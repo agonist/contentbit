@@ -103,39 +103,14 @@
   animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Dotted hero backdrop, masked to fade out, drifting imperceptibly. */
-.hero-dots {
-  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
-  background-size: 24px 24px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
-  animation: dots-pan 60s linear infinite;
+/* Glyph-field hero backdrop — fades toward the edges so the text stays clean. */
+.hero-glyphs {
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 30%, black 30%, transparent 95%);
 }
 
 /* Docs sidebar matches the page background — the border alone separates it. */
 #nd-sidebar {
   --color-fd-card: var(--color-fd-background);
-}
-
-/* Soft emerald wash behind the hero — the "valid" signal color as atmosphere. */
-.hero-glow {
-  background: radial-gradient(
-    ellipse 55% 45% at 50% 0%,
-    color-mix(in oklab, oklch(0.72 0.17 162) 8%, transparent),
-    transparent 70%
-  );
-}
-.dark .hero-glow {
-  background: radial-gradient(
-    ellipse 55% 45% at 50% 0%,
-    color-mix(in oklab, oklch(0.72 0.17 162) 13%, transparent),
-    transparent 70%
-  );
-}
-
-@keyframes dots-pan {
-  to {
-    background-position: 96px 48px;
-  }
 }
 
 /* Scroll-driven section reveal — progressive enhancement only. */

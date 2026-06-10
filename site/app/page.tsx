@@ -2,6 +2,7 @@ import { BlockShowcase } from '@/components/block-showcase'
 import { CopyButton } from '@/components/copy-button'
 import { FeatureBento } from '@/components/feature-bento'
 import { Frame } from '@/components/frame'
+import { HeroGlyphs } from '@/components/hero-glyphs'
 import { HomeDemo } from '@/components/home-demo'
 import { SiteHeader } from '@/components/site-header'
 import { ValidationDemo } from '@/components/validation-demo'
@@ -29,8 +30,7 @@ export default function Home() {
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="hero-dots absolute inset-0 -z-10" />
-          <div className="hero-glow absolute inset-0 -z-10" />
+          <HeroGlyphs />
           <div className="mx-auto max-w-3xl px-6 pt-20 pb-14 text-center sm:pt-28">
             <div className="animate-rise" style={{ animationDelay: '0ms' }}>
               <Link
