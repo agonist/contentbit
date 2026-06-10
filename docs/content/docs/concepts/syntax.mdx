@@ -61,6 +61,15 @@ Use this when budget matters.
 Three-colon blocks can nest inside child bodies; they must be balanced before the
 child ends.
 
+<Live>
+{`:::tabs
+::tab{title="Fast"}
+Use this when time matters.
+::tab{title="Cheap"}
+Use this when budget matters.
+:::`}
+</Live>
+
 ## Pipe rows
 
 Many blocks take rows of pipe-separated cells:
@@ -74,6 +83,22 @@ Many blocks take rows of pipe-separated cells:
 
 Each block defines its own columns and limits, so error messages name the exact
 expectation. Escape a literal pipe inside a cell as `\|`.
+
+<Live>
+{`:::key-metrics
+- 42% | Conversion lift
+- 18ms | Median parse time
+:::`}
+</Live>
+
+When the rows don't match the block's column count, validation fails before any
+render — and `<Live>` shows the same `file:line:col` diagnostic your build would:
+
+<Live>
+{`:::key-metrics
+- 42% | Conversion lift | extra column
+:::`}
+</Live>
 
 ## Markdown bodies
 

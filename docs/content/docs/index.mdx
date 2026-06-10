@@ -4,14 +4,15 @@ description: Parse, validate, and render your first Content Blocks document.
 ---
 
 Content Blocks is a framework-agnostic block layer for Markdown. Authors — humans,
-CMSes, or LLMs — write Markdown with directive-style blocks:
+CMSes, or LLMs — write Markdown with directive-style blocks. Every example on this
+site is rendered live by the library it documents:
 
-```md
-:::comparison{left="Basic" right="Pro"}
+<Live>
+{`:::comparison{left="Basic" right="Pro"}
 - Price | Free | $12/mo
 - Support | Community | Priority
-:::
-```
+:::`}
+</Live>
 
 The library parses that to a source-mapped AST, validates it against explicit
 per-block schemas with line-level diagnostics, and renders it through the adapter of
@@ -67,7 +68,7 @@ export function Article({ document }: { document: DocumentNode }) {
 ```
 
 `ContentBlocks` ships headless, accessible defaults for every generic block. Pass
-`components` to override any of them — see [Renderers](/docs/renderers).
+`components` to override any of them — see [Renderers](/docs/guides/renderers).
 
 ## Plug in your Markdown library (don't skip this)
 
@@ -85,7 +86,7 @@ import ReactMarkdown from 'react-markdown' // or marked, markdown-it, remark...
 ```
 
 Step-by-step setups for react-markdown, marked, markdown-it, and unified/remark:
-[Plug in your Markdown library](/docs/markdown).
+[Plug in your Markdown library](/docs/guides/markdown).
 
 ## Styled components via shadcn
 
@@ -110,8 +111,8 @@ Components land in your app as editable source files. You own them after install
 
 ## Next steps
 
-- [Plug in your Markdown library](/docs/markdown)
-- Learn the [block syntax](/docs/syntax)
-- Define [custom blocks](/docs/custom-blocks)
-- Generate [LLM authoring instructions](/docs/llm-authoring) from your registry
+- [Plug in your Markdown library](/docs/guides/markdown)
+- Learn the [block syntax](/docs/concepts/syntax)
+- Define [custom blocks](/docs/guides/custom-blocks)
+- Generate [LLM authoring instructions](/docs/concepts/llm-authoring) from your registry
 - Browse the [block reference](/docs/reference/blocks)
