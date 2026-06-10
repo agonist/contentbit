@@ -1,1 +1,1 @@
-export const GITHUB_URL = 'https://github.com/contentbit/contentbit' // placeholder
+export const GITHUB_URL = 'https://github.com/agonist/contentbit'
