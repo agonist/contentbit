@@ -91,7 +91,7 @@ export default function Home() {
             >
               or see{' '}
               <Link
-                href="/blog/two-day-neapolitan"
+                href="/blog/llm-markdown-that-cannot-break"
                 className="text-foreground underline underline-offset-4 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
               >
                 a complete article
@@ -121,11 +121,11 @@ export default function Home() {
           </div>
           <div className="mt-6 flex justify-center">
             <Link
-              href="/blog/two-day-neapolitan"
+              href="/blog/llm-markdown-that-cannot-break"
               className="group text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
             >
               <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-              this is a fragment — read the complete article: 9 blocks, 3 render targets, 0
+              this is a fragment. read a complete post: 4 blocks, 3 render targets, 0
               diagnostics
               <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>

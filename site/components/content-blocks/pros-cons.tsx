@@ -1,4 +1,4 @@
-import type { BlockComponentProps } from '@contentbit/react'
+import type { BlockComponentProps, BlockRenderContext } from '@contentbit/react'
 
 import { splitProsCons, type ProsConsData } from '@contentbit/blocks'
 import { Check, X } from 'lucide-react'
@@ -7,10 +7,12 @@ function Column({
   heading,
   items,
   tone,
+  ctx,
 }: {
   heading: string
   items: string[]
   tone: 'pro' | 'con'
+  ctx: BlockRenderContext
 }) {
   const Icon = tone === 'pro' ? Check : X
   const head =
@@ -31,7 +33,8 @@ function Column({
         {items.map((text, i) => (
           <li key={i} className="flex gap-2.5">
             <Icon className={`mt-1 size-3.5 shrink-0 ${mark}`} aria-hidden />
-            <span className="leading-relaxed">{text}</span>
+            {/* Item text is Markdown — render it, with paragraph margins zeroed. */}
+            <div className="min-w-0 leading-relaxed [&>p]:m-0">{ctx.renderMarkdown(text)}</div>
           </li>
         ))}
       </ul>
@@ -39,12 +42,12 @@ function Column({
   )
 }
 
-export function ProsConsBlock({ node }: BlockComponentProps) {
+export function ProsConsBlock({ node, ctx }: BlockComponentProps) {
   const { pros, cons } = splitProsCons(node.data as ProsConsData)
   return (
     <div data-cb-styled className="my-6 grid gap-3 sm:grid-cols-2">
-      <Column heading="Pros" items={pros} tone="pro" />
-      <Column heading="Cons" items={cons} tone="con" />
+      <Column heading="Pros" items={pros} tone="pro" ctx={ctx} />
+      <Column heading="Cons" items={cons} tone="con" ctx={ctx} />
     </div>
   )
 }

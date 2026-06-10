@@ -1,7 +1,7 @@
 import type { StepsData } from '@contentbit/blocks'
 import type { BlockComponentProps } from '@contentbit/react'
 
-export function StepsBlock({ node }: BlockComponentProps) {
+export function StepsBlock({ node, ctx }: BlockComponentProps) {
   const data = node.data as StepsData
   const last = data.items.length - 1
   return (
@@ -14,7 +14,10 @@ export function StepsBlock({ node }: BlockComponentProps) {
           <span className="bg-card text-foreground z-10 flex size-7 shrink-0 items-center justify-center rounded-full border font-mono text-xs font-semibold shadow-sm">
             {i + 1}
           </span>
-          <span className="min-w-0 pt-1 text-sm leading-relaxed">{item.text}</span>
+          {/* Step text is Markdown — inline code and emphasis are common. */}
+          <div className="min-w-0 pt-1 text-sm leading-relaxed [&>p]:m-0 [&>p+p]:mt-2">
+            {ctx.renderMarkdown(item.text)}
+          </div>
         </li>
       ))}
     </ol>
