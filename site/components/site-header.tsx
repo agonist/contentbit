@@ -13,8 +13,11 @@ function GitHubIcon({ className }: { className?: string }) {
 export function SiteHeader() {
   return (
     <header className="bg-background/80 sticky top-0 z-50 border-b backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:gap-6 sm:px-6">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-semibold tracking-tight whitespace-nowrap"
+        >
           <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md font-mono text-xs font-bold">
             :::
           </span>
@@ -27,7 +30,10 @@ export function SiteHeader() {
           <Link href="/blocks" className="hover:text-foreground hidden transition-colors sm:block">
             Blocks
           </Link>
-          <Link href="/example" className="hover:text-foreground transition-colors">
+          <Link
+            href="/example"
+            className="hover:text-foreground hidden transition-colors sm:block"
+          >
             Example
           </Link>
           <Link href="/playground" className="hover:text-foreground transition-colors">
