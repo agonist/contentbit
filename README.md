@@ -15,7 +15,7 @@ schemas with line-level diagnostics, and renders through adapters (static HTML,
 React, plain-Markdown fallback). Authoring instructions for LLMs are generated
 from the same registry that validates content, so prompts never drift from rules.
 
-Spec: see [`SPEC.md`](./SPEC.md).
+Docs: [contentbit.dev/docs](https://contentbit.dev/docs).
 
 ## Packages
 
