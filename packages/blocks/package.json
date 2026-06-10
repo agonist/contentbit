@@ -1,7 +1,25 @@
 {
   "name": "@contentbit/blocks",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "description": "The generic block pack for Content Blocks: callout, steps, comparison, tabs, faq, and more.",
+  "keywords": [
+    "markdown",
+    "content-blocks",
+    "components",
+    "llm"
+  ],
   "license": "MIT",
+  "homepage": "https://contentbit.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agonist/contentbit.git",
+    "directory": "packages/blocks"
+  },
+  "bugs": "https://github.com/agonist/contentbit/issues",
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist"
   ],

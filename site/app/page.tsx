@@ -220,12 +220,12 @@ export default function Home() {
       <footer className="border-t">
         <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm sm:flex-row">
           <p>
-            MIT licensed. Built with{' '}
+            MIT licensed. Built by{' '}
             <Link
-              href={"/docs"}
+              href="https://x.com/agonist42"
               className="hover:text-foreground underline underline-offset-4"
             >
-              Content Blocks
+              @agonist42
             </Link>
             .
           </p>
