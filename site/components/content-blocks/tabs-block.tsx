@@ -1,8 +1,8 @@
-import type { TabData, TabsData } from '@content-blocks/blocks'
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { TabData, TabsData } from '@contentbit/blocks'
+import type { BlockComponentProps } from '@contentbit/react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { isValidatedBlock } from '@content-blocks/core'
+import { isValidatedBlock } from '@contentbit/core'
 
 export function TabsBlock({ node, ctx }: BlockComponentProps) {
   const data = node.data as TabsData

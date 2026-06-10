@@ -1,5 +1,5 @@
-import type { ComparisonData } from '@content-blocks/blocks'
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { ComparisonData } from '@contentbit/blocks'
+import type { BlockComponentProps } from '@contentbit/react'
 
 export function ComparisonBlock({ node }: BlockComponentProps) {
   const data = node.data as ComparisonData

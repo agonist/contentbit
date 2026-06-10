@@ -51,9 +51,9 @@ test('every item declares the runtime packages', () => {
     if (item.name === 'generic-pack') continue
     expect(item.dependencies, item.name).toEqual(
       expect.arrayContaining([
-        '@content-blocks/core',
-        '@content-blocks/blocks',
-        '@content-blocks/react',
+        '@contentbit/core',
+        '@contentbit/blocks',
+        '@contentbit/react',
       ]),
     )
   }

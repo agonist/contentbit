@@ -9,10 +9,10 @@ import type {
   StepsData,
   TabData,
   TabsData,
-} from '@content-blocks/blocks'
+} from '@contentbit/blocks'
 
-import { splitProsCons } from '@content-blocks/blocks'
-import { isValidatedBlock } from '@content-blocks/core'
+import { splitProsCons } from '@contentbit/blocks'
+import { isValidatedBlock } from '@contentbit/core'
 
 import type { HtmlBlockRenderer } from './render.js'
 

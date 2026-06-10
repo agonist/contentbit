@@ -10,7 +10,7 @@ override.
 ## Static HTML
 
 ```ts
-import { renderToHtml } from '@content-blocks/html'
+import { renderToHtml } from '@contentbit/html'
 
 const html = renderToHtml(result.document, {
   classPrefix: 'cb-', // default
@@ -41,7 +41,7 @@ All user content is escaped. Tabs render as static sections and FAQs as native
 ## React
 
 ```tsx
-import { ContentBlocks } from '@content-blocks/react'
+import { ContentBlocks } from '@contentbit/react'
 
 <ContentBlocks
   document={result.document}
@@ -58,14 +58,14 @@ The headless defaults cover every generic block with accessible semantics: tabs 
 For styled components, install the shadcn pack instead of writing your own:
 
 ```bash
-pnpm dlx shadcn@latest add @content-blocks/generic-pack
+pnpm dlx shadcn@latest add @contentbit/generic-pack
 ```
 
 ## Plain Markdown fallback
 
 ```ts
-import { renderToMarkdown } from '@content-blocks/core'
-import { genericMarkdownRenderers } from '@content-blocks/blocks'
+import { renderToMarkdown } from '@contentbit/core'
+import { genericMarkdownRenderers } from '@contentbit/blocks'
 
 const md = renderToMarkdown(result.document, { renderers: genericMarkdownRenderers })
 ```

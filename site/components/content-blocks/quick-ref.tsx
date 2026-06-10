@@ -1,5 +1,5 @@
-import type { QuickRefData } from '@content-blocks/blocks'
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { QuickRefData } from '@contentbit/blocks'
+import type { BlockComponentProps } from '@contentbit/react'
 
 export function QuickRefBlock({ node }: BlockComponentProps) {
   const data = node.data as QuickRefData

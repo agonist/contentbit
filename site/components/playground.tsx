@@ -2,14 +2,14 @@
 
 import { styledComponents } from '@/components/content-blocks/content-renderer'
 import { Markdown } from '@/components/markdown'
-import { genericBlocks } from '@content-blocks/blocks'
+import { genericBlocks } from '@contentbit/blocks'
 import {
   createBlockRegistry,
   formatDiagnostic,
   parseDocument,
   validateDocument,
-} from '@content-blocks/core'
-import { ContentBlocks } from '@content-blocks/react'
+} from '@contentbit/core'
+import { ContentBlocks } from '@contentbit/react'
 import { useMemo, useState } from 'react'
 
 const registry = createBlockRegistry().use(genericBlocks())

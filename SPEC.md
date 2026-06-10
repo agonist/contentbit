@@ -2,7 +2,7 @@
 
 Status: draft, incubated from the `apps/landing-beta` content block system on 2026-06-10.
 
-Name: Content Blocks (`content-blocks`, npm scope `@content-blocks`). Decided 2026-06-10.
+Name: Content Blocks, shipped under the contentbit brand (CLI `contentbit`, npm scope `@contentbit`, site contentbit.dev). Scope renamed 2026-06-10.
 
 ## Thesis
 
@@ -469,10 +469,10 @@ Block definitions are renderer-agnostic. Each adapter maps block names to its ow
 implementations, so core never references framework code:
 
 ```ts
-// @content-blocks/react
+// @contentbit/react
 const components = { comparison: ComparisonBlock }
 
-// @content-blocks/html
+// @contentbit/html
 const htmlRenderers = { comparison: renderComparisonHtml }
 ```
 
@@ -561,9 +561,9 @@ import {
   createBlockRegistry,
   parseDocument,
   validateDocument,
-} from "@content-blocks/core"
-import { genericBlocks } from "@content-blocks/blocks-generic"
-import { renderToHtml } from "@content-blocks/html"
+} from "@contentbit/core"
+import { genericBlocks } from "@contentbit/blocks-generic"
+import { renderToHtml } from "@contentbit/html"
 
 const registry = createBlockRegistry().use(genericBlocks())
 
@@ -580,7 +580,7 @@ const html = renderToHtml(result.document, { registry })
 React usage:
 
 ```tsx
-import { ContentBlocks } from "@content-blocks/react"
+import { ContentBlocks } from "@contentbit/react"
 
 export function Article({ document }: { document: ValidatedDocument }) {
   return <ContentBlocks document={document} components={components} />
@@ -745,7 +745,7 @@ Relevant current shadcn registry facts:
 - item types include `registry:block`, `registry:component`, `registry:hook`,
   `registry:lib`, `registry:file`, and others
 - users can install from direct item URLs or add a namespace such as
-  `@content-blocks=https://example.com/r/{name}.json`
+  `@contentbit=https://example.com/r/{name}.json`
 
 Sources checked on 2026-06-10:
 
@@ -756,7 +756,7 @@ Sources checked on 2026-06-10:
 Install flow example:
 
 ```bash
-pnpm dlx shadcn@latest registry add @blocks=https://content-blocks.dev/r/{name}.json
+pnpm dlx shadcn@latest registry add @blocks=https://contentbit.dev/r/{name}.json
 pnpm dlx shadcn@latest add @blocks/comparison
 pnpm dlx shadcn@latest add @blocks/content-renderer
 ```
@@ -860,19 +860,19 @@ Open question: whether generic block definitions live in `core` or in
 The CLI should support:
 
 ```bash
-content-blocks validate content/**/*.md
-content-blocks render content/article.md --target html
-content-blocks instructions --target llm --out content-blocks.md
-content-blocks docs --out docs/blocks.md
-content-blocks init
-content-blocks registry build
+contentbit validate content/**/*.md
+contentbit render content/article.md --target html
+contentbit instructions --target llm --out content-blocks.md
+contentbit docs --out docs/blocks.md
+contentbit init
+contentbit registry build
 ```
 
 Later:
 
 ```bash
-content-blocks repair content/article.md
-content-blocks migrate content/**/*.md --from 1 --to 2
+contentbit repair content/article.md
+contentbit migrate content/**/*.md --from 1 --to 2
 ```
 
 The repair command should not be in V1 unless it is simple and safe.

@@ -3,7 +3,7 @@ import {
   listItems,
   type ListItemsData,
   type MarkdownBlockRenderer,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 
 export type ProsConsData = ListItemsData
 

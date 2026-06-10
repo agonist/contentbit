@@ -1,4 +1,4 @@
-import { formatDiagnostic, parseDocument, validateDocument } from '@content-blocks/core'
+import { formatDiagnostic, parseDocument, validateDocument } from '@contentbit/core'
 import { readFile } from 'node:fs/promises'
 import { parseArgs } from 'node:util'
 import { glob } from 'tinyglobby'

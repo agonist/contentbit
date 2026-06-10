@@ -1,5 +1,5 @@
-import type { StepsData } from '@content-blocks/blocks'
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { StepsData } from '@contentbit/blocks'
+import type { BlockComponentProps } from '@contentbit/react'
 
 export function StepsBlock({ node }: BlockComponentProps) {
   const data = node.data as StepsData

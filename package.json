@@ -1,5 +1,5 @@
 {
-  "name": "content-blocks-monorepo",
+  "name": "contentbit-monorepo",
   "private": true,
   "packageManager": "pnpm@11.5.0",
   "scripts": {

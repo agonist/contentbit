@@ -1,5 +1,5 @@
-import type { CalloutData } from '@content-blocks/blocks'
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { CalloutData } from '@contentbit/blocks'
+import type { BlockComponentProps } from '@contentbit/react'
 import type { LucideIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'

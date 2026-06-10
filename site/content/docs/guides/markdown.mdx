@@ -51,7 +51,7 @@ export function Markdown({ source }: { source: string }) {
 **Step 3 — pass it once:**
 
 ```tsx
-import { ContentBlocks } from '@content-blocks/react'
+import { ContentBlocks } from '@contentbit/react'
 import { Markdown } from '@/components/markdown'
 
 <ContentBlocks
@@ -83,7 +83,7 @@ pnpm add marked dompurify
 **Step 2 — wire it:**
 
 ```ts
-import { renderToHtml } from '@content-blocks/html'
+import { renderToHtml } from '@contentbit/html'
 import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 
@@ -103,7 +103,7 @@ pnpm add markdown-it
 ```
 
 ```ts
-import { renderToHtml } from '@content-blocks/html'
+import { renderToHtml } from '@contentbit/html'
 import MarkdownIt from 'markdown-it'
 
 const md = new MarkdownIt() // html: false by default — raw HTML stays escaped
@@ -123,7 +123,7 @@ pnpm add unified remark-parse remark-rehype rehype-stringify
 ```
 
 ```ts
-import { renderToHtml } from '@content-blocks/html'
+import { renderToHtml } from '@contentbit/html'
 import rehypeStringify from 'rehype-stringify'
 import remarkParse from 'remark-parse'
 import remarkRehype from 'remark-rehype'
@@ -141,8 +141,8 @@ const html = renderToHtml(result.document, {
 `renderToMarkdown` needs nothing — its output *is* Markdown:
 
 ```ts
-import { renderToMarkdown } from '@content-blocks/core'
-import { genericMarkdownRenderers } from '@content-blocks/blocks'
+import { renderToMarkdown } from '@contentbit/core'
+import { genericMarkdownRenderers } from '@contentbit/blocks'
 
 const md = renderToMarkdown(result.document, { renderers: genericMarkdownRenderers })
 ```

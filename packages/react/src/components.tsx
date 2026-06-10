@@ -11,10 +11,10 @@ import type {
   StepsData,
   TabData,
   TabsData,
-} from '@content-blocks/blocks'
+} from '@contentbit/blocks'
 
-import { splitProsCons } from '@content-blocks/blocks'
-import { isValidatedBlock, type BlockNode } from '@content-blocks/core'
+import { splitProsCons } from '@contentbit/blocks'
+import { isValidatedBlock, type BlockNode } from '@contentbit/core'
 import { useId, useState } from 'react'
 
 import type { BlockComponent } from './content-blocks.js'

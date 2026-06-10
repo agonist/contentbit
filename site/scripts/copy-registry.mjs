@@ -9,6 +9,6 @@ try {
   console.log('copied registry items to public/r/')
 } catch {
   console.warn(
-    'registry/dist/r missing — run `pnpm --filter @content-blocks/registry-src build` first',
+    'registry/dist/r missing — run `pnpm --filter @contentbit/registry-src build` first',
   )
 }

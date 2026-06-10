@@ -1,12 +1,12 @@
 'use client'
 
-import { genericBlocks } from '@content-blocks/blocks'
+import { genericBlocks } from '@contentbit/blocks'
 import {
   createBlockRegistry,
   formatDiagnostic,
   parseDocument,
   validateDocument,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 
 const BROKEN = `:::comparison{left="Basic"}
 - Price | Free
@@ -28,7 +28,7 @@ export function ValidationDemo() {
       </div>
       <div>
         <div className="text-muted-foreground flex h-9 items-center gap-2 border-b px-4 font-mono text-xs">
-          content-blocks validate broken.md
+          contentbit validate broken.md
           <span className="text-destructive ml-auto">exit 1</span>
         </div>
         <pre className="overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed">

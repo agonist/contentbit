@@ -3,7 +3,7 @@ import {
   parseDocument,
   renderToMarkdown,
   validateDocument,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 import { expect, test } from 'vitest'
 
 import { comparisonBlock, comparisonMarkdown } from './comparison.js'

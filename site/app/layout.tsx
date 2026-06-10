@@ -9,8 +9,8 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Content Blocks — structured Markdown components without framework lock-in',
-    template: '%s · Content Blocks',
+    default: 'contentbit — structured Markdown components without framework lock-in',
+    template: '%s · contentbit',
   },
   description:
     'Write Markdown with validated, structured component blocks. Render it anywhere — React, static HTML, or plain Markdown. Built for content written by humans, CMSes, and LLMs.',

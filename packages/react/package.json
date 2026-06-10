@@ -1,5 +1,5 @@
 {
-  "name": "@content-blocks/react",
+  "name": "@contentbit/react",
   "version": "0.0.1",
   "license": "MIT",
   "files": [
@@ -18,8 +18,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@content-blocks/blocks": "workspace:*",
-    "@content-blocks/core": "workspace:*"
+    "@contentbit/blocks": "workspace:*",
+    "@contentbit/core": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",

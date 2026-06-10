@@ -1,11 +1,11 @@
-import { genericMarkdownRenderers } from '@content-blocks/blocks'
+import { genericMarkdownRenderers } from '@contentbit/blocks'
 import {
   formatDiagnostic,
   parseDocument,
   renderToMarkdown,
   validateDocument,
-} from '@content-blocks/core'
-import { renderToHtml } from '@content-blocks/html'
+} from '@contentbit/core'
+import { renderToHtml } from '@contentbit/html'
 import { readFile } from 'node:fs/promises'
 import { parseArgs } from 'node:util'
 

@@ -2,9 +2,9 @@
 
 import { styledComponents } from '@/components/content-blocks/content-renderer'
 import { cn } from '@/lib/utils'
-import { genericBlocks } from '@content-blocks/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@content-blocks/core'
-import { ContentBlocks } from '@content-blocks/react'
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { ContentBlocks } from '@contentbit/react'
 import { useMemo, useState } from 'react'
 
 const registry = createBlockRegistry().use(genericBlocks())

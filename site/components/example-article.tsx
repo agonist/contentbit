@@ -6,15 +6,15 @@ import { styledComponents } from '@/components/content-blocks/content-renderer'
 import { CopyButton } from '@/components/copy-button'
 import { EXAMPLE_SOURCE } from '@/lib/example-article'
 import { cn } from '@/lib/utils'
-import { genericBlocks, genericMarkdownRenderers } from '@content-blocks/blocks'
+import { genericBlocks, genericMarkdownRenderers } from '@contentbit/blocks'
 import {
   createBlockRegistry,
   formatDiagnostic,
   parseDocument,
   renderToMarkdown,
   validateDocument,
-} from '@content-blocks/core'
-import { ContentBlocks } from '@content-blocks/react'
+} from '@contentbit/core'
+import { ContentBlocks } from '@contentbit/react'
 import { BadgeCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -69,7 +69,7 @@ function Prose({ source }: { source: string }) {
 }
 
 const VIEWS = [
-  { id: 'rendered', label: 'Rendered', hint: '@content-blocks/react + styled pack' },
+  { id: 'rendered', label: 'Rendered', hint: '@contentbit/react + styled pack' },
   { id: 'source', label: 'Source', hint: 'what the author wrote — one .md file' },
   { id: 'plain', label: 'Plain Markdown', hint: 'renderToMarkdown() — email, search, AI context' },
 ] as const

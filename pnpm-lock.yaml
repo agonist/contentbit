@@ -10,7 +10,7 @@ importers:
 
   packages/blocks:
     dependencies:
-      '@content-blocks/core':
+      '@contentbit/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -26,13 +26,13 @@ importers:
 
   packages/cli:
     dependencies:
-      '@content-blocks/blocks':
+      '@contentbit/blocks':
         specifier: workspace:*
         version: link:../blocks
-      '@content-blocks/core':
+      '@contentbit/core':
         specifier: workspace:*
         version: link:../core
-      '@content-blocks/html':
+      '@contentbit/html':
         specifier: workspace:*
         version: link:../html
       tinyglobby:
@@ -66,10 +66,10 @@ importers:
 
   packages/html:
     dependencies:
-      '@content-blocks/blocks':
+      '@contentbit/blocks':
         specifier: workspace:*
         version: link:../blocks
-      '@content-blocks/core':
+      '@contentbit/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -82,10 +82,10 @@ importers:
 
   packages/react:
     dependencies:
-      '@content-blocks/blocks':
+      '@contentbit/blocks':
         specifier: workspace:*
         version: link:../blocks
-      '@content-blocks/core':
+      '@contentbit/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -113,13 +113,13 @@ importers:
 
   registry:
     dependencies:
-      '@content-blocks/blocks':
+      '@contentbit/blocks':
         specifier: workspace:*
         version: link:../packages/blocks
-      '@content-blocks/core':
+      '@contentbit/core':
         specifier: workspace:*
         version: link:../packages/core
-      '@content-blocks/react':
+      '@contentbit/react':
         specifier: workspace:*
         version: link:../packages/react
     devDependencies:
@@ -165,13 +165,13 @@ importers:
 
   site:
     dependencies:
-      '@content-blocks/blocks':
+      '@contentbit/blocks':
         specifier: workspace:*
         version: link:../packages/blocks
-      '@content-blocks/core':
+      '@contentbit/core':
         specifier: workspace:*
         version: link:../packages/core
-      '@content-blocks/react':
+      '@contentbit/react':
         specifier: workspace:*
         version: link:../packages/react
       '@radix-ui/react-accordion':

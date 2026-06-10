@@ -1,5 +1,5 @@
-import type { KeyMetricsData } from '@content-blocks/blocks'
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { KeyMetricsData } from '@contentbit/blocks'
+import type { BlockComponentProps } from '@contentbit/react'
 
 import { cn } from '@/lib/utils'
 

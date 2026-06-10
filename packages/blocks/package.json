@@ -1,5 +1,5 @@
 {
-  "name": "@content-blocks/blocks",
+  "name": "@contentbit/blocks",
   "version": "0.0.1",
   "license": "MIT",
   "files": [
@@ -18,7 +18,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@content-blocks/core": "workspace:*",
+    "@contentbit/core": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

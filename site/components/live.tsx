@@ -1,23 +1,23 @@
 'use client'
 
-import { genericBlocks } from '@content-blocks/blocks'
+import { genericBlocks } from '@contentbit/blocks'
 import {
   createBlockRegistry,
   formatDiagnostic,
   parseDocument,
   validateDocument,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 import { useMemo } from 'react'
 
 import { styledComponents } from './content-blocks/content-renderer'
-import { ContentBlocks } from '@content-blocks/react'
+import { ContentBlocks } from '@contentbit/react'
 import { Markdown } from './markdown'
 
 /*
  * Dogfooding component. Given Content Blocks source, it runs the real library
  * pipeline — parseDocument → validateDocument → <ContentBlocks> — and shows the
  * source next to its live rendered output using the styled pack installed via
- * `shadcn add @content-blocks/generic-pack`. The docs prove the library by
+ * `shadcn add @contentbit/generic-pack`. The docs prove the library by
  * using it, not by describing it.
  */
 

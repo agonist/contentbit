@@ -1,4 +1,4 @@
-import type { BlockDefinition, MarkdownBlockRenderer } from '@content-blocks/core'
+import type { BlockDefinition, MarkdownBlockRenderer } from '@contentbit/core'
 
 import { calloutBlock, calloutMarkdown } from './blocks/callout.js'
 import { comparisonBlock, comparisonMarkdown } from './blocks/comparison.js'

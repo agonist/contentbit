@@ -164,7 +164,7 @@ function ShadcnCell() {
       <Visual className="space-y-2.5 font-mono text-xs">
         <div className="text-muted-foreground">
           <span className="text-foreground/50 select-none">$ </span>
-          shadcn add <span className="text-foreground">@content-blocks/tabs</span>
+          shadcn add <span className="text-foreground">@contentbit/tabs</span>
         </div>
         <pre className="text-muted-foreground overflow-x-auto leading-relaxed">
           <code>

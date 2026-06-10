@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "content-blocks",
-  "homepage": "https://content-blocks.dev",
+  "name": "contentbit",
+  "homepage": "https://contentbit.dev",
   "items": [
     {
       "name": "content-renderer",
@@ -9,19 +9,19 @@
       "title": "Content Renderer",
       "description": "Renders a validated Content Blocks document with the styled component pack.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react"
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react"
       ],
       "registryDependencies": [
-        "@content-blocks/callout",
-        "@content-blocks/steps",
-        "@content-blocks/key-metrics",
-        "@content-blocks/quick-ref",
-        "@content-blocks/comparison",
-        "@content-blocks/pros-cons",
-        "@content-blocks/tabs",
-        "@content-blocks/faq"
+        "@contentbit/callout",
+        "@contentbit/steps",
+        "@contentbit/key-metrics",
+        "@contentbit/quick-ref",
+        "@contentbit/comparison",
+        "@contentbit/pros-cons",
+        "@contentbit/tabs",
+        "@contentbit/faq"
       ],
       "files": [
         {
@@ -37,9 +37,9 @@
       "title": "Callout Block",
       "description": "Note, tip, warning, important, and TLDR callouts.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react",
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react",
         "lucide-react"
       ],
       "registryDependencies": [],
@@ -57,9 +57,9 @@
       "title": "Steps Block",
       "description": "Numbered process steps.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react"
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react"
       ],
       "registryDependencies": [],
       "files": [
@@ -76,9 +76,9 @@
       "title": "Key Metrics Block",
       "description": "Stat cards for scannable numbers.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react"
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react"
       ],
       "registryDependencies": [],
       "files": [
@@ -95,9 +95,9 @@
       "title": "Quick Reference Block",
       "description": "Compact key/value reference card.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react"
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react"
       ],
       "registryDependencies": [],
       "files": [
@@ -114,9 +114,9 @@
       "title": "Comparison Block",
       "description": "Two-option comparison table.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react"
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react"
       ],
       "registryDependencies": [],
       "files": [
@@ -133,9 +133,9 @@
       "title": "Pros & Cons Block",
       "description": "Paired advantages and disadvantages.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react",
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react",
         "lucide-react"
       ],
       "registryDependencies": [],
@@ -153,9 +153,9 @@
       "title": "Tabs Block",
       "description": "Tabbed switcher for alternative methods.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react"
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react"
       ],
       "registryDependencies": [
         "tabs"
@@ -174,9 +174,9 @@
       "title": "FAQ Block",
       "description": "Accordion of question/answer pairs.",
       "dependencies": [
-        "@content-blocks/core",
-        "@content-blocks/blocks",
-        "@content-blocks/react"
+        "@contentbit/core",
+        "@contentbit/blocks",
+        "@contentbit/react"
       ],
       "registryDependencies": [
         "accordion"
@@ -195,7 +195,7 @@
       "title": "Generic Pack",
       "description": "All Content Blocks components plus the renderer.",
       "registryDependencies": [
-        "@content-blocks/content-renderer"
+        "@contentbit/content-renderer"
       ],
       "files": []
     }

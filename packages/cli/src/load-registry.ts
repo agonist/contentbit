@@ -1,5 +1,5 @@
-import { genericBlocks } from '@content-blocks/blocks'
-import { createBlockRegistry, type BlockDefinition, type BlockRegistry } from '@content-blocks/core'
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, type BlockDefinition, type BlockRegistry } from '@contentbit/core'
 import { pathToFileURL } from 'node:url'
 
 /** Generic pack + optional user module (default export: BlockDefinition[]). */

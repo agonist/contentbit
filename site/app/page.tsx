@@ -9,8 +9,8 @@ import { GITHUB_URL } from '@/lib/site'
 import { ArrowRight, BadgeCheck } from 'lucide-react'
 import Link from 'next/link'
 
-const INSTALL = 'pnpm add @content-blocks/core @content-blocks/blocks'
-const SHADCN_ADD = 'pnpm dlx shadcn@latest add @content-blocks/generic-pack'
+const INSTALL = 'pnpm add @contentbit/core @contentbit/blocks'
+const SHADCN_ADD = 'pnpm dlx shadcn@latest add @contentbit/generic-pack'
 
 function Eyebrow({ index, children }: { index: string; children: React.ReactNode }) {
   return (
@@ -212,7 +212,7 @@ export default function Home() {
             <CopyButton value={SHADCN_ADD} />
           </div>
           <p className="text-muted-foreground mt-3 font-mono text-xs">
-            registry: https://content-blocks.dev/r/{'{name}'}.json
+            registry: https://contentbit.dev/r/{'{name}'}.json
           </p>
         </section>
       </main>

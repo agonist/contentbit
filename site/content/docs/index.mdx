@@ -21,22 +21,22 @@ your choice: React, static HTML, or a plain-Markdown fallback.
 ## Install
 
 ```bash
-pnpm add @content-blocks/core @content-blocks/blocks
+pnpm add @contentbit/core @contentbit/blocks
 ```
 
 Add a renderer for your target:
 
 ```bash
-pnpm add @content-blocks/html   # static HTML strings
-pnpm add @content-blocks/react  # React components
+pnpm add @contentbit/html   # static HTML strings
+pnpm add @contentbit/react  # React components
 ```
 
 ## Parse, validate, render
 
 ```ts
-import { createBlockRegistry, parseDocument, validateDocument } from '@content-blocks/core'
-import { genericBlocks } from '@content-blocks/blocks'
-import { renderToHtml } from '@content-blocks/html'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { genericBlocks } from '@contentbit/blocks'
+import { renderToHtml } from '@contentbit/html'
 
 const registry = createBlockRegistry().use(genericBlocks())
 
@@ -60,7 +60,7 @@ hint: Format: - label | left | right
 ## React
 
 ```tsx
-import { ContentBlocks } from '@content-blocks/react'
+import { ContentBlocks } from '@contentbit/react'
 
 export function Article({ document }: { document: DocumentNode }) {
   return <ContentBlocks document={document} renderMarkdown={(md) => <Markdown source={md} />} />
@@ -96,7 +96,7 @@ the namespace in your `components.json`:
 ```json
 {
   "registries": {
-    "@content-blocks": "https://content-blocks.dev/r/{name}.json"
+    "@contentbit": "https://contentbit.dev/r/{name}.json"
   }
 }
 ```
@@ -104,7 +104,7 @@ the namespace in your `components.json`:
 Then install:
 
 ```bash
-pnpm dlx shadcn@latest add @content-blocks/generic-pack
+pnpm dlx shadcn@latest add @contentbit/generic-pack
 ```
 
 Components land in your app as editable source files. You own them after install.

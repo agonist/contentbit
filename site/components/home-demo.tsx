@@ -2,9 +2,9 @@
 
 import { styledComponents } from '@/components/content-blocks/content-renderer'
 import { Markdown } from '@/components/markdown'
-import { genericBlocks } from '@content-blocks/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@content-blocks/core'
-import { ContentBlocks } from '@content-blocks/react'
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { ContentBlocks } from '@contentbit/react'
 
 const SOURCE = `:::key-metrics
 - 65% | Hydration

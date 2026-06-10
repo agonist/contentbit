@@ -20,7 +20,7 @@ export function fakeIo(): Io & { out: string[]; err: string[] } {
 test('no command prints usage and exits 2', async () => {
   const io = fakeIo()
   expect(await run([], io)).toBe(2)
-  expect(io.err.join('\n')).toContain('Usage: content-blocks <validate|render|instructions|docs>')
+  expect(io.err.join('\n')).toContain('Usage: contentbit <validate|render|instructions|docs>')
 })
 
 test('unknown command prints usage and exits 2', async () => {
@@ -31,7 +31,7 @@ test('unknown command prints usage and exits 2', async () => {
 test('render on a missing file exits 1 with a clean error, no stack trace', async () => {
   const io = fakeIo()
   expect(await run(['render', '/nonexistent/nope.md', '--target', 'html'], io)).toBe(1)
-  expect(io.err.join('\n')).toContain('content-blocks render:')
+  expect(io.err.join('\n')).toContain('contentbit render:')
   expect(io.err.join('\n')).not.toContain('    at ') // no stack frames
 })
 
@@ -42,11 +42,11 @@ test('validate with a bad --registry path exits 1 with a clean error', async () 
   expect(
     await run(['validate', join(dir, '*.md'), '--registry', '/nonexistent/registry.mjs'], io),
   ).toBe(1)
-  expect(io.err.join('\n')).toContain('content-blocks validate:')
+  expect(io.err.join('\n')).toContain('contentbit validate:')
 })
 
 test('an unrecognized flag exits 1 with a clean error', async () => {
   const io = fakeIo()
   expect(await run(['instructions', '--bogus-flag'], io)).toBe(1)
-  expect(io.err.join('\n')).toContain('content-blocks instructions:')
+  expect(io.err.join('\n')).toContain('contentbit instructions:')
 })

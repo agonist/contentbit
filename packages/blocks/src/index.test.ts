@@ -1,4 +1,4 @@
-import { createBlockRegistry, parseDocument, validateDocument } from '@content-blocks/core'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { expect, test } from 'vitest'
 
 import { genericBlocks, genericMarkdownRenderers } from './index.js'

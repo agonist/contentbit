@@ -1,5 +1,5 @@
 {
-  "name": "@content-blocks/html",
+  "name": "@contentbit/html",
   "version": "0.0.1",
   "license": "MIT",
   "files": [
@@ -18,8 +18,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@content-blocks/blocks": "workspace:*",
-    "@content-blocks/core": "workspace:*"
+    "@contentbit/blocks": "workspace:*",
+    "@contentbit/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

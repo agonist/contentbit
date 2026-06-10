@@ -1,9 +1,9 @@
 {
-  "name": "content-blocks",
+  "name": "contentbit",
   "version": "0.0.1",
   "license": "MIT",
   "bin": {
-    "content-blocks": "./dist/bin.js"
+    "contentbit": "./dist/bin.js"
   },
   "files": [
     "dist"
@@ -21,9 +21,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@content-blocks/blocks": "workspace:*",
-    "@content-blocks/core": "workspace:*",
-    "@content-blocks/html": "workspace:*",
+    "@contentbit/blocks": "workspace:*",
+    "@contentbit/core": "workspace:*",
+    "@contentbit/html": "workspace:*",
     "tinyglobby": "^0.2.10"
   },
   "devDependencies": {

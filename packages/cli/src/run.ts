@@ -4,7 +4,7 @@ export interface Io {
   writeFile(path: string, content: string): Promise<void>
 }
 
-export const USAGE = `Usage: content-blocks <validate|render|instructions|docs> [options]
+export const USAGE = `Usage: contentbit <validate|render|instructions|docs> [options]
 
   validate <globs...> [--registry <module.mjs>] [--strict-warnings]
   render <file> --target html|markdown [--registry <module.mjs>] [--out <file>]
@@ -31,7 +31,7 @@ export async function run(argv: string[], io: Io): Promise<number> {
     const command = await loader()
     return await command(rest, io)
   } catch (err) {
-    io.stderr(`content-blocks ${name}: ${err instanceof Error ? err.message : String(err)}`)
+    io.stderr(`contentbit ${name}: ${err instanceof Error ? err.message : String(err)}`)
     return 1
   }
 }

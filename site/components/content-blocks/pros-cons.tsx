@@ -1,6 +1,6 @@
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { BlockComponentProps } from '@contentbit/react'
 
-import { splitProsCons, type ProsConsData } from '@content-blocks/blocks'
+import { splitProsCons, type ProsConsData } from '@contentbit/blocks'
 import { Check, X } from 'lucide-react'
 
 function Column({

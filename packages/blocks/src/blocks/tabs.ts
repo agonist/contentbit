@@ -6,7 +6,7 @@ import {
   type ChildBlocksData,
   type MarkdownBlockRenderer,
   type MarkdownBodyData,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 import { z } from 'zod'
 
 export type TabsData = ChildBlocksData

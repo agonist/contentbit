@@ -1,5 +1,5 @@
-import { genericBlocks } from '@content-blocks/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@content-blocks/core'
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, test } from 'vitest'
 

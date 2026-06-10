@@ -1,9 +1,9 @@
 'use client'
 
-import type { ContentNode, DocumentNode, ValidatedBlockNode } from '@content-blocks/core'
+import type { ContentNode, DocumentNode, ValidatedBlockNode } from '@contentbit/core'
 import type { ComponentType, ReactNode } from 'react'
 
-import { isValidatedBlock } from '@content-blocks/core'
+import { isValidatedBlock } from '@contentbit/core'
 import { Fragment } from 'react'
 
 import { defaultComponents } from './components.js'

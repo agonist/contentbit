@@ -1,5 +1,5 @@
-import { genericBlocks } from '@content-blocks/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@content-blocks/core'
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { expect, test } from 'vitest'
 
 import { renderToHtml } from './render.js'

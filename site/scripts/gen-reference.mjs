@@ -1,5 +1,5 @@
-import { genericBlocks } from '@content-blocks/blocks'
-import { createBlockRegistry } from '@content-blocks/core'
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry } from '@contentbit/core'
 import { mkdir, writeFile } from 'node:fs/promises'
 
 const registry = createBlockRegistry().use(genericBlocks())

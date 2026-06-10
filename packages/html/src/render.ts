@@ -1,6 +1,6 @@
-import type { ContentNode, DocumentNode, ValidatedBlockNode } from '@content-blocks/core'
+import type { ContentNode, DocumentNode, ValidatedBlockNode } from '@contentbit/core'
 
-import { isValidatedBlock } from '@content-blocks/core'
+import { isValidatedBlock } from '@contentbit/core'
 
 import { genericHtmlRenderers } from './blocks.js'
 import { escapeHtml } from './escape.js'

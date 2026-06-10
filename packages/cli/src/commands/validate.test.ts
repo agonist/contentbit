@@ -39,8 +39,8 @@ test('--strict-warnings turns warnings into failures', async () => {
 })
 
 test('a custom --registry module adds blocks', async () => {
-  // Bare specifier "@content-blocks/core" can't resolve from /tmp; use a file URL
-  // of the built core package dist instead (requires `pnpm --filter @content-blocks/core build`).
+  // Bare specifier "@contentbit/core" can't resolve from /tmp; use a file URL
+  // of the built core package dist instead (requires `pnpm --filter @contentbit/core build`).
   const coreUrl = pathToFileURL(
     join(new URL('../../..', import.meta.url).pathname, 'core/dist/index.js'),
   ).href

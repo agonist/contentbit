@@ -21,7 +21,7 @@ export function SiteHeader() {
           <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center font-mono text-xs font-bold">
             :::
           </span>
-          content-blocks
+          contentbit<span className="text-muted-foreground font-normal">.dev</span>
         </Link>
         <nav className="text-muted-foreground flex items-center gap-5 text-sm">
           <Link href={"/docs"} className="hover:text-foreground transition-colors">

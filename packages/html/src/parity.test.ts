@@ -1,10 +1,10 @@
-import { genericBlocks, genericMarkdownRenderers } from '@content-blocks/blocks'
+import { genericBlocks, genericMarkdownRenderers } from '@contentbit/blocks'
 import {
   createBlockRegistry,
   parseDocument,
   renderToMarkdown,
   validateDocument,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 import { expect, test } from 'vitest'
 
 import { renderToHtml } from './render.js'

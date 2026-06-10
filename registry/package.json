@@ -1,5 +1,5 @@
 {
-  "name": "@content-blocks/registry-src",
+  "name": "@contentbit/registry-src",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@content-blocks/blocks": "workspace:*",
-    "@content-blocks/core": "workspace:*",
-    "@content-blocks/react": "workspace:*"
+    "@contentbit/blocks": "workspace:*",
+    "@contentbit/core": "workspace:*",
+    "@contentbit/react": "workspace:*"
   },
   "devDependencies": {
     "@radix-ui/react-accordion": "^1.2.2",

@@ -32,10 +32,10 @@ verified example. Custom blocks you registered are included automatically.
 
 ```bash
 # compact LLM context, written to a file your prompts can include
-content-blocks instructions --audience llm --out content-blocks-guide.md
+contentbit instructions --audience llm --out content-blocks-guide.md
 
 # human-readable reference (this site's Block reference page is generated this way)
-content-blocks docs --out docs/blocks.md
+contentbit docs --out docs/blocks.md
 ```
 
 ## The validation loop
@@ -43,7 +43,7 @@ content-blocks docs --out docs/blocks.md
 Generation is half the story; the other half is checking the output:
 
 ```bash
-content-blocks validate "content/**/*.md"
+contentbit validate "content/**/*.md"
 ```
 
 Exit code 1 on errors, with `file:line:col` diagnostics an agent can act on:
@@ -61,7 +61,7 @@ then run `validate` on the result and feed diagnostics back until clean.
 Point the CLI at a module that default-exports your extra definitions:
 
 ```bash
-content-blocks validate "content/**/*.md" --registry ./blocks/registry.mjs
+contentbit validate "content/**/*.md" --registry ./blocks/registry.mjs
 ```
 
 The generic pack is always loaded first; your module adds to it.

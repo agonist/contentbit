@@ -3,7 +3,7 @@ import {
   parseDocument,
   renderToMarkdown,
   validateDocument,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 import { expect, test } from 'vitest'
 
 import { faqBlock, faqItemBlock, faqMarkdown } from './faq.js'

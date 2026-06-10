@@ -21,16 +21,16 @@ Spec: see [`SPEC.md`](./SPEC.md).
 
 | Package                  | Purpose                                                                                            |
 | ------------------------ | -------------------------------------------------------------------------------------------------- |
-| `@content-blocks/core`   | Parser, AST, diagnostics, registry, validation, content models, authoring guide, Markdown fallback |
-| `@content-blocks/blocks` | Generic block definitions (callout, steps, comparison, tabs, faq, ...)                             |
-| `@content-blocks/html`   | Static HTML renderer                                                                               |
-| `@content-blocks/react`  | React renderer with headless defaults                                                              |
-| `content-blocks` (cli)   | validate / render / instructions / docs                                                            |
+| `@contentbit/core`   | Parser, AST, diagnostics, registry, validation, content models, authoring guide, Markdown fallback |
+| `@contentbit/blocks` | Generic block definitions (callout, steps, comparison, tabs, faq, ...)                             |
+| `@contentbit/html`   | Static HTML renderer                                                                               |
+| `@contentbit/react`  | React renderer with headless defaults                                                              |
+| `contentbit` (cli)   | validate / render / instructions / docs                                                            |
 | `registry/`              | shadcn-distributed styled component pack                                                           |
 | `site/`                  | Landing, docs (Fumadocs at /docs), blocks gallery, example article, playground, registry hosting   |
 
 ## Development
 
     pnpm install
-    pnpm --filter "@content-blocks/*" test
-    pnpm --filter "@content-blocks/*" build
+    pnpm --filter "@contentbit/*" test
+    pnpm --filter "@contentbit/*" build

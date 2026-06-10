@@ -3,7 +3,7 @@ import {
   pipeRows,
   type MarkdownBlockRenderer,
   type PipeRowsData,
-} from '@content-blocks/core'
+} from '@contentbit/core'
 
 export type KeyMetricsData = PipeRowsData
 

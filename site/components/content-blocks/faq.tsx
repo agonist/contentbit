@@ -1,5 +1,5 @@
-import type { FaqData, FaqItemData } from '@content-blocks/blocks'
-import type { BlockComponentProps } from '@content-blocks/react'
+import type { FaqData, FaqItemData } from '@contentbit/blocks'
+import type { BlockComponentProps } from '@contentbit/react'
 
 import {
   Accordion,
@@ -7,7 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { isValidatedBlock } from '@content-blocks/core'
+import { isValidatedBlock } from '@contentbit/core'
 
 export function FaqBlock({ node, ctx }: BlockComponentProps) {
   const data = node.data as FaqData
