@@ -8,14 +8,15 @@ import { ContentRenderer } from './content-renderer'
 const registry = createBlockRegistry().use(genericBlocks())
 const doc = (src: string) => validateDocument(parseDocument(src), registry).document
 
-test('renders the styled callout with type variant classes', () => {
+test('renders the styled callout with its type label and title', () => {
   const { container } = render(
     <ContentRenderer
       document={doc(':::callout{type="warning" title="Hot oven"}\nMind your hands.\n:::\n')}
     />,
   )
   const aside = container.querySelector('aside')
-  expect(aside?.className).toContain('border-l-4')
+  expect(aside?.className).toContain('border-amber-500/30')
+  expect(screen.getByText('Warning')).toBeDefined()
   expect(screen.getByText('Hot oven')).toBeDefined()
 })
 

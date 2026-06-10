@@ -35,7 +35,7 @@ export default function Home() {
             <div className="animate-rise" style={{ animationDelay: '0ms' }}>
               <Link
                 href={`${DOCS_URL}/docs/concepts/llm-authoring`}
-                className="bg-background/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur transition-colors"
+                className="bg-background/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 border px-3 py-1 font-mono text-xs backdrop-blur transition-colors"
               >
                 <span className="relative flex size-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
@@ -182,10 +182,10 @@ export default function Home() {
                 </p>
               </div>
               <Link
-                href={`${DOCS_URL}/docs/reference/blocks`}
+                href="/blocks"
                 className="text-muted-foreground hover:text-foreground hidden text-sm whitespace-nowrap transition-colors sm:block"
               >
-                Block reference →
+                All blocks →
               </Link>
             </div>
             <div className="reveal-on-scroll">
@@ -232,6 +232,9 @@ export default function Home() {
           <nav className="flex items-center gap-5">
             <Link href={`${DOCS_URL}/docs`} className="hover:text-foreground transition-colors">
               Docs
+            </Link>
+            <Link href="/blocks" className="hover:text-foreground transition-colors">
+              Blocks
             </Link>
             <Link href="/example" className="hover:text-foreground transition-colors">
               Example

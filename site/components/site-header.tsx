@@ -24,10 +24,7 @@ export function SiteHeader() {
           <Link href={`${DOCS_URL}/docs`} className="hover:text-foreground transition-colors">
             Docs
           </Link>
-          <Link
-            href={`${DOCS_URL}/docs/reference/blocks`}
-            className="hover:text-foreground hidden transition-colors sm:block"
-          >
+          <Link href="/blocks" className="hover:text-foreground hidden transition-colors sm:block">
             Blocks
           </Link>
           <Link href="/example" className="hover:text-foreground transition-colors">
