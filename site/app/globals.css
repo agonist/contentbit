@@ -107,6 +107,22 @@
   animation: dots-pan 60s linear infinite;
 }
 
+/* Soft emerald wash behind the hero — the "valid" signal color as atmosphere. */
+.hero-glow {
+  background: radial-gradient(
+    ellipse 55% 45% at 50% 0%,
+    color-mix(in oklab, oklch(0.72 0.17 162) 8%, transparent),
+    transparent 70%
+  );
+}
+.dark .hero-glow {
+  background: radial-gradient(
+    ellipse 55% 45% at 50% 0%,
+    color-mix(in oklab, oklch(0.72 0.17 162) 13%, transparent),
+    transparent 70%
+  );
+}
+
 @keyframes dots-pan {
   to {
     background-position: 96px 48px;

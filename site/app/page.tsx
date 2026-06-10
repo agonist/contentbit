@@ -1,14 +1,26 @@
 import { BlockShowcase } from '@/components/block-showcase'
 import { CopyButton } from '@/components/copy-button'
 import { FeatureBento } from '@/components/feature-bento'
+import { Frame } from '@/components/frame'
 import { HomeDemo } from '@/components/home-demo'
 import { SiteHeader } from '@/components/site-header'
 import { ValidationDemo } from '@/components/validation-demo'
 import { DOCS_URL, GITHUB_URL } from '@/lib/site'
+import { ArrowRight, BadgeCheck } from 'lucide-react'
 import Link from 'next/link'
 
 const INSTALL = 'pnpm add @content-blocks/core @content-blocks/blocks'
 const SHADCN_ADD = 'pnpm dlx shadcn@latest add @content-blocks/generic-pack'
+
+function Eyebrow({ index, children }: { index: string; children: React.ReactNode }) {
+  return (
+    <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
+      <span className="text-emerald-600 dark:text-emerald-400">{index}</span>
+      <span className="mx-2 select-none">·</span>
+      {children}
+    </p>
+  )
+}
 
 export default function Home() {
   return (
@@ -18,21 +30,26 @@ export default function Home() {
         {/* Hero */}
         <section className="relative overflow-hidden">
           <div className="hero-dots absolute inset-0 -z-10" />
-          <div className="mx-auto max-w-3xl px-6 pt-20 pb-12 text-center sm:pt-28">
+          <div className="hero-glow absolute inset-0 -z-10" />
+          <div className="mx-auto max-w-3xl px-6 pt-20 pb-14 text-center sm:pt-28">
             <div className="animate-rise" style={{ animationDelay: '0ms' }}>
               <Link
-                href={`${DOCS_URL}/docs/llm-authoring`}
-                className="bg-muted text-muted-foreground hover:text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+                href={`${DOCS_URL}/docs/concepts/llm-authoring`}
+                className="bg-background/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur transition-colors"
               >
-                <span className="size-1.5 rounded-full bg-emerald-500" />
+                <span className="relative flex size-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+                </span>
                 Built for LLM-generated content
               </Link>
             </div>
             <h1
-              className="animate-rise mt-6 text-4xl font-semibold tracking-tighter text-balance sm:text-6xl"
+              className="animate-rise mt-6 text-[2.75rem] leading-[1.05] font-semibold tracking-tighter text-balance sm:text-[4rem]"
               style={{ animationDelay: '80ms' }}
             >
-              Structured Markdown components without framework lock-in
+              Structured Markdown components
+              <span className="text-muted-foreground"> without framework lock-in</span>
             </h1>
             <p
               className="text-muted-foreground animate-rise mx-auto mt-6 max-w-xl text-base text-pretty sm:text-lg"
@@ -47,19 +64,19 @@ export default function Home() {
             >
               <Link
                 href={`${DOCS_URL}/docs`}
-                className="bg-primary text-primary-foreground inline-flex h-9 items-center rounded-md px-5 text-sm font-medium shadow-sm transition-all hover:opacity-90 active:scale-95"
+                className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-md px-5 text-sm font-medium shadow-sm transition-all hover:opacity-90 hover:shadow-md active:scale-95"
               >
                 Get started
               </Link>
               <Link
                 href="/playground"
-                className="bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center rounded-md border px-5 text-sm font-medium shadow-sm transition-all active:scale-95"
+                className="bg-background/80 hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center rounded-md border px-5 text-sm font-medium shadow-sm backdrop-blur transition-all active:scale-95"
               >
                 Open the playground
               </Link>
             </div>
             <div
-              className="animate-rise bg-card mx-auto mt-8 flex max-w-md items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 shadow-sm"
+              className="animate-rise bg-card mx-auto mt-9 flex max-w-md items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 shadow-sm"
               style={{ animationDelay: '320ms' }}
             >
               <code className="text-muted-foreground flex-1 overflow-x-auto text-left font-mono text-xs whitespace-nowrap">
@@ -68,15 +85,26 @@ export default function Home() {
               </code>
               <CopyButton value={INSTALL} />
             </div>
+            <p
+              className="animate-rise text-muted-foreground mt-5 font-mono text-xs"
+              style={{ animationDelay: '400ms' }}
+            >
+              or see{' '}
+              <Link
+                href="/example"
+                className="text-foreground underline underline-offset-4 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
+              >
+                a complete article
+              </Link>{' '}
+              rendered by the library
+            </p>
           </div>
         </section>
 
         {/* Live demo */}
         <section className="mx-auto max-w-6xl px-6 py-16">
-          <div className="mb-6">
-            <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-              The idea
-            </p>
+          <div className="mb-8">
+            <Eyebrow index="01">The idea</Eyebrow>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight">
               Markdown in, components out
             </h2>
@@ -87,17 +115,28 @@ export default function Home() {
             </p>
           </div>
           <div className="reveal-on-scroll">
-            <HomeDemo />
+            <Frame>
+              <HomeDemo />
+            </Frame>
+          </div>
+          <div className="mt-6 flex justify-center">
+            <Link
+              href="/example"
+              className="group text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
+            >
+              <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+              this is a fragment — read the complete article: 9 blocks, 3 render targets, 0
+              diagnostics
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </div>
         </section>
 
         {/* Validation */}
         <section className="border-y">
           <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="mb-6">
-              <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-                The safety net
-              </p>
+            <div className="mb-8">
+              <Eyebrow index="02">The safety net</Eyebrow>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                 Errors with line numbers, not broken pages
               </h2>
@@ -108,13 +147,21 @@ export default function Home() {
               </p>
             </div>
             <div className="reveal-on-scroll">
-              <ValidationDemo />
+              <Frame>
+                <ValidationDemo />
+              </Frame>
             </div>
           </div>
         </section>
 
         {/* Features */}
         <section className="mx-auto max-w-6xl px-6 py-16">
+          <div className="mb-8">
+            <Eyebrow index="03">The system</Eyebrow>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              One definition, every surface
+            </h2>
+          </div>
           <div className="reveal-on-scroll">
             <FeatureBento />
           </div>
@@ -123,11 +170,9 @@ export default function Home() {
         {/* Block showcase */}
         <section className="border-y">
           <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="mb-6 flex items-end justify-between gap-4">
+            <div className="mb-8 flex items-end justify-between gap-4">
               <div>
-                <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-                  The generic pack
-                </p>
+                <Eyebrow index="04">The generic pack</Eyebrow>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                   Eight blocks that work in any niche
                 </h2>
@@ -151,9 +196,7 @@ export default function Home() {
 
         {/* shadcn install */}
         <section className="mx-auto max-w-3xl px-6 py-20 text-center">
-          <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-            Styled pack
-          </p>
+          <Eyebrow index="05">Styled pack</Eyebrow>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">
             Install the components, own the code
           </h2>
@@ -189,6 +232,9 @@ export default function Home() {
           <nav className="flex items-center gap-5">
             <Link href={`${DOCS_URL}/docs`} className="hover:text-foreground transition-colors">
               Docs
+            </Link>
+            <Link href="/example" className="hover:text-foreground transition-colors">
+              Example
             </Link>
             <Link href="/playground" className="hover:text-foreground transition-colors">
               Playground

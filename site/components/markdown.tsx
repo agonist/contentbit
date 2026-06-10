@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm'
 /*
  * The host-app side of the Content Blocks contract: the library hands prose
  * segments to `renderMarkdown`, and this component turns them into React.
- * This is exactly the integration users write — see /docs/markdown.
+ * This is exactly the integration users write — see /docs/guides/markdown.
  */
 const components = {
   p: (props: ComponentProps<'p'>) => (

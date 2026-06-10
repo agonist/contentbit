@@ -12,12 +12,18 @@ import { isValidatedBlock } from '@content-blocks/core'
 export function FaqBlock({ node, ctx }: BlockComponentProps) {
   const data = node.data as FaqData
   return (
-    <div data-cb-styled className="my-6">
+    <div data-cb-styled className="bg-card my-6 rounded-lg border px-4">
       <Accordion type="single" collapsible>
         {data.blocks.map((item, i) => (
-          <AccordionItem key={i} value={`item-${i}`}>
-            <AccordionTrigger>{String(item.props.question)}</AccordionTrigger>
-            <AccordionContent>
+          <AccordionItem
+            key={i}
+            value={`item-${i}`}
+            className={i === data.blocks.length - 1 ? 'border-b-0' : undefined}
+          >
+            <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
+              {String(item.props.question)}
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
               {ctx.renderMarkdown(
                 isValidatedBlock(item) ? (item.data as FaqItemData).markdown : item.body,
               )}

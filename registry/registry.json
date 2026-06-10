@@ -8,7 +8,11 @@
       "type": "registry:component",
       "title": "Content Renderer",
       "description": "Renders a validated Content Blocks document with the styled component pack.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react"
+      ],
       "registryDependencies": [
         "@content-blocks/callout",
         "@content-blocks/steps",
@@ -32,7 +36,12 @@
       "type": "registry:component",
       "title": "Callout Block",
       "description": "Note, tip, warning, important, and TLDR callouts.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react",
+        "lucide-react"
+      ],
       "registryDependencies": [],
       "files": [
         {
@@ -47,7 +56,11 @@
       "type": "registry:component",
       "title": "Steps Block",
       "description": "Numbered process steps.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react"
+      ],
       "registryDependencies": [],
       "files": [
         {
@@ -62,7 +75,11 @@
       "type": "registry:component",
       "title": "Key Metrics Block",
       "description": "Stat cards for scannable numbers.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react"
+      ],
       "registryDependencies": [],
       "files": [
         {
@@ -77,7 +94,11 @@
       "type": "registry:component",
       "title": "Quick Reference Block",
       "description": "Compact key/value reference card.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react"
+      ],
       "registryDependencies": [],
       "files": [
         {
@@ -92,7 +113,11 @@
       "type": "registry:component",
       "title": "Comparison Block",
       "description": "Two-option comparison table.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react"
+      ],
       "registryDependencies": [],
       "files": [
         {
@@ -107,7 +132,12 @@
       "type": "registry:component",
       "title": "Pros & Cons Block",
       "description": "Paired advantages and disadvantages.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react",
+        "lucide-react"
+      ],
       "registryDependencies": [],
       "files": [
         {
@@ -122,8 +152,14 @@
       "type": "registry:component",
       "title": "Tabs Block",
       "description": "Tabbed switcher for alternative methods.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
-      "registryDependencies": ["tabs"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react"
+      ],
+      "registryDependencies": [
+        "tabs"
+      ],
       "files": [
         {
           "path": "src/blocks/tabs-block.tsx",
@@ -137,8 +173,14 @@
       "type": "registry:component",
       "title": "FAQ Block",
       "description": "Accordion of question/answer pairs.",
-      "dependencies": ["@content-blocks/core", "@content-blocks/blocks", "@content-blocks/react"],
-      "registryDependencies": ["accordion"],
+      "dependencies": [
+        "@content-blocks/core",
+        "@content-blocks/blocks",
+        "@content-blocks/react"
+      ],
+      "registryDependencies": [
+        "accordion"
+      ],
       "files": [
         {
           "path": "src/blocks/faq.tsx",
@@ -152,7 +194,9 @@
       "type": "registry:block",
       "title": "Generic Pack",
       "description": "All Content Blocks components plus the renderer.",
-      "registryDependencies": ["@content-blocks/content-renderer"],
+      "registryDependencies": [
+        "@content-blocks/content-renderer"
+      ],
       "files": []
     }
   ]

@@ -30,6 +30,9 @@ export function SiteHeader() {
           >
             Blocks
           </Link>
+          <Link href="/example" className="hover:text-foreground transition-colors">
+            Example
+          </Link>
           <Link href="/playground" className="hover:text-foreground transition-colors">
             Playground
           </Link>
