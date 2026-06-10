@@ -11,7 +11,12 @@ const guide = registry.toAuthoringGuide({
 
 // Top-level blocks render standalone; child-only blocks (tab, faq-item) only
 // make sense inside a parent, so their examples stay as plain code fences.
-const standalone = new Set(registry.all().filter((d) => !d.childOnly).map((d) => d.name))
+const standalone = new Set(
+  registry
+    .all()
+    .filter((d) => !d.childOnly)
+    .map((d) => d.name),
+)
 
 /*
  * The guide emits each block's example inside a ```md fence. Turn that fence into

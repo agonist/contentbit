@@ -77,7 +77,10 @@ export function HeroGlyphs() {
       palette = document.documentElement.classList.contains('dark') ? DARK : LIGHT
       if (reducedMotion) draw()
     })
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
 
     const pointer = { x: -1, y: -1, lastMove: 0 }
 
@@ -228,11 +231,5 @@ export function HeroGlyphs() {
     }
   }, [])
 
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      className="hero-glyphs absolute inset-0 -z-10"
-    />
-  )
+  return <canvas ref={canvasRef} aria-hidden className="hero-glyphs absolute inset-0 -z-10" />
 }

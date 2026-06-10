@@ -22,9 +22,7 @@ function GuidanceList({
 }) {
   const Icon = tone === 'use' ? Check : X
   const mark =
-    tone === 'use'
-      ? 'text-emerald-600 dark:text-emerald-400'
-      : 'text-rose-600 dark:text-rose-400'
+    tone === 'use' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
   return (
     <div className="mt-5">
       <h3 className="text-muted-foreground font-mono text-[11px] tracking-wider uppercase">

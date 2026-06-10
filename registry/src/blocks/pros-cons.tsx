@@ -20,9 +20,7 @@ function Column({
       ? 'bg-emerald-500/[0.07] text-emerald-700 dark:text-emerald-400'
       : 'bg-rose-500/[0.07] text-rose-700 dark:text-rose-400'
   const mark =
-    tone === 'pro'
-      ? 'text-emerald-600 dark:text-emerald-500'
-      : 'text-rose-600 dark:text-rose-500'
+    tone === 'pro' ? 'text-emerald-600 dark:text-emerald-500' : 'text-rose-600 dark:text-rose-500'
   return (
     <div className="bg-card overflow-hidden rounded-lg border">
       <div className={`flex items-center gap-2 border-b px-4 py-2.5 ${head}`}>

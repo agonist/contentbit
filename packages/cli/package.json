@@ -3,23 +3,19 @@
   "version": "0.1.0",
   "description": "CLI for Content Blocks: validate, render, and generate LLM authoring instructions from your registry.",
   "keywords": [
-    "markdown",
-    "content-blocks",
     "cli",
-    "validation",
-    "llm"
+    "content-blocks",
+    "llm",
+    "markdown",
+    "validation"
   ],
-  "license": "MIT",
   "homepage": "https://contentbit.dev",
+  "bugs": "https://github.com/agonist/contentbit/issues",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/agonist/contentbit.git",
     "directory": "packages/cli"
-  },
-  "bugs": "https://github.com/agonist/contentbit/issues",
-  "sideEffects": false,
-  "publishConfig": {
-    "access": "public"
   },
   "bin": {
     "contentbit": "./dist/bin.js"
@@ -28,11 +24,15 @@
     "dist"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/run.d.ts",
       "import": "./dist/run.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node build.mjs",

@@ -76,7 +76,11 @@ function Prose({ source }: { source: string }) {
 const VIEWS = [
   { id: 'rendered', label: 'Rendered', hint: '@contentbit/react + styled pack' },
   { id: 'source', label: 'Source', hint: 'what the author wrote: one .md file' },
-  { id: 'plain', label: 'Plain Markdown', hint: 'renderToMarkdown() for email, search, AI context' },
+  {
+    id: 'plain',
+    label: 'Plain Markdown',
+    hint: 'renderToMarkdown() for email, search, AI context',
+  },
 ] as const
 
 type ViewId = (typeof VIEWS)[number]['id']

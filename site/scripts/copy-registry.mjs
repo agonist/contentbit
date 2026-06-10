@@ -8,7 +8,5 @@ try {
   await cp(src, dest, { recursive: true })
   console.log('copied registry items to public/r/')
 } catch {
-  console.warn(
-    'registry/dist/r missing — run `pnpm --filter @contentbit/registry-src build` first',
-  )
+  console.warn('registry/dist/r missing — run `pnpm --filter @contentbit/registry-src build` first')
 }

@@ -1,0 +1,5 @@
+# Content files are parser input — whitespace is significant.
+site/content/
+skills/
+*.md
+*.mdx

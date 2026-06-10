@@ -23,7 +23,7 @@ interface Frame {
 export function parseDocument(source: string): ParseResult {
   const diagnostics: Diagnostic[] = []
   const lines = source.split('\n')
-  const lineStart: number[] = new Array(lines.length)
+  const lineStart: number[] = Array.from({ length: lines.length })
   let off = 0
   for (let i = 0; i < lines.length; i++) {
     lineStart[i] = off

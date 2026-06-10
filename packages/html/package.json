@@ -3,33 +3,33 @@
   "version": "0.1.0",
   "description": "Static HTML renderer for Content Blocks documents. No framework, no JavaScript required.",
   "keywords": [
-    "markdown",
     "content-blocks",
     "html",
+    "markdown",
     "renderer",
     "ssg"
   ],
-  "license": "MIT",
   "homepage": "https://contentbit.dev",
+  "bugs": "https://github.com/agonist/contentbit/issues",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/agonist/contentbit.git",
     "directory": "packages/html"
   },
-  "bugs": "https://github.com/agonist/contentbit/issues",
-  "sideEffects": false,
-  "publishConfig": {
-    "access": "public"
-  },
   "files": [
     "dist"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

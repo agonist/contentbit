@@ -50,11 +50,7 @@ test('every item declares the runtime packages', () => {
   for (const item of manifest.items) {
     if (item.name === 'generic-pack') continue
     expect(item.dependencies, item.name).toEqual(
-      expect.arrayContaining([
-        '@contentbit/core',
-        '@contentbit/blocks',
-        '@contentbit/react',
-      ]),
+      expect.arrayContaining(['@contentbit/core', '@contentbit/blocks', '@contentbit/react']),
     )
   }
 })

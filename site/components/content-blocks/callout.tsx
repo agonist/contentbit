@@ -58,9 +58,7 @@ export function CalloutBlock({ node, ctx }: BlockComponentProps) {
         <span className="font-mono text-[11px] font-semibold tracking-wider uppercase">
           {variant.label}
         </span>
-        {title ? (
-          <span className="text-foreground ml-1 text-sm font-medium">{title}</span>
-        ) : null}
+        {title ? <span className="text-foreground ml-1 text-sm font-medium">{title}</span> : null}
       </div>
       <div className="px-4 py-3 text-sm leading-relaxed [&>p]:m-0 [&>p+p]:mt-2">
         {ctx.renderMarkdown(data.markdown)}

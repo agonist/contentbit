@@ -3,34 +3,34 @@
   "version": "0.1.0",
   "description": "Parser, validator, and registry for Content Blocks: structured Markdown components without framework lock-in.",
   "keywords": [
-    "markdown",
-    "directives",
-    "content",
-    "validation",
     "ast",
-    "llm"
+    "content",
+    "directives",
+    "llm",
+    "markdown",
+    "validation"
   ],
-  "license": "MIT",
   "homepage": "https://contentbit.dev",
+  "bugs": "https://github.com/agonist/contentbit/issues",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/agonist/contentbit.git",
     "directory": "packages/core"
   },
-  "bugs": "https://github.com/agonist/contentbit/issues",
-  "sideEffects": false,
-  "publishConfig": {
-    "access": "public"
-  },
   "files": [
     "dist"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

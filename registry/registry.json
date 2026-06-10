@@ -8,11 +8,7 @@
       "type": "registry:component",
       "title": "Content Renderer",
       "description": "Renders a validated Content Blocks document with the styled component pack.",
-      "dependencies": [
-        "@contentbit/core",
-        "@contentbit/blocks",
-        "@contentbit/react"
-      ],
+      "dependencies": ["@contentbit/core", "@contentbit/blocks", "@contentbit/react"],
       "registryDependencies": [
         "@contentbit/callout",
         "@contentbit/steps",
@@ -56,11 +52,7 @@
       "type": "registry:component",
       "title": "Steps Block",
       "description": "Numbered process steps.",
-      "dependencies": [
-        "@contentbit/core",
-        "@contentbit/blocks",
-        "@contentbit/react"
-      ],
+      "dependencies": ["@contentbit/core", "@contentbit/blocks", "@contentbit/react"],
       "registryDependencies": [],
       "files": [
         {
@@ -75,11 +67,7 @@
       "type": "registry:component",
       "title": "Key Metrics Block",
       "description": "Stat cards for scannable numbers.",
-      "dependencies": [
-        "@contentbit/core",
-        "@contentbit/blocks",
-        "@contentbit/react"
-      ],
+      "dependencies": ["@contentbit/core", "@contentbit/blocks", "@contentbit/react"],
       "registryDependencies": [],
       "files": [
         {
@@ -94,11 +82,7 @@
       "type": "registry:component",
       "title": "Quick Reference Block",
       "description": "Compact key/value reference card.",
-      "dependencies": [
-        "@contentbit/core",
-        "@contentbit/blocks",
-        "@contentbit/react"
-      ],
+      "dependencies": ["@contentbit/core", "@contentbit/blocks", "@contentbit/react"],
       "registryDependencies": [],
       "files": [
         {
@@ -113,11 +97,7 @@
       "type": "registry:component",
       "title": "Comparison Block",
       "description": "Two-option comparison table.",
-      "dependencies": [
-        "@contentbit/core",
-        "@contentbit/blocks",
-        "@contentbit/react"
-      ],
+      "dependencies": ["@contentbit/core", "@contentbit/blocks", "@contentbit/react"],
       "registryDependencies": [],
       "files": [
         {
@@ -152,14 +132,8 @@
       "type": "registry:component",
       "title": "Tabs Block",
       "description": "Tabbed switcher for alternative methods.",
-      "dependencies": [
-        "@contentbit/core",
-        "@contentbit/blocks",
-        "@contentbit/react"
-      ],
-      "registryDependencies": [
-        "tabs"
-      ],
+      "dependencies": ["@contentbit/core", "@contentbit/blocks", "@contentbit/react"],
+      "registryDependencies": ["tabs"],
       "files": [
         {
           "path": "src/blocks/tabs-block.tsx",
@@ -173,14 +147,8 @@
       "type": "registry:component",
       "title": "FAQ Block",
       "description": "Accordion of question/answer pairs.",
-      "dependencies": [
-        "@contentbit/core",
-        "@contentbit/blocks",
-        "@contentbit/react"
-      ],
-      "registryDependencies": [
-        "accordion"
-      ],
+      "dependencies": ["@contentbit/core", "@contentbit/blocks", "@contentbit/react"],
+      "registryDependencies": ["accordion"],
       "files": [
         {
           "path": "src/blocks/faq.tsx",
@@ -194,9 +162,7 @@
       "type": "registry:block",
       "title": "Generic Pack",
       "description": "All Content Blocks components plus the renderer.",
-      "registryDependencies": [
-        "@contentbit/content-renderer"
-      ],
+      "registryDependencies": ["@contentbit/content-renderer"],
       "files": []
     }
   ]

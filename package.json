@@ -1,9 +1,16 @@
 {
   "name": "contentbit-monorepo",
   "private": true,
-  "packageManager": "pnpm@11.5.0",
   "scripts": {
     "test": "pnpm -r test",
-    "build": "pnpm -r build"
-  }
+    "build": "pnpm -r build",
+    "lint": "oxlint",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check ."
+  },
+  "devDependencies": {
+    "oxfmt": "^0.54.0",
+    "oxlint": "^1.69.0"
+  },
+  "packageManager": "pnpm@11.5.0"
 }

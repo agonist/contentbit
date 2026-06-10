@@ -24,16 +24,13 @@ export function SiteHeader() {
           contentbit
         </Link>
         <nav className="text-muted-foreground flex items-center gap-5 text-sm">
-          <Link href={"/docs"} className="hover:text-foreground transition-colors">
+          <Link href={'/docs'} className="hover:text-foreground transition-colors">
             Docs
           </Link>
           <Link href="/blocks" className="hover:text-foreground hidden transition-colors sm:block">
             Blocks
           </Link>
-          <Link
-            href="/blog"
-            className="hover:text-foreground hidden transition-colors sm:block"
-          >
+          <Link href="/blog" className="hover:text-foreground hidden transition-colors sm:block">
             Blog
           </Link>
           <Link href="/playground" className="hover:text-foreground transition-colors">

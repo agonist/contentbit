@@ -24,14 +24,14 @@ export default function BlocksPage() {
             Eight blocks, one registry
           </h1>
           <p className="text-muted-foreground mt-4 text-pretty">
-            Everything below (descriptions, guidance, examples) comes from the same registry
-            that validates content and writes the LLM authoring instructions. The rendered panes
-            are live: the styled pack rendering each block&apos;s real example.
+            Everything below (descriptions, guidance, examples) comes from the same registry that
+            validates content and writes the LLM authoring instructions. The rendered panes are
+            live: the styled pack rendering each block&apos;s real example.
           </p>
           <p className="text-muted-foreground mt-3 font-mono text-xs">
             machine-readable version:{' '}
             <Link
-              href={"/docs/reference/blocks"}
+              href={'/docs/reference/blocks'}
               className="text-foreground underline underline-offset-4 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
             >
               generated block reference
