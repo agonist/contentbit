@@ -1,8 +1,21 @@
+# dependencies
 node_modules/
+
+# build output (any package)
 dist/
+out/
 .next/
 .turbo/
 *.tsbuildinfo
+next-env.d.ts
+
+# generated
+.source/
+site/public/r/
+
+# test/tooling artifacts
+coverage/
+.playwright-mcp/
 
 # logs
 *.log
@@ -14,5 +27,5 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
-# os
+# os / editor
 .DS_Store
