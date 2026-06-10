@@ -1,0 +1,67 @@
+---
+title: LLM & agent authoring
+description: Generate authoring instructions from the registry, so prompts never drift.
+---
+
+The block definitions that validate content also generate instructions for whatever
+writes it. This is the core loop: schema, docs, and prompts come from one source of
+truth, so they cannot drift apart.
+
+## Generate a guide
+
+```ts
+const guide = registry.toAuthoringGuide({
+  audience: 'llm', // or 'human'
+  includeExamples: true,
+  includeAvoidRules: true,
+})
+```
+
+The `llm` audience prepends the ground rules:
+
+- write regular Markdown by default; use blocks only when they improve scanning or structure
+- never invent block names — only documented blocks exist
+- follow each block's syntax exactly
+- close every `:::block` with a line containing only `:::`
+- validate generated content and fix diagnostics rather than bypassing them
+
+Each block contributes its description, content shape, use/avoid rules, and a
+verified example. Custom blocks you registered are included automatically.
+
+## From the CLI
+
+```bash
+# compact LLM context, written to a file your prompts can include
+content-blocks instructions --audience llm --out content-blocks-guide.md
+
+# human-readable reference (this site's Block reference page is generated this way)
+content-blocks docs --out docs/blocks.md
+```
+
+## The validation loop
+
+Generation is half the story; the other half is checking the output:
+
+```bash
+content-blocks validate "content/**/*.md"
+```
+
+Exit code 1 on errors, with `file:line:col` diagnostics an agent can act on:
+
+```text
+recipes/dough.md:31:1 error CB_CHILD_COUNT
+:::tabs needs at least 2 children, found 1.
+```
+
+A typical agent skill wires both ends: include the generated guide in the prompt,
+then run `validate` on the result and feed diagnostics back until clean.
+
+## Custom registries on the CLI
+
+Point the CLI at a module that default-exports your extra definitions:
+
+```bash
+content-blocks validate "content/**/*.md" --registry ./blocks/registry.mjs
+```
+
+The generic pack is always loaded first; your module adds to it.

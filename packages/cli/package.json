@@ -1,0 +1,35 @@
+{
+  "name": "content-blocks",
+  "version": "0.0.1",
+  "license": "MIT",
+  "bin": {
+    "content-blocks": "./dist/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/run.d.ts",
+      "import": "./dist/run.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@content-blocks/blocks": "workspace:*",
+    "@content-blocks/core": "workspace:*",
+    "@content-blocks/html": "workspace:*",
+    "tinyglobby": "^0.2.10"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.17"
+  }
+}

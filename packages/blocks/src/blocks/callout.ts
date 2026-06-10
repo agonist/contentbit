@@ -1,0 +1,40 @@
+import {
+  defineBlock,
+  markdownBody,
+  type MarkdownBlockRenderer,
+  type MarkdownBodyData,
+} from '@content-blocks/core'
+import { z } from 'zod'
+
+export type CalloutData = MarkdownBodyData
+
+export const calloutBlock = defineBlock<CalloutData>({
+  name: 'callout',
+  description: 'Highlighted note, tip, warning, important, or TLDR box.',
+  props: z.object({
+    type: z.enum(['note', 'tip', 'warning', 'important', 'tldr']).default('note'),
+    title: z.string().min(1).optional(),
+  }),
+  content: markdownBody({ minLength: 10 }),
+  authoring: {
+    useWhen: [
+      'Practical advice that prevents a common mistake (tip)',
+      'Context the reader must not miss (note/important)',
+      'Something that ruins the result if ignored (warning)',
+      'A 1-3 sentence summary at the top of a section (tldr)',
+    ],
+    avoidWhen: [
+      'Regular prose that is not a standout remark',
+      'More than one callout in the same section',
+      'Content longer than ~3 sentences',
+    ],
+    example:
+      ':::callout{type="tip" title="Worth knowing"}\nAlways weigh flour — volume measures drift by 20%.\n:::',
+  },
+})
+
+export const calloutMarkdown: MarkdownBlockRenderer = (node) => {
+  const data = node.data as CalloutData
+  const title = (node.props.title as string | undefined) ?? String(node.props.type ?? 'note')
+  return `> **${title}:** ${data.markdown}`
+}

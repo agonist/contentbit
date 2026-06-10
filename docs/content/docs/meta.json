@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "index",
+    "syntax",
+    "markdown",
+    "why-not-mdx",
+    "custom-blocks",
+    "renderers",
+    "llm-authoring",
+    "reference"
+  ]
+}

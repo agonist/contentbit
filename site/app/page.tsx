@@ -1,0 +1,204 @@
+import { BlockShowcase } from '@/components/block-showcase'
+import { CopyButton } from '@/components/copy-button'
+import { FeatureBento } from '@/components/feature-bento'
+import { HomeDemo } from '@/components/home-demo'
+import { SiteHeader } from '@/components/site-header'
+import { ValidationDemo } from '@/components/validation-demo'
+import { DOCS_URL, GITHUB_URL } from '@/lib/site'
+import Link from 'next/link'
+
+const INSTALL = 'pnpm add @content-blocks/core @content-blocks/blocks'
+const SHADCN_ADD = 'pnpm dlx shadcn@latest add @content-blocks/generic-pack'
+
+export default function Home() {
+  return (
+    <>
+      <SiteHeader />
+      <main>
+        {/* Hero */}
+        <section className="relative overflow-hidden">
+          <div className="hero-dots absolute inset-0 -z-10" />
+          <div className="mx-auto max-w-3xl px-6 pt-20 pb-12 text-center sm:pt-28">
+            <div className="animate-rise" style={{ animationDelay: '0ms' }}>
+              <Link
+                href={`${DOCS_URL}/docs/llm-authoring`}
+                className="bg-muted text-muted-foreground hover:text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+              >
+                <span className="size-1.5 rounded-full bg-emerald-500" />
+                Built for LLM-generated content
+              </Link>
+            </div>
+            <h1
+              className="animate-rise mt-6 text-4xl font-semibold tracking-tighter text-balance sm:text-6xl"
+              style={{ animationDelay: '80ms' }}
+            >
+              Structured Markdown components without framework lock-in
+            </h1>
+            <p
+              className="text-muted-foreground animate-rise mx-auto mt-6 max-w-xl text-base text-pretty sm:text-lg"
+              style={{ animationDelay: '160ms' }}
+            >
+              Write Markdown with validated, structured blocks. Render it anywhere. Built for
+              content written by humans, CMSes, and LLMs.
+            </p>
+            <div
+              className="animate-rise mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              style={{ animationDelay: '240ms' }}
+            >
+              <Link
+                href={`${DOCS_URL}/docs`}
+                className="bg-primary text-primary-foreground inline-flex h-9 items-center rounded-md px-5 text-sm font-medium shadow-sm transition-all hover:opacity-90 active:scale-95"
+              >
+                Get started
+              </Link>
+              <Link
+                href="/playground"
+                className="bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center rounded-md border px-5 text-sm font-medium shadow-sm transition-all active:scale-95"
+              >
+                Open the playground
+              </Link>
+            </div>
+            <div
+              className="animate-rise bg-card mx-auto mt-8 flex max-w-md items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 shadow-sm"
+              style={{ animationDelay: '320ms' }}
+            >
+              <code className="text-muted-foreground flex-1 overflow-x-auto text-left font-mono text-xs whitespace-nowrap">
+                <span className="text-foreground/50 select-none">$ </span>
+                {INSTALL}
+              </code>
+              <CopyButton value={INSTALL} />
+            </div>
+          </div>
+        </section>
+
+        {/* Live demo */}
+        <section className="mx-auto max-w-6xl px-6 py-16">
+          <div className="mb-6">
+            <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
+              The idea
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              Markdown in, components out
+            </h2>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+              Authors write directive blocks inside ordinary Markdown. The parser builds a
+              source-mapped AST, the registry validates it, and your renderer of choice takes it
+              from there. Below: the actual styled pack rendering live.
+            </p>
+          </div>
+          <div className="reveal-on-scroll">
+            <HomeDemo />
+          </div>
+        </section>
+
+        {/* Validation */}
+        <section className="border-y">
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <div className="mb-6">
+              <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
+                The safety net
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                Errors with line numbers, not broken pages
+              </h2>
+              <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+                Validation runs before rendering — in your editor, your CI, or your agent loop.
+                Diagnostics carry a code, a position, and a fix hint, so an LLM can repair its own
+                output.
+              </p>
+            </div>
+            <div className="reveal-on-scroll">
+              <ValidationDemo />
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="mx-auto max-w-6xl px-6 py-16">
+          <div className="reveal-on-scroll">
+            <FeatureBento />
+          </div>
+        </section>
+
+        {/* Block showcase */}
+        <section className="border-y">
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
+                  The generic pack
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                  Eight blocks that work in any niche
+                </h2>
+                <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+                  Pick a block. The example is its real authoring guidance from the registry — the
+                  same text LLMs get — rendered live by the styled pack.
+                </p>
+              </div>
+              <Link
+                href={`${DOCS_URL}/docs/reference/blocks`}
+                className="text-muted-foreground hover:text-foreground hidden text-sm whitespace-nowrap transition-colors sm:block"
+              >
+                Block reference →
+              </Link>
+            </div>
+            <div className="reveal-on-scroll">
+              <BlockShowcase />
+            </div>
+          </div>
+        </section>
+
+        {/* shadcn install */}
+        <section className="mx-auto max-w-3xl px-6 py-20 text-center">
+          <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
+            Styled pack
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+            Install the components, own the code
+          </h2>
+          <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-sm">
+            The React pack ships through a shadcn registry. Components land in your app as editable
+            source files — Tailwind, your tokens, your rules.
+          </p>
+          <div className="bg-card mt-6 flex items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 text-left shadow-sm">
+            <code className="text-muted-foreground flex-1 overflow-x-auto font-mono text-xs whitespace-nowrap">
+              <span className="text-foreground/50 select-none">$ </span>
+              {SHADCN_ADD}
+            </code>
+            <CopyButton value={SHADCN_ADD} />
+          </div>
+          <p className="text-muted-foreground mt-3 font-mono text-xs">
+            registry: https://content-blocks.dev/r/{'{name}'}.json
+          </p>
+        </section>
+      </main>
+
+      <footer className="border-t">
+        <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm sm:flex-row">
+          <p>
+            MIT licensed. Built with{' '}
+            <Link
+              href={`${DOCS_URL}/docs`}
+              className="hover:text-foreground underline underline-offset-4"
+            >
+              Content Blocks
+            </Link>
+            .
+          </p>
+          <nav className="flex items-center gap-5">
+            <Link href={`${DOCS_URL}/docs`} className="hover:text-foreground transition-colors">
+              Docs
+            </Link>
+            <Link href="/playground" className="hover:text-foreground transition-colors">
+              Playground
+            </Link>
+            <Link href={GITHUB_URL} className="hover:text-foreground transition-colors">
+              GitHub
+            </Link>
+          </nav>
+        </div>
+      </footer>
+    </>
+  )
+}

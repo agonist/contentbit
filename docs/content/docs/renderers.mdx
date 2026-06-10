@@ -1,0 +1,76 @@
+---
+title: Renderers
+description: Static HTML, React, and plain-Markdown output from the same document.
+---
+
+Renderers consume a validated document. The parser and registry know nothing about
+React or HTML — every renderer is an adapter with a per-block renderer map you can
+override.
+
+## Static HTML
+
+```ts
+import { renderToHtml } from '@content-blocks/html'
+
+const html = renderToHtml(result.document, {
+  classPrefix: 'cb-', // default
+  renderMarkdown: (md) => myMarkdownPipeline(md),
+  onInvalid: 'fallback',
+})
+```
+
+- **classPrefix** — every emitted class is prefixed (`cb-callout`, `cb-comparison`).
+- **renderMarkdown** — plug your Markdown pipeline for prose segments and Markdown
+  bodies. The built-in default only escapes and wraps paragraphs. Step-by-step
+  setups for marked, markdown-it, and remark: [Plug in your Markdown
+  library](/docs/markdown).
+- **renderers** — merge custom block renderers over the generic defaults.
+
+All user content is escaped. Tabs render as static sections and FAQs as native
+`<details>`, so the output works without any JavaScript.
+
+### Error modes
+
+`onInvalid` controls what happens to blocks that failed validation:
+
+- `strict` — throw. Use in CI and for repository-owned content.
+- `annotated` — render a visible box with `data-cb-invalid`. Use in development.
+- `fallback` (default) — render the escaped raw body. Use in production for
+  user- or CMS-supplied content.
+
+## React
+
+```tsx
+import { ContentBlocks } from '@content-blocks/react'
+
+<ContentBlocks
+  document={result.document}
+  components={{ comparison: MyComparison }} // override any default
+  renderMarkdown={(md) => <Markdown source={md} />}
+  fallback={MyInvalidBlock}
+/>
+```
+
+The headless defaults cover every generic block with accessible semantics: tabs use
+`tablist`/`tab`/`tabpanel` with keyboard-reachable buttons, FAQs use native
+`<details>`. Interactivity is opt-in per block — only `tabs` carries client state.
+
+For styled components, install the shadcn pack instead of writing your own:
+
+```bash
+pnpm dlx shadcn@latest add @content-blocks/generic-pack
+```
+
+## Plain Markdown fallback
+
+```ts
+import { renderToMarkdown } from '@content-blocks/core'
+import { genericMarkdownRenderers } from '@content-blocks/blocks'
+
+const md = renderToMarkdown(result.document, { renderers: genericMarkdownRenderers })
+```
+
+Comparisons become Markdown tables, key metrics become bold-value bullets, tabs
+become headed sections. Useful for email, exports, search indexing, and any
+environment without a component runtime. Blocks without a renderer degrade to their
+raw body — information is never lost.

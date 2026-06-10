@@ -1,0 +1,32 @@
+{
+  "name": "@content-blocks/docs",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "fumadocs-mdx",
+    "predev": "node scripts/gen-reference.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/gen-reference.mjs",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@content-blocks/blocks": "workspace:*",
+    "@content-blocks/core": "workspace:*",
+    "fumadocs-core": "^16.9.3",
+    "fumadocs-mdx": "^15.0.11",
+    "fumadocs-ui": "^16.9.3",
+    "next": "^16.2.9",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.3"
+  }
+}

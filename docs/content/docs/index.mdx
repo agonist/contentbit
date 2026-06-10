@@ -1,0 +1,117 @@
+---
+title: Getting started
+description: Parse, validate, and render your first Content Blocks document.
+---
+
+Content Blocks is a framework-agnostic block layer for Markdown. Authors — humans,
+CMSes, or LLMs — write Markdown with directive-style blocks:
+
+```md
+:::comparison{left="Basic" right="Pro"}
+- Price | Free | $12/mo
+- Support | Community | Priority
+:::
+```
+
+The library parses that to a source-mapped AST, validates it against explicit
+per-block schemas with line-level diagnostics, and renders it through the adapter of
+your choice: React, static HTML, or a plain-Markdown fallback.
+
+## Install
+
+```bash
+pnpm add @content-blocks/core @content-blocks/blocks
+```
+
+Add a renderer for your target:
+
+```bash
+pnpm add @content-blocks/html   # static HTML strings
+pnpm add @content-blocks/react  # React components
+```
+
+## Parse, validate, render
+
+```ts
+import { createBlockRegistry, parseDocument, validateDocument } from '@content-blocks/core'
+import { genericBlocks } from '@content-blocks/blocks'
+import { renderToHtml } from '@content-blocks/html'
+
+const registry = createBlockRegistry().use(genericBlocks())
+
+const result = validateDocument(parseDocument(markdown), registry)
+if (!result.ok) {
+  // Each diagnostic has a code, severity, message, and exact source position.
+  console.error(result.diagnostics)
+}
+
+const html = renderToHtml(result.document)
+```
+
+Validation always runs before rendering. Invalid content produces diagnostics like:
+
+```text
+content.md:12:3 error CB_ROW_COLUMNS
+:::comparison rows require 3 columns (label | left | right). Found 2.
+hint: Format: - label | left | right
+```
+
+## React
+
+```tsx
+import { ContentBlocks } from '@content-blocks/react'
+
+export function Article({ document }: { document: DocumentNode }) {
+  return <ContentBlocks document={document} renderMarkdown={(md) => <Markdown source={md} />} />
+}
+```
+
+`ContentBlocks` ships headless, accessible defaults for every generic block. Pass
+`components` to override any of them — see [Renderers](/docs/renderers).
+
+## Plug in your Markdown library (don't skip this)
+
+Content Blocks parses **blocks only** — prose and block bodies are handed to a
+`renderMarkdown` function you provide. Without it, `**bold**` and links render as
+literal characters. The wiring is one component:
+
+```tsx
+import ReactMarkdown from 'react-markdown' // or marked, markdown-it, remark...
+
+<ContentBlocks
+  document={result.document}
+  renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}
+/>
+```
+
+Step-by-step setups for react-markdown, marked, markdown-it, and unified/remark:
+[Plug in your Markdown library](/docs/markdown).
+
+## Styled components via shadcn
+
+A polished, Tailwind-styled pack is distributed through a shadcn registry. Configure
+the namespace in your `components.json`:
+
+```json
+{
+  "registries": {
+    "@content-blocks": "https://content-blocks.dev/r/{name}.json"
+  }
+}
+```
+
+Then install:
+
+```bash
+pnpm dlx shadcn@latest add @content-blocks/generic-pack
+```
+
+Components land in your app as editable source files. You own them after install.
+
+## Next steps
+
+- [Plug in your Markdown library](/docs/markdown)
+- Learn the [block syntax](/docs/syntax)
+- Define [custom blocks](/docs/custom-blocks)
+- Generate [LLM authoring instructions](/docs/llm-authoring) from your registry
+- Browse the [block reference](/docs/reference/blocks)

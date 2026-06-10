@@ -1,0 +1,160 @@
+---
+title: Plug in your Markdown library
+description: One function connects Content Blocks to react-markdown, marked, markdown-it, or remark. Step-by-step for each.
+---
+
+Content Blocks is **not** a Markdown renderer. It parses the block layer (`:::callout`,
+`::tab`, pipe rows) and hands every prose segment — paragraphs between blocks, and
+Markdown bodies *inside* blocks — to one function you provide:
+
+- React: the `renderMarkdown` prop → returns a `ReactNode`
+- Static HTML: the `renderMarkdown` option → returns an HTML string
+
+If you don't provide it, the built-in default only escapes text and wraps paragraphs
+in `<p>` tags. `**bold**`, links, and lists will show as literal characters. **Wiring
+your Markdown library is step one of any real setup.**
+
+## What your library sees (and never sees)
+
+```text
+your markdown file              what reaches YOUR renderer
+─────────────────────           ──────────────────────────
+Some intro **prose**.       →   "Some intro **prose**."
+                                                            ← blocks never reach it
+:::callout{type="tip"}
+Inline *formatting* too.    →   "Inline *formatting* too."
+:::
+```
+
+Your library is only ever called with plain Markdown strings. It never sees `:::`
+lines, props, or pipe rows — no plugins or escaping rules needed on its side.
+
+## React + react-markdown
+
+**Step 1 — install:**
+
+```bash
+pnpm add react-markdown
+```
+
+**Step 2 — create one component** (style the elements however your app does):
+
+```tsx
+// components/markdown.tsx
+import ReactMarkdown from 'react-markdown'
+
+export function Markdown({ source }: { source: string }) {
+  return <ReactMarkdown>{source}</ReactMarkdown>
+}
+```
+
+**Step 3 — pass it once:**
+
+```tsx
+import { ContentBlocks } from '@content-blocks/react'
+import { Markdown } from '@/components/markdown'
+
+<ContentBlocks
+  document={result.document}
+  renderMarkdown={(md) => <Markdown source={md} />}
+/>
+```
+
+Done. Every prose segment and every block body now renders through react-markdown.
+(This site's playground uses exactly this setup.)
+
+## React + an existing remark/MDX pipeline
+
+If your app already renders Markdown (a blog, a CMS front end), reuse that component —
+the contract is just `(md: string) => ReactNode`:
+
+```tsx
+<ContentBlocks document={doc} renderMarkdown={(md) => <YourExistingMarkdown source={md} />} />
+```
+
+## Static HTML + marked
+
+**Step 1 — install:**
+
+```bash
+pnpm add marked dompurify
+```
+
+**Step 2 — wire it:**
+
+```ts
+import { renderToHtml } from '@content-blocks/html'
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
+
+const html = renderToHtml(result.document, {
+  renderMarkdown: (md) => DOMPurify.sanitize(marked.parse(md, { async: false })),
+})
+```
+
+Why DOMPurify: `renderMarkdown` output is inserted **as-is** (it has to be — it's
+HTML). marked passes raw HTML in the source through by default, so sanitize unless
+every author is trusted.
+
+## Static HTML + markdown-it
+
+```bash
+pnpm add markdown-it
+```
+
+```ts
+import { renderToHtml } from '@content-blocks/html'
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt() // html: false by default — raw HTML stays escaped
+
+const html = renderToHtml(result.document, {
+  renderMarkdown: (src) => md.render(src),
+})
+```
+
+markdown-it's default (`html: false`) already refuses raw HTML, so no sanitizer is
+needed for that vector.
+
+## Static HTML + unified/remark
+
+```bash
+pnpm add unified remark-parse remark-rehype rehype-stringify
+```
+
+```ts
+import { renderToHtml } from '@content-blocks/html'
+import rehypeStringify from 'rehype-stringify'
+import remarkParse from 'remark-parse'
+import remarkRehype from 'remark-rehype'
+import { unified } from 'unified'
+
+const processor = unified().use(remarkParse).use(remarkRehype).use(rehypeStringify)
+
+const html = renderToHtml(result.document, {
+  renderMarkdown: (md) => String(processor.processSync(md)),
+})
+```
+
+## Plain Markdown target
+
+`renderToMarkdown` needs nothing — its output *is* Markdown:
+
+```ts
+import { renderToMarkdown } from '@content-blocks/core'
+import { genericMarkdownRenderers } from '@content-blocks/blocks'
+
+const md = renderToMarkdown(result.document, { renderers: genericMarkdownRenderers })
+```
+
+## Gotchas
+
+- **The default is intentionally minimal.** Escaped text + `<p>` paragraphs, nothing
+  else. If formatting "doesn't work", you haven't wired this page yet.
+- **One function covers everything.** Prose between blocks and Markdown bodies inside
+  blocks (`callout`, `tab`, `faq-item`) all flow through the same `renderMarkdown`.
+- **Security split:** Content Blocks escapes everything *it* renders (props, rows,
+  titles). Whatever your `renderMarkdown` returns is your responsibility — see the
+  marked note above.
+- **Headings inside prose work normally** — but keep document structure (H1/H2) in
+  your page chrome, not in block bodies.

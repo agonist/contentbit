@@ -1,0 +1,88 @@
+---
+title: Defining custom blocks
+description: Add project-specific blocks in under 20 lines with defineBlock.
+---
+
+Every block is a `BlockDefinition`: a name, a props schema, a content model, and
+authoring guidance. The registry is the single source of truth — the same definition
+validates content, drives renderers, and generates LLM instructions.
+
+## A complete custom block
+
+```ts
+import { childBlocks, defineBlock, pipeRows } from '@content-blocks/core'
+import { z } from 'zod'
+
+export const pricingTableBlock = defineBlock({
+  name: 'pricing-table',
+  description: 'Compares product plans.',
+  props: z.object({
+    currency: z.enum(['usd', 'eur', 'gbp']).default('usd'),
+  }),
+  content: pipeRows({
+    columns: ['plan', 'price', 'features'],
+    minRows: 2,
+  }),
+  authoring: {
+    useWhen: ['Comparing SaaS pricing plans'],
+    avoidWhen: ['Listing non-pricing feature differences'],
+    example: `:::pricing-table{currency="usd"}
+- Starter | $0 | Basic usage
+- Pro | $12/mo | Teams and automation
+:::`,
+  },
+})
+```
+
+Register it next to the generic pack:
+
+```ts
+const registry = createBlockRegistry().use(genericBlocks()).add(pricingTableBlock)
+```
+
+That's it — `validateDocument` now enforces the schema, `toAuthoringGuide()` includes
+the block, and any renderer can map `pricing-table` to an implementation.
+
+## The fields
+
+- **name** — lowercase kebab-case, unique per registry. Duplicates throw.
+- **props** — a zod schema for the open-line props. Defaults are applied during
+  validation; violations become `CB_PROPS_INVALID` diagnostics with the zod path.
+- **content** — a content model (below) that parses the body into typed `data`.
+- **childOnly** — set `true` for blocks that only make sense inside a parent
+  (like `tab` inside `tabs`).
+- **interactive** — a hint to renderers that the block needs client behavior.
+- **authoring** — `useWhen` / `avoidWhen` / `example`, consumed by the generated
+  authoring guide. Keep the example valid: it's worth testing that every example
+  passes your own registry.
+
+## Content models
+
+Four helpers cover most blocks:
+
+```ts
+markdownBody({ minLength: 10 }) // free Markdown body
+pipeRows({ columns: ['qty', 'name', 'note'], optionalColumns: 1 }) // pipe rows
+listItems({ marker: 'ordered', minItems: 2 }) // bullet | ordered | signed
+childBlocks({ allowed: ['tab'], minChildren: 2 }) // nested child blocks
+```
+
+Each helper reports diagnostics with the exact body line, so authors see
+`content.md:14:1` instead of "somewhere in this block".
+
+For unusual shapes, provide your own content model: any object with `kind`,
+`describe()`, and `parse(node, report)` works.
+
+## Rendering custom blocks
+
+Renderers are adapter-side maps — block definitions never reference framework code:
+
+```tsx
+// React
+<ContentBlocks document={doc} components={{ 'pricing-table': PricingTable }} />
+```
+
+```ts
+// Static HTML
+renderToHtml(doc, { renderers: { 'pricing-table': renderPricingTableHtml } })
+```
