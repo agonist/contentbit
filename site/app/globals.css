@@ -111,6 +111,11 @@
   animation: dots-pan 60s linear infinite;
 }
 
+/* Docs sidebar matches the page background — the border alone separates it. */
+#nd-sidebar {
+  --color-fd-card: var(--color-fd-background);
+}
+
 /* Soft emerald wash behind the hero — the "valid" signal color as atmosphere. */
 .hero-glow {
   background: radial-gradient(
