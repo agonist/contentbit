@@ -37,6 +37,7 @@
     "@types/mdx": "^2.0.13",
     "@types/node": "^25.0.9",
     "@types/react": "^19.0.0",
+    "serve": "^14.2.6",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.3"
   }
