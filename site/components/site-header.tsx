@@ -18,7 +18,7 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 font-semibold tracking-tight whitespace-nowrap"
         >
-          <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md font-mono text-xs font-bold">
+          <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center font-mono text-xs font-bold">
             :::
           </span>
           content-blocks

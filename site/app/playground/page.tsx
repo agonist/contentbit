@@ -4,7 +4,7 @@ import Playground from '@/components/playground'
 import { SiteHeader } from '@/components/site-header'
 
 export const metadata: Metadata = {
-  title: 'Playground — Content Blocks',
+  title: 'Playground',
   description: 'Edit block markup and see validation + rendering live.',
 }
 

@@ -6,7 +6,7 @@ import { SiteHeader } from '@/components/site-header'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Blocks — the Content Blocks generic pack',
+  title: 'Blocks — the generic pack',
   description:
     'Every block in the generic pack: syntax, authoring guidance, and a live rendered example — straight from the registry that validates them.',
 }

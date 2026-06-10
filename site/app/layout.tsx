@@ -8,7 +8,10 @@ import { RootProvider } from 'fumadocs-ui/provider/next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Content Blocks — structured Markdown components without framework lock-in',
+  title: {
+    default: 'Content Blocks — structured Markdown components without framework lock-in',
+    template: '%s · Content Blocks',
+  },
   description:
     'Write Markdown with validated, structured component blocks. Render it anywhere — React, static HTML, or plain Markdown. Built for content written by humans, CMSes, and LLMs.',
 }

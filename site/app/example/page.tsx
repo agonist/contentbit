@@ -7,7 +7,7 @@ import { EXAMPLE_DESCRIPTION, EXAMPLE_TITLE } from '@/lib/example-article'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: `${EXAMPLE_TITLE} — a complete Content Blocks article`,
+  title: `${EXAMPLE_TITLE} — a complete article`,
   description: EXAMPLE_DESCRIPTION,
 }
 
