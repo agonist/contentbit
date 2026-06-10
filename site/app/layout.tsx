@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
+import { SITE_URL } from '@/lib/site'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
 import { RootProvider } from 'fumadocs-ui/provider/next'
@@ -8,6 +9,7 @@ import { RootProvider } from 'fumadocs-ui/provider/next'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'contentbit — structured Markdown components without framework lock-in',
     template: '%s · contentbit',
