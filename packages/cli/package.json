@@ -40,6 +40,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@clack/prompts": "^1.5.1",
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
     "@contentbit/html": "workspace:*",

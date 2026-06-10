@@ -11,5 +11,5 @@ await build({
   format: 'esm',
   outdir: 'dist',
   // Only keep true external node modules; bundle workspace deps directly.
-  external: ['node:*', 'tinyglobby'],
+  external: ['node:*', 'tinyglobby', '@clack/prompts'],
 })

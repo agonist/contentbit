@@ -4,7 +4,9 @@ export interface Io {
   writeFile(path: string, content: string): Promise<void>
 }
 
-export const USAGE = `Usage: contentbit <validate|render|instructions|docs> [options]
+export const USAGE = `Usage: contentbit <init|validate|render|instructions|docs> [options]
+
+  init [-t react|html|markdown] [-y] [--no-install]
 
   validate <globs...> [--registry <module.mjs>] [--strict-warnings]
   render <file> --target html|markdown [--registry <module.mjs>] [--out <file>]
@@ -14,6 +16,7 @@ export const USAGE = `Usage: contentbit <validate|render|instructions|docs> [opt
 type Command = (args: string[], io: Io) => Promise<number>
 
 const commands: Record<string, () => Promise<Command>> = {
+  init: async () => (await import('./commands/init.js')).initCommand,
   validate: async () => (await import('./commands/validate.js')).validateCommand,
   render: async () => (await import('./commands/render.js')).renderCommand,
   instructions: async () => (await import('./commands/instructions.js')).instructionsCommand,

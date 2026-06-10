@@ -3,6 +3,10 @@
 CLI for [Content Blocks](https://contentbit.dev): validate documents, render them, and generate LLM authoring instructions from your registry.
 
 ```bash
+# scaffold Content Blocks into any project: deps, starter content,
+# a custom-block registry, and LLM authoring instructions
+pnpm dlx contentbit@latest init
+
 # validate — exits 1 with file:line:col diagnostics
 contentbit validate "content/**/*.md"
 
