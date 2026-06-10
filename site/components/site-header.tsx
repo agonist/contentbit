@@ -1,5 +1,5 @@
 import { ThemeToggle } from '@/components/theme-toggle'
-import { DOCS_URL, GITHUB_URL } from '@/lib/site'
+import { GITHUB_URL } from '@/lib/site'
 import Link from 'next/link'
 
 function GitHubIcon({ className }: { className?: string }) {
@@ -21,7 +21,7 @@ export function SiteHeader() {
           content-blocks
         </Link>
         <nav className="text-muted-foreground flex items-center gap-5 text-sm">
-          <Link href={`${DOCS_URL}/docs`} className="hover:text-foreground transition-colors">
+          <Link href={"/docs"} className="hover:text-foreground transition-colors">
             Docs
           </Link>
           <Link href="/blocks" className="hover:text-foreground hidden transition-colors sm:block">

@@ -27,8 +27,7 @@ Spec: see [`SPEC.md`](./SPEC.md).
 | `@content-blocks/react`  | React renderer with headless defaults                                                              |
 | `content-blocks` (cli)   | validate / render / instructions / docs                                                            |
 | `registry/`              | shadcn-distributed styled component pack                                                           |
-| `site/`                  | Landing page (Next.js static export) + shadcn registry hosting                                     |
-| `docs/`                  | Documentation + playground (Fumadocs)                                                              |
+| `site/`                  | Landing, docs (Fumadocs at /docs), blocks gallery, example article, playground, registry hosting   |
 
 ## Development
 

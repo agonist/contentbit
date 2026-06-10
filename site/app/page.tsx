@@ -5,7 +5,7 @@ import { Frame } from '@/components/frame'
 import { HomeDemo } from '@/components/home-demo'
 import { SiteHeader } from '@/components/site-header'
 import { ValidationDemo } from '@/components/validation-demo'
-import { DOCS_URL, GITHUB_URL } from '@/lib/site'
+import { GITHUB_URL } from '@/lib/site'
 import { ArrowRight, BadgeCheck } from 'lucide-react'
 import Link from 'next/link'
 
@@ -34,7 +34,7 @@ export default function Home() {
           <div className="mx-auto max-w-3xl px-6 pt-20 pb-14 text-center sm:pt-28">
             <div className="animate-rise" style={{ animationDelay: '0ms' }}>
               <Link
-                href={`${DOCS_URL}/docs/concepts/llm-authoring`}
+                href={"/docs/concepts/llm-authoring"}
                 className="bg-background/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 border px-3 py-1 font-mono text-xs backdrop-blur transition-colors"
               >
                 <span className="relative flex size-1.5">
@@ -63,7 +63,7 @@ export default function Home() {
               style={{ animationDelay: '240ms' }}
             >
               <Link
-                href={`${DOCS_URL}/docs`}
+                href={"/docs"}
                 className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-md px-5 text-sm font-medium shadow-sm transition-all hover:opacity-90 hover:shadow-md active:scale-95"
               >
                 Get started
@@ -222,7 +222,7 @@ export default function Home() {
           <p>
             MIT licensed. Built with{' '}
             <Link
-              href={`${DOCS_URL}/docs`}
+              href={"/docs"}
               className="hover:text-foreground underline underline-offset-4"
             >
               Content Blocks
@@ -230,7 +230,7 @@ export default function Home() {
             .
           </p>
           <nav className="flex items-center gap-5">
-            <Link href={`${DOCS_URL}/docs`} className="hover:text-foreground transition-colors">
+            <Link href={"/docs"} className="hover:text-foreground transition-colors">
               Docs
             </Link>
             <Link href="/blocks" className="hover:text-foreground transition-colors">

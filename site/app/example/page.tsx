@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { ExampleArticle } from '@/components/example-article'
 import { SiteHeader } from '@/components/site-header'
 import { EXAMPLE_DESCRIPTION, EXAMPLE_TITLE } from '@/lib/example-article'
-import { DOCS_URL } from '@/lib/site'
+
 import Link from 'next/link'
 
 export const metadata: Metadata = {
@@ -48,7 +48,7 @@ export default function ExamplePage() {
                 Open the playground
               </Link>
               <Link
-                href={`${DOCS_URL}/docs`}
+                href={"/docs"}
                 className="bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium shadow-sm transition-all active:scale-95"
               >
                 Read the docs

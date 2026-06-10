@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import { BlockGallery } from '@/components/block-gallery'
 import { SiteHeader } from '@/components/site-header'
-import { DOCS_URL } from '@/lib/site'
+
 import Link from 'next/link'
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ export default function BlocksPage() {
           <p className="text-muted-foreground mt-3 font-mono text-xs">
             machine-readable version:{' '}
             <Link
-              href={`${DOCS_URL}/docs/reference/blocks`}
+              href={"/docs/reference/blocks"}
               className="text-foreground underline underline-offset-4 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
             >
               generated block reference
