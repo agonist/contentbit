@@ -31,10 +31,10 @@ export function SiteHeader() {
             Blocks
           </Link>
           <Link
-            href="/example"
+            href="/blog"
             className="hover:text-foreground hidden transition-colors sm:block"
           >
-            Example
+            Blog
           </Link>
           <Link href="/playground" className="hover:text-foreground transition-colors">
             Playground

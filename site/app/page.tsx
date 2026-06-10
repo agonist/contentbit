@@ -91,7 +91,7 @@ export default function Home() {
             >
               or see{' '}
               <Link
-                href="/example"
+                href="/blog/two-day-neapolitan"
                 className="text-foreground underline underline-offset-4 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
               >
                 a complete article
@@ -121,7 +121,7 @@ export default function Home() {
           </div>
           <div className="mt-6 flex justify-center">
             <Link
-              href="/example"
+              href="/blog/two-day-neapolitan"
               className="group text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
             >
               <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -236,8 +236,8 @@ export default function Home() {
             <Link href="/blocks" className="hover:text-foreground transition-colors">
               Blocks
             </Link>
-            <Link href="/example" className="hover:text-foreground transition-colors">
-              Example
+            <Link href="/blog" className="hover:text-foreground transition-colors">
+              Blog
             </Link>
             <Link href="/playground" className="hover:text-foreground transition-colors">
               Playground

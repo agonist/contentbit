@@ -4,7 +4,6 @@ import type { ComponentProps } from 'react'
 
 import { styledComponents } from '@/components/content-blocks/content-renderer'
 import { CopyButton } from '@/components/copy-button'
-import { EXAMPLE_SOURCE } from '@/lib/example-article'
 import { cn } from '@/lib/utils'
 import { genericBlocks, genericMarkdownRenderers } from '@contentbit/blocks'
 import {
@@ -58,6 +57,12 @@ const prose = {
   code: (props: ComponentProps<'code'>) => (
     <code {...props} className="bg-muted rounded px-1 py-0.5 font-mono text-[0.85em]" />
   ),
+  pre: (props: ComponentProps<'pre'>) => (
+    <pre
+      {...props}
+      className="bg-muted/40 my-4 overflow-x-auto border p-4 font-mono text-[12.5px] leading-relaxed [&_code]:bg-transparent [&_code]:p-0"
+    />
+  ),
 }
 
 function Prose({ source }: { source: string }) {
@@ -76,16 +81,16 @@ const VIEWS = [
 
 type ViewId = (typeof VIEWS)[number]['id']
 
-export function ExampleArticle() {
+export function ArticleRenderer({ source }: { source: string }) {
   const [view, setView] = useState<ViewId>('rendered')
 
   const { document, plain, blockCount, words } = useMemo(() => {
-    const result = validateDocument(parseDocument(EXAMPLE_SOURCE), registry)
+    const result = validateDocument(parseDocument(source), registry)
     if (!result.ok) {
       // Fails the static build if the article ever breaks — validation as CI.
       throw new Error(
-        `Example article is invalid:\n${result.diagnostics
-          .map((d) => formatDiagnostic(d, 'example-article.md'))
+        `Article is invalid:\n${result.diagnostics
+          .map((d) => formatDiagnostic(d, 'article.md'))
           .join('\n')}`,
       )
     }
@@ -93,9 +98,9 @@ export function ExampleArticle() {
       document: result.document,
       plain: renderToMarkdown(result.document, { renderers: genericMarkdownRenderers }),
       blockCount: result.document.children.filter((n) => n.type === 'block').length,
-      words: EXAMPLE_SOURCE.split(/\s+/).length,
+      words: source.split(/\s+/).length,
     }
-  }, [])
+  }, [source])
 
   const activeHint = VIEWS.find((v) => v.id === view)?.hint
 
@@ -111,7 +116,7 @@ export function ExampleArticle() {
         <span>{words} words</span>
         <span className="hidden sm:inline">1 document → 3 targets</span>
         <span className="ml-auto">
-          <CopyButton value={EXAMPLE_SOURCE} />
+          <CopyButton value={source} />
         </span>
       </div>
 
@@ -153,7 +158,7 @@ export function ExampleArticle() {
         ) : (
           <pre className="bg-card overflow-x-auto rounded-xl border p-5 font-mono text-[12.5px] leading-relaxed shadow-sm">
             <code>
-              {(view === 'source' ? EXAMPLE_SOURCE : plain).split('\n').map((line, i) => (
+              {(view === 'source' ? source : plain).split('\n').map((line, i) => (
                 <span
                   key={i}
                   className={cn(

@@ -1,14 +1,10 @@
-/*
- * The complete example article. One Content Blocks document, rendered on
- * /example through every target the library ships. Edit freely — the page
- * throws on validation errors during prerender, so a broken example fails
- * the build, not the reader.
- */
-export const EXAMPLE_TITLE = 'The two-day Neapolitan'
-export const EXAMPLE_DESCRIPTION =
-  'A complete dough guide written as one Content Blocks document — every block on this page is parsed, validated, and rendered by the library.'
+---
+title: The two-day Neapolitan
+description: A complete dough guide written as one Content Blocks document — every block on this page is parsed, validated, and rendered by the library.
+date: 2026-06-09
+---
 
-export const EXAMPLE_SOURCE = `Most pizza recipes fail at the same spot: they treat dough as a list of
+Most pizza recipes fail at the same spot: they treat dough as a list of
 ingredients instead of a schedule. This guide is the schedule. It takes ten
 minutes of work today and gives you blistered, foldable slices tomorrow.
 
@@ -108,4 +104,3 @@ temperature and try again — patience fixes most dough problems.
 
 That is the whole craft: weigh precisely, ferment slowly, bake violently.
 Print the quick reference, tape it inside a cabinet, and stop reading recipes.
-`
