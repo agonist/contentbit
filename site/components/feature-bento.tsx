@@ -89,7 +89,7 @@ function ValidationCell() {
       </Visual>
       <CellHeading
         title="Validation before render"
-        body="Every block has a schema. Bad content fails with file:line:col diagnostics — not broken pages."
+        body="Every block has a schema. Bad content fails with file:line:col diagnostics, not broken pages."
       />
     </div>
   )
@@ -209,7 +209,7 @@ function RegistryCell() {
         <ArrowRight className="text-muted-foreground mt-0.5 hidden size-4 shrink-0 lg:block" />
         <CellHeading
           title="Extensible registry"
-          body="A custom block is a name, a zod props schema, a content model, and authoring guidance — under 20 lines. It validates, renders, and documents itself from that one definition."
+          body="A custom block is a name, a zod props schema, a content model, and authoring guidance, in under 20 lines. It validates, renders, and documents itself from that one definition."
         />
       </div>
     </div>

@@ -59,7 +59,7 @@ export default async function BlogPostPage(props: PageParams) {
             <div>
               <h2 className="text-sm font-semibold">This post is a Content Blocks document</h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                Validated at build time — a broken block fails the deploy, not the reader.
+                Validated at build time, so a broken block fails the deploy, not the reader.
               </p>
             </div>
             <div className="flex shrink-0 gap-3">

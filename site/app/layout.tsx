@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     template: '%s · contentbit',
   },
   description:
-    'Write Markdown with validated, structured component blocks. Render it anywhere — React, static HTML, or plain Markdown. Built for content written by humans, CMSes, and LLMs.',
+    'Write Markdown with validated, structured component blocks. Render it anywhere: React, static HTML, or plain Markdown. Built for content written by humans, CMSes, and LLMs.',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -141,7 +141,7 @@ export default function Home() {
                 Errors with line numbers, not broken pages
               </h2>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                Validation runs before rendering — in your editor, your CI, or your agent loop.
+                Validation runs before rendering: in your editor, your CI, or your agent loop.
                 Diagnostics carry a code, a position, and a fix hint, so an LLM can repair its own
                 output.
               </p>
@@ -177,8 +177,8 @@ export default function Home() {
                   Eight blocks that work in any niche
                 </h2>
                 <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                  Pick a block. The example is its real authoring guidance from the registry — the
-                  same text LLMs get — rendered live by the styled pack.
+                  Pick a block. The example is its real authoring guidance from the registry, the
+                  same text LLMs get, rendered live by the styled pack.
                 </p>
               </div>
               <Link
@@ -202,7 +202,7 @@ export default function Home() {
           </h2>
           <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-sm">
             The React pack ships through a shadcn registry. Components land in your app as editable
-            source files — Tailwind, your tokens, your rules.
+            source files: Tailwind, your tokens, your rules.
           </p>
           <div className="bg-card mt-6 flex items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 text-left shadow-sm">
             <code className="text-muted-foreground flex-1 overflow-x-auto font-mono text-xs whitespace-nowrap">

@@ -32,7 +32,7 @@ export default async function BlogIndex() {
             Notes on structured content
           </h1>
           <p className="text-muted-foreground mt-4 text-pretty">
-            Every post here is a Content Blocks document — written in plain Markdown, validated at
+            Every post here is a Content Blocks document: written in plain Markdown, validated at
             build time, rendered by the library it talks about.
           </p>
         </header>

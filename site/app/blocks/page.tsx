@@ -8,7 +8,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Blocks — the generic pack',
   description:
-    'Every block in the generic pack: syntax, authoring guidance, and a live rendered example — straight from the registry that validates them.',
+    'Every block in the generic pack: syntax, authoring guidance, and a live rendered example, straight from the registry that validates them.',
 }
 
 export default function BlocksPage() {
@@ -24,7 +24,7 @@ export default function BlocksPage() {
             Eight blocks, one registry
           </h1>
           <p className="text-muted-foreground mt-4 text-pretty">
-            Everything below — descriptions, guidance, examples — comes from the same registry
+            Everything below (descriptions, guidance, examples) comes from the same registry
             that validates content and writes the LLM authoring instructions. The rendered panes
             are live: the styled pack rendering each block&apos;s real example.
           </p>

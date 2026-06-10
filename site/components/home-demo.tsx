@@ -27,7 +27,7 @@ Fold every 30 minutes, four times. Slower, same gluten.
 :::
 
 :::callout{type="tip" title="Same source, every target"}
-This panel is the real React pack — prose runs through [react-markdown](https://github.com/remarkjs/react-markdown), exactly like your app would wire it.
+This panel is the real React pack. Prose runs through [react-markdown](https://github.com/remarkjs/react-markdown), exactly like your app would wire it.
 :::`
 
 const registry = createBlockRegistry().use(genericBlocks())

@@ -16,11 +16,11 @@ const registry = createBlockRegistry().use(genericBlocks())
 
 const INITIAL = `## Try it
 
-Regular **Markdown** works everywhere — prose runs through your own
+Regular **Markdown** works everywhere. Prose runs through your own
 Markdown library ([react-markdown](https://github.com/remarkjs/react-markdown) here).
 
 :::callout{type="tip" title="Edit me"}
-Change anything on the left — validation runs as you type, and *inline
+Change anything on the left. Validation runs as you type, and *inline
 formatting* renders inside block bodies too.
 :::
 
