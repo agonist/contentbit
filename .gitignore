@@ -12,6 +12,9 @@ next-env.d.ts
 # generated
 .source/
 site/public/r/
+site/public/llms.txt
+site/public/llms-full.txt
+site/public/contentbit-guide.md
 
 # test/tooling artifacts
 coverage/
@@ -29,3 +32,6 @@ pnpm-debug.log*
 
 # os / editor
 .DS_Store
+
+# local scratch starters
+starter/

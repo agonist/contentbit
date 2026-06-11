@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "postinstall": "fumadocs-mdx",
-    "predev": "node scripts/copy-registry.mjs && node scripts/gen-reference.mjs",
+    "predev": "node scripts/copy-registry.mjs && node scripts/gen-reference.mjs && node scripts/gen-llms.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-registry.mjs && node scripts/gen-reference.mjs",
+    "prebuild": "node scripts/copy-registry.mjs && node scripts/gen-reference.mjs && node scripts/gen-llms.mjs",
     "build": "next build",
     "start": "next start"
   },
