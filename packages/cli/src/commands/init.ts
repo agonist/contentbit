@@ -60,44 +60,53 @@ Run the validate script and you will get file:line:col diagnostics.
 :::
 `
 
-const REACT_COMPONENT_WIRED = `import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-import { ContentBlocks } from '@contentbit/react'
-import ReactMarkdown from 'react-markdown'
-
-// Generic pack. Add your own blocks from blocks/registry.mjs as the project grows.
-const registry = createBlockRegistry().use(genericBlocks())
-
-export function Content({ source }: { source: string }) {
-  const result = validateDocument(parseDocument(source), registry)
-  return (
-    <ContentBlocks
-      document={result.document}
+/** The wrapper component: styled pack or headless, with or without a Markdown lib. */
+function reactComponent(styled: boolean, mdWired: boolean): string {
+  const mdImport = mdWired ? "import ReactMarkdown from 'react-markdown'\n" : ''
+  const mdProp = mdWired
+    ? '\n      renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}'
+    : `\n      // TODO: plug your Markdown library in here, e.g. react-markdown.
       // One function renders all prose: https://contentbit.dev/docs/guides/markdown
-      renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}
-    />
-  )
-}
-`
+      // renderMarkdown={(md) => <Markdown source={md} />}`
+  if (styled) {
+    return `'use client'
 
-const REACT_COMPONENT_PLAIN = `import { genericBlocks } from '@contentbit/blocks'
+import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-import { ContentBlocks } from '@contentbit/react'
+${mdImport}
+// The styled pack installed by shadcn. Yours to edit.
+import { ContentRenderer } from '@/components/content-blocks/content-renderer'
 
 const registry = createBlockRegistry().use(genericBlocks())
 
 export function Content({ source }: { source: string }) {
   const result = validateDocument(parseDocument(source), registry)
   return (
-    <ContentBlocks
-      document={result.document}
-      // TODO: plug your Markdown library in here, e.g. react-markdown.
-      // One function renders all prose: https://contentbit.dev/docs/guides/markdown
-      // renderMarkdown={(md) => <Markdown source={md} />}
+    <ContentRenderer
+      document={result.document}${mdProp}
     />
   )
 }
 `
+  }
+  return `'use client'
+
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { ContentBlocks } from '@contentbit/react'
+${mdImport}
+const registry = createBlockRegistry().use(genericBlocks())
+
+export function Content({ source }: { source: string }) {
+  const result = validateDocument(parseDocument(source), registry)
+  return (
+    <ContentBlocks
+      document={result.document}${mdProp}
+    />
+  )
+}
+`
+}
 
 function htmlRenderScript(md: 'marked' | 'markdown-it' | 'none'): string {
   const wiring =
@@ -128,6 +137,71 @@ console.log('wrote example.html')
 `
 }
 
+type Framework = 'tanstack' | 'next' | null
+
+interface FrameworkLayout {
+  framework: Framework
+  componentPath: string
+  pagePath: string | null
+}
+
+/** Where the component and example page belong for the detected framework. */
+function detectFramework(cwd: string, deps: Record<string, string>): FrameworkLayout {
+  if (
+    (deps['@tanstack/react-start'] || deps['@tanstack/react-router']) &&
+    existsSync(join(cwd, 'src/routes'))
+  ) {
+    return {
+      framework: 'tanstack',
+      componentPath: 'src/components/content-blocks.tsx',
+      pagePath: 'src/routes/example.tsx',
+    }
+  }
+  if (deps.next) {
+    const appDir = existsSync(join(cwd, 'src/app')) ? 'src/app' : 'app'
+    if (existsSync(join(cwd, appDir))) {
+      return {
+        framework: 'next',
+        componentPath: 'components/content-blocks.tsx',
+        pagePath: `${appDir}/example/page.tsx`,
+      }
+    }
+  }
+  return { framework: null, componentPath: 'components/content-blocks.tsx', pagePath: null }
+}
+
+const TANSTACK_PAGE = `import { createFileRoute } from '@tanstack/react-router'
+
+import { Content } from '../components/content-blocks'
+// Vite's ?raw import inlines the Markdown as a string at build time.
+import source from '../../content/example.md?raw'
+
+export const Route = createFileRoute('/example')({ component: ExamplePage })
+
+function ExamplePage() {
+  return (
+    <main style={{ maxWidth: '42rem', margin: '0 auto', padding: '3rem 1.5rem' }}>
+      <Content source={source} />
+    </main>
+  )
+}
+`
+
+const NEXT_PAGE = `import { readFile } from 'node:fs/promises'
+
+// If your project has no "@/" path alias, switch to a relative import.
+import { Content } from '@/components/content-blocks'
+
+export default async function ExamplePage() {
+  const source = await readFile('content/example.md', 'utf8')
+  return (
+    <main style={{ maxWidth: '42rem', margin: '0 auto', padding: '3rem 1.5rem' }}>
+      <Content source={source} />
+    </main>
+  )
+}
+`
+
 function detectPackageManager(cwd: string): string {
   // The project's lockfile outranks however the CLI itself was launched.
   const locks: Array<[string, string]> = [
@@ -150,6 +224,13 @@ function detectPackageManager(cwd: string): string {
 function installArgs(pm: string, dev: boolean, pkgs: string[]): string[] {
   const add = pm === 'npm' ? 'install' : 'add'
   return dev ? [add, '-D', ...pkgs] : [add, ...pkgs]
+}
+
+function dlxCommand(pm: string): [string, string[]] {
+  if (pm === 'pnpm') return ['pnpm', ['dlx']]
+  if (pm === 'yarn') return ['yarn', ['dlx']]
+  if (pm === 'bun') return ['bunx', []]
+  return ['npx', ['--yes']]
 }
 
 function runInstall(pm: string, args: string[], cwd: string): Promise<number> {
@@ -181,6 +262,8 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
       yes: { type: 'boolean', short: 'y', default: false },
       cwd: { type: 'string', default: process.cwd() },
       'no-install': { type: 'boolean', default: false },
+      'no-page': { type: 'boolean', default: false },
+      'no-styled': { type: 'boolean', default: false },
     },
   })
   const cwd = values.cwd
@@ -274,11 +357,43 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     ['blocks/registry.mjs', REGISTRY_TEMPLATE],
     ['content/example.md', EXAMPLE_CONTENT],
   ]
+  const layout = detectFramework(cwd, { ...pkg.dependencies, ...pkg.devDependencies })
+
+  // shadcn project? Pull the styled component pack from the contentbit registry.
+  let styled = false
+  const componentsJsonPath = join(cwd, 'components.json')
+  if (target === 'react' && !values['no-styled'] && existsSync(componentsJsonPath)) {
+    const componentsJson = JSON.parse(await readFile(componentsJsonPath, 'utf8')) as {
+      registries?: Record<string, string>
+    }
+    componentsJson.registries ??= {}
+    if (!componentsJson.registries['@contentbit']) {
+      componentsJson.registries['@contentbit'] = 'https://contentbit.dev/r/{name}.json'
+      await writeFile(componentsJsonPath, `${JSON.stringify(componentsJson, null, 2)}\n`, 'utf8')
+      io.stdout('added @contentbit registry to components.json')
+    }
+    if (values['no-install']) {
+      io.stdout('skipped: shadcn add @contentbit/generic-pack')
+      styled = true
+    } else {
+      const [bin, prefix] = dlxCommand(detectPackageManager(cwd))
+      io.stdout('installing the styled pack: shadcn add @contentbit/generic-pack')
+      const code = await runInstall(
+        bin,
+        [...prefix, 'shadcn@latest', 'add', '@contentbit/generic-pack', '--yes'],
+        cwd,
+      )
+      if (code === 0) styled = true
+      else io.stderr('styled pack install failed; falling back to headless defaults')
+    }
+  }
+
   if (target === 'react') {
-    files.push([
-      'components/content-blocks.tsx',
-      md === 'react-markdown' ? REACT_COMPONENT_WIRED : REACT_COMPONENT_PLAIN,
-    ])
+    files.push([layout.componentPath, reactComponent(styled, md === 'react-markdown')])
+    // A visible page in the framework's own routing convention.
+    if (!values['no-page'] && layout.pagePath) {
+      files.push([layout.pagePath, layout.framework === 'tanstack' ? TANSTACK_PAGE : NEXT_PAGE])
+    }
   }
   if (target === 'html') {
     files.push([
@@ -313,8 +428,12 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   io.stdout('Done. Next steps:')
   io.stdout(`  1. Validate the starter content: ${detectPackageManager(cwd)} run content:check`)
   if (target === 'react') {
-    io.stdout('  2. Render it: import { Content } from "./components/content-blocks"')
-    io.stdout('     <Content source={...content/example.md as a string} />')
+    if (!values['no-page'] && layout.pagePath) {
+      io.stdout('  2. Start the dev server and open /example to see the article rendered.')
+    } else {
+      io.stdout('  2. Render it: import { Content } from "./components/content-blocks"')
+      io.stdout('     <Content source={...content/example.md as a string} />')
+    }
     io.stdout('  3. Styled components: pnpm dlx shadcn@latest add @contentbit/generic-pack')
   } else if (target === 'html') {
     io.stdout('  2. Render it: node scripts/render-example.mjs && open example.html')

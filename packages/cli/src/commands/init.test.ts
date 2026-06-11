@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
@@ -61,6 +61,67 @@ test('init rejects an unknown markdown library', async () => {
   const io = fakeIo()
   expect(await run(['init', '--md', 'remarkable', '--no-install', '--cwd', dir], io)).toBe(2)
   expect(io.err.join('\n')).toContain('Unknown markdown library')
+})
+
+test('tanstack projects get the component and an example route in src/', async () => {
+  const dir = await project({
+    name: 'x',
+    dependencies: { react: '^19.0.0', '@tanstack/react-router': '^1.0.0' },
+  })
+  await mkdir(join(dir, 'src/routes'), { recursive: true })
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+  const route = await readFile(join(dir, 'src/routes/example.tsx'), 'utf8')
+  expect(route).toContain("createFileRoute('/example')")
+  expect(route).toContain("example.md?raw")
+  await expect(
+    readFile(join(dir, 'src/components/content-blocks.tsx'), 'utf8'),
+  ).resolves.toContain('ReactMarkdown')
+})
+
+test('next projects get an app-router page reading the file', async () => {
+  const dir = await project({ name: 'x', dependencies: { react: '^19.0.0', next: '^16.0.0' } })
+  await mkdir(join(dir, 'app'), { recursive: true })
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+  const page = await readFile(join(dir, 'app/example/page.tsx'), 'utf8')
+  expect(page).toContain('readFile')
+  const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
+  expect(component).toContain("'use client'")
+})
+
+test('--no-page skips the route scaffold', async () => {
+  const dir = await project({
+    name: 'x',
+    dependencies: { react: '^19.0.0', '@tanstack/react-router': '^1.0.0' },
+  })
+  await mkdir(join(dir, 'src/routes'), { recursive: true })
+  expect(await run(['init', '-y', '--no-page', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+  await expect(readFile(join(dir, 'src/routes/example.tsx'), 'utf8')).rejects.toThrow()
+})
+
+test('shadcn projects get the registry namespace and a styled wrapper', async () => {
+  const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
+  await writeFile(
+    join(dir, 'components.json'),
+    JSON.stringify({ style: 'new-york', aliases: { components: '@/components' } }),
+    'utf8',
+  )
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+  const componentsJson = JSON.parse(await readFile(join(dir, 'components.json'), 'utf8'))
+  expect(componentsJson.registries['@contentbit']).toContain('contentbit.dev')
+  const wrapper = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
+  expect(wrapper).toContain('ContentRenderer')
+})
+
+test('--no-styled keeps the headless wrapper in shadcn projects', async () => {
+  const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
+  await writeFile(join(dir, 'components.json'), '{}', 'utf8')
+  expect(
+    await run(['init', '-y', '--no-styled', '--no-install', '--cwd', dir], fakeIo()),
+  ).toBe(0)
+  const wrapper = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
+  expect(wrapper).toContain('ContentBlocks')
+  expect(wrapper).not.toContain('ContentRenderer')
 })
 
 test('init without react defaults to the html target', async () => {
