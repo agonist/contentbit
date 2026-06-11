@@ -8,10 +8,15 @@ import { Fragment } from 'react'
 
 import { defaultComponents } from './components.js'
 
+// Bundlers statically replace process.env.NODE_ENV; this keeps tsc happy
+// without pulling Node types into a browser-facing package.
+declare const process: { env: { NODE_ENV?: string } }
+
 // Warn once per block name in development when a valid block has no component.
 const warned = new Set<string>()
 function warnMissingComponent(name: string): void {
-  if (process.env.NODE_ENV === 'production' || warned.has(name)) return
+  if (typeof process === 'undefined' || process.env.NODE_ENV === 'production' || warned.has(name))
+    return
   warned.add(name)
   console.warn(
     `[contentbit] no component registered for block "${name}" — rendering the raw-body fallback. ` +
