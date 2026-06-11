@@ -21,17 +21,18 @@ const MD_CHOICES: Record<Target, Md[]> = {
   markdown: ['none'],
 }
 
-const REGISTRY_TEMPLATE = `// Custom blocks for this project. The CLI and your app share this module:
+const REGISTRY_TEMPLATE = `// Custom block definitions for this project. The CLI and your app share
+// this module — Node 22.18+ imports TypeScript directly:
 //
-//   contentbit validate "content/**/*.md" --registry ./blocks/registry.mjs
+//   contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 //
-// Each block is a name, a props schema, a content model, and authoring
-// guidance. One definition validates content, renders, and teaches LLMs.
+// Definitions stay framework-free (the CLI and every render target use
+// them); React components live next door in blocks/components.tsx.
 // Docs: https://contentbit.dev/docs/guides/custom-blocks
-import { defineBlock, markdownBody } from '@contentbit/core'
+import { defineBlock, markdownBody, type BlockDefinition } from '@contentbit/core'
 import { z } from 'zod'
 
-const quote = defineBlock({
+export const quote = defineBlock({
   name: 'quote',
   description: 'A pull quote with an author.',
   props: z.object({
@@ -46,51 +47,12 @@ const quote = defineBlock({
   },
 })
 
-export default [quote]
+export default [quote] satisfies BlockDefinition<unknown>[]
 `
 
-const REGISTRY_TYPES = `import type { BlockDefinition } from '@contentbit/core'
-
-declare const blocks: BlockDefinition<unknown>[]
-export default blocks
-`
-
-const EXAMPLE_CONTENT = `# Hello, Content Blocks
-
-Regular Markdown works everywhere. Blocks add validated structure:
-
-:::callout{type="tip" title="Try breaking this file"}
-Run the validate script and you will get file:line:col diagnostics.
-:::
-
-:::steps
-1. Edit this file and add or break a block.
-2. Run \`contentbit validate "content/**/*.md"\`.
-3. Render it with the target you picked at init.
-:::
-
-This one is a **custom block**, defined in \`blocks/registry.mjs\` and rendered
-by the \`QuoteBlock\` component, in about twenty lines:
-
-:::quote{author="Ada Lovelace" role="Notes on the Analytical Engine, 1843"}
-The Analytical Engine weaves algebraic patterns just as the Jacquard loom
-weaves flowers and leaves.
-:::
-`
-
-/** The wrapper component: styled pack or headless, with or without a Markdown lib. */
-function reactComponent(styled: boolean, mdWired: boolean, registryImport: string): string {
-  const mdImport = mdWired ? "import ReactMarkdown from 'react-markdown'\n" : ''
-  const mdProp = mdWired
-    ? '\n      renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}'
-    : `\n      // TODO: plug your Markdown library in here, e.g. react-markdown.
-      // One function renders all prose: https://contentbit.dev/docs/guides/markdown
-      // renderMarkdown={(md) => <Markdown source={md} />}`
-  const rendererImport = styled
-    ? `\n// The styled pack installed by shadcn. Yours to edit.
-import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
-    : ''
-  const quoteBody = styled
+/** blocks/components.tsx — React components for custom blocks, next to their definitions. */
+function blockComponentsTemplate(styled: boolean): string {
+  const body = styled
     ? `  return (
     <figure className="my-6 border-s-2 ps-4">
       <blockquote className="text-lg italic">{ctx.renderMarkdown(data.markdown)}</blockquote>
@@ -109,34 +71,77 @@ import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
       </figcaption>
     </figure>
   )`
+  return `import type { BlockComponent, BlockComponentProps } from '@contentbit/react'
+
+// One React component per custom block, keyed by block name. Definitions
+// live in ./registry.ts — add a block there, add its component here, and
+// the rest of the app never changes.
+function QuoteBlock({ node, ctx }: BlockComponentProps) {
+  const data = node.data as { markdown: string }
+${body}
+}
+
+export const blockComponents: Record<string, BlockComponent> = {
+  quote: QuoteBlock,
+}
+`
+}
+
+const EXAMPLE_CONTENT = `# Hello, Content Blocks
+
+Regular Markdown works everywhere. Blocks add validated structure:
+
+:::callout{type="tip" title="Try breaking this file"}
+Run the validate script and you will get file:line:col diagnostics.
+:::
+
+:::steps
+1. Edit this file and add or break a block.
+2. Run \`contentbit validate "content/**/*.md"\`.
+3. Render it with the target you picked at init.
+:::
+
+This one is a **custom block**, defined in \`blocks/registry.ts\` and rendered
+by the \`QuoteBlock\` component, in about twenty lines:
+
+:::quote{author="Ada Lovelace" role="Notes on the Analytical Engine, 1843"}
+The Analytical Engine weaves algebraic patterns just as the Jacquard loom
+weaves flowers and leaves.
+:::
+`
+
+/** The wrapper component: styled pack or headless, with or without a Markdown lib. */
+function reactComponent(styled: boolean, mdWired: boolean, blocksImport: string): string {
+  const mdImport = mdWired ? "import ReactMarkdown from 'react-markdown'\n" : ''
+  const mdProp = mdWired
+    ? '\n      renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}'
+    : `\n      // TODO: plug your Markdown library in here, e.g. react-markdown.
+      // One function renders all prose: https://contentbit.dev/docs/guides/markdown
+      // renderMarkdown={(md) => <Markdown source={md} />}`
+  const rendererImport = styled
+    ? `\n// The styled pack installed by shadcn. Yours to edit.
+import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
+    : ''
   const renderer = styled ? 'ContentRenderer' : 'ContentBlocks'
-  const reactImports = styled
-    ? "import type { BlockComponentProps } from '@contentbit/react'"
-    : "import { ContentBlocks, type BlockComponentProps } from '@contentbit/react'"
+  const reactImport = styled ? '' : "import { ContentBlocks } from '@contentbit/react'\n"
   return `'use client'
 
 import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-${reactImports}
-${mdImport}${rendererImport}
-// Custom blocks defined in blocks/registry.mjs — the same module the
-// validate script uses, so content and rendering can never disagree.
-import customBlocks from '${registryImport}'
+${reactImport}${mdImport}${rendererImport}
+// Everything block-related lives in the blocks/ folder: definitions in
+// registry.ts (shared with the validate CLI), components in components.tsx.
+import customBlocks from '${blocksImport}/registry'
+import { blockComponents } from '${blocksImport}/components'
 
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
-
-/** Renderer for the custom :::quote block. One component per block name. */
-function QuoteBlock({ node, ctx }: BlockComponentProps) {
-  const data = node.data as { markdown: string }
-${quoteBody}
-}
 
 export function Content({ source }: { source: string }) {
   const result = validateDocument(parseDocument(source), registry)
   return (
     <${renderer}
       document={result.document}
-      components={{ quote: QuoteBlock }}${mdProp}
+      components={blockComponents}${mdProp}
     />
   )
 }
@@ -389,8 +394,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   // Scaffold project files; never overwrite.
   const files: Array<[string, string]> = [
-    ['blocks/registry.mjs', REGISTRY_TEMPLATE],
-    ['blocks/registry.d.mts', REGISTRY_TYPES],
+    ['blocks/registry.ts', REGISTRY_TEMPLATE],
     ['content/example.md', EXAMPLE_CONTENT],
   ]
   const layout = detectFramework(cwd, { ...pkg.dependencies, ...pkg.devDependencies })
@@ -426,10 +430,11 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   if (target === 'react') {
     const depth = layout.componentPath.split('/').length - 1
-    const registryImport = `${'../'.repeat(depth)}blocks/registry.mjs`
+    const blocksImport = `${'../'.repeat(depth)}blocks`
+    files.push(['blocks/components.tsx', blockComponentsTemplate(styled)])
     files.push([
       layout.componentPath,
-      reactComponent(styled, md === 'react-markdown', registryImport),
+      reactComponent(styled, md === 'react-markdown', blocksImport),
     ])
     // A visible page in the framework's own routing convention.
     if (!values['no-page'] && layout.pagePath) {
@@ -454,7 +459,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   fresh.scripts ??= {}
   if (!fresh.scripts['content:check']) {
     fresh.scripts['content:check'] =
-      'contentbit validate "content/**/*.md" --registry ./blocks/registry.mjs'
+      'contentbit validate "content/**/*.md" --registry ./blocks/registry.ts'
     await writeFile(pkgPath, `${JSON.stringify(fresh, null, 2)}\n`, 'utf8')
     io.stdout('added script: content:check')
   }
@@ -463,7 +468,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   let registry
   try {
     // Include the scaffolded custom blocks so the guide covers them too.
-    registry = await loadRegistry(join(cwd, 'blocks/registry.mjs'))
+    registry = await loadRegistry(join(cwd, 'blocks/registry.ts'))
   } catch {
     registry = await loadRegistry() // packages not installed yet (--no-install)
   }

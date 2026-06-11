@@ -8,6 +8,17 @@ import { Fragment } from 'react'
 
 import { defaultComponents } from './components.js'
 
+// Warn once per block name in development when a valid block has no component.
+const warned = new Set<string>()
+function warnMissingComponent(name: string): void {
+  if (process.env.NODE_ENV === 'production' || warned.has(name)) return
+  warned.add(name)
+  console.warn(
+    `[contentbit] no component registered for block "${name}" — rendering the raw-body fallback. ` +
+      'Pass it via the `components` prop.',
+  )
+}
+
 export interface BlockRenderContext {
   renderMarkdown(md: string): ReactNode
   renderNodes(nodes: ContentNode[]): ReactNode
@@ -56,6 +67,7 @@ export function ContentBlocks(props: ContentBlocksProps): ReactNode {
         if (Component && isValidatedBlock(node)) {
           return <Component key={i} node={node} ctx={ctx} />
         }
+        if (!Component && isValidatedBlock(node)) warnMissingComponent(node.name)
         return <Fallback key={i} name={node.name} body={node.body} />
       })
     },

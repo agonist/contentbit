@@ -51,5 +51,8 @@
     "esbuild": "^0.25.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.17"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

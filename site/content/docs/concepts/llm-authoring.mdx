@@ -61,7 +61,7 @@ then run `validate` on the result and feed diagnostics back until clean.
 Point the CLI at a module that default-exports your extra definitions:
 
 ```bash
-contentbit validate "content/**/*.md" --registry ./blocks/registry.mjs
+contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
 The generic pack is always loaded first; your module adds to it.

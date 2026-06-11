@@ -30,13 +30,16 @@ test('init scaffolds a react project non-interactively', async () => {
   const io = fakeIo()
   expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
 
-  await expect(readFile(join(dir, 'blocks/registry.mjs'), 'utf8')).resolves.toContain(
+  await expect(readFile(join(dir, 'blocks/registry.ts'), 'utf8')).resolves.toContain(
     "name: 'quote'",
   )
   await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(':::quote')
   const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
   expect(component).toContain('ContentBlocks')
-  expect(component).toContain('QuoteBlock')
+  expect(component).toContain('blockComponents')
+  await expect(readFile(join(dir, 'blocks/components.tsx'), 'utf8')).resolves.toContain(
+    'QuoteBlock',
+  )
   await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::callout')
 
   const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
@@ -169,7 +172,7 @@ test('the scaffolded content validates against the scaffolded registry', async (
   }
   const out = execFileSync(
     'node',
-    [bin, 'validate', join(dir, 'content/*.md'), '--registry', join(dir, 'blocks/registry.mjs')],
+    [bin, 'validate', join(dir, 'content/*.md'), '--registry', join(dir, 'blocks/registry.ts')],
     { encoding: 'utf8' },
   )
   expect(out).toContain('0 errors')
