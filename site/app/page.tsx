@@ -1,17 +1,15 @@
 import { BlockShowcase } from '@/components/block-showcase'
-import { CopyButton } from '@/components/copy-button'
 import { FeatureBento } from '@/components/feature-bento'
 import { Frame } from '@/components/frame'
 import { HeroGlyphs } from '@/components/hero-glyphs'
 import { HomeDemo } from '@/components/home-demo'
+import { InstallTabs } from '@/components/install-tabs'
 import { SiteHeader } from '@/components/site-header'
 import { ValidationDemo } from '@/components/validation-demo'
 import { GITHUB_URL } from '@/lib/site'
 import { ArrowRight, BadgeCheck } from 'lucide-react'
 import Link from 'next/link'
 
-const INSTALL = 'pnpm add @contentbit/core @contentbit/blocks'
-const SHADCN_ADD = 'pnpm dlx shadcn@latest add @contentbit/generic-pack'
 
 function Eyebrow({ index, children }: { index: string; children: React.ReactNode }) {
   return (
@@ -75,15 +73,8 @@ export default function Home() {
                 Open the playground
               </Link>
             </div>
-            <div
-              className="animate-rise bg-card mx-auto mt-9 flex max-w-md items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 shadow-sm"
-              style={{ animationDelay: '320ms' }}
-            >
-              <code className="text-muted-foreground flex-1 overflow-x-auto text-left font-mono text-xs whitespace-nowrap">
-                <span className="text-foreground/50 select-none">$ </span>
-                {INSTALL}
-              </code>
-              <CopyButton value={INSTALL} />
+            <div className="animate-rise mx-auto mt-9 max-w-md" style={{ animationDelay: '320ms' }}>
+              <InstallTabs command="contentbit@latest init" />
             </div>
             <p
               className="animate-rise text-muted-foreground mt-5 font-mono text-xs"
@@ -203,12 +194,8 @@ export default function Home() {
             The React pack ships through a shadcn registry. Components land in your app as editable
             source files: Tailwind, your tokens, your rules.
           </p>
-          <div className="bg-card mt-6 flex items-center gap-2 rounded-lg border py-1.5 pr-1.5 pl-4 text-left shadow-sm">
-            <code className="text-muted-foreground flex-1 overflow-x-auto font-mono text-xs whitespace-nowrap">
-              <span className="text-foreground/50 select-none">$ </span>
-              {SHADCN_ADD}
-            </code>
-            <CopyButton value={SHADCN_ADD} />
+          <div className="mt-6">
+            <InstallTabs command="shadcn@latest add @contentbit/generic-pack" />
           </div>
           <p className="text-muted-foreground mt-3 font-mono text-xs">
             registry: https://contentbit.dev/r/{'{name}'}.json

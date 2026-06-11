@@ -20,13 +20,43 @@ your choice: React, static HTML, or a plain-Markdown fallback.
 
 ## Install
 
+One command sets up everything: the packages, a starter document, a custom-block
+registry, a rendered example page, and LLM authoring instructions.
+
+<Tabs items={['pnpm', 'npm', 'bun', 'yarn']}>
+
+<Tab value="pnpm">
+```bash
+pnpm dlx contentbit@latest init
+```
+</Tab>
+
+<Tab value="npm">
+```bash
+npx contentbit@latest init
+```
+</Tab>
+
+<Tab value="bun">
+```bash
+bunx contentbit@latest init
+```
+</Tab>
+
+<Tab value="yarn">
+```bash
+yarn dlx contentbit@latest init
+```
+</Tab>
+
+</Tabs>
+
+It detects your framework and package manager, asks two questions (or none with
+`-y`), and leaves you with a working `/example` page. Prefer wiring things up
+manually? Install the pieces directly:
+
 ```bash
 pnpm add @contentbit/core @contentbit/blocks
-```
-
-Add a renderer for your target:
-
-```bash
 pnpm add @contentbit/html   # static HTML strings
 pnpm add @contentbit/react  # React components
 ```
