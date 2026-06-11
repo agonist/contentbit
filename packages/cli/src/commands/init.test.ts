@@ -88,10 +88,10 @@ test('tanstack projects get the component and an example route in src/', async (
   expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
   const route = await readFile(join(dir, 'src/routes/example.tsx'), 'utf8')
   expect(route).toContain("createFileRoute('/example')")
-  expect(route).toContain("example.md?raw")
-  await expect(
-    readFile(join(dir, 'src/components/content-blocks.tsx'), 'utf8'),
-  ).resolves.toContain('ReactMarkdown')
+  expect(route).toContain('example.md?raw')
+  await expect(readFile(join(dir, 'src/components/content-blocks.tsx'), 'utf8')).resolves.toContain(
+    'ReactMarkdown',
+  )
 })
 
 test('next projects get an app-router page reading the file', async () => {
@@ -132,9 +132,7 @@ test('shadcn projects get the registry namespace and a styled wrapper', async ()
 test('--no-styled keeps the headless wrapper in shadcn projects', async () => {
   const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
   await writeFile(join(dir, 'components.json'), '{}', 'utf8')
-  expect(
-    await run(['init', '-y', '--no-styled', '--no-install', '--cwd', dir], fakeIo()),
-  ).toBe(0)
+  expect(await run(['init', '-y', '--no-styled', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
   const wrapper = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
   expect(wrapper).toContain('ContentBlocks')
   expect(wrapper).not.toContain('ContentRenderer')

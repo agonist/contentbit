@@ -10,7 +10,6 @@ import { GITHUB_URL } from '@/lib/site'
 import { ArrowRight, BadgeCheck } from 'lucide-react'
 import Link from 'next/link'
 
-
 function Eyebrow({ index, children }: { index: string; children: React.ReactNode }) {
   return (
     <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">

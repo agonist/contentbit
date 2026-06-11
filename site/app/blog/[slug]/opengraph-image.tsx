@@ -25,16 +25,14 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const { slug } = await params
   const post = await getPost(slug)
   return new ImageResponse(
-    (
-      <Blog
-        category="Blog"
-        title={post.title}
-        excerpt={post.description}
-        author="contentbit"
-        meta={`${formatDate(post.date)} · ${post.blockCount} blocks · valid`}
-        accent="#10b981"
-      />
-    ),
+    <Blog
+      category="Blog"
+      title={post.title}
+      excerpt={post.description}
+      author="contentbit"
+      meta={`${formatDate(post.date)} · ${post.blockCount} blocks · valid`}
+      accent="#10b981"
+    />,
     size,
   )
 }

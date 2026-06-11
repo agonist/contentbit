@@ -118,4 +118,6 @@ await mkdir(OUT_DIR, { recursive: true })
 await writeFile(path.join(OUT_DIR, 'llms.txt'), llms, 'utf8')
 await writeFile(path.join(OUT_DIR, 'llms-full.txt'), full, 'utf8')
 await writeFile(path.join(OUT_DIR, 'contentbit-guide.md'), guide, 'utf8')
-console.log(`generated llms.txt (${docs.length} docs, ${posts.length} posts), llms-full.txt, contentbit-guide.md`)
+console.log(
+  `generated llms.txt (${docs.length} docs, ${posts.length} posts), llms-full.txt, contentbit-guide.md`,
+)
