@@ -31,6 +31,38 @@ test('init scaffolds a react project non-interactively', async () => {
   expect(io.out.join('\n')).toContain('Next steps')
 })
 
+test('react init wires react-markdown by default and installs it', async () => {
+  const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+  const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
+  expect(component).toContain('ReactMarkdown')
+  expect(component).not.toContain('TODO')
+  expect(io.out.join('\n')).toContain('react-markdown')
+})
+
+test('--md none scaffolds the unwired component', async () => {
+  const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
+  expect(await run(['init', '-y', '--md', 'none', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+  const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
+  expect(component).toContain('TODO')
+})
+
+test('html init scaffolds a wired render script', async () => {
+  const dir = await project({ name: 'x' })
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+  const script = await readFile(join(dir, 'scripts/render-example.mjs'), 'utf8')
+  expect(script).toContain("from 'marked'")
+  expect(script).toContain('renderToHtml')
+})
+
+test('init rejects an unknown markdown library', async () => {
+  const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
+  const io = fakeIo()
+  expect(await run(['init', '--md', 'remarkable', '--no-install', '--cwd', dir], io)).toBe(2)
+  expect(io.err.join('\n')).toContain('Unknown markdown library')
+})
+
 test('init without react defaults to the html target', async () => {
   const dir = await project({ name: 'x' })
   expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)

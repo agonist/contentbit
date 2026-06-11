@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
@@ -10,6 +11,15 @@ import { loadRegistry } from '../load-registry.js'
 type Target = 'react' | 'html' | 'markdown'
 
 const TARGETS: Target[] = ['react', 'html', 'markdown']
+
+type Md = 'react-markdown' | 'marked' | 'markdown-it' | 'none'
+
+/** Markdown library choices per target; the first entry is the default. */
+const MD_CHOICES: Record<Target, Md[]> = {
+  react: ['react-markdown', 'none'],
+  html: ['marked', 'markdown-it', 'none'],
+  markdown: ['none'],
+}
 
 const REGISTRY_TEMPLATE = `// Custom blocks for this project. The CLI and your app share this module:
 //
@@ -50,7 +60,27 @@ Run the validate script and you will get file:line:col diagnostics.
 :::
 `
 
-const REACT_COMPONENT = `import { genericBlocks } from '@contentbit/blocks'
+const REACT_COMPONENT_WIRED = `import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { ContentBlocks } from '@contentbit/react'
+import ReactMarkdown from 'react-markdown'
+
+// Generic pack. Add your own blocks from blocks/registry.mjs as the project grows.
+const registry = createBlockRegistry().use(genericBlocks())
+
+export function Content({ source }: { source: string }) {
+  const result = validateDocument(parseDocument(source), registry)
+  return (
+    <ContentBlocks
+      document={result.document}
+      // One function renders all prose: https://contentbit.dev/docs/guides/markdown
+      renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}
+    />
+  )
+}
+`
+
+const REACT_COMPONENT_PLAIN = `import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { ContentBlocks } from '@contentbit/react'
 
@@ -69,7 +99,47 @@ export function Content({ source }: { source: string }) {
 }
 `
 
-function detectPackageManager(): string {
+function htmlRenderScript(md: 'marked' | 'markdown-it' | 'none'): string {
+  const wiring =
+    md === 'marked'
+      ? `import { marked } from 'marked'
+
+const renderMarkdown = (md) => marked.parse(md, { async: false })`
+      : md === 'markdown-it'
+        ? `import MarkdownIt from 'markdown-it'
+
+const mdIt = new MarkdownIt() // html: false by default — raw HTML stays escaped
+const renderMarkdown = (md) => mdIt.render(md)`
+        : `// TODO: plug a Markdown library in here (marked, markdown-it, remark).
+const renderMarkdown = undefined`
+  return `// Render content/example.md to example.html. Run: node scripts/render-example.mjs
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { renderToHtml } from '@contentbit/html'
+import { readFile, writeFile } from 'node:fs/promises'
+${wiring}
+
+const source = await readFile('content/example.md', 'utf8')
+const registry = createBlockRegistry().use(genericBlocks())
+const result = validateDocument(parseDocument(source), registry)
+const html = renderToHtml(result.document, { renderMarkdown })
+await writeFile('example.html', html, 'utf8')
+console.log('wrote example.html')
+`
+}
+
+function detectPackageManager(cwd: string): string {
+  // The project's lockfile outranks however the CLI itself was launched.
+  const locks: Array<[string, string]> = [
+    ['pnpm-lock.yaml', 'pnpm'],
+    ['yarn.lock', 'yarn'],
+    ['bun.lock', 'bun'],
+    ['bun.lockb', 'bun'],
+    ['package-lock.json', 'npm'],
+  ]
+  for (const [file, pm] of locks) {
+    if (existsSync(join(cwd, file))) return pm
+  }
   const agent = process.env.npm_config_user_agent ?? ''
   for (const pm of ['pnpm', 'yarn', 'bun']) {
     if (agent.startsWith(pm)) return pm
@@ -107,6 +177,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     args,
     options: {
       target: { type: 'string', short: 't' },
+      md: { type: 'string' },
       yes: { type: 'boolean', short: 'y', default: false },
       cwd: { type: 'string', default: process.cwd() },
       'no-install': { type: 'boolean', default: false },
@@ -151,14 +222,42 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     target = detected
   }
 
+  // Resolve the Markdown library: flag > prompt (interactive) > target default.
+  // The default gives working prose rendering out of the box; 'none' opts out.
+  const choices = MD_CHOICES[target]
+  let md: Md
+  if (values.md) {
+    if (!choices.includes(values.md as Md)) {
+      io.stderr(`Unknown markdown library "${values.md}". Use one of: ${choices.join(', ')}`)
+      return 2
+    }
+    md = values.md as Md
+  } else if (choices.length > 1 && !values.yes && process.stdin.isTTY && process.stdout.isTTY) {
+    const { isCancel, select } = await import('@clack/prompts')
+    const answer = await select({
+      message: 'Markdown library for prose rendering?',
+      initialValue: choices[0],
+      options: choices.map((c) => ({
+        value: c,
+        label: c,
+        hint: c === 'none' ? 'wire one yourself later' : 'installed and wired for you',
+      })),
+    })
+    if (isCancel(answer)) return 1
+    md = answer as Md
+  } else {
+    md = choices[0]
+  }
+
   // Install runtime packages plus the CLI as a dev dependency.
   const runtime = ['@contentbit/core', '@contentbit/blocks']
   if (target === 'react') runtime.push('@contentbit/react')
   if (target === 'html') runtime.push('@contentbit/html')
+  if (md !== 'none') runtime.push(md)
   if (values['no-install']) {
     io.stdout(`skipped install: ${runtime.join(' ')} + contentbit (dev)`)
   } else {
-    const pm = detectPackageManager()
+    const pm = detectPackageManager(cwd)
     io.stdout(`installing with ${pm}: ${runtime.join(' ')}`)
     if ((await runInstall(pm, installArgs(pm, false, runtime), cwd)) !== 0) {
       io.stderr('install failed')
@@ -175,7 +274,18 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     ['blocks/registry.mjs', REGISTRY_TEMPLATE],
     ['content/example.md', EXAMPLE_CONTENT],
   ]
-  if (target === 'react') files.push(['components/content-blocks.tsx', REACT_COMPONENT])
+  if (target === 'react') {
+    files.push([
+      'components/content-blocks.tsx',
+      md === 'react-markdown' ? REACT_COMPONENT_WIRED : REACT_COMPONENT_PLAIN,
+    ])
+  }
+  if (target === 'html') {
+    files.push([
+      'scripts/render-example.mjs',
+      htmlRenderScript(md as 'marked' | 'markdown-it' | 'none'),
+    ])
+  }
   for (const [rel, content] of files) {
     const result = await scaffold(join(cwd, rel), content)
     io.stdout(`${result}: ${rel}`)
@@ -201,12 +311,13 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   io.stdout('')
   io.stdout('Done. Next steps:')
-  io.stdout(`  1. Validate the starter content: ${detectPackageManager()} run content:check`)
+  io.stdout(`  1. Validate the starter content: ${detectPackageManager(cwd)} run content:check`)
   if (target === 'react') {
     io.stdout('  2. Render it: import { Content } from "./components/content-blocks"')
+    io.stdout('     <Content source={...content/example.md as a string} />')
     io.stdout('  3. Styled components: pnpm dlx shadcn@latest add @contentbit/generic-pack')
   } else if (target === 'html') {
-    io.stdout('  2. Render it: contentbit render content/example.md --target html')
+    io.stdout('  2. Render it: node scripts/render-example.mjs && open example.html')
   } else {
     io.stdout('  2. Render it: contentbit render content/example.md --target markdown')
   }
