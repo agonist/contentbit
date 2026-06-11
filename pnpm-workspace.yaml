@@ -2,6 +2,7 @@ packages:
   - 'packages/*'
   - 'registry'
   - 'site'
+  - 'video'
 allowBuilds:
   esbuild: true
   sharp: true
