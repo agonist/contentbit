@@ -25,24 +25,34 @@ const REGISTRY_TEMPLATE = `// Custom blocks for this project. The CLI and your a
 //
 //   contentbit validate "content/**/*.md" --registry ./blocks/registry.mjs
 //
-// Define blocks with @contentbit/core and default-export them as an array.
+// Each block is a name, a props schema, a content model, and authoring
+// guidance. One definition validates content, renders, and teaches LLMs.
 // Docs: https://contentbit.dev/docs/guides/custom-blocks
-//
-// import { defineBlock, pipeRows } from '@contentbit/core'
-// import { z } from 'zod'
-//
-// const pricingTable = defineBlock({
-//   name: 'pricing-table',
-//   description: 'Compares product plans.',
-//   props: z.object({ currency: z.enum(['usd', 'eur']).default('usd') }),
-//   content: pipeRows({ columns: ['plan', 'price'], minRows: 2 }),
-//   authoring: {
-//     useWhen: ['Comparing pricing plans'],
-//     example: ':::pricing-table\\n- Starter | $0\\n- Pro | $12/mo\\n:::',
-//   },
-// })
+import { defineBlock, markdownBody } from '@contentbit/core'
+import { z } from 'zod'
 
-export default []
+const quote = defineBlock({
+  name: 'quote',
+  description: 'A pull quote with an author.',
+  props: z.object({
+    author: z.string().min(1),
+    role: z.string().optional(),
+  }),
+  content: markdownBody({ minLength: 3 }),
+  authoring: {
+    useWhen: ['Quoting a person to support a point'],
+    avoidWhen: ['Highlighting your own remark, use callout instead'],
+    example: ':::quote{author="Ada Lovelace"}\\nThe Analytical Engine weaves algebraic patterns.\\n:::',
+  },
+})
+
+export default [quote]
+`
+
+const REGISTRY_TYPES = `import type { BlockDefinition } from '@contentbit/core'
+
+declare const blocks: BlockDefinition<unknown>[]
+export default blocks
 `
 
 const EXAMPLE_CONTENT = `# Hello, Content Blocks
@@ -58,50 +68,75 @@ Run the validate script and you will get file:line:col diagnostics.
 2. Run \`contentbit validate "content/**/*.md"\`.
 3. Render it with the target you picked at init.
 :::
+
+This one is a **custom block**, defined in \`blocks/registry.mjs\` and rendered
+by the \`QuoteBlock\` component, in about twenty lines:
+
+:::quote{author="Ada Lovelace" role="Notes on the Analytical Engine, 1843"}
+The Analytical Engine weaves algebraic patterns just as the Jacquard loom
+weaves flowers and leaves.
+:::
 `
 
 /** The wrapper component: styled pack or headless, with or without a Markdown lib. */
-function reactComponent(styled: boolean, mdWired: boolean): string {
+function reactComponent(styled: boolean, mdWired: boolean, registryImport: string): string {
   const mdImport = mdWired ? "import ReactMarkdown from 'react-markdown'\n" : ''
   const mdProp = mdWired
     ? '\n      renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}'
     : `\n      // TODO: plug your Markdown library in here, e.g. react-markdown.
       // One function renders all prose: https://contentbit.dev/docs/guides/markdown
       // renderMarkdown={(md) => <Markdown source={md} />}`
-  if (styled) {
-    return `'use client'
-
-import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-${mdImport}
-// The styled pack installed by shadcn. Yours to edit.
-import { ContentRenderer } from '@/components/content-blocks/content-renderer'
-
-const registry = createBlockRegistry().use(genericBlocks())
-
-export function Content({ source }: { source: string }) {
-  const result = validateDocument(parseDocument(source), registry)
-  return (
-    <ContentRenderer
-      document={result.document}${mdProp}
-    />
-  )
-}
-`
-  }
+  const rendererImport = styled
+    ? `\n// The styled pack installed by shadcn. Yours to edit.
+import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
+    : ''
+  const quoteBody = styled
+    ? `  return (
+    <figure className="my-6 border-s-2 ps-4">
+      <blockquote className="text-lg italic">{ctx.renderMarkdown(data.markdown)}</blockquote>
+      <figcaption className="text-muted-foreground mt-2 text-sm">
+        — {String(node.props.author)}
+        {node.props.role ? \`, \${String(node.props.role)}\` : null}
+      </figcaption>
+    </figure>
+  )`
+    : `  return (
+    <figure style={{ margin: '1.5rem 0', borderLeft: '2px solid #d4d4d4', paddingLeft: '1rem' }}>
+      <blockquote style={{ fontStyle: 'italic' }}>{ctx.renderMarkdown(data.markdown)}</blockquote>
+      <figcaption style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.7 }}>
+        — {String(node.props.author)}
+        {node.props.role ? \`, \${String(node.props.role)}\` : null}
+      </figcaption>
+    </figure>
+  )`
+  const renderer = styled ? 'ContentRenderer' : 'ContentBlocks'
+  const reactImports = styled
+    ? "import type { BlockComponentProps } from '@contentbit/react'"
+    : "import { ContentBlocks, type BlockComponentProps } from '@contentbit/react'"
   return `'use client'
 
 import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-import { ContentBlocks } from '@contentbit/react'
-${mdImport}
-const registry = createBlockRegistry().use(genericBlocks())
+${reactImports}
+${mdImport}${rendererImport}
+// Custom blocks defined in blocks/registry.mjs — the same module the
+// validate script uses, so content and rendering can never disagree.
+import customBlocks from '${registryImport}'
+
+const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
+
+/** Renderer for the custom :::quote block. One component per block name. */
+function QuoteBlock({ node, ctx }: BlockComponentProps) {
+  const data = node.data as { markdown: string }
+${quoteBody}
+}
 
 export function Content({ source }: { source: string }) {
   const result = validateDocument(parseDocument(source), registry)
   return (
-    <ContentBlocks
-      document={result.document}${mdProp}
+    <${renderer}
+      document={result.document}
+      components={{ quote: QuoteBlock }}${mdProp}
     />
   )
 }
@@ -333,7 +368,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   }
 
   // Install runtime packages plus the CLI as a dev dependency.
-  const runtime = ['@contentbit/core', '@contentbit/blocks']
+  const runtime = ['@contentbit/core', '@contentbit/blocks', 'zod']
   if (target === 'react') runtime.push('@contentbit/react')
   if (target === 'html') runtime.push('@contentbit/html')
   if (md !== 'none') runtime.push(md)
@@ -355,6 +390,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   // Scaffold project files; never overwrite.
   const files: Array<[string, string]> = [
     ['blocks/registry.mjs', REGISTRY_TEMPLATE],
+    ['blocks/registry.d.mts', REGISTRY_TYPES],
     ['content/example.md', EXAMPLE_CONTENT],
   ]
   const layout = detectFramework(cwd, { ...pkg.dependencies, ...pkg.devDependencies })
@@ -389,7 +425,12 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   }
 
   if (target === 'react') {
-    files.push([layout.componentPath, reactComponent(styled, md === 'react-markdown')])
+    const depth = layout.componentPath.split('/').length - 1
+    const registryImport = `${'../'.repeat(depth)}blocks/registry.mjs`
+    files.push([
+      layout.componentPath,
+      reactComponent(styled, md === 'react-markdown', registryImport),
+    ])
     // A visible page in the framework's own routing convention.
     if (!values['no-page'] && layout.pagePath) {
       files.push([layout.pagePath, layout.framework === 'tanstack' ? TANSTACK_PAGE : NEXT_PAGE])
@@ -419,7 +460,13 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   }
 
   // Generate the LLM authoring guide from the registry, ready to paste into a prompt.
-  const registry = await loadRegistry()
+  let registry
+  try {
+    // Include the scaffolded custom blocks so the guide covers them too.
+    registry = await loadRegistry(join(cwd, 'blocks/registry.mjs'))
+  } catch {
+    registry = await loadRegistry() // packages not installed yet (--no-install)
+  }
   const guide = registry.toAuthoringGuide({ audience: 'llm', includeExamples: true })
   await writeFile(join(cwd, 'contentbit-guide.md'), guide, 'utf8')
   io.stdout('created: contentbit-guide.md (LLM authoring instructions)')

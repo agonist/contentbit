@@ -1,6 +1,9 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 
 import { run } from '../run'
@@ -12,18 +15,28 @@ async function project(pkg: object): Promise<string> {
   return dir
 }
 
+/** Make @contentbit/* and zod resolvable from the temp project, as a real install would. */
+async function linkModules(dir: string): Promise<void> {
+  const root = fileURLToPath(new URL('../../../..', import.meta.url))
+  await mkdir(join(dir, 'node_modules/@contentbit'), { recursive: true })
+  for (const name of ['core', 'blocks']) {
+    await symlink(join(root, 'packages', name), join(dir, 'node_modules/@contentbit', name))
+  }
+  await symlink(join(root, 'packages/core/node_modules/zod'), join(dir, 'node_modules/zod'))
+}
+
 test('init scaffolds a react project non-interactively', async () => {
   const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
   const io = fakeIo()
   expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
 
   await expect(readFile(join(dir, 'blocks/registry.mjs'), 'utf8')).resolves.toContain(
-    'export default []',
+    "name: 'quote'",
   )
-  await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(':::steps')
-  await expect(readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')).resolves.toContain(
-    'ContentBlocks',
-  )
+  await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(':::quote')
+  const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
+  expect(component).toContain('ContentBlocks')
+  expect(component).toContain('QuoteBlock')
   await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::callout')
 
   const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
@@ -144,12 +157,24 @@ test('init is idempotent and never overwrites existing files', async () => {
   expect(io.out.join('\n')).toContain('skipped: content/example.md')
 })
 
-test('the scaffolded example content validates', async () => {
+test('the scaffolded content validates against the scaffolded registry', async () => {
   const dir = await project({ name: 'x' })
+  await linkModules(dir) // simulate the install so registry.mjs is importable
   await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())
-  const io = fakeIo()
-  expect(await run(['validate', join(dir, 'content/*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('0 errors')
+  // vite-node cannot follow loadRegistry's dynamic import of a scaffolded
+  // module, so this one runs end to end against the built binary.
+  const bin = fileURLToPath(new URL('../../dist/bin.js', import.meta.url))
+  if (!existsSync(bin)) {
+    execFileSync('pnpm', ['build'], { cwd: fileURLToPath(new URL('../..', import.meta.url)) })
+  }
+  const out = execFileSync(
+    'node',
+    [bin, 'validate', join(dir, 'content/*.md'), '--registry', join(dir, 'blocks/registry.mjs')],
+    { encoding: 'utf8' },
+  )
+  expect(out).toContain('0 errors')
+  // With modules resolvable, the generated guide covers the custom block too.
+  await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::quote')
 })
 
 test('init rejects an unknown target', async () => {
