@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "agonist/contentbit" }],
+  "commit": false,
+  "fixed": [
+    [
+      "contentbit",
+      "@contentbit/core",
+      "@contentbit/blocks",
+      "@contentbit/html",
+      "@contentbit/react",
+      "@contentbit/astro"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "privatePackages": false,
+  "ignore": []
+}

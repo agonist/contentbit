@@ -23,6 +23,7 @@ Lint and formatting run from the root: `pnpm lint` (oxlint) and `pnpm fmt`
 | `packages/blocks` | Generic block definitions                                       |
 | `packages/html`   | Static HTML renderer                                            |
 | `packages/react`  | React renderer                                                  |
+| `packages/astro`  | Astro renderer                                                  |
 | `packages/cli`    | The `contentbit` CLI (init, validate, render, instructions)     |
 | `registry/`       | Source of the shadcn-distributed styled pack                    |
 | `site/`           | contentbit.dev: landing, docs, blog, playground, registry files |
@@ -40,7 +41,24 @@ Lint and formatting run from the root: `pnpm lint` (oxlint) and `pnpm fmt`
 - Docs pages double as tests: `<Live>` examples run through the real parser at
   build time, and blog posts fail the build if they have diagnostics.
 
+## Changesets
+
+Releases are managed with [changesets](https://github.com/changesets/changesets).
+If your PR changes published behavior in any package, add a changeset:
+
+```bash
+pnpm changeset
+```
+
+Pick the affected packages, the bump level (patch/minor/major), and write a
+short user-facing description — it becomes the changelog entry. Commit the
+generated file in `.changeset/` with your PR. Docs/site/internal-only changes
+don't need one.
+
 ## Releasing
 
-Versions are bumped manually per package. `pnpm -r publish` from a clean main
-publishes whatever is ahead of npm and skips the rest.
+All publishable packages share one version (fixed/lockstep mode). On every
+push to main, the release workflow keeps a "Version Packages" PR up to date
+with the pending changesets. Merging that PR bumps versions, updates
+changelogs, publishes to npm, and creates GitHub releases. Nothing publishes
+until that PR is merged.
