@@ -47,7 +47,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",
-    "contentbit": "^0.1.0",
+    "contentbit": "link:../../packages/cli",
     "eslint": "^9",
     "jsdom": "^28",
     "prettier": "^3.8.3",
