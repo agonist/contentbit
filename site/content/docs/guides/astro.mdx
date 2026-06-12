@@ -1,0 +1,127 @@
+---
+title: Astro
+description: Render validated documents with .astro components — renderer only, one validation path.
+---
+
+`@contentbit/astro` is a renderer, deliberately nothing more. There is no
+content-loader integration: Astro's own content collections load your Markdown,
+contentbit validates and renders it where it's used, and `contentbit validate`
+covers the same files in CI. One validation path instead of two pipelines that
+can fall out of sync.
+
+## Setup
+
+`init` detects Astro from your dependencies (or force it with `-t astro`):
+
+```bash
+npx contentbit@latest init
+```
+
+It scaffolds the full loop:
+
+- `blocks/registry.ts` — a custom `quote` block, shared with the validate CLI
+- `blocks/QuoteBlock.astro` — its `.astro` component
+- `content/example.md` — a starter document
+- `src/content.config.ts` — an `articles` collection over `content/` using
+  Astro's builtin glob loader
+- `src/pages/example.astro` — a rendered example page
+- the `content:check` script and the [agent integration](/docs/guides/agents)
+
+Wiring it by hand instead:
+
+```bash
+pnpm add @contentbit/core @contentbit/blocks @contentbit/astro
+```
+
+## Render a page
+
+The pattern is the same as every other target — parse, validate, render — in
+component frontmatter:
+
+```astro
+---
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { getEntry } from 'astro:content'
+import { ContentBlocks } from '@contentbit/astro/components'
+
+const entry = await getEntry('articles', 'example')
+if (!entry?.body) throw new Error('Entry not found.')
+
+const registry = createBlockRegistry().use(genericBlocks())
+const result = validateDocument(parseDocument(entry.body), registry)
+---
+
+<ContentBlocks document={result.document} />
+```
+
+Static pages render at build time, so this is a real safety net: invalid blocks
+fail the build, not the reader.
+
+## Component overrides
+
+Map block names to your own `.astro` components. Validated props arrive as
+component props, nested block content arrives via `<slot />`, and the raw AST
+node is available as the reserved `node` prop:
+
+```astro
+---
+// QuoteBlock.astro — renders the custom `quote` block
+interface Props {
+  author: string
+  role?: string
+}
+const { author, role } = Astro.props
+---
+
+<figure>
+  <blockquote><slot /></blockquote>
+  <figcaption>— {author}{role ? `, ${role}` : null}</figcaption>
+</figure>
+```
+
+```astro
+<ContentBlocks document={result.document} components={{ quote: QuoteBlock }} />
+```
+
+Because props were already validated against the block's schema, your component
+can use them without defensive parsing.
+
+## Options
+
+- **`renderMarkdown`** — `(md: string) => string` for prose and block bodies.
+  Ships with a marked-based default (GFM, raw HTML escaped), so it works
+  untouched; swap in your own to match the rest of your site. The default is
+  also exported as `defaultRenderMarkdown` from `@contentbit/astro`.
+- **`classPrefix`** — prefix for the headless markup's class names, default
+  `cb-`.
+- **`renderers`** — low-level per-block render functions, when a full `.astro`
+  component is more than you need.
+- **`onInvalid`** — what to do with a block that failed validation: `strict`
+  (throw), `annotated` (visible dev box), or `fallback` (escaped body as
+  prose). The Astro default is `annotated`, which keeps invalid blocks loud
+  during dev, while `@contentbit/html` defaults to `fallback`. Set it
+  explicitly if you want matching behavior across targets.
+
+## Validate in CI
+
+`init` adds the gate for you:
+
+```json
+{ "scripts": { "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts" } }
+```
+
+The CLI strips frontmatter before validating — the same thing Astro does when
+it hands you `entry.body` — so the CLI and your pages always judge identical
+content.
+
+## Styled components
+
+A Tailwind-styled pack for Astro is distributed through the shadcn registry:
+
+```bash
+pnpm dlx shadcn@latest add @contentbit/astro-pack
+```
+
+Components land in your project as editable `.astro` source files. You own
+them after install.

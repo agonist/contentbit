@@ -1,0 +1,135 @@
+---
+title: Document stats & auditing
+description: analyzeDocument and contentbit stats — outlines, block usage, link domains, and validation summaries as JSON.
+---
+
+`contentbit validate` is a gate: it exits 1 and blocks the pipeline. `contentbit
+stats` is the read tool next to it: it analyzes documents and prints JSON to
+stdout, always exiting 0 — even when documents have validation errors. It exists
+so you (or your agent) can rank what needs attention across a whole content
+directory without opening a single file.
+
+## Try it
+
+Edit the source — the report recomputes as you type. Notice the per-section
+word counts: that's the thin-section detector.
+
+<StatsLive>
+{`## Getting started
+
+Install the package, run init, open the example page. Three steps,
+two minutes, no configuration.
+
+:::callout{type="tip" title="Shortcut"}
+\`npx contentbit@latest init -y\` skips every prompt.
+:::
+
+## Deployment
+
+Coming soon.
+
+:::steps
+1. Build the site.
+2. Push to your host.
+:::
+
+Read the [full guide](https://contentbit.dev/docs) for the details.`}
+</StatsLive>
+
+## The CLI
+
+Point `stats` at files or globs (quote globs so your shell doesn't expand them):
+
+```bash
+contentbit stats "content/**/*.md" --registry ./blocks/registry.ts
+```
+
+One matched file prints a single stats object; multiple files print an array.
+Validation runs against the same registry `validate` uses and lands in a
+`validation` summary per file — skip it with `--no-validate`. No files matched
+is the only failure mode (exit 2).
+
+A report, trimmed to the interesting fields:
+
+```json
+{
+  "file": { "path": "content/getting-started.md", "lines": 102 },
+  "length": { "words": 601, "readingMinutes": 4, "approxTokens": 1164 },
+  "outline": [
+    { "level": 2, "text": "Getting started", "line": 20, "words": 127 },
+    { "level": 2, "text": "Deployment", "line": 37, "words": 2 }
+  ],
+  "blocks": { "total": 7, "byName": { "callout": 1, "steps": 1 }, "maxDepth": 2 },
+  "links": { "total": 3, "external": 1, "internal": 2, "domains": ["contentbit.dev"] },
+  "validation": { "errors": 0, "warnings": 0 }
+}
+```
+
+## What's in the report
+
+- **`outline`** — every ATX heading with its level, source line, and the prose
+  word count from that heading until the next one. A section with 2 words is a
+  stub; the outline finds it instantly.
+- **`blocks`** — total count, `byName` usage, nesting depth, and per-instance
+  source lines. An empty `byName` on a long page usually means missed structure:
+  prose that wants to be steps, a comparison, or an FAQ.
+- **`links`** — external/internal split plus the deduplicated external
+  `domains` list. Good for spotting link rot targets and unexpected domains.
+- **`length`** — prose words only (frontmatter, code, and markup syntax are
+  excluded), reading minutes, and a rough token estimate.
+- **`frontmatter`**, **`images`** (with `missingAlt`), **`code`**, and
+  **`structure`** (lists, tables, blockquotes) round out the picture.
+
+## The library API
+
+The same analysis is one import, with no filesystem access and nothing
+environment-specific:
+
+```ts
+import { analyzeDocument } from '@contentbit/core'
+
+const stats = analyzeDocument(source, { path: 'content/post.md' })
+stats.outline // [{ level, text, line, words }, ...]
+```
+
+`analyzeDocument` takes the raw source string and needs no registry. The CLI
+adds the `validation` summary by running the validate pipeline alongside it —
+do the same if you need both:
+
+```ts
+import { parseDocument, stripFrontmatter, validateDocument } from '@contentbit/core'
+
+const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
+```
+
+The live demo above is exactly this — `analyzeDocument` plus
+`validateDocument`, running in your browser.
+
+## Auditing with an agent
+
+The `contentbit-audit` skill installed by [`contentbit agents`](/docs/guides/agents)
+turns this JSON into a ranked report. Its priority order is worth stealing for
+your own tooling:
+
+1. **Validation errors and warnings** — broken content ships broken pages.
+2. **Thin documents** — outline sections with very low word counts.
+3. **Block-less documents** — empty `blocks.byName` where sibling documents use blocks.
+4. **Missing or inconsistent frontmatter** compared to siblings.
+5. **Structural imbalance** — skipped heading levels, single-section walls of text.
+
+Ask your agent to "audit my content" and this is the loop it runs.
+
+## Recipes
+
+JSON to stdout means `jq` does the rest:
+
+```bash
+# Rank files by word count, shortest first
+contentbit stats "content/**/*.md" | jq 'sort_by(.length.words) | .[] | {path: .file.path, words: .length.words}'
+
+# Files with no blocks at all
+contentbit stats "content/**/*.md" | jq '.[] | select(.blocks.total == 0) | .file.path'
+
+# Every external domain you link to
+contentbit stats "content/**/*.md" | jq '[.[].links.domains[]] | unique'
+```

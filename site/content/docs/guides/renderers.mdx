@@ -1,11 +1,12 @@
 ---
 title: Renderers
-description: Static HTML, React, and plain-Markdown output from the same document.
+description: Static HTML, React, Astro, and plain-Markdown output from the same document.
 ---
 
 Renderers consume a validated document. The parser and registry know nothing about
 React or HTML — every renderer is an adapter with a per-block renderer map you can
-override.
+override. Four targets ship today: static HTML, React, Astro, and a
+plain-Markdown fallback.
 
 ## Static HTML
 
@@ -38,6 +39,10 @@ All user content is escaped. Tabs render as static sections and FAQs as native
 - `fallback` (default) — render the escaped raw body. Use in production for
   user- or CMS-supplied content.
 
+The Astro renderer takes the same option but defaults to `annotated` — static
+builds surface invalid blocks loudly during dev. Set it explicitly if you want
+matching behavior across targets.
+
 ## React
 
 ```tsx
@@ -60,6 +65,27 @@ For styled components, install the shadcn pack instead of writing your own:
 ```bash
 pnpm dlx shadcn@latest add @contentbit/generic-pack
 ```
+
+## Astro
+
+```astro
+---
+import { ContentBlocks } from '@contentbit/astro/components'
+import QuoteBlock from '../blocks/QuoteBlock.astro'
+---
+
+<ContentBlocks
+  document={result.document}
+  components={{ quote: QuoteBlock }}
+  onInvalid="annotated"
+/>
+```
+
+Per-block overrides are plain `.astro` components: validated props arrive as
+component props, nested content via `<slot />`, and the raw AST node as the
+reserved `node` prop. `renderMarkdown` ships with a marked-based default (GFM,
+raw HTML escaped), so prose works untouched. Note the `onInvalid` default here
+is `annotated`, not `fallback`. Full guide: [Astro](/docs/guides/astro).
 
 ## Plain Markdown fallback
 

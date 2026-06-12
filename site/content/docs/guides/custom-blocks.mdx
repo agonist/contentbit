@@ -5,7 +5,10 @@ description: Add project-specific blocks in under 20 lines with defineBlock.
 
 Every block is a `BlockDefinition`: a name, a props schema, a content model, and
 authoring guidance. The registry is the single source of truth — the same definition
-validates content, drives renderers, and generates LLM instructions.
+validates content, drives renderers, and generates LLM instructions. Define a
+block today and every [agent wired to this project](/docs/guides/agents) writes
+it correctly on its next run, because skills read the registry live through the
+CLI.
 
 ## A complete custom block
 
@@ -48,6 +51,9 @@ the block, and any renderer can map `pricing-table` to an implementation.
 - **name** — lowercase kebab-case, unique per registry. Duplicates throw.
 - **props** — a zod schema for the open-line props. Defaults are applied during
   validation; violations become `CB_PROPS_INVALID` diagnostics with the zod path.
+  Generated authoring guides document every prop — name, type with enum values
+  spelled out, required/optional, default, and any `.describe()` text — so
+  describing props pays off: your agent reads those descriptions.
 - **content** — a content model (below) that parses the body into typed `data`.
 - **childOnly** — set `true` for blocks that only make sense inside a parent
   (like `tab` inside `tabs`).
@@ -85,4 +91,9 @@ Renderers are adapter-side maps — block definitions never reference framework 
 ```ts
 // Static HTML
 renderToHtml(doc, { renderers: { 'pricing-table': renderPricingTableHtml } })
+```
+
+```astro
+// Astro — a plain .astro component; props arrive validated, body via <slot />
+<ContentBlocks document={doc} components={{ 'pricing-table': PricingTable }} />
 ```

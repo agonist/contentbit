@@ -1,0 +1,39 @@
+---
+title: Changelog
+description: What shipped in each release.
+---
+
+{/* Append new releases at the top. Keep entries terse — under ~10 bullets —
+    and link the announcement post for the narrative. */}
+
+Terse by design — each release links its announcement post.
+
+## 0.2.0
+
+All packages now share one version number — this is the first synchronized
+release. [Read the announcement →](/blog/contentbit-0-2-0)
+
+- **Coding-agent integration.** New `contentbit agents` command (also run by
+  `init`, skip with `--no-agents`): installs the `contentbit-author` and
+  `contentbit-audit` Claude Code skills and manages a fenced instruction block
+  in `AGENTS.md` for every other agent. Skills hold no schemas — they read
+  everything from the CLI at runtime, so custom blocks are picked up
+  automatically. See [Coding-agent integration](/docs/guides/agents).
+- **Document stats.** `analyzeDocument` in `@contentbit/core` and a
+  `contentbit stats` command: heading outlines with per-section word counts,
+  block usage, link domains, and a validation summary, as JSON. Accepts
+  multiple files and globs. See [Document stats & auditing](/docs/guides/stats).
+- **`@contentbit/astro`.** Renderer-only Astro integration: render validated
+  documents with `.astro` components, per-block overrides included. See
+  [Astro](/docs/guides/astro).
+- **Every prop, documented.** Generated authoring guides now list every prop
+  from the block's schema — name, type (enums spelled out), required/optional,
+  default, and description — so agents that never guess props can discover
+  all of them.
+
+## 0.1.0
+
+Initial release: directive-block parser with source-mapped AST, block registry
+with per-block schemas, line-level validation diagnostics, the generic block
+pack, React and static-HTML renderers, the shadcn styled pack, and the
+`contentbit` CLI.

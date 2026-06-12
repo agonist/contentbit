@@ -14,6 +14,8 @@
 # contentbit
 
 **Structured Markdown components without framework lock-in.**
+`npx contentbit@latest init`, then ask your coding agent to write a post — it
+fetches the live authoring guide, writes, and validates until clean.
 
 LLMs are fluent in Markdown, and that fluency is the problem: generated content
 *looks* right and breaks in production. Content Blocks is a content protocol
@@ -46,27 +48,34 @@ npx contentbit@latest init
 
 One command: detects your framework and package manager, installs the
 packages, scaffolds a starter document, a custom block, and a rendered
-`/example` page, and generates LLM authoring instructions for your prompts.
-In shadcn projects it also installs the styled component pack.
+`/example` page, generates LLM authoring instructions, and wires in your
+coding agent. In shadcn projects it also installs the styled component pack.
 
 Prefer the pieces? `pnpm add @contentbit/core @contentbit/blocks` plus the
 renderer of your choice. Full walkthrough:
 [contentbit.dev/docs](https://contentbit.dev/docs).
 
+## Ask your agent
+
+After `init`, your agent knows how to write content for this project:
+
+> "write a blog post about X" &nbsp;·&nbsp; "audit my content"
+
+`contentbit agents` (included in `init`) installs Claude Code skills and an
+`AGENTS.md` block, so writing fetches the live guide and validates until clean,
+and auditing ranks findings from `contentbit stats` JSON. The skills hold no
+schemas; they read everything from the CLI at runtime, so custom blocks are
+picked up automatically. See
+[contentbit.dev/docs/guides/agents](https://contentbit.dev/docs/guides/agents).
+
 ## The loop
+
+What runs under the hood — yourself or via the skills:
 
 1. Generate the authoring guide from your registry: `contentbit instructions --audience llm`
 2. Let the model write plain Markdown with blocks. Nothing executable.
 3. Validate: `contentbit validate "content/**/*.md"` exits 1 with precise diagnostics.
-4. Feed diagnostics back to the model until clean. Render anywhere: React, static HTML, or plain Markdown.
-
-Your coding agent runs this loop for you: `contentbit agents` (included in
-`init`) installs Claude Code skills and an `AGENTS.md` block, so "write a blog
-post" fetches the live guide, writes, and validates until clean — and "audit my
-content" ranks findings from `contentbit stats` JSON. The skills hold no
-schemas; they read everything from the CLI at runtime, so custom blocks are
-picked up automatically. See
-[contentbit.dev/docs/guides/agents](https://contentbit.dev/docs/guides/agents).
+4. Feed diagnostics back to the model until clean. Render anywhere: React, Astro, static HTML, or plain Markdown.
 
 ## Packages
 
@@ -76,6 +85,7 @@ picked up automatically. See
 | `@contentbit/blocks` | Generic block definitions (callout, steps, comparison, tabs, faq, ...)                             |
 | `@contentbit/html`   | Static HTML renderer, works without JavaScript                                                     |
 | `@contentbit/react`  | React renderer with headless accessible defaults                                                   |
+| `@contentbit/astro`  | Astro renderer: `.astro` components with per-block overrides                                       |
 | `contentbit`         | CLI: init / validate / stats / render / instructions / docs / agents                               |
 
 The styled component pack ships through a shadcn registry:
@@ -88,6 +98,7 @@ The styled component pack ships through a shadcn registry:
 - [All blocks](https://contentbit.dev/blocks), the generic pack with authoring guidance
 - [Playground](https://contentbit.dev/playground), validates as you type
 - [Blog](https://contentbit.dev/blog), every post is a validated Content Blocks document
+- [Changelog](https://contentbit.dev/docs/changelog), what shipped in each release
 - [llms.txt](https://contentbit.dev/llms.txt) / [authoring guide](https://contentbit.dev/contentbit-guide.md) for agents
 
 ## Development

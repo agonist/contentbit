@@ -1,3 +1,4 @@
+import { AgentSession } from '@/components/agent-session'
 import { BlockShowcase } from '@/components/block-showcase'
 import { FeatureBento } from '@/components/feature-bento'
 import { Frame } from '@/components/frame'
@@ -31,14 +32,14 @@ export default function Home() {
           <div className="mx-auto max-w-3xl px-6 pt-20 pb-14 text-center sm:pt-28">
             <div className="animate-rise" style={{ animationDelay: '0ms' }}>
               <Link
-                href={'/docs/concepts/llm-authoring'}
+                href={'/docs/guides/agents'}
                 className="bg-background/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 border px-3 py-1 font-mono text-xs backdrop-blur transition-colors"
               >
                 <span className="relative flex size-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
                   <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
                 </span>
-                Built for LLM-generated content
+                New: your coding agent writes validated content
               </Link>
             </div>
             <h1
@@ -53,7 +54,7 @@ export default function Home() {
               style={{ animationDelay: '160ms' }}
             >
               Write Markdown with validated, structured blocks. Render it anywhere. Built for
-              content written by humans, CMSes, and LLMs.
+              content written by humans, CMSes, and coding agents.
             </p>
             <div
               className="animate-rise mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
@@ -79,14 +80,14 @@ export default function Home() {
               className="animate-rise text-muted-foreground mt-5 font-mono text-xs"
               style={{ animationDelay: '400ms' }}
             >
-              or see{' '}
+              or read the{' '}
               <Link
-                href="/blog/llm-markdown-that-cannot-break"
+                href="/blog/contentbit-0-2-0"
                 className="text-foreground underline underline-offset-4 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
               >
-                a complete article
-              </Link>{' '}
-              rendered by the library
+                0.2.0 announcement
+              </Link>
+              , itself rendered by the library
             </p>
           </div>
         </section>
@@ -143,25 +144,90 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features */}
+        {/* Agent integration */}
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="mb-8">
-            <Eyebrow index="03">The system</Eyebrow>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              One definition, every surface
-            </h2>
+            <Eyebrow index="03">The operator</Eyebrow>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Your agent runs the loop</h2>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+              <code className="font-mono">init</code>
+              {
+                ' installs skills and AGENTS.md instructions, so “write a blog post” fetches the live authoring guide, writes, and validates until clean. The skills hold no schemas — they read everything from the CLI — so your custom blocks are picked up automatically.'
+              }
+            </p>
           </div>
           <div className="reveal-on-scroll">
-            <FeatureBento />
+            <Frame>
+              <AgentSession
+                steps={[
+                  { kind: 'user', text: 'write a blog post about our new dark mode' },
+                  { kind: 'skill', name: 'contentbit-author' },
+                  {
+                    kind: 'command',
+                    command:
+                      'contentbit instructions --audience llm --registry ./blocks/registry.ts',
+                    exitCode: 0,
+                  },
+                  {
+                    kind: 'assistant',
+                    text: 'Drafting content/dark-mode.md with a callout and a before/after comparison…',
+                  },
+                  {
+                    kind: 'command',
+                    command:
+                      'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+                    exitCode: 1,
+                    output:
+                      'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
+                  },
+                  {
+                    kind: 'assistant',
+                    text: 'The comparison row is missing its second value — fixing and revalidating.',
+                  },
+                  {
+                    kind: 'command',
+                    command:
+                      'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+                    exitCode: 0,
+                    output: '1 file(s): 0 errors, 0 warnings',
+                  },
+                ]}
+              />
+            </Frame>
+          </div>
+          <div className="mt-6 flex justify-center">
+            <Link
+              href="/docs/guides/agents"
+              className="group text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
+            >
+              <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+              works with Claude Code, Cursor, Codex, Copilot — see the agents guide
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="border-y">
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <div className="mb-8">
+              <Eyebrow index="04">The system</Eyebrow>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                One definition, every surface
+              </h2>
+            </div>
+            <div className="reveal-on-scroll">
+              <FeatureBento />
+            </div>
           </div>
         </section>
 
         {/* Block showcase */}
-        <section className="border-y">
+        <section>
           <div className="mx-auto max-w-6xl px-6 py-16">
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
-                <Eyebrow index="04">The generic pack</Eyebrow>
+                <Eyebrow index="05">The generic pack</Eyebrow>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                   Eight blocks that work in any niche
                 </h2>
@@ -184,21 +250,23 @@ export default function Home() {
         </section>
 
         {/* shadcn install */}
-        <section className="mx-auto max-w-3xl px-6 py-20 text-center">
-          <Eyebrow index="05">Styled pack</Eyebrow>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-            Install the components, own the code
-          </h2>
-          <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-sm">
-            The React pack ships through a shadcn registry. Components land in your app as editable
-            source files: Tailwind, your tokens, your rules.
-          </p>
-          <div className="mt-6">
-            <InstallTabs command="shadcn@latest add @contentbit/generic-pack" />
+        <section className="border-t">
+          <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+            <Eyebrow index="06">Styled pack</Eyebrow>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              Install the components, own the code
+            </h2>
+            <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-sm">
+              The React pack ships through a shadcn registry. Components land in your app as
+              editable source files: Tailwind, your tokens, your rules.
+            </p>
+            <div className="mt-6">
+              <InstallTabs command="shadcn@latest add @contentbit/generic-pack" />
+            </div>
+            <p className="text-muted-foreground mt-3 font-mono text-xs">
+              registry: https://contentbit.dev/r/{'{name}'}.json
+            </p>
           </div>
-          <p className="text-muted-foreground mt-3 font-mono text-xs">
-            registry: https://contentbit.dev/r/{'{name}'}.json
-          </p>
         </section>
       </main>
 
@@ -223,6 +291,9 @@ export default function Home() {
             </Link>
             <Link href="/blog" className="hover:text-foreground transition-colors">
               Blog
+            </Link>
+            <Link href="/docs/changelog" className="hover:text-foreground transition-colors">
+              Changelog
             </Link>
             <Link href="/playground" className="hover:text-foreground transition-colors">
               Playground
