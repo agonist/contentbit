@@ -1,0 +1,84 @@
+---
+title: Coding-agent integration
+description: Ship skills and AGENTS.md instructions so any agent can write and audit validated content.
+---
+
+Your coding agent already lives in the repo. This guide wires it to contentbit so
+"write a blog post about X" produces a validated document, and "audit my content"
+reports real findings from document stats.
+
+The integration is deliberately thin: skill files contain no block schemas. They
+teach the agent to fetch live data from the CLI — the authoring guide from
+`instructions`, health data from `stats`, diagnostics from `validate` — so when
+you add a custom block, every agent picks it up on the next run. Nothing to
+regenerate, nothing to drift.
+
+## Install
+
+`contentbit init` installs the integration automatically (skip with
+`--no-agents`). In an existing project, or after upgrading the CLI:
+
+```bash
+contentbit agents
+```
+
+This manages two things:
+
+- **`AGENTS.md`** — a fenced block between `<!-- contentbit:start -->` and
+  `<!-- contentbit:end -->` markers with compact instructions any agent reads
+  (Cursor, Codex, Copilot, ...). Your content outside the markers is never
+  touched; re-running refreshes only the block.
+- **Claude Code skills** — when a `.claude/` directory exists (or with
+  `--claude`), two skills land in `.claude/skills/`:
+  - `contentbit-author` — the writing loop: fetch the authoring guide, write,
+    validate, fix diagnostics until exit 0.
+  - `contentbit-audit` — the health check: run `stats` across content, flag
+    validation issues, thin documents, and block-less pages, in that order.
+
+Pass `--no-agents-md` to manage only the skills.
+
+## What the agent does
+
+The author skill follows the same loop you would run by hand:
+
+```bash
+# 1. the live guide, including your custom blocks
+contentbit instructions --audience llm --registry ./blocks/registry.ts
+
+# 2. write the document, then validate until clean
+contentbit validate content/new-post.md --registry ./blocks/registry.ts
+```
+
+Both skills read the `content:check` script in your package.json to discover the
+project's content glob and `--registry` flag, so they adapt to your layout
+without configuration.
+
+The audit skill leans on `stats`, which prints JSON and always exits 0:
+
+```bash
+contentbit stats "content/**/*.md" --registry ./blocks/registry.ts
+```
+
+Each entry carries a heading outline with per-section word counts, block usage
+by name, link domains, and a validation summary — enough to rank what needs
+attention without opening a single file.
+
+## Plug contentbit into your own skills
+
+You likely already have skills for your content workflows — a blog-post skill, a
+changelog skill. Add contentbit as a context source and a quality gate with
+three lines:
+
+```markdown
+Before writing, run `contentbit instructions --audience llm --registry <path>`
+and follow it exactly — never guess block syntax. After writing, run
+`contentbit validate <file> --registry <path>` and fix every diagnostic
+(`file:line:col severity CODE message`, with `hint:` lines) until it exits 0.
+```
+
+For data-informed writing, feed `contentbit stats` output in as well — for
+example, have the skill check sibling documents' outlines and block usage so new
+content matches the structure of what already works.
+
+This works in any agent that can run shell commands. The CLI is the interface;
+skills, rules files, and prompts are thin adapters over it.

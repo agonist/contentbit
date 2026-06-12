@@ -7,6 +7,7 @@ import { parseArgs } from 'node:util'
 import type { Io } from '../run.js'
 
 import { loadRegistry } from '../load-registry.js'
+import { installAgentIntegration } from './agents.js'
 
 type Target = 'react' | 'html' | 'markdown' | 'astro'
 
@@ -398,6 +399,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
       'no-install': { type: 'boolean', default: false },
       'no-page': { type: 'boolean', default: false },
       'no-styled': { type: 'boolean', default: false },
+      'no-agents': { type: 'boolean', default: false },
     },
   })
   const cwd = values.cwd
@@ -573,6 +575,14 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   const guide = registry.toAuthoringGuide({ audience: 'llm', includeExamples: true })
   await writeFile(join(cwd, 'contentbit-guide.md'), guide, 'utf8')
   io.stdout('created: contentbit-guide.md (LLM authoring instructions)')
+
+  // Coding-agent integration: an AGENTS.md block for every agent, plus Claude
+  // Code skills when a .claude/ directory exists. `contentbit agents` refreshes.
+  if (!values['no-agents']) {
+    await installAgentIntegration(cwd, {}, io)
+    io.stdout('Agent integration installed — try asking your agent:')
+    io.stdout('  "write a blog post about X" or "audit my content"')
+  }
 
   io.stdout('')
   io.stdout('Done. Next steps:')

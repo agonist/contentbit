@@ -95,7 +95,7 @@ ${posts.map((p) => `- [${p.meta.title}](${SITE_URL}/blog/${p.file.replace(/\.md$
 - @contentbit/blocks: the generic block pack
 - @contentbit/react: React renderer (headless defaults)
 - @contentbit/html: static HTML renderer
-- contentbit: CLI — init, validate, render, instructions
+- contentbit: CLI — init, validate, stats, render, instructions, agents
 `
 
 // ── llms-full.txt: everything inlined ──
