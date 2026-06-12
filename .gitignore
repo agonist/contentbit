@@ -33,8 +33,5 @@ pnpm-debug.log*
 # os / editor
 .DS_Store
 
-# local scratch starters
-starter/
-
 # QA screenshots
 qa-*.png

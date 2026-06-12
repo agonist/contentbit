@@ -1,0 +1,85 @@
+---
+import { genericBlocks } from "@contentbit/blocks"
+import {
+  createBlockRegistry,
+  parseDocument,
+  validateDocument,
+} from "@contentbit/core"
+import { getEntry } from "astro:content"
+
+import ContentRenderer from "@/components/content-blocks/content-renderer.astro"
+// Definitions in blocks/registry.ts are shared with the validate CLI.
+import customBlocks from "../../blocks/registry"
+import QuoteBlock from "../../blocks/QuoteBlock.astro"
+import Layout from "@/layouts/main.astro"
+
+// Entry ids are the file path relative to the collection base, minus ".md".
+const entry = await getEntry("articles", "example")
+if (!entry?.body)
+  throw new Error('Entry "example" not found in the articles collection.')
+
+const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
+// Static pages render at build time, so invalid blocks fail the build here.
+const result = validateDocument(parseDocument(entry.body), registry)
+---
+
+<Layout>
+  <div class="border-b border-border/60">
+    <header
+      class="mx-auto flex max-w-2xl items-center justify-between px-6 py-4"
+    >
+      <span class="font-mono text-xs tracking-wider uppercase"
+        >Example article</span
+      >
+      <a
+        href="https://contentbit.dev"
+        class="text-xs text-muted-foreground transition-colors hover:text-foreground"
+      >
+        built with contentbit
+      </a>
+    </header>
+  </div>
+  <main class="article mx-auto max-w-2xl px-6 py-12">
+    <ContentRenderer
+      document={result.document}
+      components={{ quote: QuoteBlock }}
+    />
+  </main>
+</Layout>
+
+<style is:global>
+  /* Light prose styles for the Markdown between blocks. */
+  .article h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .article h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .article p {
+    font-size: 0.875rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    color: var(--muted-foreground);
+  }
+  .article p:has(+ h2) {
+    margin-bottom: 0;
+  }
+  .article a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .article code {
+    background: var(--muted);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    font-size: 0.8125rem;
+  }
+</style>

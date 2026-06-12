@@ -1,0 +1,81 @@
+---
+import type { ProsConsData } from '@contentbit/blocks'
+import type { ValidatedBlockNode } from '@contentbit/core'
+
+import { splitProsCons } from '@contentbit/blocks'
+// Item text is rendered with the package default: marked with raw HTML
+// escaped (safe for untrusted content). Swap in your own pipeline here.
+import { defaultRenderMarkdown } from '@contentbit/astro'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+}
+
+const { node } = Astro.props
+const { pros, cons } = splitProsCons(node.data as ProsConsData)
+
+// Inline lucide paths: check, x.
+const CHECK = '<path d="M20 6 9 17l-5-5"/>'
+const X = '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'
+
+const columns = [
+  {
+    heading: 'Pros',
+    items: pros,
+    path: CHECK,
+    head: 'bg-emerald-500/[0.07] text-emerald-700 dark:text-emerald-400',
+    mark: 'text-emerald-600 dark:text-emerald-500',
+  },
+  {
+    heading: 'Cons',
+    items: cons,
+    path: X,
+    head: 'bg-rose-500/[0.07] text-rose-700 dark:text-rose-400',
+    mark: 'text-rose-600 dark:text-rose-500',
+  },
+]
+---
+
+<div data-cb-styled class="my-6 grid gap-3 sm:grid-cols-2">
+  {
+    columns.map((col) => (
+      <div class="bg-card overflow-hidden rounded-lg border">
+        <div class:list={['flex items-center gap-2 border-b px-4 py-2.5', col.head]}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="size-3.5"
+            aria-hidden="true"
+            set:html={col.path}
+          />
+          <span class="text-xs font-semibold tracking-wider uppercase">{col.heading}</span>
+        </div>
+        <ul class="list-none space-y-2 p-4 text-sm">
+          {col.items.map((text) => (
+            <li class="flex gap-2.5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class:list={['mt-1 size-3.5 shrink-0', col.mark]}
+                aria-hidden="true"
+                set:html={col.path}
+              />
+              {/* Item text is Markdown — render it, with paragraph margins zeroed. */}
+              <div class="min-w-0 leading-relaxed [&>p]:m-0" set:html={defaultRenderMarkdown(text)} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))
+  }
+</div>

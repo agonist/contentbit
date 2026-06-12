@@ -1,0 +1,51 @@
+---
+import type { FaqData, FaqItemData } from '@contentbit/blocks'
+import type { ValidatedBlockNode } from '@contentbit/core'
+
+import { isValidatedBlock } from '@contentbit/core'
+// Item text is rendered with the package default: marked with raw HTML
+// escaped (safe for untrusted content). Swap in your own pipeline here.
+import { defaultRenderMarkdown } from '@contentbit/astro'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+}
+
+const { node } = Astro.props
+const data = node.data as FaqData
+const items = data.blocks.map((item) => ({
+  question: String(item.props.question),
+  html: defaultRenderMarkdown(isValidatedBlock(item) ? (item.data as FaqItemData).markdown : item.body),
+}))
+
+// Inline lucide path: chevron-down.
+const CHEVRON = '<path d="m6 9 6 6 6-6"/>'
+
+// Native <details> means items open independently (the React pack's accordion
+// is single-open). Add name="faq" to the <details> elements for exclusivity.
+---
+
+<div data-cb-styled class="bg-card my-6 rounded-lg border px-4">
+  {
+    items.map((item, i) => (
+      <details class:list={['group', i < items.length - 1 && 'border-b']}>
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left text-sm font-medium [&::-webkit-details-marker]:hidden">
+          {item.question}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+            set:html={CHEVRON}
+          />
+        </summary>
+        <div class="text-muted-foreground pb-4 text-sm leading-relaxed" set:html={item.html} />
+      </details>
+    ))
+  }
+</div>

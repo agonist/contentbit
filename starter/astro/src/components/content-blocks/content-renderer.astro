@@ -1,0 +1,51 @@
+---
+import type { DocumentNode } from '@contentbit/core'
+import type { ComponentProps } from 'astro/types'
+
+import { ContentBlocks } from '@contentbit/astro/components'
+
+import Callout from './callout.astro'
+import Comparison from './comparison.astro'
+import Faq from './faq.astro'
+import KeyMetrics from './key-metrics.astro'
+import ProsCons from './pros-cons.astro'
+import QuickRef from './quick-ref.astro'
+import Steps from './steps.astro'
+import Tabs from './tabs.astro'
+
+// The styled pack, keyed by block name. Add your custom blocks via the
+// `components` prop — they merge over these.
+const styledComponents: Record<string, unknown> = {
+  callout: Callout,
+  steps: Steps,
+  'key-metrics': KeyMetrics,
+  'quick-ref': QuickRef,
+  comparison: Comparison,
+  'pros-cons': ProsCons,
+  tabs: Tabs,
+  faq: Faq,
+}
+
+interface Props {
+  document: DocumentNode
+  components?: Record<string, unknown>
+  renderers?: ComponentProps<typeof ContentBlocks>['renderers']
+  /**
+   * Prose pipeline for Markdown BETWEEN blocks and callout bodies. Note:
+   * steps, pros-cons, tabs, and faq render their inner item text with the
+   * package default (marked) — edit those components to change it.
+   */
+  renderMarkdown?: (md: string) => string
+  onInvalid?: 'strict' | 'annotated' | 'fallback'
+}
+
+const { document, components, renderers, renderMarkdown, onInvalid } = Astro.props
+---
+
+<ContentBlocks
+  document={document}
+  components={{ ...styledComponents, ...components }}
+  renderers={renderers}
+  renderMarkdown={renderMarkdown}
+  onInvalid={onInvalid}
+/>

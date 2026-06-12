@@ -1,0 +1,23 @@
+---
+import type { QuickRefData } from '@contentbit/blocks'
+import type { ValidatedBlockNode } from '@contentbit/core'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+}
+
+const { node } = Astro.props
+const data = node.data as QuickRefData
+---
+
+<dl data-cb-styled class="bg-card my-6 space-y-2.5 rounded-lg border px-4 py-3.5">
+  {
+    data.rows.map((row) => (
+      <div class="flex items-baseline gap-3">
+        <dt class="text-muted-foreground shrink-0 text-sm">{row.key}</dt>
+        <span class="border-foreground/15 min-w-4 flex-1 self-center border-b border-dotted" aria-hidden="true" />
+        <dd class="text-right text-sm font-medium tabular-nums">{row.value}</dd>
+      </div>
+    ))
+  }
+</dl>

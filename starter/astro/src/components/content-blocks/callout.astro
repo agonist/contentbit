@@ -1,0 +1,76 @@
+---
+import type { ValidatedBlockNode } from '@contentbit/core'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+  type?: string
+  title?: string
+}
+
+const { type = 'note', title } = Astro.props
+
+interface Variant {
+  border: string
+  head: string
+  label: string
+  path: string
+}
+
+// Inline lucide paths: info, lightbulb, triangle-alert, octagon-alert, sparkles.
+const VARIANTS: Record<string, Variant> = {
+  note: {
+    border: 'border-border',
+    head: 'bg-muted/60 text-muted-foreground',
+    label: 'Note',
+    path: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  },
+  tip: {
+    border: 'border-emerald-500/30',
+    head: 'bg-emerald-500/[0.07] text-emerald-700 dark:text-emerald-400',
+    label: 'Tip',
+    path: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  },
+  warning: {
+    border: 'border-amber-500/30',
+    head: 'bg-amber-500/[0.08] text-amber-700 dark:text-amber-400',
+    label: 'Warning',
+    path: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  },
+  important: {
+    border: 'border-rose-500/30',
+    head: 'bg-rose-500/[0.07] text-rose-700 dark:text-rose-400',
+    label: 'Important',
+    path: '<path d="M12 16h.01"/><path d="M12 8v4"/><path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"/>',
+  },
+  tldr: {
+    border: 'border-sky-500/30',
+    head: 'bg-sky-500/[0.07] text-sky-700 dark:text-sky-400',
+    label: 'TL;DR',
+    path: '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
+  },
+}
+
+const variant = VARIANTS[type] ?? VARIANTS.note
+---
+
+<aside data-cb-styled class:list={['bg-card my-6 border', variant.border]}>
+  <div class:list={['flex items-center gap-2 border-b px-4 py-2', variant.head]}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="size-3.5 shrink-0"
+      aria-hidden="true"
+      set:html={variant.path}
+    />
+    <span class="font-mono text-[11px] font-semibold tracking-wider uppercase">{variant.label}</span>
+    {title ? <span class="text-foreground ml-1 text-sm font-medium">{title}</span> : null}
+  </div>
+  <div class="px-4 py-3 text-sm leading-relaxed [&>p]:m-0 [&>p+p]:mt-2">
+    <slot />
+  </div>
+</aside>

@@ -1,0 +1,19 @@
+---
+// The Astro component for the custom `quote` block defined in blocks/registry.ts.
+// Block props arrive as component props; nested content arrives via <slot />.
+interface Props {
+  author: string
+  role?: string
+}
+
+const { author, role } = Astro.props
+---
+
+<figure
+  style="margin: 1.5rem 0; border-left: 2px solid #d4d4d4; padding-left: 1rem;"
+>
+  <blockquote style="font-style: italic;"><slot /></blockquote>
+  <figcaption style="margin-top: 0.5rem; font-size: 0.875rem; opacity: 0.7;">
+    — {author}{role ? `, ${role}` : null}
+  </figcaption>
+</figure>
