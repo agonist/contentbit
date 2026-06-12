@@ -4,11 +4,12 @@ export interface Io {
   writeFile(path: string, content: string): Promise<void>
 }
 
-export const USAGE = `Usage: contentbit <init|validate|render|instructions|docs> [options]
+export const USAGE = `Usage: contentbit <init|validate|stats|render|instructions|docs> [options]
 
   init [-t react|html|markdown] [--md ...] [-y] [--no-install] [--no-page]
 
   validate <globs...> [--registry <module.mjs>] [--strict-warnings]
+  stats <file> [--registry <module.mjs>] [--no-validate]
   render <file> --target html|markdown [--registry <module.mjs>] [--out <file>]
   instructions [--audience llm|human] [--no-examples] [--registry <module.mjs>] [--out <file>]
   docs [--registry <module.mjs>] [--out <file>]`
@@ -18,6 +19,7 @@ type Command = (args: string[], io: Io) => Promise<number>
 const commands: Record<string, () => Promise<Command>> = {
   init: async () => (await import('./commands/init.js')).initCommand,
   validate: async () => (await import('./commands/validate.js')).validateCommand,
+  stats: async () => (await import('./commands/stats.js')).statsCommand,
   render: async () => (await import('./commands/render.js')).renderCommand,
   instructions: async () => (await import('./commands/instructions.js')).instructionsCommand,
   docs: async () => (await import('./commands/docs.js')).docsCommand,

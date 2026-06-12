@@ -10,6 +10,10 @@ pnpm dlx contentbit@latest init
 # validate — exits 1 with file:line:col diagnostics
 contentbit validate "content/**/*.md"
 
+# structured JSON stats for one document: outline, word counts,
+# block census, links, validation summary — quick context for LLMs
+contentbit stats article.md
+
 # compact LLM context generated from the registry
 contentbit instructions --audience llm --out guide.md
 
