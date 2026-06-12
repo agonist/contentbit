@@ -4,7 +4,15 @@ import { cn } from '@/lib/utils'
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
 
-export function CopyButton({ value, className }: { value: string; className?: string }) {
+export function CopyButton({
+  value,
+  className,
+  onCopy,
+}: {
+  value: string
+  className?: string
+  onCopy?: () => void
+}) {
   const [copied, setCopied] = useState(false)
   return (
     <button
@@ -18,6 +26,7 @@ export function CopyButton({ value, className }: { value: string; className?: st
         void navigator.clipboard.writeText(value)
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
+        onCopy?.()
       }}
     >
       {copied ? (

@@ -8,9 +8,9 @@ import type { Io } from '../run.js'
 
 import { loadRegistry } from '../load-registry.js'
 
-type Target = 'react' | 'html' | 'markdown'
+type Target = 'react' | 'html' | 'markdown' | 'astro'
 
-const TARGETS: Target[] = ['react', 'html', 'markdown']
+const TARGETS: Target[] = ['react', 'html', 'markdown', 'astro']
 
 type Md = 'react-markdown' | 'marked' | 'markdown-it' | 'none'
 
@@ -19,6 +19,8 @@ const MD_CHOICES: Record<Target, Md[]> = {
   react: ['react-markdown', 'none'],
   html: ['marked', 'markdown-it', 'none'],
   markdown: ['none'],
+  // @contentbit/astro ships its own marked-based default; nothing to install.
+  astro: ['none'],
 }
 
 const REGISTRY_TEMPLATE = `// Custom block definitions for this project. The CLI and your app share
@@ -242,6 +244,70 @@ export default async function ExamplePage() {
 }
 `
 
+const ASTRO_CONTENT_CONFIG = `import { defineCollection } from 'astro:content'
+import { glob } from 'astro/loaders'
+
+export const collections = {
+  articles: defineCollection({
+    // Astro's builtin Markdown loader. Entry bodies are parsed and validated
+    // where they render (see src/pages/example.astro); \`contentbit validate\`
+    // covers the same files in CI.
+    loader: glob({ pattern: '**/*.md', base: './content' }),
+  }),
+}
+`
+
+const ASTRO_QUOTE_BLOCK = `---
+// The Astro component for the custom \`quote\` block defined in blocks/registry.ts.
+// Block props arrive as component props; nested content arrives via <slot />.
+interface Props {
+  author: string
+  role?: string
+}
+
+const { author, role } = Astro.props
+---
+
+<figure style="margin: 1.5rem 0; border-left: 2px solid #d4d4d4; padding-left: 1rem;">
+  <blockquote style="font-style: italic;"><slot /></blockquote>
+  <figcaption style="margin-top: 0.5rem; font-size: 0.875rem; opacity: 0.7;">
+    — {author}{role ? \`, \${role}\` : null}
+  </figcaption>
+</figure>
+`
+
+/** The example page: styled pack renderer or the headless ContentBlocks. */
+function astroPage(styled: boolean): string {
+  const importLine = styled
+    ? "import ContentRenderer from '../components/content-blocks/content-renderer.astro'"
+    : "import { ContentBlocks } from '@contentbit/astro/components'"
+  const renderer = styled ? 'ContentRenderer' : 'ContentBlocks'
+  return `---
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { getEntry } from 'astro:content'
+
+${importLine}
+
+// Definitions in blocks/registry.ts are shared with the validate CLI.
+import customBlocks from '../../blocks/registry'
+import QuoteBlock from '../../blocks/QuoteBlock.astro'
+
+// Entry ids are the file path relative to the collection base, minus ".md".
+const entry = await getEntry('articles', 'example')
+if (!entry?.body) throw new Error('Entry "example" not found in the articles collection.')
+
+const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
+// Static pages render at build time, so invalid blocks fail the build here.
+const result = validateDocument(parseDocument(entry.body), registry)
+---
+
+<main style="max-width: 42rem; margin: 0 auto; padding: 3rem 1.5rem;">
+  <${renderer} document={result.document} components={{ quote: QuoteBlock }} />
+</main>
+`
+}
+
 function detectPackageManager(cwd: string): string {
   // The project's lockfile outranks however the CLI itself was launched.
   const locks: Array<[string, string]> = [
@@ -279,6 +345,34 @@ function runInstall(pm: string, args: string[], cwd: string): Promise<number> {
     child.on('close', (code) => resolve(code ?? 1))
     child.on('error', () => resolve(1))
   })
+}
+
+/** Wire the @contentbit shadcn registry and install a styled pack. Returns true on success. */
+async function installStyledPack(
+  cwd: string,
+  pack: string,
+  noInstall: boolean,
+  io: Io,
+): Promise<boolean> {
+  const componentsJsonPath = join(cwd, 'components.json')
+  const componentsJson = JSON.parse(await readFile(componentsJsonPath, 'utf8')) as {
+    registries?: Record<string, string>
+  }
+  componentsJson.registries ??= {}
+  if (!componentsJson.registries['@contentbit']) {
+    componentsJson.registries['@contentbit'] = 'https://contentbit.dev/r/{name}.json'
+    await writeFile(componentsJsonPath, `${JSON.stringify(componentsJson, null, 2)}\n`, 'utf8')
+    io.stdout('added @contentbit registry to components.json')
+  }
+  if (noInstall) {
+    io.stdout(`skipped: shadcn add ${pack}`)
+    return true
+  }
+  const [bin, prefix] = dlxCommand(detectPackageManager(cwd))
+  io.stdout(`installing the styled pack: shadcn add ${pack}`)
+  const code = await runInstall(bin, [...prefix, 'shadcn@latest', 'add', pack, '--yes'], cwd)
+  if (code !== 0) io.stderr('styled pack install failed; falling back to headless defaults')
+  return code === 0
 }
 
 /** Write a file unless it already exists; returns what happened for the summary. */
@@ -320,7 +414,8 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   // Resolve the render target: flag > prompt (interactive) > detection.
   const hasReact = Boolean(pkg.dependencies?.react ?? pkg.devDependencies?.react)
-  const detected: Target = hasReact ? 'react' : 'html'
+  const hasAstro = Boolean(pkg.dependencies?.astro ?? pkg.devDependencies?.astro)
+  const detected: Target = hasAstro ? 'astro' : hasReact ? 'react' : 'html'
   let target: Target
   if (values.target) {
     if (!TARGETS.includes(values.target as Target)) {
@@ -335,6 +430,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
       initialValue: detected,
       options: [
         { value: 'react', label: 'React', hint: 'ContentBlocks component' },
+        { value: 'astro', label: 'Astro', hint: 'content collections + .astro components' },
         { value: 'html', label: 'Static HTML', hint: 'renderToHtml, no framework' },
         { value: 'markdown', label: 'Plain Markdown', hint: 'fallback rendering only' },
       ],
@@ -376,6 +472,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   const runtime = ['@contentbit/core', '@contentbit/blocks', 'zod']
   if (target === 'react') runtime.push('@contentbit/react')
   if (target === 'html') runtime.push('@contentbit/html')
+  if (target === 'astro') runtime.push('@contentbit/astro')
   if (md !== 'none') runtime.push(md)
   if (values['no-install']) {
     io.stdout(`skipped install: ${runtime.join(' ')} + contentbit (dev)`)
@@ -403,29 +500,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   let styled = false
   const componentsJsonPath = join(cwd, 'components.json')
   if (target === 'react' && !values['no-styled'] && existsSync(componentsJsonPath)) {
-    const componentsJson = JSON.parse(await readFile(componentsJsonPath, 'utf8')) as {
-      registries?: Record<string, string>
-    }
-    componentsJson.registries ??= {}
-    if (!componentsJson.registries['@contentbit']) {
-      componentsJson.registries['@contentbit'] = 'https://contentbit.dev/r/{name}.json'
-      await writeFile(componentsJsonPath, `${JSON.stringify(componentsJson, null, 2)}\n`, 'utf8')
-      io.stdout('added @contentbit registry to components.json')
-    }
-    if (values['no-install']) {
-      io.stdout('skipped: shadcn add @contentbit/generic-pack')
-      styled = true
-    } else {
-      const [bin, prefix] = dlxCommand(detectPackageManager(cwd))
-      io.stdout('installing the styled pack: shadcn add @contentbit/generic-pack')
-      const code = await runInstall(
-        bin,
-        [...prefix, 'shadcn@latest', 'add', '@contentbit/generic-pack', '--yes'],
-        cwd,
-      )
-      if (code === 0) styled = true
-      else io.stderr('styled pack install failed; falling back to headless defaults')
-    }
+    styled = await installStyledPack(cwd, '@contentbit/generic-pack', values['no-install'], io)
   }
 
   if (target === 'react') {
@@ -446,6 +521,29 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
       'scripts/render-example.mjs',
       htmlRenderScript(md as 'marked' | 'markdown-it' | 'none'),
     ])
+  }
+  if (target === 'astro') {
+    let astroStyled = false
+    if (!values['no-styled'] && existsSync(componentsJsonPath)) {
+      astroStyled = await installStyledPack(cwd, '@contentbit/astro-pack', values['no-install'], io)
+    }
+    files.push(['blocks/QuoteBlock.astro', ASTRO_QUOTE_BLOCK])
+    // Every config filename Astro resolves (src/content.config.* plus the
+    // legacy src/content/config.* location), so we never scaffold a second
+    // config that Astro would silently ignore.
+    const configCandidates = ['ts', 'mts', 'mjs', 'js'].flatMap((ext) => [
+      `src/content.config.${ext}`,
+      `src/content/config.${ext}`,
+    ])
+    const existingConfig = configCandidates.find((p) => existsSync(join(cwd, p)))
+    if (existingConfig) {
+      io.stdout(`content config exists (${existingConfig}); add this collection manually:`)
+      io.stdout(ASTRO_CONTENT_CONFIG)
+      io.stdout('the example page expects the "articles" collection above')
+    } else {
+      files.push(['src/content.config.ts', ASTRO_CONTENT_CONFIG])
+    }
+    if (!values['no-page']) files.push(['src/pages/example.astro', astroPage(astroStyled)])
   }
   for (const [rel, content] of files) {
     const result = await scaffold(join(cwd, rel), content)
@@ -487,6 +585,9 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
       io.stdout('     <Content source={...content/example.md as a string} />')
     }
     io.stdout('  3. Styled components: pnpm dlx shadcn@latest add @contentbit/generic-pack')
+  } else if (target === 'astro') {
+    io.stdout('  2. Start the dev server and open /example to see the article rendered.')
+    io.stdout('  3. Styled components: pnpm dlx shadcn@latest add @contentbit/astro-pack')
   } else if (target === 'html') {
     io.stdout('  2. Render it: node scripts/render-example.mjs && open example.html')
   } else {

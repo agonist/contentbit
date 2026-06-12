@@ -4,6 +4,7 @@ packages:
   - 'site'
   - 'video'
 allowBuilds:
+  core-js: true
   esbuild: true
   sharp: true
 minimumReleaseAgeExclude:

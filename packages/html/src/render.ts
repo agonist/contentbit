@@ -1,4 +1,4 @@
-import type { ContentNode, DocumentNode, ValidatedBlockNode } from '@contentbit/core'
+import type { BlockNode, ContentNode, DocumentNode, ValidatedBlockNode } from '@contentbit/core'
 
 import { isValidatedBlock } from '@contentbit/core'
 
@@ -31,7 +31,12 @@ export interface RenderToHtmlOptions {
   onInvalid?: 'strict' | 'annotated' | 'fallback'
 }
 
-function defaultMarkdown(md: string): string {
+/**
+ * The minimal prose fallback shared by every renderer that has no Markdown
+ * pipeline wired: escaped paragraphs, never raw HTML. Also used for
+ * onInvalid: "fallback" block bodies.
+ */
+export function fallbackMarkdown(md: string): string {
   return md
     .trim()
     .split(/\n{2,}/)
@@ -39,9 +44,19 @@ function defaultMarkdown(md: string): string {
     .join('\n')
 }
 
+/** The onInvalid: "annotated" box. One definition so CSS contracts (.{prefix}invalid, data-cb-invalid) cannot drift between render targets. */
+export function invalidBlockHtml(node: Pick<BlockNode, 'name' | 'body'>, prefix: string): string {
+  return `<div class="${prefix}invalid" data-cb-invalid="${escapeHtml(node.name)}"><pre>${escapeHtml(node.body)}</pre></div>`
+}
+
+/** The onInvalid: "strict" error, shared verbatim across render targets. */
+export function unrenderableBlockError(name: string): Error {
+  return new Error(`Cannot render block "${name}": not validated or no renderer registered.`)
+}
+
 export function renderToHtml(document: DocumentNode, opts: RenderToHtmlOptions = {}): string {
   const prefix = opts.classPrefix ?? 'cb-'
-  const renderMarkdown = opts.renderMarkdown ?? defaultMarkdown
+  const renderMarkdown = opts.renderMarkdown ?? fallbackMarkdown
   const renderers = { ...genericHtmlRenderers, ...opts.renderers }
   const onInvalid = opts.onInvalid ?? 'fallback'
 
@@ -55,15 +70,9 @@ export function renderToHtml(document: DocumentNode, opts: RenderToHtmlOptions =
           if (node.type === 'markdown') return renderMarkdown(node.value)
           const renderer = renderers[node.name]
           if (renderer && isValidatedBlock(node)) return renderer(node, ctx)
-          if (onInvalid === 'strict') {
-            throw new Error(
-              `Cannot render block "${node.name}": not validated or no renderer registered.`,
-            )
-          }
-          if (onInvalid === 'annotated') {
-            return `<div class="${prefix}invalid" data-cb-invalid="${escapeHtml(node.name)}"><pre>${escapeHtml(node.body)}</pre></div>`
-          }
-          return defaultMarkdown(node.body)
+          if (onInvalid === 'strict') throw unrenderableBlockError(node.name)
+          if (onInvalid === 'annotated') return invalidBlockHtml(node, prefix)
+          return fallbackMarkdown(node.body)
         })
         .join('\n')
     },

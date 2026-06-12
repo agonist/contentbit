@@ -191,3 +191,95 @@ test('init fails cleanly without a package.json', async () => {
   expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(1)
   expect(io.err.join('\n')).toContain('No package.json')
 })
+
+test('init scaffolds an astro project non-interactively', async () => {
+  // astro outranks react when both are present
+  const dir = await project({
+    name: 'x',
+    dependencies: { astro: '^6.0.0', react: '^19.0.0' },
+  })
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+
+  const config = await readFile(join(dir, 'src/content.config.ts'), 'utf8')
+  expect(config).toContain("import { glob } from 'astro/loaders'")
+  expect(config).toContain('defineCollection')
+  const page = await readFile(join(dir, 'src/pages/example.astro'), 'utf8')
+  expect(page).toContain("from '@contentbit/astro/components'")
+  expect(page).toContain("getEntry('articles', 'example')")
+  expect(page).toContain('validateDocument(parseDocument(entry.body), registry)')
+  expect(page).toContain('QuoteBlock')
+  await expect(readFile(join(dir, 'blocks/QuoteBlock.astro'), 'utf8')).resolves.toContain(
+    'Astro.props',
+  )
+  await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(':::quote')
+  expect(io.out.join('\n')).toContain('@contentbit/astro')
+  expect(io.out.join('\n')).toContain('Next steps')
+})
+
+test('astro init leaves an existing content config alone and prints the snippet', async () => {
+  const dir = await project({ name: 'x', dependencies: { astro: '^6.0.0' } })
+  await mkdir(join(dir, 'src'), { recursive: true })
+  await writeFile(join(dir, 'src/content.config.ts'), 'export const collections = {}\n', 'utf8')
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+
+  await expect(readFile(join(dir, 'src/content.config.ts'), 'utf8')).resolves.toBe(
+    'export const collections = {}\n',
+  )
+  expect(io.out.join('\n')).toContain('add this collection manually')
+  expect(io.out.join('\n')).toContain('glob(')
+})
+
+test('astro init recognizes a content config Astro resolves before .ts', async () => {
+  const dir = await project({ name: 'x', dependencies: { astro: '^6.0.0' } })
+  await mkdir(join(dir, 'src'), { recursive: true })
+  await writeFile(join(dir, 'src/content.config.mts'), 'export const collections = {}\n', 'utf8')
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+
+  // No second config that Astro would silently ignore.
+  await expect(readFile(join(dir, 'src/content.config.ts'), 'utf8')).rejects.toThrow()
+  expect(io.out.join('\n')).toContain('content config exists (src/content.config.mts)')
+})
+
+test('--target astro works in a project without astro installed', async () => {
+  const dir = await project({ name: 'x' })
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--target', 'astro', '--cwd', dir], io)).toBe(0)
+  await expect(readFile(join(dir, 'src/content.config.ts'), 'utf8')).resolves.toContain('glob(')
+})
+
+test('astro init in a shadcn project installs the astro pack and uses ContentRenderer', async () => {
+  const dir = await project({ name: 'x', dependencies: { astro: '^6.0.0' } })
+  await writeFile(join(dir, 'components.json'), '{}', 'utf8')
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+
+  expect(io.out.join('\n')).toContain('skipped: shadcn add @contentbit/astro-pack')
+  const componentsJson = JSON.parse(await readFile(join(dir, 'components.json'), 'utf8'))
+  expect(componentsJson.registries['@contentbit']).toBe('https://contentbit.dev/r/{name}.json')
+  const page = await readFile(join(dir, 'src/pages/example.astro'), 'utf8')
+  expect(page).toContain('ContentRenderer')
+  expect(page).toContain('../components/content-blocks/content-renderer.astro')
+  // The pack install was skipped, so the next steps must say how to get it.
+  expect(io.out.join('\n')).toContain('shadcn@latest add @contentbit/astro-pack')
+})
+
+test('astro init without components.json stays headless', async () => {
+  const dir = await project({ name: 'x', dependencies: { astro: '^6.0.0' } })
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+  const page = await readFile(join(dir, 'src/pages/example.astro'), 'utf8')
+  expect(page).toContain("import { ContentBlocks } from '@contentbit/astro/components'")
+  expect(page).not.toContain('ContentRenderer')
+})
+
+test('astro init with --no-styled stays headless even with components.json', async () => {
+  const dir = await project({ name: 'x', dependencies: { astro: '^6.0.0' } })
+  await writeFile(join(dir, 'components.json'), '{}', 'utf8')
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--no-styled', '--cwd', dir], io)).toBe(0)
+  const page = await readFile(join(dir, 'src/pages/example.astro'), 'utf8')
+  expect(page).not.toContain('ContentRenderer')
+})

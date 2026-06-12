@@ -1,0 +1,93 @@
+---
+import type { TabData, TabsData } from '@contentbit/blocks'
+import type { ValidatedBlockNode } from '@contentbit/core'
+
+import { isValidatedBlock } from '@contentbit/core'
+// Item text is rendered with the package default: marked with raw HTML
+// escaped (safe for untrusted content). Swap in your own pipeline here.
+import { defaultRenderMarkdown } from '@contentbit/astro'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+}
+
+const { node } = Astro.props
+const data = node.data as TabsData
+// The source offset alone collides when two documents render on one page, so
+// a per-render suffix keeps tab/panel ids (and their ARIA wiring) unique.
+const id = `cb-tabs-${node.position.start.offset}-${Math.random().toString(36).slice(2, 8)}`
+const tabs = data.blocks.map((tab, i) => ({
+  title: String(tab.props.title),
+  html: defaultRenderMarkdown(isValidatedBlock(tab) ? (tab.data as TabData).markdown : tab.body),
+  selected: i === 0,
+}))
+---
+
+<div data-cb-styled data-cb-tabs class="my-6">
+  <div role="tablist" class="bg-muted text-muted-foreground inline-flex h-9 items-center justify-center rounded-lg p-1">
+    {
+      tabs.map((tab, i) => (
+        <button
+          type="button"
+          role="tab"
+          id={`${id}-tab-${i}`}
+          aria-controls={`${id}-panel-${i}`}
+          aria-selected={tab.selected ? 'true' : 'false'}
+          tabindex={tab.selected ? 0 : -1}
+          class="aria-selected:bg-background aria-selected:text-foreground inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all aria-selected:shadow-sm"
+        >
+          {tab.title}
+        </button>
+      ))
+    }
+  </div>
+  {
+    tabs.map((tab, i) => (
+      <div
+        role="tabpanel"
+        id={`${id}-panel-${i}`}
+        aria-labelledby={`${id}-tab-${i}`}
+        hidden={!tab.selected}
+        class="mt-2 text-sm leading-relaxed"
+        set:html={tab.html}
+      />
+    ))
+  }
+</div>
+
+<script>
+  // One handler per page; activates a tab within its [data-cb-tabs] container.
+  function activate(container: Element, index: number): void {
+    const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+    const panels = container.querySelectorAll<HTMLElement>('[role="tabpanel"]')
+    tabs.forEach((tab, i) => {
+      tab.setAttribute('aria-selected', i === index ? 'true' : 'false')
+      tab.tabIndex = i === index ? 0 : -1
+    })
+    panels.forEach((panel, i) => {
+      panel.hidden = i !== index
+    })
+    tabs[index]?.focus()
+  }
+
+  function init(): void {
+    document.querySelectorAll('[data-cb-tabs]').forEach((container) => {
+      if (container instanceof HTMLElement && container.dataset.cbTabsReady) return
+      if (container instanceof HTMLElement) container.dataset.cbTabsReady = 'true'
+      const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+      tabs.forEach((tab, i) => {
+        tab.addEventListener('click', () => activate(container, i))
+        tab.addEventListener('keydown', (event) => {
+          if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+          event.preventDefault()
+          const delta = event.key === 'ArrowRight' ? 1 : -1
+          activate(container, (i + delta + tabs.length) % tabs.length)
+        })
+      })
+    })
+  }
+
+  init()
+  // Re-bind after Astro view-transition navigations (no-op without <ClientRouter />).
+  document.addEventListener('astro:page-load', init)
+</script>

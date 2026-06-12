@@ -1,0 +1,38 @@
+---
+import type { ComparisonData } from '@contentbit/blocks'
+import type { ValidatedBlockNode } from '@contentbit/core'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+  left?: string
+  right?: string
+}
+
+const { node, left, right } = Astro.props
+const data = node.data as ComparisonData
+---
+
+<div data-cb-styled class="bg-card my-6 overflow-x-auto rounded-lg border">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="bg-muted/50 border-b">
+        <th scope="col" class="w-[28%] px-4 py-3 text-left font-medium" />
+        <th scope="col" class="px-4 py-3 text-left"><span class="font-semibold">{left}</span></th>
+        <th scope="col" class="px-4 py-3 text-left"><span class="font-semibold">{right}</span></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y">
+      {
+        data.rows.map((row) => (
+          <tr class="hover:bg-muted/30 transition-colors">
+            <th scope="row" class="text-muted-foreground px-4 py-3 text-left text-[13px] font-medium">
+              {row.label}
+            </th>
+            <td class="px-4 py-3 tabular-nums">{row.left}</td>
+            <td class="px-4 py-3 tabular-nums">{row.right}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

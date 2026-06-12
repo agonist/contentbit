@@ -1,0 +1,57 @@
+{
+  "name": "@contentbit/astro",
+  "version": "0.1.0",
+  "description": "Astro renderer for Content Blocks: .astro components for rendering validated documents, with per-block component overrides.",
+  "keywords": [
+    "astro",
+    "astro-component",
+    "content-blocks",
+    "markdown",
+    "renderer",
+    "withastro"
+  ],
+  "homepage": "https://contentbit.dev",
+  "bugs": "https://github.com/agonist/contentbit/issues",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agonist/contentbit.git",
+    "directory": "packages/astro"
+  },
+  "files": [
+    "dist",
+    "components"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./components": "./components/index.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "pnpm build && vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@contentbit/blocks": "workspace:*",
+    "@contentbit/core": "workspace:*",
+    "@contentbit/html": "workspace:*",
+    "marked": "^18.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "astro": "^6.4.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.17"
+  },
+  "peerDependencies": {
+    "astro": "^5.0.0 || ^6.0.0"
+  }
+}

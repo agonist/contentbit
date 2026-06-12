@@ -1,0 +1,48 @@
+---
+import type { DocumentNode } from '@contentbit/core'
+import type { HtmlBlockRenderer } from '@contentbit/html'
+
+import { genericHtmlRenderers } from '@contentbit/html'
+
+import { defaultRenderMarkdown } from '../dist/markdown.js'
+import RenderNodes from './RenderNodes.astro'
+
+interface Props {
+  /** A validated document: validateDocument(parseDocument(entry.body), registry).document. */
+  document: DocumentNode
+  /**
+   * Per-block Astro component overrides, keyed by block name. An override
+   * receives the block's validated props spread as component props, plus a
+   * reserved `node` prop (the full ValidatedBlockNode); nested content
+   * arrives through the default <slot />. A block prop literally named
+   * "node" is shadowed by the reserved prop.
+   */
+  components?: Record<string, unknown>
+  /** Per-block string renderers, merged over the generic html defaults. */
+  renderers?: Record<string, HtmlBlockRenderer>
+  /** CSS class prefix for default renderers. Default "cb-". */
+  classPrefix?: string
+  /** Prose pipeline. Default: marked (GFM) with raw HTML escaped. */
+  renderMarkdown?: (md: string) => string
+  /** Invalid-block behavior: throw, visible dev box, or escaped body. Default "annotated". */
+  onInvalid?: 'strict' | 'annotated' | 'fallback'
+}
+
+const {
+  document,
+  components = {},
+  renderers,
+  classPrefix = 'cb-',
+  renderMarkdown = defaultRenderMarkdown,
+  onInvalid = 'annotated',
+} = Astro.props
+---
+
+<RenderNodes
+  nodes={document.children}
+  components={components}
+  renderers={{ ...genericHtmlRenderers, ...renderers }}
+  classPrefix={classPrefix}
+  renderMarkdown={renderMarkdown}
+  onInvalid={onInvalid}
+/>

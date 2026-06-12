@@ -31,6 +31,15 @@ test('invalid files exit 1 and print formatted line-level diagnostics', async ()
   expect(all).toContain('bad.md:1:1 error CB_PROPS_INVALID')
 })
 
+test('block syntax inside YAML frontmatter is not validated as content', async () => {
+  const dir = await fixture({
+    'fm.md': '---\ntitle: x\nsnippet: |\n  :::note\n---\n\nProse only.\n',
+  })
+  const io = fakeIo()
+  expect(await run(['validate', join(dir, '*.md')], io)).toBe(0)
+  expect(io.out.join('\n')).toContain('0 errors')
+})
+
 test('--strict-warnings turns warnings into failures', async () => {
   const dir = await fixture({ 'warn.md': 'hello\n:::\nworld\n' }) // stray close => warning
   const io = fakeIo()

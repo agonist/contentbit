@@ -1,4 +1,9 @@
-import { formatDiagnostic, parseDocument, validateDocument } from '@contentbit/core'
+import {
+  formatDiagnostic,
+  parseDocument,
+  stripFrontmatter,
+  validateDocument,
+} from '@contentbit/core'
 import { readFile } from 'node:fs/promises'
 import { parseArgs } from 'node:util'
 import { glob } from 'tinyglobby'
@@ -31,7 +36,10 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
   let warnings = 0
   for (const file of files.sort()) {
     const source = await readFile(file, 'utf8')
-    const result = validateDocument(parseDocument(source), registry)
+    // Frontmatter is metadata, not content: blanked (positions preserved) so
+    // block syntax inside YAML never produces diagnostics — matching what
+    // frontmatter-aware consumers like Astro validate from entry bodies.
+    const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
     for (const d of result.diagnostics) {
       io.stderr(formatDiagnostic(d, file))
       if (d.severity === 'error') errors++

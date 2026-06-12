@@ -1,0 +1,32 @@
+---
+import type { KeyMetricsData } from '@contentbit/blocks'
+import type { ValidatedBlockNode } from '@contentbit/core'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+}
+
+// Static map so Tailwind can see the class names.
+const COLS: Record<number, string> = {
+  1: 'sm:grid-cols-1',
+  2: 'sm:grid-cols-2',
+  3: 'sm:grid-cols-3',
+  4: 'sm:grid-cols-4',
+}
+
+const { node } = Astro.props
+const data = node.data as KeyMetricsData
+const cols = COLS[Math.min(data.rows.length, 4)]
+---
+
+<div data-cb-styled class:list={['my-6 grid grid-cols-2 gap-3', cols]}>
+  {
+    data.rows.map((row) => (
+      <div class="bg-card relative overflow-hidden rounded-lg border px-4 pt-4 pb-3.5">
+        <span class="via-foreground/20 absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent" aria-hidden="true" />
+        <div class="text-2xl font-bold tracking-tight tabular-nums sm:text-[1.75rem]">{row.value}</div>
+        <div class="text-muted-foreground mt-1 truncate font-mono text-[11px] tracking-wide uppercase">{row.label}</div>
+      </div>
+    ))
+  }
+</div>

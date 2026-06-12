@@ -3,6 +3,7 @@ export type { SourcePoint, SourceRange, Severity, Diagnostic } from './diagnosti
 export { formatDiagnostic } from './diagnostics.js'
 export type { DocumentNode, ContentNode, MarkdownNode, BlockNode } from './ast.js'
 export { parseDocument, type ParseResult } from './parser.js'
+export { stripFrontmatter } from './frontmatter.js'
 export { parseProps } from './props.js'
 export { bodyLineRange } from './position.js'
 export {

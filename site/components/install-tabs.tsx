@@ -2,6 +2,7 @@
 
 import { CopyButton } from '@/components/copy-button'
 import { cn } from '@/lib/utils'
+import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
 
 /*
@@ -37,9 +38,11 @@ export function InstallTabs({ command }: { command: string }) {
   }, [])
 
   function select(next: Pm) {
+    if (next === pm) return
     setPm(next)
     localStorage.setItem(STORAGE_KEY, next)
     window.dispatchEvent(new CustomEvent(STORAGE_KEY, { detail: next }))
+    posthog.capture('package_manager_selected', { package_manager: next, command })
   }
 
   const value = runner(pm, command)
@@ -69,7 +72,16 @@ export function InstallTabs({ command }: { command: string }) {
           <span className="text-foreground/50 select-none">$ </span>
           {value}
         </code>
-        <CopyButton value={value} />
+        <CopyButton
+          value={value}
+          onCopy={() =>
+            posthog.capture('install_command_copied', {
+              package_manager: pm,
+              command,
+              full_command: value,
+            })
+          }
+        />
       </div>
     </div>
   )

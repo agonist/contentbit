@@ -6,6 +6,7 @@ import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { ContentBlocks } from '@contentbit/react'
 import { Check, X } from 'lucide-react'
+import posthog from 'posthog-js'
 import { useMemo } from 'react'
 
 const registry = createBlockRegistry().use(genericBlocks())
@@ -107,6 +108,7 @@ export function BlockGallery() {
             key={def.name}
             href={`#${def.name}`}
             className="bg-card text-muted-foreground hover:text-foreground hover:border-foreground/30 border px-2.5 py-1 font-mono text-xs transition-colors"
+            onClick={() => posthog.capture('block_anchor_clicked', { block_name: def.name })}
           >
             :::{def.name}
           </a>

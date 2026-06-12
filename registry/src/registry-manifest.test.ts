@@ -15,9 +15,19 @@ const manifest = JSON.parse(readFileSync(join(root, 'registry.json'), 'utf8')) a
   items: ManifestItem[]
 }
 
-test('manifest declares all 8 blocks, the renderer, and the pack', () => {
+test('manifest declares all 8 blocks, the renderer, and the pack — for both frameworks', () => {
   const names = manifest.items.map((i) => i.name).sort()
   expect(names).toEqual([
+    'astro-callout',
+    'astro-comparison',
+    'astro-content-renderer',
+    'astro-faq',
+    'astro-key-metrics',
+    'astro-pack',
+    'astro-pros-cons',
+    'astro-quick-ref',
+    'astro-steps',
+    'astro-tabs',
     'callout',
     'comparison',
     'content-renderer',
@@ -29,6 +39,19 @@ test('manifest declares all 8 blocks, the renderer, and the pack', () => {
     'steps',
     'tabs',
   ])
+})
+
+test('astro items depend on @contentbit/astro and target .astro files', () => {
+  const astroItems = manifest.items.filter(
+    (i) => i.name.startsWith('astro-') && i.name !== 'astro-pack',
+  )
+  expect(astroItems).toHaveLength(9)
+  for (const item of astroItems) {
+    expect(item.dependencies, item.name).toContain('@contentbit/astro')
+    for (const file of item.files ?? []) {
+      expect(file.path, item.name).toMatch(/\.astro$/)
+    }
+  }
 })
 
 test('every declared file exists', () => {
@@ -48,9 +71,10 @@ test('interactive items depend on their shadcn primitives', () => {
 
 test('every item declares the runtime packages', () => {
   for (const item of manifest.items) {
-    if (item.name === 'generic-pack') continue
+    if (item.name === 'generic-pack' || item.name === 'astro-pack') continue
+    const framework = item.name.startsWith('astro-') ? '@contentbit/astro' : '@contentbit/react'
     expect(item.dependencies, item.name).toEqual(
-      expect.arrayContaining(['@contentbit/core', '@contentbit/blocks', '@contentbit/react']),
+      expect.arrayContaining(['@contentbit/core', '@contentbit/blocks', framework]),
     )
   }
 })

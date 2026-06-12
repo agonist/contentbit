@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { ArticleRenderer } from '@/components/article-renderer'
+import { BlogPostCta } from '@/components/blog-post-cta'
 import { SiteHeader } from '@/components/site-header'
 import { getAllPosts, getPost } from '@/lib/blog'
 import Link from 'next/link'
@@ -62,20 +63,7 @@ export default async function BlogPostPage(props: PageParams) {
                 Validated at build time, so a broken block fails the deploy, not the reader.
               </p>
             </div>
-            <div className="flex shrink-0 gap-3">
-              <Link
-                href="/playground"
-                className="bg-primary text-primary-foreground inline-flex h-9 items-center px-4 text-sm font-medium shadow-sm transition-all hover:opacity-90 active:scale-95"
-              >
-                Open the playground
-              </Link>
-              <Link
-                href="/docs"
-                className="bg-background hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center border px-4 text-sm font-medium shadow-sm transition-all active:scale-95"
-              >
-                Read the docs
-              </Link>
-            </div>
+            <BlogPostCta />
           </div>
         </aside>
       </main>

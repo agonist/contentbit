@@ -1,0 +1,8 @@
+---
+const { type, title, node } = Astro.props
+---
+
+<div class="fancy" data-type={type} data-block={node.name}>
+  <strong>{title}</strong>
+  <slot />
+</div>

@@ -1,6 +1,9 @@
 export { escapeHtml } from './escape.js'
 export {
+  fallbackMarkdown,
+  invalidBlockHtml,
   renderToHtml,
+  unrenderableBlockError,
   type HtmlBlockRenderer,
   type HtmlRenderContext,
   type RenderToHtmlOptions,
