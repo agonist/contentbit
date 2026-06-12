@@ -60,6 +60,14 @@ renderer of your choice. Full walkthrough:
 3. Validate: `contentbit validate "content/**/*.md"` exits 1 with precise diagnostics.
 4. Feed diagnostics back to the model until clean. Render anywhere: React, static HTML, or plain Markdown.
 
+Your coding agent runs this loop for you: `contentbit agents` (included in
+`init`) installs Claude Code skills and an `AGENTS.md` block, so "write a blog
+post" fetches the live guide, writes, and validates until clean — and "audit my
+content" ranks findings from `contentbit stats` JSON. The skills hold no
+schemas; they read everything from the CLI at runtime, so custom blocks are
+picked up automatically. See
+[contentbit.dev/docs/guides/agents](https://contentbit.dev/docs/guides/agents).
+
 ## Packages
 
 | Package              | Purpose                                                                                            |
@@ -68,7 +76,7 @@ renderer of your choice. Full walkthrough:
 | `@contentbit/blocks` | Generic block definitions (callout, steps, comparison, tabs, faq, ...)                             |
 | `@contentbit/html`   | Static HTML renderer, works without JavaScript                                                     |
 | `@contentbit/react`  | React renderer with headless accessible defaults                                                   |
-| `contentbit`         | CLI: init / validate / render / instructions / docs                                                |
+| `contentbit`         | CLI: init / validate / stats / render / instructions / docs / agents                               |
 
 The styled component pack ships through a shadcn registry:
 `pnpm dlx shadcn@latest add @contentbit/generic-pack`

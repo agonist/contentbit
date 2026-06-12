@@ -38,6 +38,24 @@ const registry = createBlockRegistry().use([
     childOnly: true,
     authoring: { useWhen: ['Inside :::tabs'], avoidWhen: [], example: '::tab{title="A"}' },
   }),
+  defineBlock({
+    name: 'quote',
+    description: 'A pull quote.',
+    props: z.object({
+      author: z.string(),
+      role: z.string().optional().describe('Shown after the author name'),
+      year: z.number().optional(),
+      featured: z.boolean().default(false),
+    }),
+    content: markdownBody(),
+    authoring: { useWhen: ['Quoting a person'], avoidWhen: [], example: '' },
+  }),
+  defineBlock({
+    name: 'divider',
+    description: 'A thematic break.',
+    content: markdownBody(),
+    authoring: { useWhen: ['Separating sections'], avoidWhen: [], example: '' },
+  }),
 ])
 
 test('llm guide lists rules, every block, syntax, use/avoid, examples', () => {
@@ -51,6 +69,25 @@ test('llm guide lists rules, every block, syntax, use/avoid, examples', () => {
   expect(guide).toContain(':::callout{type="tip"}')
   expect(guide).toContain('List rows: `- label | left | right`')
   expect(guide).toContain('(child block — only inside a parent that allows it)')
+})
+
+test('every prop is documented from the schema: type, required, default, description', () => {
+  const guide = registry.toAuthoringGuide({ audience: 'llm' })
+  // Optional props exist for authors only if the guide says so.
+  expect(guide).toContain('- author: string (required)')
+  expect(guide).toContain('- role: string (optional) — Shown after the author name')
+  expect(guide).toContain('- year: number (optional)')
+  expect(guide).toContain('- featured: boolean (optional, default: false)')
+  // Enums enumerate their values; defaults are spelled out.
+  expect(guide).toContain('- type: one of note|tip (optional, default: note)')
+  expect(guide).toContain('- title: string (optional)')
+  expect(guide).toContain('- left: string (required)')
+})
+
+test('prop-less blocks have no Props section', () => {
+  const guide = registry.toAuthoringGuide({ audience: 'llm' })
+  const divider = guide.slice(guide.indexOf('## divider'))
+  expect(divider).not.toContain('Props:')
 })
 
 test('examples can be excluded', () => {

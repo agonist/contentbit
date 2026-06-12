@@ -9,6 +9,10 @@ description: Every built-in block, generated from the registry.
 
 Highlighted note, tip, warning, important, or TLDR box.
 
+Props:
+- type: one of note|tip|warning|important|tldr (optional, default: note)
+- title: string (optional)
+
 Content: Markdown body
 
 Use when:
@@ -104,6 +108,10 @@ Example:
 
 Side-by-side comparison of exactly two options.
 
+Props:
+- left: string (required)
+- right: string (required)
+
 Content: List rows: `- label | left | right`
 
 Use when:
@@ -176,6 +184,9 @@ Use this when budget matters.
 
 One tab panel with a title. (child block — only inside a parent that allows it)
 
+Props:
+- title: string (required)
+
 Content: Markdown body
 
 Use when:
@@ -217,6 +228,9 @@ Yes, up to 3 months.
 ## faq-item
 
 One question/answer pair. (child block — only inside a parent that allows it)
+
+Props:
+- question: string (required)
 
 Content: Markdown body
 

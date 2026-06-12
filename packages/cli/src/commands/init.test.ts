@@ -178,6 +178,29 @@ test('the scaffolded content validates against the scaffolded registry', async (
   await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::quote')
 })
 
+test('init installs the agent integration by default', async () => {
+  const dir = await project({ name: 'x' })
+  await mkdir(join(dir, '.claude'))
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+  const agentsMd = await readFile(join(dir, 'AGENTS.md'), 'utf8')
+  expect(agentsMd).toContain('<!-- contentbit:start -->')
+  await expect(
+    readFile(join(dir, '.claude/skills/contentbit-author/SKILL.md'), 'utf8'),
+  ).resolves.toContain('contentbit-author')
+  expect(io.out.join('\n')).toContain('Agent integration installed')
+})
+
+test('--no-agents skips the agent integration', async () => {
+  const dir = await project({ name: 'x' })
+  await mkdir(join(dir, '.claude'))
+  expect(await run(['init', '-y', '--no-agents', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+  await expect(readFile(join(dir, 'AGENTS.md'), 'utf8')).rejects.toThrow()
+  await expect(
+    readFile(join(dir, '.claude/skills/contentbit-author/SKILL.md'), 'utf8'),
+  ).rejects.toThrow()
+})
+
 test('init rejects an unknown target', async () => {
   const dir = await project({ name: 'x' })
   const io = fakeIo()

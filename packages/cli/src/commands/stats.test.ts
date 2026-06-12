@@ -59,8 +59,41 @@ test('--no-validate omits the validation field', async () => {
   expect(stats.validation).toBeUndefined()
 })
 
-test('requires exactly one file', async () => {
+test('requires at least one file', async () => {
   expect(await run(['stats'], fakeIo())).toBe(2)
-  const dir = await fixture({ 'a.md': 'x\n', 'b.md': 'y\n' })
-  expect(await run(['stats', join(dir, 'a.md'), join(dir, 'b.md')], fakeIo())).toBe(2)
+})
+
+test('multiple files produce a JSON array sorted by path', async () => {
+  const dir = await fixture({ 'b.md': '# B\n', 'a.md': '# A\n' })
+  const io = fakeIo()
+  expect(await run(['stats', join(dir, 'b.md'), join(dir, 'a.md')], io)).toBe(0)
+  const stats = JSON.parse(io.out.join('\n'))
+  expect(Array.isArray(stats)).toBe(true)
+  expect(stats.map((s: { file: { path: string } }) => s.file.path)).toEqual([
+    join(dir, 'a.md'),
+    join(dir, 'b.md'),
+  ])
+  expect(stats[0].validation).toEqual({ errors: 0, warnings: 0 })
+})
+
+test('a glob expands to matching files', async () => {
+  const dir = await fixture({ 'a.md': '# A\n', 'b.md': '# B\n', 'c.txt': 'not markdown\n' })
+  const io = fakeIo()
+  expect(await run(['stats', join(dir, '*.md')], io)).toBe(0)
+  const stats = JSON.parse(io.out.join('\n'))
+  expect(stats).toHaveLength(2)
+})
+
+test('a glob matching a single file keeps the single-object output', async () => {
+  const dir = await fixture({ 'post.md': doc })
+  const io = fakeIo()
+  expect(await run(['stats', join(dir, '*.md')], io)).toBe(0)
+  const stats = JSON.parse(io.out.join('\n'))
+  expect(Array.isArray(stats)).toBe(false)
+  expect(stats.file.path).toBe(join(dir, 'post.md'))
+})
+
+test('no files matched exits 2', async () => {
+  const dir = await fixture({})
+  expect(await run(['stats', join(dir, '*.md')], fakeIo())).toBe(2)
 })
