@@ -20,7 +20,8 @@ export const quote = defineBlock({
   authoring: {
     useWhen: ['Quoting a person to support a point'],
     avoidWhen: ['Highlighting your own remark, use callout instead'],
-    example: ':::quote{author="Ada Lovelace"}\nThe Analytical Engine weaves algebraic patterns.\n:::',
+    example:
+      ':::quote{author="Ada Lovelace"}\nThe Analytical Engine weaves algebraic patterns.\n:::',
   },
 })
 
