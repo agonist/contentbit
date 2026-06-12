@@ -1,6 +1,5 @@
-import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from 'remotion'
+import { AbsoluteFill, Audio, Sequence, interpolate, staticFile, useCurrentFrame } from 'remotion'
 import { loadFont } from '@remotion/google-fonts/GeistMono'
-import { Audio, interpolate, staticFile } from 'remotion'
 import { Command } from './scenes/Command'
 import { End } from './scenes/End'
 import { Loop } from './scenes/Loop'
