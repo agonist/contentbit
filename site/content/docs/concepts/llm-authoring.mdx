@@ -25,8 +25,12 @@ The `llm` audience prepends the ground rules:
 - close every `:::block` with a line containing only `:::`
 - validate generated content and fix diagnostics rather than bypassing them
 
-Each block contributes its description, content shape, use/avoid rules, and a
-verified example. Custom blocks you registered are included automatically.
+Each block contributes its description, content shape, use/avoid rules, a
+verified example, and a per-prop reference: every prop's name, type (enum
+values spelled out), required or optional, default, and `.describe()` text.
+That last part matters for the "never guess props" rule — optional props an
+example doesn't use are still discoverable. Custom blocks you registered are
+included automatically.
 
 ## From the CLI
 
@@ -56,6 +60,10 @@ recipes/dough.md:31:1 error CB_CHILD_COUNT
 A typical agent skill wires both ends: include the generated guide in the prompt,
 then run `validate` on the result and feed diagnostics back until clean.
 
+There's a third leg for existing content: [`contentbit stats`](/docs/guides/stats)
+reports outlines, block usage, and validation summaries as JSON, so an agent can
+rank what needs attention across the whole content directory.
+
 ## Custom registries on the CLI
 
 Point the CLI at a module that default-exports your extra definitions:
@@ -65,3 +73,10 @@ contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
 The generic pack is always loaded first; your module adds to it.
+
+## Let your agent run the loop
+
+You don't have to wire any of this yourself. `contentbit agents` (run
+automatically by `init`) installs skills and `AGENTS.md` instructions that do
+exactly what this page describes — fetch the guide, write, validate until
+clean, audit with stats. See [Coding-agent integration](/docs/guides/agents).

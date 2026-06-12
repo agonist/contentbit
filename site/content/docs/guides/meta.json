@@ -1,4 +1,4 @@
 {
   "title": "Guides",
-  "pages": ["markdown", "renderers", "custom-blocks", "agents"]
+  "pages": ["agents", "markdown", "renderers", "astro", "custom-blocks", "stats"]
 }

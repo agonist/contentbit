@@ -1,10 +1,12 @@
 ---
 title: Getting started
-description: Parse, validate, and render your first Content Blocks document.
+description: One command to set up Content Blocks — then your coding agent writes validated content.
 ---
 
-Content Blocks is a framework-agnostic block layer for Markdown. Authors — humans,
-CMSes, or LLMs — write Markdown with directive-style blocks. Every example on this
+Content Blocks is a framework-agnostic block layer for Markdown — the contract
+between whatever writes your content (you, a CMS, a coding agent) and whatever
+renders it. Authors write Markdown with directive-style blocks; every block has
+a schema, validation runs before anything renders, and every example on this
 site is rendered live by the library it documents:
 
 <Live>
@@ -14,14 +16,10 @@ site is rendered live by the library it documents:
 :::`}
 </Live>
 
-The library parses that to a source-mapped AST, validates it against explicit
-per-block schemas with line-level diagnostics, and renders it through the adapter of
-your choice: React, static HTML, or a plain-Markdown fallback.
+The shortest path from install to publishable content is two steps: run `init`,
+then ask your coding agent to write.
 
-## Install
-
-One command sets up everything: the packages, a starter document, a custom-block
-registry, a rendered example page, and LLM authoring instructions.
+## 1. One command
 
 <Tabs items={['pnpm', 'npm', 'bun', 'yarn']}>
 
@@ -52,16 +50,102 @@ yarn dlx contentbit@latest init
 </Tabs>
 
 It detects your framework and package manager, asks two questions (or none with
-`-y`), and leaves you with a working `/example` page. Prefer wiring things up
-manually? Install the pieces directly:
+`-y`), and leaves you with everything wired:
+
+<TerminalDemo
+  title="~/my-app"
+  replayable
+  lines={[
+    { text: 'npx contentbit@latest init -y', type: 'command' },
+    { text: 'installing with pnpm: @contentbit/core @contentbit/blocks @contentbit/react', delay: 400 },
+    { text: 'created: blocks/registry.ts' },
+    { text: 'created: content/example.md' },
+    { text: 'created: blocks/components.tsx' },
+    { text: 'created: components/content-blocks.tsx' },
+    { text: 'created: app/example/page.tsx' },
+    { text: 'added script: content:check' },
+    { text: 'created: contentbit-guide.md (LLM authoring instructions)' },
+    { text: 'created: AGENTS.md (contentbit block)' },
+    { text: 'installed: .claude/skills/contentbit-author/SKILL.md' },
+    { text: 'installed: .claude/skills/contentbit-audit/SKILL.md', delay: 350 },
+    { text: 'Agent integration installed — try asking your agent:', type: 'success' },
+    { text: '  "write a blog post about X" or "audit my content"', type: 'success' },
+  ]}
+/>
+
+That's packages for your render target, a custom-block registry, a starter
+document with a rendered `/example` page, a `content:check` validate script,
+LLM authoring instructions, and the [coding-agent integration](/docs/guides/agents)
+(skip it with `--no-agents`).
+
+## 2. Ask your agent
+
+Your coding agent now knows how to write content for this project. Try:
+
+> write a blog post about our new dark mode
+
+> audit my content
+
+The installed `contentbit-author` skill runs the loop a careful human would:
+fetch the live authoring guide, write, validate, fix every diagnostic until the
+validator exits 0.
+
+<AgentSession
+  steps={[
+    { kind: 'user', text: 'write a short post about our new dark mode' },
+    { kind: 'skill', name: 'contentbit-author' },
+    { kind: 'command', command: 'contentbit instructions --audience llm --registry ./blocks/registry.ts', exitCode: 0 },
+    { kind: 'assistant', text: 'Drafting content/dark-mode.md with a callout and a before/after comparison…' },
+    {
+      kind: 'command',
+      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+      exitCode: 1,
+      output: 'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
+    },
+    { kind: 'assistant', text: 'The comparison row is missing its second value — fixing and revalidating.' },
+    {
+      kind: 'command',
+      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+      exitCode: 0,
+      output: '1 file(s): 0 errors, 0 warnings',
+    },
+  ]}
+/>
+
+This is reliable because the skills contain no schemas. They read everything
+from the CLI at runtime (the authoring guide, the diagnostics, the stats), so
+when you add a custom block, every agent picks it up on the next run with
+nothing to regenerate. Works beyond Claude Code too: `AGENTS.md` carries the
+same instructions for Cursor, Codex, Copilot, and friends.
+
+## The validation contract
+
+What makes the loop converge is the diagnostic format. Invalid content never
+renders; it produces errors a machine can act on:
+
+```text
+content.md:12:3 error CB_ROW_COLUMNS
+:::comparison rows require 3 columns (label | left | right). Found 2.
+hint: Format: - label | left | right
+```
+
+Each diagnostic carries the exact source position, a stable code, and a fix
+hint, so your agent (or your CI) can act on it. The same gate runs in the
+editor loop, in `pnpm run content:check`, and before every render.
+
+## Under the hood
+
+Prefer wiring things up manually? Install the pieces directly:
 
 ```bash
 pnpm add @contentbit/core @contentbit/blocks
 pnpm add @contentbit/html   # static HTML strings
 pnpm add @contentbit/react  # React components
+pnpm add @contentbit/astro  # .astro components
 ```
 
-## Parse, validate, render
+The whole pipeline is three calls — parse to a source-mapped AST, validate
+against the registry, render through the adapter of your choice:
 
 ```ts
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
@@ -72,22 +156,14 @@ const registry = createBlockRegistry().use(genericBlocks())
 
 const result = validateDocument(parseDocument(markdown), registry)
 if (!result.ok) {
-  // Each diagnostic has a code, severity, message, and exact source position.
-  console.error(result.diagnostics)
+  console.error(result.diagnostics) // code, severity, message, exact position
 }
 
 const html = renderToHtml(result.document)
 ```
 
-Validation always runs before rendering. Invalid content produces diagnostics like:
-
-```text
-content.md:12:3 error CB_ROW_COLUMNS
-:::comparison rows require 3 columns (label | left | right). Found 2.
-hint: Format: - label | left | right
-```
-
-## React
+In React, `ContentBlocks` ships headless, accessible defaults for every generic
+block:
 
 ```tsx
 import { ContentBlocks } from '@contentbit/react'
@@ -97,52 +173,25 @@ export function Article({ document }: { document: DocumentNode }) {
 }
 ```
 
-`ContentBlocks` ships headless, accessible defaults for every generic block. Pass
-`components` to override any of them — see [Renderers](/docs/guides/renderers).
-
-## Plug in your Markdown library (don't skip this)
-
-Content Blocks parses **blocks only** — prose and block bodies are handed to a
-`renderMarkdown` function you provide. Without it, `**bold**` and links render as
-literal characters. The wiring is one component:
-
-```tsx
-import ReactMarkdown from 'react-markdown' // or marked, markdown-it, remark...
-
-<ContentBlocks
-  document={result.document}
-  renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}
-/>
-```
-
-Step-by-step setups for react-markdown, marked, markdown-it, and unified/remark:
+One thing not to skip: Content Blocks parses **blocks only** — prose and block
+bodies are handed to a `renderMarkdown` function you provide (react-markdown,
+marked, markdown-it, remark…). Without it, `**bold**` renders as literal
+characters. Step-by-step wiring for each library:
 [Plug in your Markdown library](/docs/guides/markdown).
 
-## Styled components via shadcn
-
-A polished, Tailwind-styled pack is distributed through a shadcn registry. Configure
-the namespace in your `components.json`:
-
-```json
-{
-  "registries": {
-    "@contentbit": "https://contentbit.dev/r/{name}.json"
-  }
-}
-```
-
-Then install:
+And if headless isn't your thing, a polished Tailwind-styled pack installs
+through the shadcn registry — components land as editable source files you own:
 
 ```bash
 pnpm dlx shadcn@latest add @contentbit/generic-pack
 ```
 
-Components land in your app as editable source files. You own them after install.
-
 ## Next steps
 
+- [Coding-agent integration](/docs/guides/agents) — what `init` installed, and how to wire other agents
 - [Plug in your Markdown library](/docs/guides/markdown)
 - Learn the [block syntax](/docs/concepts/syntax)
 - Define [custom blocks](/docs/guides/custom-blocks)
-- Generate [LLM authoring instructions](/docs/concepts/llm-authoring) from your registry
-- Browse the [block reference](/docs/reference/blocks)
+- [Document stats & auditing](/docs/guides/stats) — rank what needs attention across your content
+- Render with [Astro](/docs/guides/astro)
+- Browse the [block reference](/docs/reference/blocks) and the [changelog](/docs/changelog)

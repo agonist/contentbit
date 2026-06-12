@@ -9,10 +9,13 @@ Markdown bodies *inside* blocks — to one function you provide:
 
 - React: the `renderMarkdown` prop → returns a `ReactNode`
 - Static HTML: the `renderMarkdown` option → returns an HTML string
+- Astro: the `renderMarkdown` prop → returns an HTML string; ships a
+  marked-based default (GFM, raw HTML escaped), so it works untouched
 
-If you don't provide it, the built-in default only escapes text and wraps paragraphs
-in `<p>` tags. `**bold**`, links, and lists will show as literal characters. **Wiring
-your Markdown library is step one of any real setup.**
+If you don't provide it, the React and HTML built-in default only escapes text
+and wraps paragraphs in `<p>` tags. `**bold**`, links, and lists will show as
+literal characters. **Wiring your Markdown library is step one of any real
+setup** (Astro excepted — its default is already a full renderer).
 
 ## What your library sees (and never sees)
 

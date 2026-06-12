@@ -13,6 +13,36 @@ teach the agent to fetch live data from the CLI — the authoring guide from
 you add a custom block, every agent picks it up on the next run. Nothing to
 regenerate, nothing to drift.
 
+A session looks like this. The failed validation in the middle is the loop
+doing its job:
+
+<AgentSession
+  steps={[
+    { kind: 'user', text: 'write a blog post about our new dark mode' },
+    { kind: 'skill', name: 'contentbit-author' },
+    {
+      kind: 'command',
+      command: 'contentbit instructions --audience llm --registry ./blocks/registry.ts',
+      exitCode: 0,
+    },
+    { kind: 'assistant', text: 'The guide lists 9 blocks, including the custom quote block. Drafting content/dark-mode.md with a callout, a comparison, and a closing quote…' },
+    {
+      kind: 'command',
+      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+      exitCode: 1,
+      output: 'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
+    },
+    { kind: 'assistant', text: 'Line 18 is missing the second column value — fixing the row and revalidating.' },
+    {
+      kind: 'command',
+      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+      exitCode: 0,
+      output: '1 file(s): 0 errors, 0 warnings',
+    },
+    { kind: 'assistant', text: 'Done — content/dark-mode.md validates clean.' },
+  ]}
+/>
+
 ## Install
 
 `contentbit init` installs the integration automatically (skip with
@@ -28,8 +58,8 @@ This manages two things:
   `<!-- contentbit:end -->` markers with compact instructions any agent reads
   (Cursor, Codex, Copilot, ...). Your content outside the markers is never
   touched; re-running refreshes only the block.
-- **Claude Code skills** — when a `.claude/` directory exists (or with
-  `--claude`), two skills land in `.claude/skills/`:
+- **Claude Code skills** — when a `.claude/` directory exists (or forced with
+  `--claude` when it doesn't), two skills land in `.claude/skills/`:
   - `contentbit-author` — the writing loop: fetch the authoring guide, write,
     validate, fix diagnostics until exit 0.
   - `contentbit-audit` — the health check: run `stats` across content, flag
@@ -53,6 +83,12 @@ Both skills read the `content:check` script in your package.json to discover the
 project's content glob and `--registry` flag, so they adapt to your layout
 without configuration.
 
+The "never guess props" rule in the guide is satisfiable: generated
+authoring instructions document every prop from the block's schema — name, type
+with enum values spelled out, required or optional, default, and description —
+so optional props an example doesn't use are still discoverable. See
+[LLM authoring](/docs/concepts/llm-authoring).
+
 The audit skill leans on `stats`, which prints JSON and always exits 0:
 
 ```bash
@@ -61,7 +97,8 @@ contentbit stats "content/**/*.md" --registry ./blocks/registry.ts
 
 Each entry carries a heading outline with per-section word counts, block usage
 by name, link domains, and a validation summary — enough to rank what needs
-attention without opening a single file.
+attention without opening a single file. Full field reference and recipes:
+[Document stats & auditing](/docs/guides/stats).
 
 ## Plug contentbit into your own skills
 

@@ -6,7 +6,7 @@ export interface Io {
 
 export const USAGE = `Usage: contentbit <init|validate|stats|render|instructions|docs|agents> [options]
 
-  init [-t react|html|markdown] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
+  init [-t react|html|markdown|astro] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
   agents [--claude] [--no-agents-md]
 
   validate <globs...> [--registry <module.mjs>] [--strict-warnings]
