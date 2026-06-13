@@ -48,3 +48,14 @@ export {
   type MarkdownRenderContext,
   type RenderToMarkdownOptions,
 } from './render-markdown.js'
+export {
+  parseLinkFrontmatter,
+  buildLinkIndex,
+  validateLinks,
+  type LinkFrontmatter,
+  type ParseLinkResult,
+  type IndexedPage,
+  type LinkIndex,
+  type LinkInput,
+  type LinkDiagnostic,
+} from './links.js'
