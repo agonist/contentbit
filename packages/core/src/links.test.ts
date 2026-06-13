@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { buildLinkIndex, parseLinkFrontmatter } from './links.js'
+import { buildLinkIndex, parseLinkFrontmatter, validateLinks } from './links.js'
 
 test('parses a full authored link frontmatter', () => {
   const r = parseLinkFrontmatter({
@@ -44,4 +44,47 @@ test('derives linkedFrom and resolves aliases in linksTo', () => {
 test('skips files without a slug', () => {
   const index = buildLinkIndex([{ path: 'x.md', data: { title: 'no slug' } }])
   expect(index.pages.size).toBe(0)
+})
+
+function codes(rows: { diagnostic: { code: string } }[]): string[] {
+  return rows.map((r) => r.diagnostic.code).sort()
+}
+
+test('errors on a dangling linksTo with a did-you-mean hint', () => {
+  const rows = validateLinks([
+    { path: 'a.md', data: { slug: 'a', linksTo: ['beginer'] } },
+    { path: 'b.md', data: { slug: 'beginner' } },
+  ])
+  const unresolved = rows.find((r) => r.diagnostic.code === 'CB_LINK_UNRESOLVED')
+  expect(unresolved).toBeTruthy()
+  expect(unresolved?.diagnostic.severity).toBe('error')
+  expect(unresolved?.diagnostic.hint).toContain('beginner')
+})
+
+test('errors on duplicate slugs', () => {
+  const rows = validateLinks([
+    { path: 'a.md', data: { slug: 'dup' } },
+    { path: 'b.md', data: { slug: 'dup' } },
+  ])
+  expect(codes(rows)).toContain('CB_SLUG_DUPLICATE')
+})
+
+test('warns on orphan and self-link', () => {
+  const rows = validateLinks([{ path: 'a.md', data: { slug: 'a', linksTo: ['a'] } }])
+  expect(codes(rows)).toContain('CB_LINK_SELF')
+  // 'a' links only to itself; nobody else links to it => orphan
+  expect(codes(rows)).toContain('CB_LINK_ORPHAN')
+})
+
+test('reports shape errors as CB_LINK_SHAPE', () => {
+  const rows = validateLinks([{ path: 'a.md', data: { slug: 'a', linksTo: 'b' } }])
+  expect(codes(rows)).toContain('CB_LINK_SHAPE')
+})
+
+test('a valid symmetric graph produces no errors', () => {
+  const rows = validateLinks([
+    { path: 'a.md', data: { slug: 'a', linksTo: ['b'] } },
+    { path: 'b.md', data: { slug: 'b', linksTo: ['a'] } },
+  ])
+  expect(rows.filter((r) => r.diagnostic.severity === 'error')).toEqual([])
 })
