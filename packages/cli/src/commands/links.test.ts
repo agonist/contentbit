@@ -44,3 +44,28 @@ test('writes the index json through io.writeFile', async () => {
   const parsed = JSON.parse(writes[path])
   expect(parsed.pages.map((p: { slug: string }) => p.slug).sort()).toEqual(['a', 'b'])
 })
+
+test('--fix rewrites alias references to the current slug in source', async () => {
+  const dir = await fixture({
+    'a.md': '---\nslug: a\nlinksTo:\n  - old-b\n---\nA\n',
+    'b.md': '---\nslug: b\naliases:\n  - old-b\nlinksTo:\n  - a\n---\nB\n',
+  })
+  const writes: Record<string, string> = {}
+  const io = { ...fakeIo(), writeFile: async (p: string, c: string) => void (writes[p] = c) }
+  expect(await run(['links', join(dir, '*.md'), '--fix'], io)).toBe(0)
+  const aWrite = Object.entries(writes).find(([p]) => p.endsWith('a.md'))
+  expect(aWrite).toBeTruthy()
+  expect(aWrite![1]).toContain('- b')
+  expect(aWrite![1]).not.toContain('old-b')
+})
+
+test('--fix leaves files without alias references untouched (no write)', async () => {
+  const dir = await fixture({
+    'a.md': '---\nslug: a\nlinksTo:\n  - b\n---\nA\n',
+    'b.md': '---\nslug: b\nlinksTo:\n  - a\n---\nB\n',
+  })
+  const writes: Record<string, string> = {}
+  const io = { ...fakeIo(), writeFile: async (p: string, c: string) => void (writes[p] = c) }
+  await run(['links', join(dir, '*.md'), '--fix'], io)
+  expect(Object.keys(writes).some((p) => p.endsWith('a.md') || p.endsWith('b.md'))).toBe(false)
+})

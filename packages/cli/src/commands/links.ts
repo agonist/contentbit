@@ -1,9 +1,11 @@
 import {
   buildLinkIndex,
+  extractFrontmatter,
   formatDiagnostic,
   serializeLinkIndex,
   validateLinks,
 } from '@contentbit/core'
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { glob } from 'tinyglobby'
@@ -42,6 +44,34 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
   }
 
   const index = buildLinkIndex(inputs)
+
+  if (values.fix && index.aliases.size > 0) {
+    for (const file of files) {
+      const source = await readFile(file, 'utf8')
+      const fm = extractFrontmatter(source)
+      if (!fm) continue
+      const fmEnd = fm.lines.end // 1-based last fence line
+      const lines = source.split('\n')
+      let changed = false
+      for (let i = 0; i < fmEnd && i < lines.length; i++) {
+        for (const [alias, current] of index.aliases) {
+          // Replace a whole-token alias occurrence (list item or inline) within
+          // the frontmatter region only. Boundary chars avoid partial hits.
+          const re = new RegExp(`(^|[\\s\\[,'"-])${escapeRe(alias)}($|[\\s\\],'"])`, 'g')
+          const next = lines[i].replace(re, (_m, p1, p2) => `${p1}${current}${p2}`)
+          if (next !== lines[i]) {
+            lines[i] = next
+            changed = true
+          }
+        }
+      }
+      if (changed) {
+        await io.writeFile(file, lines.join('\n'))
+        io.stdout(`fixed alias references in ${file}`)
+      }
+    }
+  }
+
   const outPath = values.out ?? join(process.cwd(), '.contentbit', 'link-index.json')
   await io.writeFile(outPath, JSON.stringify(serializeLinkIndex(index), null, 2) + '\n')
 
@@ -53,4 +83,8 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
   )
   io.stdout(`index written to ${outPath}`)
   return errors > 0 ? 1 : 0
+}
+
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
