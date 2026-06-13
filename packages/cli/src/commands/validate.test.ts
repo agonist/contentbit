@@ -77,3 +77,19 @@ test('no matching files exits 2', async () => {
   const dir = await fixture({})
   expect(await run(['validate', join(dir, '*.md')], fakeIo())).toBe(2)
 })
+
+test('validate fails on a dangling internal link', async () => {
+  const dir = await fixture({
+    'a.md': '---\nslug: a\nlinksTo:\n  - missing\n---\n\nProse.\n',
+  })
+  const io = fakeIo()
+  expect(await run(['validate', join(dir, '*.md')], io)).toBe(1)
+  expect(io.err.join('\n')).toContain('CB_LINK_UNRESOLVED')
+})
+
+test('validate ignores link checks when no file declares a slug', async () => {
+  const dir = await fixture({ 'a.md': '---\ntitle: just prose\n---\n\nProse.\n' })
+  const io = fakeIo()
+  expect(await run(['validate', join(dir, '*.md')], io)).toBe(0)
+  expect(io.err.join('\n')).not.toContain('CB_LINK')
+})
