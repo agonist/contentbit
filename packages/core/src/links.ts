@@ -88,6 +88,22 @@ export function buildLinkIndex(inputs: LinkInput[]): LinkIndex {
   return { pages, aliases }
 }
 
+export interface SerializedLinkIndex {
+  pages: IndexedPage[]
+  aliases: Record<string, string>
+}
+
+// Stable, sorted JSON form for .contentbit/link-index.json. Sorting by slug
+// (and sorting linkedFrom) keeps the artifact diff-friendly across runs.
+export function serializeLinkIndex(index: LinkIndex): SerializedLinkIndex {
+  const pages = [...index.pages.values()]
+    .map((p) => ({ ...p, linkedFrom: [...p.linkedFrom].sort() }))
+    .sort((a, b) => a.slug.localeCompare(b.slug))
+  const aliases: Record<string, string> = {}
+  for (const key of [...index.aliases.keys()].sort()) aliases[key] = index.aliases.get(key)!
+  return { pages, aliases }
+}
+
 export interface LinkDiagnostic {
   file: string
   diagnostic: Diagnostic

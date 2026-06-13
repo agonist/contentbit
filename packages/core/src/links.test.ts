@@ -1,6 +1,11 @@
 import { expect, test } from 'vitest'
 
-import { buildLinkIndex, parseLinkFrontmatter, validateLinks } from './links.js'
+import {
+  buildLinkIndex,
+  parseLinkFrontmatter,
+  serializeLinkIndex,
+  validateLinks,
+} from './links.js'
 
 test('parses a full authored link frontmatter', () => {
   const r = parseLinkFrontmatter({
@@ -87,4 +92,14 @@ test('a valid symmetric graph produces no errors', () => {
     { path: 'b.md', data: { slug: 'b', linksTo: ['a'] } },
   ])
   expect(rows.filter((r) => r.diagnostic.severity === 'error')).toEqual([])
+})
+
+test('serializes to a stable sorted plain object', () => {
+  const index = buildLinkIndex([
+    { path: 'b.md', data: { slug: 'b', linksTo: ['a'] } },
+    { path: 'a.md', data: { slug: 'a' } },
+  ])
+  const json = serializeLinkIndex(index)
+  expect(json.pages.map((p) => p.slug)).toEqual(['a', 'b']) // sorted
+  expect(json.pages[0].linkedFrom).toEqual(['b'])
 })
