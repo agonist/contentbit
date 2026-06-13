@@ -1,11 +1,6 @@
 import { expect, test } from 'vitest'
 
-import {
-  buildLinkIndex,
-  parseLinkFrontmatter,
-  serializeLinkIndex,
-  validateLinks,
-} from './links.js'
+import { buildLinkIndex, parseLinkFrontmatter, serializeLinkIndex, validateLinks } from './links.js'
 
 test('parses a full authored link frontmatter', () => {
   const r = parseLinkFrontmatter({

@@ -196,7 +196,12 @@ export function validateLinks(inputs: LinkInput[]): LinkDiagnostic[] {
     for (const alias of page.aliases) {
       if (index.pages.has(alias))
         out.push(
-          diag(page.path, 'CB_ALIAS_CONFLICT', 'error', `alias "${alias}" collides with an existing slug`),
+          diag(
+            page.path,
+            'CB_ALIAS_CONFLICT',
+            'error',
+            `alias "${alias}" collides with an existing slug`,
+          ),
         )
     }
     for (const target of page.linksTo) {
@@ -218,7 +223,9 @@ export function validateLinks(inputs: LinkInput[]): LinkDiagnostic[] {
       }
     }
     if (page.linkedFrom.length === 0)
-      out.push(diag(page.path, 'CB_LINK_ORPHAN', 'warning', `page "${page.slug}" has no inbound links`))
+      out.push(
+        diag(page.path, 'CB_LINK_ORPHAN', 'warning', `page "${page.slug}" has no inbound links`),
+      )
   }
   return out
 }
