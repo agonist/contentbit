@@ -86,9 +86,28 @@ test('extractFrontmatter keeps block scalars as raw strings', () => {
   expect(fm?.data).toEqual({ snippet: 'line one\nline two' })
 })
 
-test('extractFrontmatter falls back to raw text for nested mappings', () => {
-  const fm = extractFrontmatter('---\nauthor:\n  name: Ada\n  url: https://a.dev\n---\n')
-  expect(fm?.data).toEqual({ author: 'name: Ada\nurl: https://a.dev' })
+test('parses a one-level nested mapping into an object', () => {
+  const fm = extractFrontmatter(
+    '---\nkeywords:\n  primary: how to make pizza dough\n  secondary: [easy dough, homemade dough]\n---\nBody\n',
+  )
+  expect(fm?.data.keywords).toEqual({
+    primary: 'how to make pizza dough',
+    secondary: ['easy dough', 'homemade dough'],
+  })
+})
+
+test('nested mapping coexists with flat keys and dash lists', () => {
+  const fm = extractFrontmatter(
+    '---\nslug: a\nlinksTo:\n  - b\n  - c\nkeywords:\n  primary: x\n---\nBody\n',
+  )
+  expect(fm?.data.slug).toBe('a')
+  expect(fm?.data.linksTo).toEqual(['b', 'c'])
+  expect(fm?.data.keywords).toEqual({ primary: 'x' })
+})
+
+test('mappings deeper than one level fall back to raw text', () => {
+  const fm = extractFrontmatter('---\nouter:\n  inner:\n    deep: x\n---\nBody\n')
+  expect(typeof fm?.data.outer).toBe('string')
 })
 
 test('extractFrontmatter handles empty frontmatter and comments', () => {
