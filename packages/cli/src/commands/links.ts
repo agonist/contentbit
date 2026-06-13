@@ -5,8 +5,8 @@ import {
   serializeLinkIndex,
   validateLinks,
 } from '@contentbit/core'
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { mkdir, readFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { glob } from 'tinyglobby'
 
@@ -50,19 +50,26 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
       const source = await readFile(file, 'utf8')
       const fm = extractFrontmatter(source)
       if (!fm) continue
-      const fmEnd = fm.lines.end // 1-based last fence line
       const lines = source.split('\n')
       let changed = false
-      for (let i = 0; i < fmEnd && i < lines.length; i++) {
+      // Only rewrite alias tokens inside the `linksTo:` block — never inside an
+      // `aliases:` list (which records the rename and must stay intact), and
+      // never in document body. Track whether we are within linksTo's scope:
+      // a top-level key resets it, dash-list / inline continuation keeps it.
+      let inLinksTo = false
+      for (let i = 0; i < fm.lines.end && i < lines.length; i++) {
+        const line = lines[i]
+        const topKey = line.match(/^([A-Za-z0-9_.-]+):(.*)$/)
+        if (topKey) inLinksTo = topKey[1] === 'linksTo'
+        if (!inLinksTo) continue
+        let next = line
         for (const [alias, current] of index.aliases) {
-          // Replace a whole-token alias occurrence (list item or inline) within
-          // the frontmatter region only. Boundary chars avoid partial hits.
           const re = new RegExp(`(^|[\\s\\[,'"-])${escapeRe(alias)}($|[\\s\\],'"])`, 'g')
-          const next = lines[i].replace(re, (_m, p1, p2) => `${p1}${current}${p2}`)
-          if (next !== lines[i]) {
-            lines[i] = next
-            changed = true
-          }
+          next = next.replace(re, (_m, p1, p2) => `${p1}${current}${p2}`)
+        }
+        if (next !== line) {
+          lines[i] = next
+          changed = true
         }
       }
       if (changed) {
@@ -73,6 +80,9 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
   }
 
   const outPath = values.out ?? join(process.cwd(), '.contentbit', 'link-index.json')
+  // The default target lives in a .contentbit/ dir that may not exist yet, and
+  // the shared Io.writeFile is a thin fs wrapper that won't create it.
+  await mkdir(dirname(outPath), { recursive: true })
   await io.writeFile(outPath, JSON.stringify(serializeLinkIndex(index), null, 2) + '\n')
 
   let edges = 0

@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
@@ -45,6 +45,20 @@ test('writes the index json through io.writeFile', async () => {
   expect(parsed.pages.map((p: { slug: string }) => p.slug).sort()).toEqual(['a', 'b'])
 })
 
+test('creates a missing parent directory for the index file (real fs write)', async () => {
+  const dir = await fixture({
+    'a.md': '---\nslug: a\nlinksTo:\n  - b\n---\nA\n',
+    'b.md': '---\nslug: b\nlinksTo:\n  - a\n---\nB\n',
+  })
+  // The default output dir .contentbit/ does not exist yet; use the real
+  // fs-backed writeFile (not the captured mock) to exercise directory creation.
+  const out = join(dir, '.contentbit', 'link-index.json')
+  const io = { ...fakeIo(), writeFile: (p: string, c: string) => writeFile(p, c, 'utf8') }
+  expect(await run(['links', join(dir, '*.md'), '--out', out], io)).toBe(0)
+  const parsed = JSON.parse(await readFile(out, 'utf8'))
+  expect(parsed.pages.map((p: { slug: string }) => p.slug).sort()).toEqual(['a', 'b'])
+})
+
 test('--fix rewrites alias references to the current slug in source', async () => {
   const dir = await fixture({
     'a.md': '---\nslug: a\nlinksTo:\n  - old-b\n---\nA\n',
@@ -57,6 +71,10 @@ test('--fix rewrites alias references to the current slug in source', async () =
   expect(aWrite).toBeTruthy()
   expect(aWrite![1]).toContain('- b')
   expect(aWrite![1]).not.toContain('old-b')
+  // The page that DECLARES the alias must keep it intact — rewriting it would
+  // erase the rename record and break future references to the old slug.
+  const bWrite = Object.entries(writes).find(([p]) => p.endsWith('b.md'))
+  if (bWrite) expect(bWrite[1]).toContain('old-b')
 })
 
 test('--fix leaves files without alias references untouched (no write)', async () => {
