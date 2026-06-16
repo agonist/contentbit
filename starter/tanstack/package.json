@@ -15,9 +15,9 @@
     "content:links": "contentbit links \"content/**/*.md\""
   },
   "dependencies": {
-    "@contentbit/blocks": "^0.1.0",
-    "@contentbit/core": "^0.1.0",
-    "@contentbit/react": "^0.1.0",
+    "@contentbit/blocks": "^0.2.0",
+    "@contentbit/core": "^0.2.0",
+    "@contentbit/react": "^0.2.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4",
     "@tanstack/react-devtools": "latest",

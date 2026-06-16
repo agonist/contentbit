@@ -87,3 +87,17 @@ test('--fix leaves files without alias references untouched (no write)', async (
   await run(['links', join(dir, '*.md'), '--fix'], io)
   expect(Object.keys(writes).some((p) => p.endsWith('a.md') || p.endsWith('b.md'))).toBe(false)
 })
+
+test('--fix skips rewrites when the link graph has errors', async () => {
+  const dir = await fixture({
+    'a.md': '---\nslug: a\nlinksTo:\n  - old-target\n---\nA\n',
+    'b.md': '---\nslug: b\naliases:\n  - old-target\n---\nB\n',
+    'c.md': '---\nslug: c\naliases:\n  - old-target\n---\nC\n',
+  })
+  const writes: Record<string, string> = {}
+  const io = { ...fakeIo(), writeFile: async (p: string, c: string) => void (writes[p] = c) }
+  expect(await run(['links', join(dir, '*.md'), '--fix'], io)).toBe(1)
+  expect(io.err.join('\n')).toContain('CB_ALIAS_CONFLICT')
+  expect(io.err.join('\n')).toContain('--fix skipped')
+  expect(Object.keys(writes).some((p) => p.endsWith('.md'))).toBe(false)
+})

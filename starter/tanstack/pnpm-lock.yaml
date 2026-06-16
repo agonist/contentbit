@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@contentbit/blocks':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.2.0
+        version: 0.2.0
       '@contentbit/core':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.2.0
+        version: 0.2.0
       '@contentbit/react':
-        specifier: ^0.1.0
-        version: 0.1.0(react@19.2.7)
+        specifier: ^0.2.0
+        version: 0.2.0(react@19.2.7)
       '@fontsource-variable/inter':
         specifier: ^5.2.8
         version: 5.2.8
@@ -287,14 +287,14 @@ packages:
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
 
-  '@contentbit/blocks@0.1.0':
-    resolution: {integrity: sha512-5FaJNwhHdUIcq7qUhLwlMjmBrjz7KY6M4d7VYS9Q7UBIh0/84yYN3JctRlh4xmInFPi0BLfZiKXCgn2/xR+IKQ==}
+  '@contentbit/blocks@0.2.0':
+    resolution: {integrity: sha512-psE0gZqAPF+fg0gk3r2oQvOHgVo8u+kPgHwx6dEp3Ew0fyEo/aPJ3tbs8JOR8fFBKvaqsbFRcLrfp1ExDL8ESw==}
 
-  '@contentbit/core@0.1.0':
-    resolution: {integrity: sha512-jwXj4ULhHxv85qqXoeLfig3WmnE2kAYcFzrIBWRyn32GEXgRP/j/WTilk9f7J05t+x5zTPnefcf6TwSzV8rYMA==}
+  '@contentbit/core@0.2.0':
+    resolution: {integrity: sha512-jB0FzsPZvpcd0bH2CFR8y4OS9mUMAeX1h4QqtE0BZfEISXwMQAzvonQebWofQ7BHr+HrpskCi7EQl3XV88Lj+g==}
 
-  '@contentbit/react@0.1.0':
-    resolution: {integrity: sha512-PLNVYy5PdpkYXqcAJxyQN4XKgZybPwu6ubm9lv/72SzUH8YPFr0BD4lB+aEdUyWwk2C2grBYVw8ARSeDeBTtYQ==}
+  '@contentbit/react@0.2.0':
+    resolution: {integrity: sha512-LnkH3WrLpLhx5L8mLFRpadWIL6fOptZ0SoLkgeA+aVaHo565dcVJrUgvheRz6u3xZzXh/UxHzfEoqy+Y2cLlZw==}
     peerDependencies:
       react: ^19.0.0
 
@@ -4525,19 +4525,19 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@contentbit/blocks@0.1.0':
+  '@contentbit/blocks@0.2.0':
     dependencies:
-      '@contentbit/core': 0.1.0
+      '@contentbit/core': 0.2.0
       zod: 4.4.3
 
-  '@contentbit/core@0.1.0':
+  '@contentbit/core@0.2.0':
     dependencies:
       zod: 4.4.3
 
-  '@contentbit/react@0.1.0(react@19.2.7)':
+  '@contentbit/react@0.2.0(react@19.2.7)':
     dependencies:
-      '@contentbit/blocks': 0.1.0
-      '@contentbit/core': 0.1.0
+      '@contentbit/blocks': 0.2.0
+      '@contentbit/core': 0.2.0
       react: 19.2.7
 
   '@csstools/color-helpers@6.0.2': {}

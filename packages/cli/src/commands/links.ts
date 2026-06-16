@@ -45,7 +45,9 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
 
   const index = buildLinkIndex(inputs)
 
-  if (values.fix && index.aliases.size > 0) {
+  if (values.fix && errors > 0) {
+    io.stderr('links: --fix skipped because link errors must be resolved first.')
+  } else if (values.fix && index.aliases.size > 0) {
     for (const file of files) {
       const source = await readFile(file, 'utf8')
       const fm = extractFrontmatter(source)
