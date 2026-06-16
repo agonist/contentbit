@@ -68,6 +68,28 @@ schemas; they read everything from the CLI at runtime, so custom blocks are
 picked up automatically. See
 [contentbit.dev/docs/guides/agents](https://contentbit.dev/docs/guides/agents).
 
+## Internal links
+
+Author content relationships in frontmatter and let contentbit keep the graph
+honest:
+
+```yaml
+---
+slug: beginner-pizza-dough
+linksTo:
+  - cold-fermentation-pizza
+aliases:
+  - intro-pizza-dough
+keywords:
+  primary: how to make pizza dough
+---
+```
+
+`contentbit links "content/**/*.md"` writes `.contentbit/link-index.json` with
+resolved `linksTo` and derived `linkedFrom` backlinks. `contentbit validate`
+runs the same link checks automatically when files declare slugs, and
+`contentbit links --fix` rewrites stale alias references in `linksTo`.
+
 ## The loop
 
 What runs under the hood — yourself or via the skills:
@@ -86,7 +108,7 @@ What runs under the hood — yourself or via the skills:
 | `@contentbit/html`   | Static HTML renderer, works without JavaScript                                                     |
 | `@contentbit/react`  | React renderer with headless accessible defaults                                                   |
 | `@contentbit/astro`  | Astro renderer: `.astro` components with per-block overrides                                       |
-| `contentbit`         | CLI: init / validate / stats / render / instructions / docs / agents                               |
+| `contentbit`         | CLI: init / validate / stats / links / render / instructions / docs / agents                       |
 
 The styled component pack ships through a shadcn registry:
 `pnpm dlx shadcn@latest add @contentbit/generic-pack`

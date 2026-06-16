@@ -34,8 +34,15 @@ test('init scaffolds a react project non-interactively', async () => {
     "name: 'quote'",
   )
   await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(':::quote')
+  await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(
+    'slug: hello-content-blocks',
+  )
+  await expect(readFile(join(dir, 'content/related.md'), 'utf8')).resolves.toContain(
+    'related-contentbit-workflows',
+  )
   const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
   expect(component).toContain('ContentBlocks')
+  expect(component).toContain('stripFrontmatter')
   expect(component).toContain('blockComponents')
   await expect(readFile(join(dir, 'blocks/components.tsx'), 'utf8')).resolves.toContain(
     'QuoteBlock',
@@ -44,6 +51,7 @@ test('init scaffolds a react project non-interactively', async () => {
 
   const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
   expect(pkg.scripts['content:check']).toContain('contentbit validate')
+  expect(pkg.scripts['content:links']).toContain('contentbit links')
   expect(io.out.join('\n')).toContain('Next steps')
 })
 
@@ -156,6 +164,7 @@ test('init is idempotent and never overwrites existing files', async () => {
     'edited by the user\n',
   )
   expect(io.out.join('\n')).toContain('skipped: content/example.md')
+  expect(io.out.join('\n')).toContain('skipped: content/related.md')
 })
 
 test('the scaffolded content validates against the scaffolded registry', async () => {
@@ -176,6 +185,10 @@ test('the scaffolded content validates against the scaffolded registry', async (
   expect(out).toContain('0 errors')
   // With modules resolvable, the generated guide covers the custom block too.
   await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::quote')
+  const linkOut = execFileSync('node', [bin, 'links', join(dir, 'content/*.md')], {
+    encoding: 'utf8',
+  })
+  expect(linkOut).toContain('0 errors, 0 warnings')
 })
 
 test('init installs the agent integration by default', async () => {
@@ -236,6 +249,9 @@ test('init scaffolds an astro project non-interactively', async () => {
     'Astro.props',
   )
   await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(':::quote')
+  await expect(readFile(join(dir, 'content/related.md'), 'utf8')).resolves.toContain(
+    'related-contentbit-workflows',
+  )
   expect(io.out.join('\n')).toContain('@contentbit/astro')
   expect(io.out.join('\n')).toContain('Next steps')
 })

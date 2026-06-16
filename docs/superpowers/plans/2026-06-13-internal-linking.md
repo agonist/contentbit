@@ -4,6 +4,8 @@
 
 **Goal:** Add a frontmatter-authored internal-link graph to contentbit, with a generated index, derived backlinks, broken-link validation through `contentbit validate`, and rename-healing via per-page aliases.
 
+**Implementation status:** Complete on `feat/internal-linking`. Public usage docs live in `site/content/docs/guides/internal-linking.mdx`; generated `contentbit agents` instructions now include the link-index workflow.
+
 **Architecture:** Authored link data (`slug`, `linksTo`, `aliases`, `keywords`) lives in each file's YAML frontmatter. A pure index-builder reads only frontmatter, resolves aliases, and derives `linkedFrom`. A `validateLinks` function emits `CB_*` diagnostics for dangling/duplicate/orphan links. A new `contentbit links` command builds/writes `.contentbit/link-index.json` and the existing `validate` command runs the cross-file link check automatically when link data is present. One supporting change: the frontmatter parser gains one level of nested-mapping support so `keywords.primary/secondary` parses.
 
 **Tech Stack:** TypeScript (NodeNext ESM, `.js` import specifiers), Zod 4, Vitest, tinyglobby, `node:util` parseArgs. Monorepo packages `@contentbit/core` and `contentbit` (CLI).

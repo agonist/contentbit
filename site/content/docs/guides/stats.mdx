@@ -75,6 +75,9 @@ A report, trimmed to the interesting fields:
   prose that wants to be steps, a comparison, or an FAQ.
 - **`links`** — external/internal split plus the deduplicated external
   `domains` list. Good for spotting link rot targets and unexpected domains.
+  This is inline Markdown link analysis. For the frontmatter-authored internal
+  graph with `slug`, `linksTo`, aliases, and backlinks, use
+  [`contentbit links`](/docs/guides/internal-linking).
 - **`length`** — prose words only (frontmatter, code, and markup syntax are
   excluded), reading minutes, and a rough token estimate.
 - **`frontmatter`**, **`images`** (with `missingAlt`), **`code`**, and

@@ -90,7 +90,18 @@ export const blockComponents: Record<string, BlockComponent> = {
 `
 }
 
-const EXAMPLE_CONTENT = `# Hello, Content Blocks
+const EXAMPLE_CONTENT = `---
+slug: hello-content-blocks
+linksTo:
+  - related-contentbit-workflows
+aliases:
+  - getting-started-contentbit
+keywords:
+  primary: validated Markdown blocks
+  secondary: [content workflow, agent writing]
+---
+
+# Hello, Content Blocks
 
 Regular Markdown works everywhere. Blocks add validated structure:
 
@@ -113,6 +124,28 @@ weaves flowers and leaves.
 :::
 `
 
+const RELATED_CONTENT = `---
+slug: related-contentbit-workflows
+linksTo:
+  - hello-content-blocks
+keywords:
+  primary: contentbit workflow
+  secondary: [validation loop, internal links]
+---
+
+# Related contentbit workflows
+
+This supporting page exists to show internal links in frontmatter. The link
+graph is authored once with \`slug\` and \`linksTo\`, then contentbit derives
+\`linkedFrom\` in \`.contentbit/link-index.json\`.
+
+:::callout{type="note"}
+Run \`contentbit links "content/**/*.md" --fix\` after renaming a page. Alias
+references in \`linksTo\` are rewritten to the current slug, while \`aliases\`
+stays as the rename record.
+:::
+`
+
 /** The wrapper component: styled pack or headless, with or without a Markdown lib. */
 function reactComponent(styled: boolean, mdWired: boolean, blocksImport: string): string {
   const mdImport = mdWired ? "import ReactMarkdown from 'react-markdown'\n" : ''
@@ -130,7 +163,7 @@ import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
   return `'use client'
 
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { createBlockRegistry, parseDocument, stripFrontmatter, validateDocument } from '@contentbit/core'
 ${reactImport}${mdImport}${rendererImport}
 // Everything block-related lives in the blocks/ folder: definitions in
 // registry.ts (shared with the validate CLI), components in components.tsx.
@@ -140,7 +173,7 @@ import { blockComponents } from '${blocksImport}/components'
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
 
 export function Content({ source }: { source: string }) {
-  const result = validateDocument(parseDocument(source), registry)
+  const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
   return (
     <${renderer}
       document={result.document}
@@ -166,14 +199,14 @@ const renderMarkdown = (md) => mdIt.render(md)`
 const renderMarkdown = undefined`
   return `// Render content/example.md to example.html. Run: node scripts/render-example.mjs
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { createBlockRegistry, parseDocument, stripFrontmatter, validateDocument } from '@contentbit/core'
 import { renderToHtml } from '@contentbit/html'
 import { readFile, writeFile } from 'node:fs/promises'
 ${wiring}
 
 const source = await readFile('content/example.md', 'utf8')
 const registry = createBlockRegistry().use(genericBlocks())
-const result = validateDocument(parseDocument(source), registry)
+const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
 const html = renderToHtml(result.document, { renderMarkdown })
 await writeFile('example.html', html, 'utf8')
 console.log('wrote example.html')
@@ -405,7 +438,11 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   const cwd = values.cwd
 
   // A project to init into is required.
-  let pkg: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> }
+  let pkg: {
+    scripts?: Record<string, string>
+    dependencies?: Record<string, string>
+    devDependencies?: Record<string, string>
+  }
   const pkgPath = join(cwd, 'package.json')
   try {
     pkg = JSON.parse(await readFile(pkgPath, 'utf8'))
@@ -495,6 +532,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   const files: Array<[string, string]> = [
     ['blocks/registry.ts', REGISTRY_TEMPLATE],
     ['content/example.md', EXAMPLE_CONTENT],
+    ['content/related.md', RELATED_CONTENT],
   ]
   const layout = detectFramework(cwd, { ...pkg.dependencies, ...pkg.devDependencies })
 
@@ -552,7 +590,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     io.stdout(`${result}: ${rel}`)
   }
 
-  // Wire the validate script.
+  // Wire content scripts.
   const fresh = JSON.parse(await readFile(pkgPath, 'utf8')) as {
     scripts?: Record<string, string>
   }
@@ -560,8 +598,14 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   if (!fresh.scripts['content:check']) {
     fresh.scripts['content:check'] =
       'contentbit validate "content/**/*.md" --registry ./blocks/registry.ts'
-    await writeFile(pkgPath, `${JSON.stringify(fresh, null, 2)}\n`, 'utf8')
     io.stdout('added script: content:check')
+  }
+  if (!fresh.scripts['content:links']) {
+    fresh.scripts['content:links'] = 'contentbit links "content/**/*.md"'
+    io.stdout('added script: content:links')
+  }
+  if (!pkg.scripts?.['content:check'] || !pkg.scripts?.['content:links']) {
+    await writeFile(pkgPath, `${JSON.stringify(fresh, null, 2)}\n`, 'utf8')
   }
 
   // Generate the LLM authoring guide from the registry, ready to paste into a prompt.
@@ -587,6 +631,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   io.stdout('')
   io.stdout('Done. Next steps:')
   io.stdout(`  1. Validate the starter content: ${detectPackageManager(cwd)} run content:check`)
+  io.stdout(`     Build the link index: ${detectPackageManager(cwd)} run content:links`)
   if (target === 'react') {
     if (!values['no-page'] && layout.pagePath) {
       io.stdout('  2. Start the dev server and open /example to see the article rendered.')

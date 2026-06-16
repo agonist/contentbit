@@ -21,6 +21,7 @@ test('creates AGENTS.md with a fenced contentbit block', async () => {
   expect(agentsMd).toContain('contentbit instructions --audience llm')
   expect(agentsMd).toContain('contentbit validate')
   expect(agentsMd).toContain('contentbit stats')
+  expect(agentsMd).toContain('contentbit links')
   expect(io.out.join('\n')).toContain('AGENTS.md')
 })
 
@@ -59,9 +60,11 @@ test('installs Claude Code skills when .claude/ exists', async () => {
   expect(author).toContain('name: contentbit-author')
   expect(author).toContain('contentbit instructions --audience llm')
   expect(author).toContain('contentbit validate')
+  expect(author).toContain('contentbit links')
   const audit = await readFile(join(dir, '.claude/skills/contentbit-audit/SKILL.md'), 'utf8')
   expect(audit).toContain('name: contentbit-audit')
   expect(audit).toContain('contentbit stats')
+  expect(audit).toContain('contentbit links')
   expect(io.out.join('\n')).toContain('contentbit-author')
 })
 

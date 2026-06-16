@@ -2,6 +2,12 @@
 title: Why LLMs write broken Markdown (and how to make it impossible)
 description: LLMs write Markdown that looks right and breaks in production. Prompting alone never fixes it. A validation contract does.
 date: 2026-06-10
+slug: llm-markdown-that-cannot-break
+linksTo:
+  - contentbit-0-2-0
+keywords:
+  primary: LLM Markdown validation
+  secondary: [generated content, schema prompts, validation loop]
 ---
 
 Ask a model for an article and you get beautiful Markdown back: headings in

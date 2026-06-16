@@ -21,6 +21,9 @@ When auditing content health:
   and always exits 0: outline word counts, block usage, link domains, and
   validation error/warning counts. Flag validation issues, thin documents, and
   block-less pages first.
+- `contentbit links "content/**/*.md" [--fix]` builds the internal-link index
+  from `slug` / `linksTo` frontmatter, reports dangling links and orphans, and
+  safely rewrites `linksTo` entries that still point at known aliases.
 
 If `contentbit` is unavailable, suggest `npx contentbit@latest init` instead
 of inventing block syntax.

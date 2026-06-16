@@ -9,9 +9,10 @@ reports real findings from document stats.
 
 The integration is deliberately thin: skill files contain no block schemas. They
 teach the agent to fetch live data from the CLI — the authoring guide from
-`instructions`, health data from `stats`, diagnostics from `validate` — so when
-you add a custom block, every agent picks it up on the next run. Nothing to
-regenerate, nothing to drift.
+`instructions`, health data from `stats`, link graph data from `links`,
+diagnostics from `validate` — so when you add a custom block or rename a page
+slug, every agent picks it up on the next run. Nothing to regenerate, nothing to
+drift.
 
 A session looks like this. The failed validation in the middle is the loop
 doing its job:
@@ -63,7 +64,8 @@ This manages two things:
   - `contentbit-author` — the writing loop: fetch the authoring guide, write,
     validate, fix diagnostics until exit 0.
   - `contentbit-audit` — the health check: run `stats` across content, flag
-    validation issues, thin documents, and block-less pages, in that order.
+    validation issues, internal-link problems, thin documents, and block-less
+    pages, in that order.
 
 Pass `--no-agents-md` to manage only the skills.
 
@@ -75,7 +77,10 @@ The author skill follows the same loop you would run by hand:
 # 1. the live guide, including your custom blocks
 contentbit instructions --audience llm --registry ./blocks/registry.ts
 
-# 2. write the document, then validate until clean
+# 2. if the project uses link frontmatter, load the current graph
+contentbit links "content/**/*.md"
+
+# 3. write the document, then validate until clean
 contentbit validate content/new-post.md --registry ./blocks/registry.ts
 ```
 
@@ -100,6 +105,20 @@ by name, link domains, and a validation summary — enough to rank what needs
 attention without opening a single file. Full field reference and recipes:
 [Document stats & auditing](/docs/guides/stats).
 
+For internal-link health, use the graph command next to stats:
+
+```bash
+contentbit links "content/**/*.md"
+contentbit links "content/**/*.md" --fix
+```
+
+The first command writes `.contentbit/link-index.json` with resolved `linksTo`
+and derived `linkedFrom`. The second safely rewrites `linksTo` values that still
+point at known aliases after a slug rename. The author skill uses that index as
+context when sibling documents declare `slug`, `linksTo`, `aliases`, or
+`keywords`. Full workflow:
+[Internal linking](/docs/guides/internal-linking).
+
 ## Plug contentbit into your own skills
 
 You likely already have skills for your content workflows — a blog-post skill, a
@@ -108,8 +127,10 @@ three lines:
 
 ```markdown
 Before writing, run `contentbit instructions --audience llm --registry <path>`
-and follow it exactly — never guess block syntax. After writing, run
-`contentbit validate <file> --registry <path>` and fix every diagnostic
+and follow it exactly — never guess block syntax. If sibling documents use
+internal-link frontmatter, run `contentbit links <content glob>` and choose
+`linksTo` values from the generated index. After writing, run
+`contentbit validate <content glob> --registry <path>` and fix every diagnostic
 (`file:line:col severity CODE message`, with `hint:` lines) until it exits 0.
 ```
 

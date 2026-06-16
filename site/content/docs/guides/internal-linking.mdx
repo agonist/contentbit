@@ -1,0 +1,124 @@
+---
+title: Internal linking
+description: Build and validate a frontmatter-authored internal-link graph with contentbit links.
+---
+
+Internal links are content metadata, not renderer behavior. Author each page's
+place in the graph in frontmatter, let contentbit derive backlinks, and fail CI
+when a slug drifts after a rename.
+
+```yaml
+---
+slug: beginner-pizza-dough
+linksTo:
+  - cold-fermentation-pizza
+  - detroit-pizza-dough
+aliases:
+  - intro-pizza-dough
+keywords:
+  primary: how to make pizza dough
+  secondary: [easy pizza dough recipe, homemade pizza dough]
+---
+```
+
+Only `slug`, `linksTo`, `aliases`, and `keywords` belong in source files.
+`linkedFrom` is derived and written only to `.contentbit/link-index.json`.
+
+## Build the index
+
+Point `links` at the same content glob you validate:
+
+```bash
+contentbit links "content/**/*.md"
+```
+
+The command reads frontmatter, resolves aliases, derives backlinks, writes
+`.contentbit/link-index.json`, and prints a summary:
+
+```text
+12 page(s), 34 link(s), 1 orphan(s): 0 errors, 1 warnings
+index written to /site/.contentbit/link-index.json
+```
+
+The JSON artifact is intentionally small and stable, so an agent or pipeline can
+load it before writing a page:
+
+```json
+{
+  "pages": [
+    {
+      "slug": "beginner-pizza-dough",
+      "path": "/repo/content/beginner.md",
+      "title": "Beginner Pizza Dough",
+      "linksTo": ["cold-fermentation-pizza"],
+      "linkedFrom": ["pizza-flour-guide"],
+      "aliases": ["intro-pizza-dough"],
+      "keywords": {
+        "primary": "how to make pizza dough",
+        "secondary": ["easy pizza dough recipe"]
+      }
+    }
+  ],
+  "aliases": {
+    "intro-pizza-dough": "beginner-pizza-dough"
+  }
+}
+```
+
+## Validate links
+
+`contentbit validate` runs the cross-file link checks automatically whenever any
+matched file declares a `slug`:
+
+```bash
+contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
+```
+
+Use the full content glob for linked documents. Validating only one linked file
+does not give the checker the rest of the graph.
+
+The link diagnostics use the same `file:line:col severity CODE message` shape as
+block validation:
+
+- `CB_LINK_UNRESOLVED` for a `linksTo` target that is not a slug or alias.
+- `CB_SLUG_DUPLICATE` for two pages with the same `slug`.
+- `CB_ALIAS_CONFLICT` for aliases that collide with another alias or real slug.
+- `CB_LINK_SELF` for a page linking to itself.
+- `CB_LINK_ORPHAN` for a page with no inbound links.
+
+## Heal renames
+
+When a page changes slug, keep the old slug in `aliases` on the destination page:
+
+```yaml
+---
+slug: cold-fermentation-pizza
+aliases:
+  - overnight-pizza-dough
+---
+```
+
+Then let `--fix` rewrite stale outbound references:
+
+```bash
+contentbit links "content/**/*.md" --fix
+```
+
+`--fix` is deliberately narrow. It only rewrites values inside `linksTo` that
+point at known aliases. It does not remove aliases, invent related pages, change
+body Markdown, or write `linkedFrom` to source files.
+
+## Agent workflow
+
+`contentbit agents` teaches installed skills and `AGENTS.md` to use the link
+graph when it exists:
+
+1. Run `contentbit links <content glob>` before writing to read current slugs,
+   aliases, keywords, and backlinks.
+2. Pick `linksTo` values from existing slugs; never guess a slug from a title.
+3. Run `contentbit links <content glob> --fix` after edits when aliases are
+   present.
+4. Run `contentbit validate <content glob> --registry <path>` until clean.
+
+For projects without generated agents, add the same loop to your own skill or
+rules file. The CLI stays the source of truth.

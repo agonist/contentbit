@@ -8,6 +8,18 @@ description: What shipped in each release.
 
 Terse by design — each release links its announcement post.
 
+## Next
+
+- **Internal linking.** New `contentbit links` command builds
+  `.contentbit/link-index.json` from frontmatter `slug`, `linksTo`, `aliases`,
+  and `keywords`, derives backlinks, validates broken slug references, and
+  heals alias references with `--fix`. `contentbit validate` now runs link
+  checks automatically when matched files declare slugs. See
+  [Internal linking](/docs/guides/internal-linking).
+- **Agent link context.** `contentbit agents` now teaches generated skills and
+  `AGENTS.md` blocks to load the link index, choose existing slugs, and validate
+  the full graph when authoring linked content.
+
 ## 0.2.0
 
 All packages now share one version number — this is the first synchronized

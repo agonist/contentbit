@@ -3,6 +3,7 @@ import {
   formatDiagnostic,
   parseDocument,
   renderToMarkdown,
+  stripFrontmatter,
   validateDocument,
 } from '@contentbit/core'
 import { renderToHtml } from '@contentbit/html'
@@ -30,7 +31,7 @@ export async function renderCommand(args: string[], io: Io): Promise<number> {
   }
   const registry = await loadRegistry(values.registry)
   const source = await readFile(file, 'utf8')
-  const result = validateDocument(parseDocument(source), registry)
+  const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
   if (!result.ok) {
     for (const d of result.diagnostics) io.stderr(formatDiagnostic(d, file))
     return 1
