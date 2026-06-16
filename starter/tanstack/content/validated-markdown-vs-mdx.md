@@ -1,3 +1,12 @@
+---
+slug: validated-markdown-vs-mdx
+linksTo:
+  - dialing-in-espresso
+keywords:
+  primary: validated Markdown
+  secondary: [MDX alternative, content validation]
+---
+
 # Why validated Markdown beats MDX
 
 MDX won by promising rich content: drop React components straight into your

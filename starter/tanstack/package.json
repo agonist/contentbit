@@ -11,7 +11,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx}\"",
     "check": "prettier --check \"**/*.{ts,tsx,js,jsx}\"",
     "typecheck": "tsc --noEmit",
-    "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts"
+    "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts",
+    "content:links": "contentbit links \"content/**/*.md\""
   },
   "dependencies": {
     "@contentbit/blocks": "^0.1.0",

@@ -4,7 +4,7 @@ export interface Io {
   writeFile(path: string, content: string): Promise<void>
 }
 
-export const USAGE = `Usage: contentbit <init|validate|stats|render|instructions|docs|agents> [options]
+export const USAGE = `Usage: contentbit <init|validate|stats|render|instructions|docs|agents|links> [options]
 
   init [-t react|html|markdown|astro] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
   agents [--claude] [--no-agents-md]
@@ -13,7 +13,8 @@ export const USAGE = `Usage: contentbit <init|validate|stats|render|instructions
   stats <globs...> [--registry <module.mjs>] [--no-validate]
   render <file> --target html|markdown [--registry <module.mjs>] [--out <file>]
   instructions [--audience llm|human] [--no-examples] [--registry <module.mjs>] [--out <file>]
-  docs [--registry <module.mjs>] [--out <file>]`
+  docs [--registry <module.mjs>] [--out <file>]
+  links <globs...> [--fix] [--out <file>]`
 
 type Command = (args: string[], io: Io) => Promise<number>
 
@@ -25,6 +26,7 @@ const commands: Record<string, () => Promise<Command>> = {
   instructions: async () => (await import('./commands/instructions.js')).instructionsCommand,
   docs: async () => (await import('./commands/docs.js')).docsCommand,
   agents: async () => (await import('./commands/agents.js')).agentsCommand,
+  links: async () => (await import('./commands/links.js')).linksCommand,
 }
 
 export async function run(argv: string[], io: Io): Promise<number> {

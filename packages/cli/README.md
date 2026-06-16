@@ -1,6 +1,8 @@
 # contentbit
 
-CLI for [Content Blocks](https://contentbit.dev): validate documents, render them, and generate LLM authoring instructions from your registry.
+CLI for [Content Blocks](https://contentbit.dev): validate documents, build
+internal-link indexes, render content, and generate LLM authoring instructions
+from your registry.
 
 ```bash
 # scaffold Content Blocks into any project: deps, starter content,
@@ -13,6 +15,10 @@ contentbit validate "content/**/*.md"
 # structured JSON stats for one document: outline, word counts,
 # block census, links, validation summary — quick context for LLMs
 contentbit stats article.md
+
+# internal-link graph from frontmatter slugs, aliases, and linksTo
+contentbit links "content/**/*.md"
+contentbit links "content/**/*.md" --fix
 
 # compact LLM context generated from the registry
 contentbit instructions --audience llm --out guide.md

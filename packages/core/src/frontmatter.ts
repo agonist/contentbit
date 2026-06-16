@@ -82,9 +82,29 @@ function parseValue(value: string, indented: string[]): unknown {
     const items = dedent(indented)
     if (items.every((l) => l.startsWith('- ')))
       return items.map((l) => parseScalar(l.slice(2).trim()))
+    const mapping = parseNestedMapping(items)
+    if (mapping) return mapping
     return items.join('\n')
   }
   return parseScalar(value)
+}
+
+// A one-level mapping: every dedented line is `key: scalar` (or `key:` with an
+// inline array value). Returns null if any line isn't a flat mapping entry —
+// e.g. a deeper-indented line or a `key:` with no inline value, which would
+// need its own nested block — so the caller keeps the raw-text fallback.
+function parseNestedMapping(items: string[]): Record<string, unknown> | null {
+  const out: Record<string, unknown> = {}
+  for (const line of items) {
+    if (/^[ \t]/.test(line)) return null
+    const m = line.match(KEY_RE)
+    if (!m) return null
+    const [, key, rawValue] = m
+    const v = rawValue.trim()
+    if (v === '') return null
+    out[key] = parseScalar(v)
+  }
+  return Object.keys(out).length > 0 ? out : null
 }
 
 function dedent(lines: string[]): string[] {

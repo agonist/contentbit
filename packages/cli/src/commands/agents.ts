@@ -10,7 +10,7 @@ import type { Io } from '../run.js'
 // registry stays the single source of truth and nothing can drift. Bump the
 // frontmatter version when a template changes; `contentbit agents` re-runs
 // overwrite in place.
-const TEMPLATE_VERSION = 1
+const TEMPLATE_VERSION = 2
 
 const AUTHOR_SKILL = `---
 name: contentbit-author
@@ -34,6 +34,8 @@ Check \`package.json\` for a \`content:check\` script. It holds the canonical
 validate invocation for this project: the content glob and, if present, the
 \`--registry <path>\` flag pointing at custom block definitions. Reuse both
 below. No script? Default to \`content/**/*.md\` with no \`--registry\` flag.
+If the project has a \`content:links\` script, use it for the internal-link
+index; otherwise run \`contentbit links <content glob>\` directly.
 
 ## The loop
 
@@ -48,7 +50,19 @@ below. No script? Default to \`content/**/*.md\` with no \`--registry\` flag.
 
 2. **Write the document.** Plain Markdown everywhere; blocks only where the
    guide's use-when guidance fits. Keep frontmatter consistent with sibling
-   documents in the same folder.
+   documents in the same folder. If sibling documents use \`slug\`, \`linksTo\`,
+   \`aliases\`, or \`keywords\`, run the link index first:
+
+   \`\`\`sh
+   contentbit links <content glob>
+   \`\`\`
+
+   Read \`.contentbit/link-index.json\` to pick existing slugs and related
+   pages. Author only \`slug\`, \`linksTo\`, \`aliases\`, and \`keywords\` in
+   frontmatter; never write derived \`linkedFrom\` into source files. When
+   creating a linked page, include \`keywords.primary\` and
+   \`keywords.secondary\` with search-intent phrases that would help future
+   agents choose this page as a \`linksTo\` target.
 
 3. **Validate and fix until clean:**
 
@@ -58,8 +72,19 @@ below. No script? Default to \`content/**/*.md\` with no \`--registry\` flag.
 
    Diagnostics print to stderr as \`file:line:col severity CODE message\`, often
    with a \`hint:\` line suggesting the fix. Exit 0 means clean; exit 1 means
-   errors remain. Fix every diagnostic and re-run. Never finish with a failing
-   validate.
+   errors remain. If the document has link frontmatter, validate the full
+   content glob so cross-file links are checked against the whole graph. Fix
+   every diagnostic and re-run. Never finish with a failing validate.
+
+4. **Refresh internal links when present:**
+
+   \`\`\`sh
+   contentbit links <content glob> --fix
+   \`\`\`
+
+   \`--fix\` only rewrites \`linksTo\` values that point at known aliases. It
+   does not invent links, remove aliases, or write backlinks. Re-run validate
+   after it changes files.
 
 ## Failure modes
 
@@ -82,6 +107,8 @@ version: ${TEMPLATE_VERSION}
 
 \`contentbit stats\` analyzes documents and prints JSON to stdout. It is a read
 tool: it always exits 0, even when documents have validation errors.
+\`contentbit links\` builds the frontmatter-authored internal-link graph and
+prints link diagnostics.
 
 ## Gather
 
@@ -90,23 +117,31 @@ content glob and \`--registry\` flag, then:
 
 \`\`\`sh
 contentbit stats "content/**/*.md" [--registry <path>]
+contentbit links "content/**/*.md"
 \`\`\`
 
 One matched file prints a single stats object; multiple files print an array.
 Each entry includes the file path, frontmatter data, a heading \`outline\` with
 per-section word counts, \`blocks.byName\` usage counts, \`links.domains\`, and
 a \`validation\` summary (\`errors\`/\`warnings\`).
+\`contentbit links\` also writes \`.contentbit/link-index.json\`, whose pages
+contain \`slug\`, resolved \`linksTo\`, derived \`linkedFrom\`, \`aliases\`, and
+\`keywords\`.
 
 ## Interpret
 
 Prioritize findings in this order:
 
 1. **Validation errors and warnings** — broken content ships broken pages.
-2. **Thin documents** — outline sections with very low word counts.
-3. **Block-less documents** — \`blocks.byName\` empty where sibling documents
+2. **Internal-link errors** — unresolved links, duplicate slugs, and alias
+   conflicts from \`contentbit links\`.
+3. **Orphans and self-links** — link warnings that point to isolated or noisy
+   pages.
+4. **Thin documents** — outline sections with very low word counts.
+5. **Block-less documents** — \`blocks.byName\` empty where sibling documents
    use blocks; structure (steps, callouts, comparisons, faq) may be missing.
-4. **Missing or inconsistent frontmatter** compared to sibling documents.
-5. **Structural imbalance** — skipped heading levels, single-section walls of text.
+6. **Missing or inconsistent frontmatter** compared to sibling documents.
+7. **Structural imbalance** — skipped heading levels, single-section walls of text.
 
 ## Report
 
@@ -123,14 +158,22 @@ This project validates Markdown content with contentbit. Documents are plain
 Markdown plus directive blocks (\`:::name{props} ... :::\`), each with a schema.
 The \`content:check\` script in package.json holds the canonical validate
 command — the content glob and the \`--registry\` flag — reuse its arguments.
+If the project has a \`content:links\` script, use it to build the internal-link
+index; otherwise run \`contentbit links <content glob>\`.
 
 When writing or editing content:
 
 1. Fetch the live authoring guide first — never guess block syntax:
    \`contentbit instructions --audience llm [--registry <path>]\`
 2. Write plain Markdown; use blocks where the guide's use-when guidance fits.
-3. Validate until clean (exit 0): \`contentbit validate <file> [--registry <path>]\`.
+3. If sibling documents use \`slug\` / \`linksTo\`, read
+   \`.contentbit/link-index.json\` from \`contentbit links <content glob>\` and
+   author frontmatter links with existing slugs. When creating a linked page,
+   include \`keywords.primary\` and \`keywords.secondary\` with search-intent
+   phrases future agents can use to choose related pages.
+4. Validate until clean (exit 0): \`contentbit validate <file> [--registry <path>]\`.
    Diagnostics print as \`file:line:col severity CODE message\` with fix hints.
+   For link frontmatter, validate the full content glob so cross-file checks run.
 
 When auditing content health:
 
@@ -138,6 +181,9 @@ When auditing content health:
   and always exits 0: outline word counts, block usage, link domains, and
   validation error/warning counts. Flag validation issues, thin documents, and
   block-less pages first.
+- \`contentbit links "content/**/*.md" [--fix]\` builds
+  \`.contentbit/link-index.json\`, reports dangling links/orphans, and rewrites
+  alias references in \`linksTo\` when \`--fix\` is used.
 
 If \`contentbit\` is unavailable, suggest \`npx contentbit@latest init\` instead
 of inventing block syntax.

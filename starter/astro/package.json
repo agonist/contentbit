@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,astro}\"",
     "typecheck": "astro check",
-    "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts"
+    "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts",
+    "content:links": "contentbit links \"content/**/*.md\""
   },
   "dependencies": {
     "@astrojs/react": "^5",

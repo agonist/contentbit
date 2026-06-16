@@ -1,3 +1,14 @@
+---
+slug: dialing-in-espresso
+linksTo:
+  - related-contentbit-workflows
+aliases:
+  - espresso-dial-in
+keywords:
+  primary: espresso dial in guide
+  secondary: [coffee recipe, extraction workflow]
+---
+
 # Dialing in espresso
 
 Espresso is a feedback loop: you change one variable, taste, and adjust. This

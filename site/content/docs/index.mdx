@@ -64,6 +64,7 @@ It detects your framework and package manager, asks two questions (or none with
     { text: 'created: components/content-blocks.tsx' },
     { text: 'created: app/example/page.tsx' },
     { text: 'added script: content:check' },
+    { text: 'added script: content:links' },
     { text: 'created: contentbit-guide.md (LLM authoring instructions)' },
     { text: 'created: AGENTS.md (contentbit block)' },
     { text: 'installed: .claude/skills/contentbit-author/SKILL.md' },
@@ -75,8 +76,8 @@ It detects your framework and package manager, asks two questions (or none with
 
 That's packages for your render target, a custom-block registry, a starter
 document with a rendered `/example` page, a `content:check` validate script,
-LLM authoring instructions, and the [coding-agent integration](/docs/guides/agents)
-(skip it with `--no-agents`).
+an optional `content:links` index script, LLM authoring instructions, and the
+[coding-agent integration](/docs/guides/agents) (skip it with `--no-agents`).
 
 ## 2. Ask your agent
 
@@ -193,5 +194,6 @@ pnpm dlx shadcn@latest add @contentbit/generic-pack
 - Learn the [block syntax](/docs/concepts/syntax)
 - Define [custom blocks](/docs/guides/custom-blocks)
 - [Document stats & auditing](/docs/guides/stats) — rank what needs attention across your content
+- [Internal linking](/docs/guides/internal-linking) — generate backlinks and catch broken slug references
 - Render with [Astro](/docs/guides/astro)
 - Browse the [block reference](/docs/reference/blocks) and the [changelog](/docs/changelog)

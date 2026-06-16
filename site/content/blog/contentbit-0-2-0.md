@@ -2,6 +2,12 @@
 title: contentbit 0.2.0 — your coding agent writes validated content
 description: One command installs agent skills that fetch the live authoring guide, write, and validate until clean. Plus document stats, an Astro renderer, and fully documented props.
 date: 2026-06-12
+slug: contentbit-0-2-0
+linksTo:
+  - llm-markdown-that-cannot-break
+keywords:
+  primary: coding agent content workflow
+  secondary: [contentbit agents, content validation, document stats]
 ---
 
 0.1.0 gave you the contract: every block has a schema, validation runs before
