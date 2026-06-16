@@ -116,7 +116,9 @@ The first command writes `.contentbit/link-index.json` with resolved `linksTo`
 and derived `linkedFrom`. The second safely rewrites `linksTo` values that still
 point at known aliases after a slug rename. The author skill uses that index as
 context when sibling documents declare `slug`, `linksTo`, `aliases`, or
-`keywords`. Full workflow:
+`keywords`, and asks new linked pages to include `keywords.primary` and
+`keywords.secondary` search-intent phrases for future link selection. Full
+workflow:
 [Internal linking](/docs/guides/internal-linking).
 
 ## Plug contentbit into your own skills

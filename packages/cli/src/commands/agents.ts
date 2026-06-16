@@ -59,7 +59,10 @@ index; otherwise run \`contentbit links <content glob>\` directly.
 
    Read \`.contentbit/link-index.json\` to pick existing slugs and related
    pages. Author only \`slug\`, \`linksTo\`, \`aliases\`, and \`keywords\` in
-   frontmatter; never write derived \`linkedFrom\` into source files.
+   frontmatter; never write derived \`linkedFrom\` into source files. When
+   creating a linked page, include \`keywords.primary\` and
+   \`keywords.secondary\` with search-intent phrases that would help future
+   agents choose this page as a \`linksTo\` target.
 
 3. **Validate and fix until clean:**
 
@@ -165,7 +168,9 @@ When writing or editing content:
 2. Write plain Markdown; use blocks where the guide's use-when guidance fits.
 3. If sibling documents use \`slug\` / \`linksTo\`, read
    \`.contentbit/link-index.json\` from \`contentbit links <content glob>\` and
-   author frontmatter links with existing slugs.
+   author frontmatter links with existing slugs. When creating a linked page,
+   include \`keywords.primary\` and \`keywords.secondary\` with search-intent
+   phrases future agents can use to choose related pages.
 4. Validate until clean (exit 0): \`contentbit validate <file> [--registry <path>]\`.
    Diagnostics print as \`file:line:col severity CODE message\` with fix hints.
    For link frontmatter, validate the full content glob so cross-file checks run.
