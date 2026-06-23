@@ -113,3 +113,12 @@ test('renderMarkdown prop overrides the default pipeline', async () => {
   })
   expect(out).toContain('<custom>Prose.</custom>')
 })
+
+test('renderMarkdown prop can be async for prose and default block bodies', async () => {
+  const out = await render({
+    document: doc('Prose.\n\n:::callout{type="tip"}\nBody.\n:::\n'),
+    renderMarkdown: async (md: string) => `<host>${md.trim()}</host>`,
+  })
+  expect(out).toContain('<host>Prose.</host>')
+  expect(out).toContain('<host>Body.</host>')
+})

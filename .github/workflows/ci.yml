@@ -16,7 +16,32 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm version:check
       - run: pnpm lint
       - run: pnpm fmt:check
       - run: pnpm -r build
       - run: pnpm -r test
+
+  starter:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        starter: [starter/astro, starter/tanstack]
+    defaults:
+      run:
+        working-directory: ${{ matrix.starter }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.starter }}/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm content:check
+      - run: pnpm content:links
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm smoke

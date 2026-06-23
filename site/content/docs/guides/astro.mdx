@@ -5,9 +5,9 @@ description: Render validated documents with .astro components — renderer only
 
 `@contentbit/astro` is a renderer, deliberately nothing more. There is no
 content-loader integration: Astro's own content collections load your Markdown,
-contentbit validates and renders it where it's used, and `contentbit validate`
-covers the same files in CI. One validation path instead of two pipelines that
-can fall out of sync.
+your Astro Markdown processor renders prose, contentbit validates structured
+block islands where they are used, and `contentbit validate` covers the same
+files in CI. One validation path, without replacing Astro's Markdown pipeline.
 
 ## Setup
 
@@ -58,6 +58,33 @@ const result = validateDocument(parseDocument(entry.body), registry)
 Static pages render at build time, so this is a real safety net: invalid blocks
 fail the build, not the reader.
 
+## Use Astro/Sätteri for prose
+
+Astro 7 uses Sätteri for Markdown and MDX. Contentbit can stay complementary by
+delegating Markdown fragments back to that host renderer:
+
+```astro
+---
+import { createSatteriMarkdownProcessor } from '@astrojs/markdown-satteri'
+import { ContentBlocks } from '@contentbit/astro/components'
+
+const processor = await createSatteriMarkdownProcessor({
+  features: { directive: true, headingAttributes: true, math: true },
+})
+
+const renderMarkdown = async (markdown: string) => {
+  const result = await processor.render(markdown)
+  return result.code
+}
+---
+
+<ContentBlocks document={result.document} renderMarkdown={renderMarkdown} />
+```
+
+The contentbit parser still finds and validates block directives, but normal
+Markdown syntax, heading ids, smart punctuation, math, and other enabled prose
+features stay owned by Astro.
+
 ## Component overrides
 
 Map block names to your own `.astro` components. Validated props arrive as
@@ -89,10 +116,10 @@ can use them without defensive parsing.
 
 ## Options
 
-- **`renderMarkdown`** — `(md: string) => string` for prose and block bodies.
-  Ships with a marked-based default (GFM, raw HTML escaped), so it works
-  untouched; swap in your own to match the rest of your site. The default is
-  also exported as `defaultRenderMarkdown` from `@contentbit/astro`.
+- **`renderMarkdown`** — `(md: string) => string | Promise<string>` for prose
+  and block bodies. Ships with a marked-based default (GFM, raw HTML escaped),
+  so it works untouched; swap in your own to match the rest of your site. The
+  default is also exported as `defaultRenderMarkdown` from `@contentbit/astro`.
 - **`classPrefix`** — prefix for the headless markup's class names, default
   `cb-`.
 - **`renderers`** — low-level per-block render functions, when a full `.astro`
