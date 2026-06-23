@@ -1,11 +1,11 @@
 ---
 import type { ContentNode, ValidatedBlockNode } from '@contentbit/core'
-import type { AstroBlockRenderer, AstroMarkdownRenderer } from '../dist/render-block.js'
+import type { AstroBlockRenderer, AstroMarkdownRenderer } from '@contentbit/astro'
 
 import { isValidatedBlock } from '@contentbit/core'
 import { fallbackMarkdown, invalidBlockHtml, unrenderableBlockError } from '@contentbit/html'
 
-import { renderBlockShell } from '../dist/render-block.js'
+import { renderBlockShell } from '@contentbit/astro'
 
 interface Props {
   nodes: ContentNode[]

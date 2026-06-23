@@ -1,9 +1,8 @@
 ---
 import type { DocumentNode } from '@contentbit/core'
-import type { AstroBlockRenderer, AstroMarkdownRenderer } from '../dist/render-block.js'
+import type { AstroBlockRenderer, AstroMarkdownRenderer } from '@contentbit/astro'
 
-import { defaultRenderMarkdown } from '../dist/markdown.js'
-import { genericAstroRenderers } from '../dist/render-block.js'
+import { defaultRenderMarkdown, genericAstroRenderers } from '@contentbit/astro'
 import RenderNodes from './RenderNodes.astro'
 
 interface Props {
