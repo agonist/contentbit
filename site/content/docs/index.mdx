@@ -1,13 +1,15 @@
 ---
 title: Getting started
-description: One command to set up Content Blocks — then your coding agent writes validated content.
+description: Set up contentbit, validate your first document, and let your coding agent start writing.
 ---
 
-Content Blocks is a framework-agnostic block layer for Markdown — the contract
-between whatever writes your content (you, a CMS, a coding agent) and whatever
-renders it. Authors write Markdown with directive-style blocks; every block has
-a schema, validation runs before anything renders, and every example on this
-site is rendered live by the library it documents:
+contentbit is the shortest path from "my agent wrote some Markdown" to
+"this content is structured, validated, and ready to render." It adds a small
+block protocol to Markdown, generates authoring instructions from your block
+schemas, and gives your coding agent a repeatable write -> validate -> fix loop.
+
+The contract is simple: authors and agents write Markdown with directive-style
+blocks; every block has a schema; validation runs before anything renders:
 
 <Live>
 {`:::comparison{left="Basic" right="Pro"}
@@ -16,8 +18,11 @@ site is rendered live by the library it documents:
 :::`}
 </Live>
 
-The shortest path from install to publishable content is two steps: run `init`,
-then ask your coding agent to write.
+First-time flow:
+
+1. Run `init`.
+2. Validate the starter document.
+3. Ask your agent to write or audit content.
 
 ## 1. One command
 
@@ -74,22 +79,35 @@ It detects your framework and package manager, asks two questions (or none with
   ]}
 />
 
-That's packages for your render target, a custom-block registry, a starter
-document with a rendered `/example` page, a `content:check` validate script,
-an optional `content:links` index script, LLM authoring instructions, and the
-[coding-agent integration](/docs/guides/agents) (skip it with `--no-agents`).
+That gives you a working content system, not just a package install:
+
+- **Content to edit:** `content/example.md` and `content/related.md`
+- **A schema source of truth:** `blocks/registry.ts`
+- **A visible render target:** `/example` when your framework supports it
+- **Quality gates:** `content:check` and `content:links` scripts
+- **Agent context:** `contentbit-guide.md`, `AGENTS.md`, and Claude Code skills
+  when a `.claude/` directory exists
+
+Skip the agent files with `--no-agents` if you only want the library and CLI.
 
 ## 2. Ask your agent
 
-Your coding agent now knows how to write content for this project. Try:
+Your coding agent now has project-local instructions. Start with one of these:
 
 > write a blog post about our new dark mode
 
 > audit my content
 
-The installed `contentbit-author` skill runs the loop a careful human would:
-fetch the live authoring guide, write, validate, fix every diagnostic until the
-validator exits 0.
+The writing loop is deliberately boring:
+
+1. Read the `content:check` script to discover the content glob and registry.
+2. Fetch the live authoring guide from that registry.
+3. Write plain Markdown with registered blocks.
+4. Validate the file.
+5. Fix diagnostics until validation exits 0.
+
+The failed validation in this demo is the useful part: it gives the agent a
+specific source line, stable error code, and fix hint.
 
 <AgentSession
   steps={[
