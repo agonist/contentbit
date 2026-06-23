@@ -1,21 +1,43 @@
-# TanStack Start + shadcn/ui
+# contentbit TanStack starter
 
-This is a template for a new TanStack Start project with React, TypeScript, and shadcn/ui.
+This starter is a working TanStack Start project with contentbit already wired:
+Markdown content, block validation, internal links, styled React components, and
+agent instructions.
 
-## Adding components
-
-To add components to your app, run the following command:
+## First run
 
 ```bash
-npx shadcn@latest add button
+pnpm install
+pnpm run content:check
+pnpm run content:links
+pnpm run dev
 ```
 
-This will place the ui components in the `components` directory.
+Open `http://localhost:3000/blog` to see the content graph demo.
 
-## Using components
+## What to edit
 
-To use the components in your app, import them as follows:
+- `content/*.md` — Markdown documents with contentbit blocks and link frontmatter.
+- `blocks/registry.ts` — custom block schemas shared by the CLI, renderer, and agents.
+- `blocks/components.tsx` — React renderers for custom blocks.
+- `src/components/content-blocks/*` — styled block components installed from the contentbit registry.
+- `AGENTS.md` and `contentbit-guide.md` — instructions your coding agent reads before writing.
 
-```tsx
-import { Button } from "@/components/ui/button";
+## Agent workflow
+
+Ask your agent to write or audit content:
+
+```text
+write a blog post about espresso ratios
+audit my content
+```
+
+The agent should fetch the live guide with `contentbit instructions`, write
+plain Markdown with registered blocks, run `pnpm run content:check`, and fix
+diagnostics until validation exits 0.
+
+Refresh the generated agent files at any time:
+
+```bash
+pnpm exec contentbit agents
 ```

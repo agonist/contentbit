@@ -1,11 +1,24 @@
 ---
 title: Coding-agent integration
-description: Ship skills and AGENTS.md instructions so any agent can write and audit validated content.
+description: Give Codex, Claude Code, Cursor, Copilot, and other agents a fast validated writing loop.
 ---
 
-Your coding agent already lives in the repo. This guide wires it to contentbit so
-"write a blog post about X" produces a validated document, and "audit my content"
-reports real findings from document stats.
+contentbit turns your coding agent into a safer content author. The agent does
+not need to memorize block syntax or guess props; it asks the CLI for the live
+guide, writes Markdown, validates the result, and fixes diagnostics until the
+document is clean.
+
+If you already ran `contentbit init`, try this now:
+
+> write a blog post about our new dark mode
+
+> audit my content
+
+If this is an existing project, install or refresh the integration first:
+
+```bash
+contentbit agents
+```
 
 The integration is deliberately thin: skill files contain no block schemas. They
 teach the agent to fetch live data from the CLI — the authoring guide from
@@ -14,8 +27,8 @@ diagnostics from `validate` — so when you add a custom block or rename a page
 slug, every agent picks it up on the next run. Nothing to regenerate, nothing to
 drift.
 
-A session looks like this. The failed validation in the middle is the loop
-doing its job:
+A session looks like this. The failed validation in the middle is expected: it
+is the feedback loop doing its job.
 
 <AgentSession
   steps={[
@@ -44,7 +57,7 @@ doing its job:
   ]}
 />
 
-## Install
+## What gets installed
 
 `contentbit init` installs the integration automatically (skip with
 `--no-agents`). In an existing project, or after upgrading the CLI:
@@ -69,7 +82,11 @@ This manages two things:
 
 Pass `--no-agents-md` to manage only the skills.
 
-## What the agent does
+The project scripts matter too. The generated instructions tell the agent to
+read `content:check` from `package.json` because that script contains the
+canonical content glob and `--registry` flag for your project.
+
+## Writing loop
 
 The author skill follows the same loop you would run by hand:
 
@@ -93,6 +110,8 @@ authoring instructions document every prop from the block's schema — name, typ
 with enum values spelled out, required or optional, default, and description —
 so optional props an example doesn't use are still discoverable. See
 [LLM authoring](/docs/concepts/llm-authoring).
+
+## Audit loop
 
 The audit skill leans on `stats`, which prints JSON and always exits 0:
 
