@@ -317,7 +317,7 @@ export function validateLinks(
   const index = buildLinkIndex(inputs, resolvedOptions)
   const lookup = buildLookup(index.pages, resolvedOptions)
 
-  for (const { path, fm } of validInputs) {
+  for (const { fm } of validInputs) {
     const page = index.pages.get(
       pageMapKey(frontmatterIdentity(fm, resolvedOptions), resolvedOptions),
     )

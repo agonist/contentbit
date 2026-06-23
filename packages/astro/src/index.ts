@@ -1,2 +1,11 @@
 export { defaultRenderMarkdown } from './markdown.js'
-export { renderBlockShell, type BlockShell, type RenderBlockOptions } from './render-block.js'
+export {
+  genericAstroRenderers,
+  renderBlockShell,
+  type AstroBlockRenderContext,
+  type AstroBlockRenderer,
+  type AstroMarkdownRenderer,
+  type BlockShell,
+  type MaybePromise,
+  type RenderBlockOptions,
+} from './render-block.js'

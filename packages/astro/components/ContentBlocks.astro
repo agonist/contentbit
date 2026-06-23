@@ -1,10 +1,8 @@
 ---
 import type { DocumentNode } from '@contentbit/core'
-import type { HtmlBlockRenderer } from '@contentbit/html'
+import type { AstroBlockRenderer, AstroMarkdownRenderer } from '@contentbit/astro'
 
-import { genericHtmlRenderers } from '@contentbit/html'
-
-import { defaultRenderMarkdown } from '../dist/markdown.js'
+import { defaultRenderMarkdown, genericAstroRenderers } from '@contentbit/astro'
 import RenderNodes from './RenderNodes.astro'
 
 interface Props {
@@ -16,14 +14,14 @@ interface Props {
    * reserved `node` prop (the full ValidatedBlockNode); nested content
    * arrives through the default <slot />. A block prop literally named
    * "node" is shadowed by the reserved prop.
-   */
+  */
   components?: Record<string, unknown>
   /** Per-block string renderers, merged over the generic html defaults. */
-  renderers?: Record<string, HtmlBlockRenderer>
+  renderers?: Record<string, AstroBlockRenderer>
   /** CSS class prefix for default renderers. Default "cb-". */
   classPrefix?: string
   /** Prose pipeline. Default: marked (GFM) with raw HTML escaped. */
-  renderMarkdown?: (md: string) => string
+  renderMarkdown?: AstroMarkdownRenderer
   /** Invalid-block behavior: throw, visible dev box, or escaped body. Default "annotated". */
   onInvalid?: 'strict' | 'annotated' | 'fallback'
 }
@@ -41,7 +39,7 @@ const {
 <RenderNodes
   nodes={document.children}
   components={components}
-  renderers={{ ...genericHtmlRenderers, ...renderers }}
+  renderers={{ ...genericAstroRenderers, ...renderers }}
   classPrefix={classPrefix}
   renderMarkdown={renderMarkdown}
   onInvalid={onInvalid}

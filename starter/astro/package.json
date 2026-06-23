@@ -12,7 +12,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,astro}\"",
     "typecheck": "astro check",
     "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts",
-    "content:links": "contentbit links \"content/**/*.md\""
+    "content:links": "contentbit links \"content/**/*.md\"",
+    "smoke": "node ../../scripts/starter-smoke.mjs astro"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.3.1",

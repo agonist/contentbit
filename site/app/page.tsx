@@ -47,14 +47,14 @@ export default function Home() {
               style={{ animationDelay: '80ms' }}
             >
               Structured Markdown components
-              <span className="text-muted-foreground"> without framework lock-in</span>
+              <span className="text-muted-foreground"> for LLM-written content</span>
             </h1>
             <p
               className="text-muted-foreground animate-rise mx-auto mt-6 max-w-xl text-base text-pretty sm:text-lg"
               style={{ animationDelay: '160ms' }}
             >
-              Write Markdown with validated, structured blocks. Render it anywhere. Built for
-              content written by humans, CMSes, and coding agents.
+              Give coding agents validated, structured Markdown blocks. Render generated content
+              anywhere.
             </p>
             <div
               className="animate-rise mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"

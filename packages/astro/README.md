@@ -46,7 +46,8 @@ props as component props, a reserved `node` prop with the full block node
 `<slot />`.
 
 The default prose pipeline is marked (GFM) with raw HTML escaped — the same
-safe-by-default stance as every other render target. Pass your own
-`renderMarkdown` to opt into raw HTML for trusted content.
+safe-by-default stance as every other render target. Contentbit is only the
+block/validation layer: pass your own `renderMarkdown` when your site already
+has a Markdown pipeline, including Astro's async Sätteri renderer in Astro 7.
 
 Docs: https://contentbit.dev/docs

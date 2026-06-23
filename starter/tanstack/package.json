@@ -12,7 +12,8 @@
     "check": "prettier --check \"**/*.{ts,tsx,js,jsx}\"",
     "typecheck": "tsc --noEmit",
     "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts",
-    "content:links": "contentbit links \"content/**/*.md\""
+    "content:links": "contentbit links \"content/**/*.md\"",
+    "smoke": "node ../../scripts/starter-smoke.mjs tanstack"
   },
   "dependencies": {
     "@contentbit/blocks": "^0.3.0",

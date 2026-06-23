@@ -35,7 +35,7 @@ interface Props {
    * children. The blog routes pass prerendered Sätteri output here so
    * contentbit complements Astro's Markdown renderer instead of replacing it.
    */
-  renderMarkdown?: (md: string) => string
+  renderMarkdown?: ComponentProps<typeof ContentBlocks>['renderMarkdown']
   onInvalid?: 'strict' | 'annotated' | 'fallback'
 }
 

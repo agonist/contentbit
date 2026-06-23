@@ -4,9 +4,11 @@ description: Static HTML, React, Astro, and plain-Markdown output from the same 
 ---
 
 Renderers consume a validated document. The parser and registry know nothing about
-React or HTML — every renderer is an adapter with a per-block renderer map you can
-override. Four targets ship today: static HTML, React, Astro, and a
-plain-Markdown fallback.
+React, Astro, or HTML — every renderer is an adapter with a per-block renderer map
+you can override. Contentbit should complement your host renderer, not replace it:
+use it for block structure, validation, metadata, and link graphs, while your app
+keeps owning normal Markdown prose. Four targets ship today: static HTML, React,
+Astro, and a plain-Markdown fallback.
 
 ## Static HTML
 
@@ -84,8 +86,10 @@ import QuoteBlock from '../blocks/QuoteBlock.astro'
 Per-block overrides are plain `.astro` components: validated props arrive as
 component props, nested content via `<slot />`, and the raw AST node as the
 reserved `node` prop. `renderMarkdown` ships with a marked-based default (GFM,
-raw HTML escaped), so prose works untouched. Note the `onInvalid` default here
-is `annotated`, not `fallback`. Full guide: [Astro](/docs/guides/astro).
+raw HTML escaped), so prose works untouched, and it also accepts async host
+renderers when you want Astro/Sätteri or another site pipeline to render prose.
+Note the `onInvalid` default here is `annotated`, not `fallback`. Full guide:
+[Astro](/docs/guides/astro).
 
 ## Plain Markdown fallback
 

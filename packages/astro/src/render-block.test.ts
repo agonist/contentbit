@@ -2,10 +2,9 @@ import type { ValidatedBlockNode } from '@contentbit/core'
 
 import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-import { genericHtmlRenderers } from '@contentbit/html'
 import { expect, test } from 'vitest'
 
-import { renderBlockShell } from './render-block.js'
+import { genericAstroRenderers, renderBlockShell } from './render-block.js'
 
 const registry = createBlockRegistry().use(genericBlocks())
 
@@ -17,12 +16,12 @@ function block(source: string): ValidatedBlockNode<unknown> {
 const opts = {
   classPrefix: 'cb-',
   renderMarkdown: (md: string) => `<p>${md.trim()}</p>`,
-  renderers: genericHtmlRenderers,
+  renderers: genericAstroRenderers,
 }
 
-test('a renderer that never calls renderNodes yields a single part', () => {
+test('a renderer that never calls renderNodes yields a single part', async () => {
   const node = block(':::steps\n1. Mix\n2. Rest\n:::\n')
-  const shell = renderBlockShell(node, opts)
+  const shell = await renderBlockShell(node, opts)
   expect(shell).not.toBeNull()
   expect(shell!.childSlots).toEqual([])
   expect(shell!.parts).toHaveLength(1)
@@ -30,9 +29,9 @@ test('a renderer that never calls renderNodes yields a single part', () => {
   expect(shell!.parts[0]).toContain('<li>Mix</li>')
 })
 
-test('renderNodes call sites become child slots between parts', () => {
+test('renderNodes call sites become child slots between parts', async () => {
   const node = block(':::callout{type="tip"}\nHello\n:::\n')
-  const shell = renderBlockShell(node, {
+  const shell = await renderBlockShell(node, {
     ...opts,
     renderers: {
       callout: (n, ctx) =>
@@ -44,9 +43,9 @@ test('renderNodes call sites become child slots between parts', () => {
   expect(shell!.childSlots[0][0]).toMatchObject({ type: 'markdown' })
 })
 
-test('multiple renderNodes calls keep document order', () => {
+test('multiple renderNodes calls keep document order', async () => {
   const node = block(':::callout{type="tip"}\nHello\n:::\n')
-  const shell = renderBlockShell(node, {
+  const shell = await renderBlockShell(node, {
     ...opts,
     renderers: {
       callout: (n, ctx) =>
@@ -57,9 +56,9 @@ test('multiple renderNodes calls keep document order', () => {
   expect(shell!.childSlots).toHaveLength(2)
 })
 
-test('a token-looking sequence in real content is left as literal text', () => {
+test('a token-looking sequence in real content is left as literal text', async () => {
   const node = block(':::callout{type="tip"}\nHello\n:::\n')
-  const shell = renderBlockShell(node, {
+  const shell = await renderBlockShell(node, {
     ...opts,
     renderers: {
       callout: () => 'before \u0000cb:9\u0000 after',
@@ -69,7 +68,7 @@ test('a token-looking sequence in real content is left as literal text', () => {
   expect(shell!.childSlots).toEqual([])
 })
 
-test('returns null when no renderer is registered for the block', () => {
+test('returns null when no renderer is registered for the block', async () => {
   const node = block(':::callout{type="tip"}\nHello\n:::\n')
-  expect(renderBlockShell(node, { ...opts, renderers: {} })).toBeNull()
+  await expect(renderBlockShell(node, { ...opts, renderers: {} })).resolves.toBeNull()
 })

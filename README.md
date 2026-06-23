@@ -13,14 +13,13 @@
 
 # contentbit
 
-**Structured Markdown components without framework lock-in.**
+**Structured Markdown components for LLM-written content.**
 `npx contentbit@latest init`, then ask your coding agent to write a post — it
 fetches the live authoring guide, writes, and validates until clean.
 
 LLMs are fluent in Markdown, and that fluency is the problem: generated content
 *looks* right and breaks in production. Content Blocks is a content protocol
-that fixes the interface. Authors (humans, CMSes, LLMs) write plain Markdown
-with directive blocks:
+that fixes the interface. LLMs write plain Markdown with directive blocks:
 
 ```md
 :::comparison{left="Basic" right="Pro"}

@@ -1,18 +1,18 @@
 ---
 import type { ContentNode, ValidatedBlockNode } from '@contentbit/core'
-import type { HtmlBlockRenderer } from '@contentbit/html'
+import type { AstroBlockRenderer, AstroMarkdownRenderer } from '@contentbit/astro'
 
 import { isValidatedBlock } from '@contentbit/core'
 import { fallbackMarkdown, invalidBlockHtml, unrenderableBlockError } from '@contentbit/html'
 
-import { renderBlockShell } from '../dist/render-block.js'
+import { renderBlockShell } from '@contentbit/astro'
 
 interface Props {
   nodes: ContentNode[]
   components: Record<string, unknown>
-  renderers: Record<string, HtmlBlockRenderer>
+  renderers: Record<string, AstroBlockRenderer>
   classPrefix: string
-  renderMarkdown: (md: string) => string
+  renderMarkdown: AstroMarkdownRenderer
   onInvalid: 'strict' | 'annotated' | 'fallback'
 }
 
@@ -26,12 +26,12 @@ type Plan =
   | { kind: 'override'; node: ValidatedBlockNode<unknown>; Component: OverrideComponent }
   | { kind: 'shell'; parts: string[]; childSlots: ContentNode[][] }
 
-const plans: Plan[] = nodes.map((node) => {
-  if (node.type === 'markdown') return { kind: 'html', html: renderMarkdown(node.value) }
+const plans: Plan[] = await Promise.all(nodes.map(async (node) => {
+  if (node.type === 'markdown') return { kind: 'html', html: await renderMarkdown(node.value) }
   if (isValidatedBlock(node)) {
     const override = components[node.name]
     if (override) return { kind: 'override', node, Component: override as OverrideComponent }
-    const shell = renderBlockShell(node, { classPrefix, renderMarkdown, renderers })
+    const shell = await renderBlockShell(node, { classPrefix, renderMarkdown, renderers })
     if (shell) return { kind: 'shell', ...shell }
   }
   // Not validated, or validated with no renderer and no override. The
@@ -42,7 +42,7 @@ const plans: Plan[] = nodes.map((node) => {
     return { kind: 'html', html: invalidBlockHtml(node, classPrefix) }
   }
   return { kind: 'html', html: fallbackMarkdown(node.body) }
-})
+}))
 ---
 
 {

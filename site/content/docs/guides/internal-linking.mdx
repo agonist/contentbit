@@ -83,8 +83,63 @@ block validation:
 - `CB_LINK_UNRESOLVED` for a `linksTo` target that is not a slug or alias.
 - `CB_SLUG_DUPLICATE` for two pages with the same `slug`.
 - `CB_ALIAS_CONFLICT` for aliases that collide with another alias or real slug.
+- `CB_LINK_LOCALE_MISSING` for a target that exists in another locale but not the
+  current locale.
+- `CB_LINK_CROSS_LOCALE` for an explicit object target that intentionally points
+  across locales.
 - `CB_LINK_SELF` for a page linking to itself.
 - `CB_LINK_ORPHAN` for a page with no inbound links.
+
+## Multilingual projects
+
+Use the resolver mode that matches your URL model:
+
+```bash
+# Same translated slug in every locale: /en/blog/espresso and /fr/blog/espresso
+contentbit links "content/**/*.md" --link-resolve same-locale-slug
+
+# Translated slugs with stable content keys:
+contentbit links "content/**/*.md" --link-resolve same-locale-key
+
+# Prefer stable keys, but allow same-locale slug links for simple projects:
+contentbit links "content/**/*.md" --link-resolve prefer-same-locale-key-fallback-slug
+```
+
+For translated slugs, author a stable `key` and a locale-specific `slug`:
+
+```yaml
+---
+locale: fr
+slug: regler-espresso
+key: espresso-dial-in
+linksTo:
+  - espresso-grinder-settings
+---
+```
+
+The matching English page can use the same `key` with its own slug:
+
+```yaml
+---
+locale: en
+slug: dialing-in-espresso
+key: espresso-dial-in
+linksTo:
+  - espresso-grinder-settings
+---
+```
+
+The generated index keeps locale, slug, and key together so an app can build URLs
+with its own route helper, such as `/{locale}/blog/{slug}`. To point across
+locales intentionally, use an object target:
+
+```yaml
+linksTo:
+  - locale: en
+    slug: dialing-in-espresso
+```
+
+That emits a warning instead of silently hiding the cross-locale edge.
 
 ## Heal renames
 
