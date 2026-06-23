@@ -31,9 +31,9 @@ interface Props {
   components?: Record<string, unknown>
   renderers?: ComponentProps<typeof ContentBlocks>['renderers']
   /**
-   * Prose pipeline for Markdown BETWEEN blocks and callout bodies. Note:
-   * steps, pros-cons, tabs, and faq render their inner item text with the
-   * package default (marked) — edit those components to change it.
+   * Host prose pipeline for Markdown between block islands and nested block
+   * children. The blog routes pass prerendered Sätteri output here so
+   * contentbit complements Astro's Markdown renderer instead of replacing it.
    */
   renderMarkdown?: (md: string) => string
   onInvalid?: 'strict' | 'annotated' | 'fallback'

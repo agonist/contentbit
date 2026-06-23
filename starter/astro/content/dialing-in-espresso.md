@@ -18,7 +18,7 @@ variable, taste, and adjust. It starts the loop and points to the grinder notes
 and shot log that keep each change honest.
 
 :::callout{type="tldr"}
-Start at **1:2 in 28 seconds**. Sour means grind finer, bitter means grind
+Start at a **1 to 2 ratio in 28 seconds**. Sour means grind finer, bitter means grind
 coarser. Change one thing at a time.
 :::
 

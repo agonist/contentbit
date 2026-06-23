@@ -1,6 +1,7 @@
 import { genericBlocks } from '@contentbit/blocks'
 import {
   createBlockRegistry,
+  type ContentNode,
   parseDocument,
   parseLinkFrontmatter,
   validateDocument,
@@ -9,6 +10,7 @@ import type { LinkTarget } from '@contentbit/core'
 import { getCollection } from 'astro:content'
 
 import customBlocks from '../../blocks/registry'
+import { renderMarkdownToHtml } from './markdown'
 
 export const blogSlugs = ['dialing-in-espresso', 'grinder-setting-notes', 'espresso-recipe-log']
 
@@ -18,19 +20,22 @@ export async function getBlogArticles() {
   const entries = await getCollection('articles')
   const entryBySlug = new Map(entries.map((entry) => [String(entry.data.slug), entry]))
 
-  return blogSlugs.map((slug) => {
-    const entry = entryBySlug.get(slug)
-    if (!entry?.body) throw new Error(`Entry "${slug}" not found in the articles collection.`)
+  return Promise.all(
+    blogSlugs.map(async (slug) => {
+      const entry = entryBySlug.get(slug)
+      if (!entry?.body) throw new Error(`Entry "${slug}" not found in the articles collection.`)
 
-    const parsed = parseLinkFrontmatter(entry.data)
-    if (!parsed.ok || !parsed.value) {
-      throw new Error(`Entry "${slug}" has invalid internal-link frontmatter.`)
-    }
+      const parsed = parseLinkFrontmatter(entry.data)
+      if (!parsed.ok || !parsed.value) {
+        throw new Error(`Entry "${slug}" has invalid internal-link frontmatter.`)
+      }
 
-    // Static pages render at build time, so invalid blocks fail the build here.
-    const result = validateDocument(parseDocument(entry.body), registry)
-    return { entry, meta: parsed.value, result }
-  })
+      // Static pages render at build time, so invalid blocks fail the build here.
+      const result = validateDocument(parseDocument(entry.body), registry)
+      const markdownHtml = await renderMarkdownSegments(result.document.children)
+      return { entry, meta: parsed.value, result, markdownHtml }
+    }),
+  )
 }
 
 export type BlogArticle = Awaited<ReturnType<typeof getBlogArticles>>[number]
@@ -64,4 +69,25 @@ export function blockCount(article: BlogArticle): number {
 
 export function keywordCount(article: BlogArticle): number {
   return (article.meta.keywords?.primary ? 1 : 0) + (article.meta.keywords?.secondary?.length ?? 0)
+}
+
+function collectMarkdownSegments(nodes: ContentNode[], segments = new Set<string>()): Set<string> {
+  for (const node of nodes) {
+    if (node.type === 'markdown') {
+      segments.add(node.value)
+      continue
+    }
+
+    collectMarkdownSegments(node.children, segments)
+  }
+
+  return segments
+}
+
+async function renderMarkdownSegments(nodes: ContentNode[]): Promise<Map<string, string>> {
+  const segments = collectMarkdownSegments(nodes)
+  const rendered = await Promise.all(
+    [...segments].map(async (source) => [source, await renderMarkdownToHtml(source)] as const),
+  )
+  return new Map(rendered)
 }

@@ -3,9 +3,7 @@ import type { FaqData, FaqItemData } from '@contentbit/blocks'
 import type { ValidatedBlockNode } from '@contentbit/core'
 
 import { isValidatedBlock } from '@contentbit/core'
-// Item text is rendered with the package default: marked with raw HTML
-// escaped (safe for untrusted content). Swap in your own pipeline here.
-import { defaultRenderMarkdown } from '@contentbit/astro'
+import { renderMarkdownToHtml } from '@/lib/markdown'
 
 interface Props {
   node: ValidatedBlockNode<unknown>
@@ -13,10 +11,12 @@ interface Props {
 
 const { node } = Astro.props
 const data = node.data as FaqData
-const items = data.blocks.map((item) => ({
-  question: String(item.props.question),
-  html: defaultRenderMarkdown(isValidatedBlock(item) ? (item.data as FaqItemData).markdown : item.body),
-}))
+const items = await Promise.all(
+  data.blocks.map(async (item) => ({
+    question: String(item.props.question),
+    html: await renderMarkdownToHtml(isValidatedBlock(item) ? (item.data as FaqItemData).markdown : item.body),
+  })),
+)
 
 // Inline lucide path: chevron-down.
 const CHEVRON = '<path d="m6 9 6 6 6-6"/>'

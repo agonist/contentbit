@@ -35,6 +35,11 @@ const keywordTags = [
   article.meta.keywords?.primary,
   ...(article.meta.keywords?.secondary ?? []),
 ].filter(Boolean)
+const renderArticleMarkdown = (source: string) => {
+  const html = article.markdownHtml.get(source)
+  if (html === undefined) throw new Error('Markdown segment was not prerendered with Satteri.')
+  return html
+}
 ---
 
 <Layout>
@@ -116,7 +121,11 @@ const keywordTags = [
       </div>
     </div>
 
-    <ContentRenderer document={article.result.document} components={{ quote: QuoteBlock }} />
+    <ContentRenderer
+      document={article.result.document}
+      components={{ quote: QuoteBlock }}
+      renderMarkdown={renderArticleMarkdown}
+    />
   </main>
 </Layout>
 
