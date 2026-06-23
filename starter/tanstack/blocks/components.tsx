@@ -8,7 +8,7 @@ function QuoteBlock({ node, ctx }: BlockComponentProps) {
   return (
     <figure className="my-6 border-s-2 ps-4">
       <blockquote className="text-lg italic">{ctx.renderMarkdown(data.markdown)}</blockquote>
-      <figcaption className="text-muted-foreground mt-2 text-sm">
+      <figcaption className="mt-2 text-sm text-muted-foreground">
         — {String(node.props.author)}
         {node.props.role ? `, ${String(node.props.role)}` : null}
       </figcaption>

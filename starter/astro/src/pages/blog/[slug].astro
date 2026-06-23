@@ -1,0 +1,158 @@
+---
+import {
+  blockCount,
+  keywordCount,
+  linkedFromFor,
+  getBlogArticles,
+  targetsFor,
+  titleFor,
+  wordCount,
+} from "@/lib/blog"
+import ContentRenderer from "@/components/content-blocks/content-renderer.astro"
+import QuoteBlock from "../../../blocks/QuoteBlock.astro"
+import Layout from "@/layouts/main.astro"
+
+export async function getStaticPaths() {
+  const articles = await getBlogArticles()
+  return articles.map((article) => ({
+    params: { slug: article.meta.slug },
+  }))
+}
+
+const articles = await getBlogArticles()
+const article = articles.find((item) => item.meta.slug === Astro.params.slug)
+if (!article) throw new Error(`Article "${Astro.params.slug}" was not found.`)
+
+const outgoingLinks = targetsFor(article)
+const incomingLinks = linkedFromFor(article.meta.slug, articles)
+const metadataStats = [
+  { label: "Words", value: wordCount(article.entry.body ?? "") },
+  { label: "Blocks", value: blockCount(article) },
+  { label: "Links", value: outgoingLinks.length },
+  { label: "Backlinks", value: incomingLinks.length },
+]
+const keywordTags = [
+  article.meta.keywords?.primary,
+  ...(article.meta.keywords?.secondary ?? []),
+].filter(Boolean)
+---
+
+<Layout>
+  <div class="border-b border-border/60">
+    <header class="mx-auto flex max-w-2xl items-center justify-between px-6 py-4">
+      <a href="/blog" class="text-xs text-muted-foreground transition-colors hover:text-foreground">
+        Blog
+      </a>
+      <a
+        href="https://contentbit.dev"
+        class="text-xs text-muted-foreground transition-colors hover:text-foreground"
+      >
+        built with contentbit
+      </a>
+    </header>
+  </div>
+
+  <main class="article mx-auto max-w-2xl px-6 py-12">
+    <div class="mb-8 rounded-lg border bg-card p-4">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p class="font-mono text-[0.7rem] tracking-wider text-muted-foreground uppercase">
+            Contentbit metadata
+          </p>
+          <p class="mt-1 text-sm font-medium">{article.meta.slug}</p>
+        </div>
+        <div class="grid grid-cols-4 gap-2 text-center">
+          {
+            metadataStats.map((stat) => (
+              <div class="rounded-md bg-muted px-2 py-1.5">
+                <div class="text-sm font-semibold text-foreground">{stat.value}</div>
+                <div class="text-[0.65rem] text-muted-foreground uppercase">{stat.label}</div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3 text-xs text-muted-foreground sm:grid-cols-2">
+        <p>
+          <span class="font-medium text-foreground">Links to:</span>{" "}
+          {
+            outgoingLinks.map((slug, index) => (
+              <>
+                {index > 0 ? ", " : ""}
+                <a href={`/blog/${slug}`}>{titleFor(slug, articles)}</a>
+              </>
+            ))
+          }
+        </p>
+        <p>
+          <span class="font-medium text-foreground">Linked from:</span>{" "}
+          {
+            incomingLinks.map((slug, index) => (
+              <>
+                {index > 0 ? ", " : ""}
+                <a href={`/blog/${slug}`}>{titleFor(slug, articles)}</a>
+              </>
+            ))
+          }
+        </p>
+        <p>
+          <span class="font-medium text-foreground">Aliases:</span>{" "}
+          {article.meta.aliases?.join(", ") ?? "None"}
+        </p>
+        <p>
+          <span class="font-medium text-foreground">Keywords:</span> {keywordCount(article)}
+        </p>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2">
+        {
+          keywordTags.map((keyword) => (
+            <span class="rounded-md border bg-background px-2 py-1 text-xs text-muted-foreground">
+              {keyword}
+            </span>
+          ))
+        }
+      </div>
+    </div>
+
+    <ContentRenderer document={article.result.document} components={{ quote: QuoteBlock }} />
+  </main>
+</Layout>
+
+<style is:global>
+  /* Light prose styles for the Markdown between blocks. */
+  .article h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .article h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .article p {
+    font-size: 0.875rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    color: var(--muted-foreground);
+  }
+  .article p:has(+ h2) {
+    margin-bottom: 0;
+  }
+  .article a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .article code {
+    background: var(--muted);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    font-size: 0.8125rem;
+  }
+</style>

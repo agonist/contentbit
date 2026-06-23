@@ -6,7 +6,8 @@
 // Definitions stay framework-free (the CLI and every render target use
 // them); React components live next door in blocks/components.tsx.
 // Docs: https://contentbit.dev/docs/guides/custom-blocks
-import { defineBlock, markdownBody, type BlockDefinition } from '@contentbit/core'
+import { defineBlock, markdownBody } from '@contentbit/core'
+import type { BlockDefinition } from '@contentbit/core'
 import { z } from 'zod'
 
 export const quote = defineBlock({

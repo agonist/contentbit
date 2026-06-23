@@ -1,7 +1,8 @@
 import type { DocumentNode } from '@contentbit/core'
 import type { ReactNode } from 'react'
 
-import { ContentBlocks, type BlockComponent } from '@contentbit/react'
+import { ContentBlocks } from '@contentbit/react'
+import type { BlockComponent } from '@contentbit/react'
 
 import { CalloutBlock } from './callout'
 import { ComparisonBlock } from './comparison'

@@ -19,16 +19,16 @@ export function KeyMetricsBlock({ node }: BlockComponentProps) {
       {data.rows.map((row, i) => (
         <div
           key={i}
-          className="bg-card relative overflow-hidden rounded-lg border px-4 pt-4 pb-3.5"
+          className="relative overflow-hidden rounded-lg border bg-card px-4 pt-4 pb-3.5"
         >
           <span
-            className="via-foreground/20 absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent"
+            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent"
             aria-hidden
           />
           <div className="text-2xl font-bold tracking-tight tabular-nums sm:text-[1.75rem]">
             {row.value}
           </div>
-          <div className="text-muted-foreground mt-1 truncate font-mono text-[11px] tracking-wide uppercase">
+          <div className="mt-1 truncate font-mono text-[11px] tracking-wide text-muted-foreground uppercase">
             {row.label}
           </div>
         </div>
