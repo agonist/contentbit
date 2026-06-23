@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# contentbit generated indexes
+.contentbit/
 
 # dependencies
 node_modules/
