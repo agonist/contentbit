@@ -1,6 +1,6 @@
 {
   "name": "contentbit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI for Content Blocks: validate, render, and generate LLM authoring instructions from your registry.",
   "keywords": [
     "cli",
