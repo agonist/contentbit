@@ -69,12 +69,12 @@ const guide = createBlockRegistry()
 const docLine = (d) => `- [${d.meta.title}](${docUrl(d.file)}): ${d.meta.description ?? ''}`
 const llms = `# contentbit (Content Blocks)
 
-> Structured Markdown components without framework lock-in. Authors — humans,
-> CMSes, or LLMs — write plain Markdown with directive blocks (:::callout,
-> :::comparison, ...). The library parses to a source-mapped AST, validates
-> against per-block schemas with file:line:col diagnostics, and renders through
-> React, static HTML, or a plain-Markdown fallback. npm scope: @contentbit.
-> CLI: \`npx contentbit@latest init\`.
+> Structured Markdown components for LLM-written content. LLMs write plain
+> Markdown with directive blocks (:::callout, :::comparison, ...). The library
+> parses to a source-mapped AST, validates against per-block schemas with
+> file:line:col diagnostics, and renders through React, static HTML, or a
+> plain-Markdown fallback. npm scope: @contentbit. CLI:
+> \`npx contentbit@latest init\`.
 
 ## Start here
 
