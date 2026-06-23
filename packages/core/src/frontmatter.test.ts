@@ -81,6 +81,21 @@ test('extractFrontmatter parses dash lists', () => {
   expect(fm?.data).toEqual({ tags: ['alpha', 'beta'], title: 'x' })
 })
 
+test('extractFrontmatter parses simple dash-list mappings', () => {
+  const fm = extractFrontmatter(
+    '---\nlinksTo:\n  - locale: en\n    slug: sourdough-pizza\n  - key: pizza-flour\n---\n',
+  )
+  expect(fm?.data.linksTo).toEqual([
+    { locale: 'en', slug: 'sourdough-pizza' },
+    { key: 'pizza-flour' },
+  ])
+})
+
+test('extractFrontmatter parses inline mappings', () => {
+  const fm = extractFrontmatter('---\nlinksTo:\n  - { locale: en, slug: sourdough-pizza }\n---\n')
+  expect(fm?.data.linksTo).toEqual([{ locale: 'en', slug: 'sourdough-pizza' }])
+})
+
 test('extractFrontmatter keeps block scalars as raw strings', () => {
   const fm = extractFrontmatter('---\nsnippet: |\n  line one\n  line two\n---\n')
   expect(fm?.data).toEqual({ snippet: 'line one\nline two' })

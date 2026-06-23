@@ -1,4 +1,5 @@
 import {
+  aliasReplacementsForPage,
   buildLinkIndex,
   extractFrontmatter,
   formatDiagnostic,
@@ -12,6 +13,7 @@ import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
+import { linkResolverOptions } from '../link-options.js'
 import { collectLinkInputs } from '../links-io.js'
 
 export async function linksCommand(args: string[], io: Io): Promise<number> {
@@ -21,6 +23,11 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
     options: {
       out: { type: 'string' },
       fix: { type: 'boolean', default: false },
+      'link-resolve': { type: 'string' },
+      'locale-field': { type: 'string' },
+      'slug-field': { type: 'string' },
+      'key-field': { type: 'string' },
+      'default-locale': { type: 'string' },
     },
   })
   if (positionals.length === 0) {
@@ -34,16 +41,17 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
   }
 
   const inputs = await collectLinkInputs(files)
+  const linkOptions = linkResolverOptions(values)
 
   let errors = 0
   let warnings = 0
-  for (const { file, diagnostic } of validateLinks(inputs)) {
+  for (const { file, diagnostic } of validateLinks(inputs, linkOptions)) {
     io.stderr(formatDiagnostic(diagnostic, file))
     if (diagnostic.severity === 'error') errors++
     else if (diagnostic.severity === 'warning') warnings++
   }
 
-  const index = buildLinkIndex(inputs)
+  const index = buildLinkIndex(inputs, linkOptions)
 
   if (values.fix && errors > 0) {
     io.stderr('links: --fix skipped because link errors must be resolved first.')
@@ -65,7 +73,7 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
         if (topKey) inLinksTo = topKey[1] === 'linksTo'
         if (!inLinksTo) continue
         let next = line
-        for (const [alias, current] of index.aliases) {
+        for (const [alias, current] of aliasReplacementsForPage(index, fm.data)) {
           const re = new RegExp(`(^|[\\s\\[,'"-])${escapeRe(alias)}($|[\\s\\],'"])`, 'g')
           next = next.replace(re, (_m, p1, p2) => `${p1}${current}${p2}`)
         }

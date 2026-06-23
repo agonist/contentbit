@@ -13,10 +13,12 @@ import customBlocks from "../../blocks/registry"
 import QuoteBlock from "../../blocks/QuoteBlock.astro"
 import Layout from "@/layouts/main.astro"
 
-// Entry ids are the file path relative to the collection base, minus ".md".
-const entry = await getEntry("articles", "example")
+// This entry resolves by its frontmatter slug.
+const entry = await getEntry("articles", "dialing-in-espresso")
 if (!entry?.body)
-  throw new Error('Entry "example" not found in the articles collection.')
+  throw new Error(
+    'Entry "dialing-in-espresso" not found in the articles collection.',
+  )
 
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
 // Static pages render at build time, so invalid blocks fail the build here.

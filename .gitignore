@@ -18,6 +18,7 @@ site/public/contentbit-guide.md
 
 # test/tooling artifacts
 coverage/
+.contentbit/
 .playwright-mcp/
 
 # logs
