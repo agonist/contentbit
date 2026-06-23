@@ -3,9 +3,7 @@ import type { TabData, TabsData } from '@contentbit/blocks'
 import type { ValidatedBlockNode } from '@contentbit/core'
 
 import { isValidatedBlock } from '@contentbit/core'
-// Item text is rendered with the package default: marked with raw HTML
-// escaped (safe for untrusted content). Swap in your own pipeline here.
-import { defaultRenderMarkdown } from '@contentbit/astro'
+import { renderMarkdownToHtml } from '@/lib/markdown'
 
 interface Props {
   node: ValidatedBlockNode<unknown>
@@ -16,11 +14,13 @@ const data = node.data as TabsData
 // The source offset alone collides when two documents render on one page, so
 // a per-render suffix keeps tab/panel ids (and their ARIA wiring) unique.
 const id = `cb-tabs-${node.position.start.offset}-${Math.random().toString(36).slice(2, 8)}`
-const tabs = data.blocks.map((tab, i) => ({
-  title: String(tab.props.title),
-  html: defaultRenderMarkdown(isValidatedBlock(tab) ? (tab.data as TabData).markdown : tab.body),
-  selected: i === 0,
-}))
+const tabs = await Promise.all(
+  data.blocks.map(async (tab, i) => ({
+    title: String(tab.props.title),
+    html: await renderMarkdownToHtml(isValidatedBlock(tab) ? (tab.data as TabData).markdown : tab.body),
+    selected: i === 0,
+  })),
+)
 ---
 
 <div data-cb-styled data-cb-tabs class="my-6">

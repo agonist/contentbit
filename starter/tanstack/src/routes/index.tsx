@@ -10,8 +10,10 @@ function App() {
         <div>
           <h1 className="font-medium">Project ready!</h1>
           <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
+          <p>Open the blog demo to see internal linking in action.</p>
+          <Button asChild className="mt-2">
+            <a href="/blog">View blog demo</a>
+          </Button>
         </div>
       </div>
     </div>

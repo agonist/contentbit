@@ -1,6 +1,7 @@
 import type { BlockComponentProps, BlockRenderContext } from '@contentbit/react'
 
-import { splitProsCons, type ProsConsData } from '@contentbit/blocks'
+import { splitProsCons } from '@contentbit/blocks'
+import type { ProsConsData } from '@contentbit/blocks'
 import { Check, X } from 'lucide-react'
 
 function Column({
@@ -22,7 +23,7 @@ function Column({
   const mark =
     tone === 'pro' ? 'text-emerald-600 dark:text-emerald-500' : 'text-rose-600 dark:text-rose-500'
   return (
-    <div className="bg-card overflow-hidden rounded-lg border">
+    <div className="overflow-hidden rounded-lg border bg-card">
       <div className={`flex items-center gap-2 border-b px-4 py-2.5 ${head}`}>
         <Icon className="size-3.5" aria-hidden strokeWidth={3} />
         <span className="text-xs font-semibold tracking-wider uppercase">{heading}</span>

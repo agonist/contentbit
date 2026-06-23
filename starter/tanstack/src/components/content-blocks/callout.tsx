@@ -52,13 +52,13 @@ export function CalloutBlock({ node, ctx }: BlockComponentProps) {
   const variant = VARIANTS[type] ?? VARIANTS.note
   const Icon = variant.icon
   return (
-    <aside data-cb-styled className={cn('bg-card my-6 border', variant.border)}>
+    <aside data-cb-styled className={cn('my-6 border bg-card', variant.border)}>
       <div className={cn('flex items-center gap-2 border-b px-4 py-2', variant.head)}>
         <Icon className="size-3.5 shrink-0" aria-hidden strokeWidth={2.5} />
         <span className="font-mono text-[11px] font-semibold tracking-wider uppercase">
           {variant.label}
         </span>
-        {title ? <span className="text-foreground ml-1 text-sm font-medium">{title}</span> : null}
+        {title ? <span className="ml-1 text-sm font-medium text-foreground">{title}</span> : null}
       </div>
       <div className="px-4 py-3 text-sm leading-relaxed [&>p]:m-0 [&>p+p]:mt-2">
         {ctx.renderMarkdown(data.markdown)}

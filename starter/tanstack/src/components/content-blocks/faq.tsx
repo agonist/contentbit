@@ -12,7 +12,7 @@ import { isValidatedBlock } from '@contentbit/core'
 export function FaqBlock({ node, ctx }: BlockComponentProps) {
   const data = node.data as FaqData
   return (
-    <div data-cb-styled className="bg-card my-6 rounded-lg border px-4">
+    <div data-cb-styled className="my-6 rounded-lg border bg-card px-4">
       <Accordion type="single" collapsible>
         {data.blocks.map((item, i) => (
           <AccordionItem
@@ -23,7 +23,7 @@ export function FaqBlock({ node, ctx }: BlockComponentProps) {
             <AccordionTrigger className="text-left text-sm font-medium hover:no-underline">
               {String(item.props.question)}
             </AccordionTrigger>
-            <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
+            <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
               {ctx.renderMarkdown(
                 isValidatedBlock(item) ? (item.data as FaqItemData).markdown : item.body,
               )}
