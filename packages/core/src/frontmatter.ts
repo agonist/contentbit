@@ -80,8 +80,8 @@ function parseValue(value: string, indented: string[]): unknown {
   if (value === '') {
     if (indented.length === 0) return null
     const items = dedent(indented)
-    if (items.every((l) => l.startsWith('- ')))
-      return items.map((l) => parseScalar(l.slice(2).trim()))
+    const list = parseDashList(items)
+    if (list) return list
     const mapping = parseNestedMapping(items)
     if (mapping) return mapping
     return items.join('\n')
@@ -105,6 +105,31 @@ function parseNestedMapping(items: string[]): Record<string, unknown> | null {
     out[key] = parseScalar(v)
   }
   return Object.keys(out).length > 0 ? out : null
+}
+
+function parseDashList(items: string[]): unknown[] | null {
+  const groups: string[][] = []
+  let current: string[] | null = null
+  for (const line of items) {
+    if (line.startsWith('- ')) {
+      if (current) groups.push(current)
+      current = [line.slice(2)]
+    } else if (current && /^[ \t]/.test(line)) {
+      current.push(line)
+    } else {
+      return null
+    }
+  }
+  if (current) groups.push(current)
+  return groups.map((group) => parseDashItem(group))
+}
+
+function parseDashItem(lines: string[]): unknown {
+  const first = lines[0].trim()
+  if (lines.length === 1) return parseNestedMapping([first]) ?? parseScalar(first)
+  const rest = dedent(lines.slice(1))
+  const mapping = parseNestedMapping([first, ...rest])
+  return mapping ?? lines.join('\n')
 }
 
 function dedent(lines: string[]): string[] {
@@ -132,6 +157,18 @@ function parseScalar(value: string): unknown {
     const inner = value.slice(1, -1).trim()
     if (inner === '') return []
     return splitInlineItems(inner).map((item) => parseScalar(item.trim()))
+  }
+  if (value.startsWith('{') && value.endsWith('}')) {
+    const inner = value.slice(1, -1).trim()
+    if (inner === '') return {}
+    const out: Record<string, unknown> = {}
+    for (const item of splitInlineItems(inner)) {
+      const m = item.trim().match(KEY_RE)
+      if (!m) return value
+      const [, key, rawValue] = m
+      out[key] = parseScalar(rawValue.trim())
+    }
+    return out
   }
   return value
 }

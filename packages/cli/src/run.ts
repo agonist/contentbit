@@ -9,12 +9,12 @@ export const USAGE = `Usage: contentbit <init|validate|stats|render|instructions
   init [-t react|html|markdown|astro] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
   agents [--claude] [--no-agents-md]
 
-  validate <globs...> [--registry <module.mjs>] [--strict-warnings]
+  validate <globs...> [--registry <module.mjs>] [--strict-warnings] [--link-resolve <mode>]
   stats <globs...> [--registry <module.mjs>] [--no-validate]
   render <file> --target html|markdown [--registry <module.mjs>] [--out <file>]
   instructions [--audience llm|human] [--no-examples] [--registry <module.mjs>] [--out <file>]
   docs [--registry <module.mjs>] [--out <file>]
-  links <globs...> [--fix] [--out <file>]`
+  links <globs...> [--fix] [--out <file>] [--link-resolve <mode>]`
 
 type Command = (args: string[], io: Io) => Promise<number>
 

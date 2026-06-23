@@ -13,6 +13,7 @@ import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
+import { linkResolverOptions } from '../link-options.js'
 import { loadRegistry } from '../load-registry.js'
 
 export async function validateCommand(args: string[], io: Io): Promise<number> {
@@ -22,6 +23,11 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
     options: {
       registry: { type: 'string' },
       'strict-warnings': { type: 'boolean', default: false },
+      'link-resolve': { type: 'string' },
+      'locale-field': { type: 'string' },
+      'slug-field': { type: 'string' },
+      'key-field': { type: 'string' },
+      'default-locale': { type: 'string' },
     },
   })
   if (positionals.length === 0) {
@@ -34,6 +40,7 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
     return 2
   }
   const registry = await loadRegistry(values.registry)
+  const linkOptions = linkResolverOptions(values)
 
   let errors = 0
   let warnings = 0
@@ -54,7 +61,7 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
 
   // Cross-file internal-link checks, only when the project uses linking.
   if (linkInputs.some((i) => 'slug' in i.data)) {
-    for (const { file, diagnostic } of validateLinks(linkInputs)) {
+    for (const { file, diagnostic } of validateLinks(linkInputs, linkOptions)) {
       io.stderr(formatDiagnostic(diagnostic, file))
       if (diagnostic.severity === 'error') errors++
       else if (diagnostic.severity === 'warning') warnings++

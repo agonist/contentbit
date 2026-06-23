@@ -101,3 +101,36 @@ test('--fix skips rewrites when the link graph has errors', async () => {
   expect(io.err.join('\n')).toContain('--fix skipped')
   expect(Object.keys(writes).some((p) => p.endsWith('.md'))).toBe(false)
 })
+
+test('supports same-locale slug resolution from the CLI', async () => {
+  const dir = await fixture({
+    'en-a.md': '---\nlocale: en\nslug: pizza\nlinksTo:\n  - cold\n---\nA\n',
+    'en-b.md': '---\nlocale: en\nslug: cold\nlinksTo:\n  - pizza\n---\nB\n',
+    'fr-a.md': '---\nlocale: fr\nslug: pizza\nlinksTo:\n  - froid\n---\nA\n',
+    'fr-b.md': '---\nlocale: fr\nslug: froid\nlinksTo:\n  - pizza\n---\nB\n',
+  })
+  const writes: Record<string, string> = {}
+  const io = { ...fakeIo(), writeFile: async (p: string, c: string) => void (writes[p] = c) }
+  expect(await run(['links', join(dir, '*.md'), '--link-resolve', 'same-locale-slug'], io)).toBe(0)
+  const parsed = JSON.parse(Object.values(writes).find((value) => value.includes('"pages"'))!)
+  const fr = parsed.pages.find(
+    (p: { locale?: string; slug: string }) => p.locale === 'fr' && p.slug === 'pizza',
+  )
+  expect(fr.linksTo).toEqual([{ target: 'froid', locale: 'fr', slug: 'froid' }])
+})
+
+test('--fix rewrites only same-locale aliases in same-locale slug mode', async () => {
+  const dir = await fixture({
+    'fr-a.md': '---\nlocale: fr\nslug: a\nlinksTo:\n  - old-b\n---\nA\n',
+    'fr-b.md': '---\nlocale: fr\nslug: b\naliases:\n  - old-b\nlinksTo:\n  - a\n---\nB\n',
+    'en-b.md': '---\nlocale: en\nslug: b-en\naliases:\n  - old-b\n---\nB\n',
+  })
+  const writes: Record<string, string> = {}
+  const io = { ...fakeIo(), writeFile: async (p: string, c: string) => void (writes[p] = c) }
+  expect(
+    await run(['links', join(dir, '*.md'), '--fix', '--link-resolve', 'same-locale-slug'], io),
+  ).toBe(0)
+  const aWrite = Object.entries(writes).find(([p]) => p.endsWith('fr-a.md'))
+  expect(aWrite?.[1]).toContain('- b')
+  expect(aWrite?.[1]).not.toContain('b-en')
+})

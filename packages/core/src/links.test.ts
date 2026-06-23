@@ -5,6 +5,8 @@ import { buildLinkIndex, parseLinkFrontmatter, serializeLinkIndex, validateLinks
 test('parses a full authored link frontmatter', () => {
   const r = parseLinkFrontmatter({
     slug: 'beginner-pizza-dough',
+    locale: 'en',
+    key: 'pizza-dough',
     linksTo: ['cold-fermentation-pizza'],
     aliases: ['intro-pizza-dough'],
     keywords: { primary: 'how to make pizza dough', secondary: ['easy dough'] },
@@ -13,6 +15,8 @@ test('parses a full authored link frontmatter', () => {
   expect(r.ok).toBe(true)
   if (r.ok) {
     expect(r.value?.slug).toBe('beginner-pizza-dough')
+    expect(r.value?.locale).toBe('en')
+    expect(r.value?.key).toBe('pizza-dough')
     expect(r.value?.linksTo).toEqual(['cold-fermentation-pizza'])
   }
 })
@@ -97,4 +101,82 @@ test('serializes to a stable sorted plain object', () => {
   const json = serializeLinkIndex(index)
   expect(json.pages.map((p) => p.slug)).toEqual(['a', 'b']) // sorted
   expect(json.pages[0].linkedFrom).toEqual(['b'])
+})
+
+test('same-locale-slug resolves duplicate localized slugs independently', () => {
+  const inputs = [
+    { path: 'en-a.md', data: { locale: 'en', slug: 'pizza', linksTo: ['cold'] } },
+    { path: 'en-b.md', data: { locale: 'en', slug: 'cold', linksTo: ['pizza'] } },
+    { path: 'fr-a.md', data: { locale: 'fr', slug: 'pizza', linksTo: ['froid'] } },
+    { path: 'fr-b.md', data: { locale: 'fr', slug: 'froid', linksTo: ['pizza'] } },
+  ]
+  const rows = validateLinks(inputs, { resolve: 'same-locale-slug' })
+  expect(rows.filter((r) => r.diagnostic.severity === 'error')).toEqual([])
+  const json = serializeLinkIndex(buildLinkIndex(inputs, { resolve: 'same-locale-slug' }))
+  const fr = json.pages.find((p) => p.locale === 'fr' && p.slug === 'pizza')
+  expect(fr?.linksTo).toEqual([{ target: 'froid', locale: 'fr', slug: 'froid' }])
+})
+
+test('same-locale-slug reports targets that only exist in another locale', () => {
+  const rows = validateLinks(
+    [
+      { path: 'fr-a.md', data: { locale: 'fr', slug: 'pizza', linksTo: ['cold'] } },
+      { path: 'en-b.md', data: { locale: 'en', slug: 'cold' } },
+    ],
+    { resolve: 'same-locale-slug' },
+  )
+  expect(codes(rows)).toContain('CB_LINK_LOCALE_MISSING')
+})
+
+test('same-locale-key resolves stable keys to localized slugs', () => {
+  const inputs = [
+    {
+      path: 'fr-a.md',
+      data: {
+        locale: 'fr',
+        slug: 'pate-a-pizza',
+        key: 'pizza-dough',
+        linksTo: ['cold-fermentation'],
+      },
+    },
+    {
+      path: 'fr-b.md',
+      data: {
+        locale: 'fr',
+        slug: 'fermentation-a-froid',
+        key: 'cold-fermentation',
+        linksTo: ['pizza-dough'],
+      },
+    },
+  ]
+  const rows = validateLinks(inputs, { resolve: 'same-locale-key' })
+  expect(rows.filter((r) => r.diagnostic.severity === 'error')).toEqual([])
+  const json = serializeLinkIndex(buildLinkIndex(inputs, { resolve: 'same-locale-key' }))
+  const fr = json.pages.find((p) => p.slug === 'pate-a-pizza')
+  expect(fr?.linksTo).toEqual([
+    {
+      target: 'cold-fermentation',
+      locale: 'fr',
+      slug: 'fermentation-a-froid',
+      key: 'cold-fermentation',
+    },
+  ])
+})
+
+test('explicit object targets can resolve cross-locale links', () => {
+  const rows = validateLinks(
+    [
+      {
+        path: 'fr-a.md',
+        data: {
+          locale: 'fr',
+          slug: 'pate-a-pizza',
+          linksTo: [{ locale: 'en', slug: 'pizza-dough' }],
+        },
+      },
+      { path: 'en-a.md', data: { locale: 'en', slug: 'pizza-dough' } },
+    ],
+    { resolve: 'same-locale-slug' },
+  )
+  expect(codes(rows)).toContain('CB_LINK_CROSS_LOCALE')
 })
