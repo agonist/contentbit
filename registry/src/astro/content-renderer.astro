@@ -31,11 +31,11 @@ interface Props {
   components?: Record<string, unknown>
   renderers?: ComponentProps<typeof ContentBlocks>['renderers']
   /**
-   * Prose pipeline for Markdown BETWEEN blocks and callout bodies. Note:
-   * steps, pros-cons, tabs, and faq render their inner item text with the
-   * package default (marked) — edit those components to change it.
+   * Host prose pipeline for Markdown between block islands and nested block
+   * children. Pass your Astro/Satteri renderer here if the rest of your site
+   * uses Astro's Markdown processor.
    */
-  renderMarkdown?: (md: string) => string
+  renderMarkdown?: ComponentProps<typeof ContentBlocks>['renderMarkdown']
   onInvalid?: 'strict' | 'annotated' | 'fallback'
 }
 
