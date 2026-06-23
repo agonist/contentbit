@@ -1,5 +1,12 @@
 # @contentbit/blocks
 
+## 0.3.0
+
+### Patch Changes
+
+- Updated dependencies [[`3739eea`](https://github.com/agonist/contentbit/commit/3739eea3362c764f703a42bfb57773f827cc721e)]:
+  - @contentbit/core@0.3.0
+
 ## 0.2.0
 
 ### Patch Changes
