@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createServer, type Plugin, type ViteDevServer } from 'vite'
+import { createServer, searchForWorkspaceRoot, type Plugin, type ViteDevServer } from 'vite'
 import type { BlockComponent } from '@contentbit/react'
 
 import { handleStudioApiRequest } from './api.js'
@@ -30,6 +30,9 @@ export async function startStudio(options: StartStudioOptions): Promise<StudioSe
   const host = options.host ?? '127.0.0.1'
   const port = options.port ?? 4377
   const cwd = options.cwd ?? process.cwd()
+  const fsAllow = [
+    ...new Set([root, cwd, searchForWorkspaceRoot(root), searchForWorkspaceRoot(cwd)]),
+  ]
   const apiOptions: StudioOptions = {
     globs: options.globs,
     cwd,
@@ -48,7 +51,7 @@ export async function startStudio(options: StartStudioOptions): Promise<StudioSe
       strictPort: options.port !== undefined && options.port !== 0,
       open: false,
       fs: {
-        allow: [root, cwd],
+        allow: fsAllow,
       },
     },
   })
