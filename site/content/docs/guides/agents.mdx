@@ -22,8 +22,8 @@ contentbit agents
 
 The integration is deliberately thin: skill files contain no block schemas. They
 teach the LLM agent to fetch live data from the CLI — the authoring guide from
-`instructions`, health data from `stats`, link graph data from `links`,
-diagnostics from `validate` — so when you add a custom block or rename a page
+`instructions`, ranked repair plans from `doctor`, raw health data from `stats`,
+link graph data from `links`, diagnostics from `validate` — so when you add a custom block or rename a page
 slug, every LLM agent picks it up on the next run. Nothing to regenerate, nothing to
 drift.
 
@@ -76,9 +76,9 @@ This manages two things:
   `--claude` when it doesn't), two skills land in `.claude/skills/`:
   - `contentbit-author` — the writing loop: fetch the authoring guide, write,
     validate, fix diagnostics until exit 0.
-  - `contentbit-audit` — the health check: run `stats` across content, flag
-    validation issues, internal-link problems, thin documents, and block-less
-    pages, in that order.
+  - `contentbit-audit` — the health check: run `doctor` across content, flag
+    validation issues, internal-link problems, thin sections, block-less long
+    documents, and missing image alt text, in that order.
 
 Pass `--no-agents-md` to manage only the skills.
 
@@ -113,16 +113,24 @@ so optional props an example doesn't use are still discoverable. See
 
 ## Audit loop
 
-The audit skill leans on `stats`, which prints JSON and always exits 0:
+The audit skill starts with `doctor`, which prints a ranked repair plan and can
+also emit JSON:
+
+```bash
+contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
+contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --json
+```
+
+Use `stats` when you need raw per-document metrics:
 
 ```bash
 contentbit stats "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
-Each entry carries a heading outline with per-section word counts, block usage
-by name, link domains, and a validation summary — enough to rank what needs
-attention without opening a single file. Full field reference and recipes:
-[Document stats & auditing](/docs/guides/stats).
+Each stats entry carries a heading outline with per-section word counts, block
+usage by name, link domains, and a validation summary. Full field reference and
+recipes: [Document stats & auditing](/docs/guides/stats). Doctor behavior:
+[Content doctor](/docs/guides/doctor).
 
 For internal-link health, use the graph command next to stats:
 
@@ -155,9 +163,10 @@ internal-link frontmatter, run `contentbit links <content glob>` and choose
 (`file:line:col severity CODE message`, with `hint:` lines) until it exits 0.
 ```
 
-For data-informed writing, feed `contentbit stats` output in as well — for
-example, have the skill check sibling documents' outlines and block usage so new
-content matches the structure of what already works.
+For data-informed writing, feed `contentbit doctor --json` or `contentbit stats`
+output in as well — for example, have the skill check sibling documents'
+outlines and block usage so new content matches the structure of what already
+works.
 
 This works in any LLM agent that can run shell commands. The CLI is the interface;
 skills, rules files, and prompts are thin adapters over it.

@@ -70,6 +70,7 @@ It detects your framework and package manager, asks two questions (or none with
     { text: 'created: app/example/page.tsx' },
     { text: 'added script: content:check' },
     { text: 'added script: content:links' },
+    { text: 'added script: content:doctor' },
     { text: 'created: contentbit-guide.md (LLM authoring instructions)' },
     { text: 'created: AGENTS.md (contentbit block)' },
     { text: 'installed: .claude/skills/contentbit-author/SKILL.md' },
@@ -84,7 +85,7 @@ That gives you a working content system, not just a package install:
 - **Content to edit:** `content/example.md` and `content/related.md`
 - **A schema source of truth:** `blocks/registry.ts`
 - **A visible render target:** `/example` when your framework supports it
-- **Quality gates:** `content:check` and `content:links` scripts
+- **Quality gates:** `content:doctor`, `content:check`, and `content:links` scripts
 - **Agent context:** `contentbit-guide.md`, `AGENTS.md`, and Claude Code skills
   when a `.claude/` directory exists
 
@@ -132,7 +133,7 @@ specific source line, stable error code, and fix hint.
 />
 
 This is reliable because the skills contain no schemas. They read everything
-from the CLI at runtime (the authoring guide, the diagnostics, the stats), so
+from the CLI at runtime (the authoring guide, the diagnostics, doctor reports, and stats), so
 when you add a custom block, every LLM agent picks it up on the next run with
 nothing to regenerate. Works beyond Claude Code too: `AGENTS.md` carries the
 same instructions for Cursor, Codex, Copilot, and friends.
@@ -211,7 +212,8 @@ pnpm dlx shadcn@latest add @contentbit/generic-pack
 - [Plug in your Markdown library](/docs/guides/markdown)
 - Learn the [block syntax](/docs/concepts/syntax)
 - Define [custom blocks](/docs/guides/custom-blocks)
-- [Document stats & auditing](/docs/guides/stats) — rank what needs attention across your content
+- [Content doctor](/docs/guides/doctor) — one ranked repair plan across validation, links, and content health
+- [Document stats & auditing](/docs/guides/stats) — raw outlines, block usage, links, and validation summaries
 - [Internal linking](/docs/guides/internal-linking) — generate backlinks and catch broken slug references
 - Render with [Astro](/docs/guides/astro)
 - Browse the [block reference](/docs/reference/blocks) and the [changelog](/docs/changelog)

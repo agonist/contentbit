@@ -10,6 +10,10 @@ Terse by design — each release links its announcement post.
 
 ## Next
 
+- **Content doctor.** New `contentbit doctor` command reads matched content once
+  and prints a ranked repair plan across block validation, internal-link
+  diagnostics, thin sections, block-less long documents, and missing image alt
+  text. Use `--json` for agents and CI. See [Content doctor](/docs/guides/doctor).
 - **Internal linking.** New `contentbit links` command builds
   `.contentbit/link-index.json` from frontmatter `slug`, `linksTo`, `aliases`,
   and `keywords`, derives backlinks, validates broken slug references, and

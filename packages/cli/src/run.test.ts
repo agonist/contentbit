@@ -20,7 +20,7 @@ export function fakeIo(): Io & { out: string[]; err: string[] } {
 test('no command prints usage and exits 2', async () => {
   const io = fakeIo()
   expect(await run([], io)).toBe(2)
-  expect(io.err.join('\n')).toContain('Usage: contentbit <init|validate|stats')
+  expect(io.err.join('\n')).toContain('Usage: contentbit <init|validate|doctor|stats')
   expect(io.err.join('\n')).toContain('|links>')
 })
 

@@ -1,0 +1,81 @@
+---
+title: Content doctor
+description: Run validation, link checks, and content-quality heuristics as one ranked repair plan.
+---
+
+`contentbit doctor` is the audit command to run before opening files by hand. It
+reads matched content once, validates registered blocks, checks frontmatter
+links, analyzes document structure, and prints the issues in repair order.
+
+```bash
+contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
+```
+
+The default report is meant for humans:
+
+```text
+contentbit doctor
+3 file(s): 1 errors, 1 warnings, 2 suggestions
+2 linked page(s), 1 link(s), 1 orphan(s)
+
+Repair plan:
+1. [error] validation CB_PROPS_INVALID content/bad.md:8:1 - comparison: prop "left" Required
+2. [warning] links CB_LINK_ORPHAN content/orphan.md:1:1 - page "orphan" has no inbound links
+3. [info] stats CB_THIN_SECTION content/guide.md:24:1 - section "Deploy" has 3 words
+```
+
+## What it checks
+
+- **Validation errors** from the same registry path used by `contentbit validate`.
+- **Internal-link errors and warnings** from `slug`, `linksTo`, `aliases`,
+  locale/key options, and the same resolver modes used by `contentbit links`.
+- **Thin sections** below `--min-section-words` (default `25`).
+- **Block-less long documents** with at least 250 prose words and no structured
+  blocks.
+- **Missing image alt text** from Markdown image syntax.
+
+`doctor` is read-only. It does not write `.contentbit/link-index.json`, and it
+does not run `links --fix`. If aliases are present and the link graph has no
+errors, the text report suggests the fix command explicitly.
+
+## JSON for agents and CI
+
+Use `--json` when an LLM agent or pipeline needs stable data:
+
+```bash
+contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --json
+```
+
+The shape is:
+
+```json
+{
+  "files": 3,
+  "summary": { "errors": 1, "warnings": 1, "suggestions": 2 },
+  "linkGraph": { "pages": 2, "links": 1, "orphans": 1 },
+  "findings": [
+    {
+      "severity": "error",
+      "source": "validation",
+      "code": "CB_PROPS_INVALID",
+      "file": "content/bad.md",
+      "line": 8,
+      "column": 1,
+      "message": "comparison: prop \"left\" Required"
+    }
+  ]
+}
+```
+
+Exit codes match its job as a health gate:
+
+- `0` when there are no error findings.
+- `1` when there are error findings, or when `--strict-warnings` is passed and
+  warnings are present.
+- `2` when no files or globs were provided, or no files matched.
+
+## How it fits
+
+Use `doctor` to decide what to fix first. Use `validate` when you only need the
+blocking syntax/schema gate. Use `links` when you need to write the link index
+or heal alias references. Use `stats` when you need raw per-document metrics.

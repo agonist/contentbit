@@ -52,6 +52,7 @@ test('init scaffolds a react project non-interactively', async () => {
   const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
   expect(pkg.scripts['content:check']).toContain('contentbit validate')
   expect(pkg.scripts['content:links']).toContain('contentbit links')
+  expect(pkg.scripts['content:doctor']).toContain('contentbit doctor')
   expect(io.out.join('\n')).toContain('Next steps')
 })
 

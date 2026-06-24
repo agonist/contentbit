@@ -604,7 +604,16 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     fresh.scripts['content:links'] = 'contentbit links "content/**/*.md"'
     io.stdout('added script: content:links')
   }
-  if (!pkg.scripts?.['content:check'] || !pkg.scripts?.['content:links']) {
+  if (!fresh.scripts['content:doctor']) {
+    fresh.scripts['content:doctor'] =
+      'contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts'
+    io.stdout('added script: content:doctor')
+  }
+  if (
+    !pkg.scripts?.['content:check'] ||
+    !pkg.scripts?.['content:links'] ||
+    !pkg.scripts?.['content:doctor']
+  ) {
     await writeFile(pkgPath, `${JSON.stringify(fresh, null, 2)}\n`, 'utf8')
   }
 
@@ -630,7 +639,8 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   io.stdout('')
   io.stdout('Done. Next steps:')
-  io.stdout(`  1. Validate the starter content: ${detectPackageManager(cwd)} run content:check`)
+  io.stdout(`  1. Inspect content health: ${detectPackageManager(cwd)} run content:doctor`)
+  io.stdout(`     Validate the starter content: ${detectPackageManager(cwd)} run content:check`)
   io.stdout(`     Build the link index: ${detectPackageManager(cwd)} run content:links`)
   if (target === 'react') {
     if (!values['no-page'] && layout.pagePath) {

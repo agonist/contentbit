@@ -20,6 +20,7 @@ test('creates AGENTS.md with a fenced contentbit block', async () => {
   // The block teaches the live-CLI loop, not baked-in schemas.
   expect(agentsMd).toContain('contentbit instructions --audience llm')
   expect(agentsMd).toContain('contentbit validate')
+  expect(agentsMd).toContain('contentbit doctor')
   expect(agentsMd).toContain('contentbit stats')
   expect(agentsMd).toContain('contentbit links')
   expect(agentsMd).toContain('keywords.primary')
@@ -65,6 +66,7 @@ test('installs Claude Code skills when .claude/ exists', async () => {
   expect(author).toContain('keywords.primary')
   const audit = await readFile(join(dir, '.claude/skills/contentbit-audit/SKILL.md'), 'utf8')
   expect(audit).toContain('name: contentbit-audit')
+  expect(audit).toContain('contentbit doctor')
   expect(audit).toContain('contentbit stats')
   expect(audit).toContain('contentbit links')
   expect(io.out.join('\n')).toContain('contentbit-author')

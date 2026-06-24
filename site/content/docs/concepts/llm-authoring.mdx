@@ -60,9 +60,10 @@ recipes/dough.md:31:1 error CB_CHILD_COUNT
 A typical LLM-agent skill wires both ends: include the generated guide in the
 prompt, then run `validate` on the result and feed diagnostics back until clean.
 
-There's a third leg for existing content: [`contentbit stats`](/docs/guides/stats)
-reports outlines, block usage, and validation summaries as JSON, so an LLM agent
-can rank what needs attention across the whole content directory.
+There's a third leg for existing content: [`contentbit doctor`](/docs/guides/doctor)
+prints a ranked repair plan across validation, links, and content health, so an
+LLM agent can choose what to fix first. [`contentbit stats`](/docs/guides/stats)
+still provides raw outlines, block usage, and validation summaries as JSON.
 
 ## Custom registries on the CLI
 
@@ -79,4 +80,4 @@ The generic pack is always loaded first; your module adds to it.
 You don't have to wire any of this yourself. `contentbit agents` (run
 automatically by `init`) installs skills and `AGENTS.md` instructions that do
 exactly what this page describes — fetch the guide, write, validate until
-clean, audit with stats. See [LLM-agent integration](/docs/guides/agents).
+clean, audit with doctor. See [LLM-agent integration](/docs/guides/agents).

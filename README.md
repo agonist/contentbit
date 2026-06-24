@@ -46,6 +46,7 @@ instructions, so your schemas, docs, and prompts stay in sync.
 
 ```bash
 npx contentbit@latest init
+pnpm run content:doctor  # ranked repair plan
 pnpm run content:check   # use the package manager init picked
 ```
 
@@ -70,6 +71,7 @@ renderer of your choice. Full walkthrough:
 | ------------------------ | ------------------------------------------------------------------------------ |
 | `content/example.md`     | A working Markdown document with built-in blocks and one custom block          |
 | `blocks/registry.ts`     | The block schema registry shared by the CLI, renderers, docs, and LLM agents  |
+| `content:doctor`         | A ranked health report: validation, links, thin sections, missing alt text    |
 | `content:check`          | A package script that runs `contentbit validate` with the right content glob   |
 | `contentbit-guide.md`    | Generated LLM authoring rules to read before writing                          |
 | `AGENTS.md`              | Compact repo instructions for Codex, Cursor, Copilot, and other LLM agents    |
@@ -85,7 +87,8 @@ After `init`, your LLM agent has enough context to write and repair content:
 2. Run `contentbit instructions --audience llm` to fetch the live block guide.
 3. Write plain Markdown, using blocks only when the guide says they fit.
 4. Run `contentbit validate ...` and fix every diagnostic until it exits 0.
-5. For audits, run `contentbit stats ...` and rank real content issues.
+5. For audits, run `contentbit doctor ...` for a ranked repair plan; use
+   `contentbit stats ...` when you need raw JSON metrics.
 
 Refresh or add the integration at any time:
 
@@ -136,7 +139,7 @@ static HTML, or plain Markdown.
 | `@contentbit/html`   | Static HTML renderer, works without JavaScript                                                     |
 | `@contentbit/react`  | React renderer with headless accessible defaults                                                   |
 | `@contentbit/astro`  | Astro renderer: `.astro` components with per-block overrides                                       |
-| `contentbit`         | CLI: init / validate / stats / links / render / instructions / docs / agents                       |
+| `contentbit`         | CLI: init / validate / doctor / stats / links / render / instructions / docs / agents              |
 
 The styled component pack ships through a shadcn registry:
 `pnpm dlx shadcn@latest add @contentbit/generic-pack`
