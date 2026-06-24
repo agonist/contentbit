@@ -9,7 +9,8 @@
       "@contentbit/blocks",
       "@contentbit/html",
       "@contentbit/react",
-      "@contentbit/astro"
+      "@contentbit/astro",
+      "@contentbit/studio"
     ]
   ],
   "linked": [],

@@ -53,6 +53,7 @@ test('init scaffolds a react project non-interactively', async () => {
   expect(pkg.scripts['content:check']).toContain('contentbit validate')
   expect(pkg.scripts['content:links']).toContain('contentbit links')
   expect(pkg.scripts['content:doctor']).toContain('contentbit doctor')
+  expect(pkg.scripts.studio).toContain('contentbit studio')
   expect(io.out.join('\n')).toContain('Next steps')
 })
 

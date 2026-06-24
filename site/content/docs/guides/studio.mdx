@@ -1,0 +1,92 @@
+---
+title: Content Studio
+description: Browse content health, previews, stats, links, backlinks, and keywords in a read-only local web app.
+---
+
+`contentbit studio` opens a local dashboard over your Markdown content. It is
+the human-friendly view next to [`contentbit doctor`](/docs/guides/doctor):
+doctor prints the ranked repair plan; Studio lets you browse the same project
+health, preview documents, and inspect links without jumping between files.
+
+New projects created with `contentbit init` include:
+
+```bash
+pnpm studio
+```
+
+That script expands to:
+
+```bash
+contentbit studio "content/**/*.md" --registry ./blocks/registry.ts
+```
+
+Run the command directly when you want a custom glob or registry:
+
+```bash
+contentbit studio "content/**/*.md" --registry ./blocks/registry.ts --no-open
+```
+
+## What you get
+
+The first screen is a dense content dashboard:
+
+- health counters for files, findings, blocks, and link graph coverage
+- search and status filters
+- sortable file table
+- block usage
+- keyword coverage from `keywords.primary` and `keywords.secondary`
+- internal-link summary for pages, links, and orphans
+
+Open a document to inspect:
+
+- rendered preview using `@contentbit/html`
+- source Markdown
+- word, section, image, link, and reading-time stats
+- outgoing links and backlinks
+- keywords
+- validation, link, and content-health findings
+
+Generic blocks render through `@contentbit/react`. Custom blocks are still
+validated from your registry, and Studio automatically looks for project
+components next to the registry (`blocks/components.tsx` from `contentbit init`,
+or `components.ts`, `preview.tsx`, and `renderers.tsx`). If no component exists,
+Studio falls back to a safe labelled block that shows the body as Markdown.
+
+## Options
+
+```bash
+contentbit studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open]
+```
+
+Link resolver options match `contentbit links` and `contentbit doctor`:
+
+```bash
+contentbit studio "content/**/*.md" \
+  --registry ./blocks/registry.ts \
+  --link-resolve prefer-same-locale-key-fallback-slug \
+  --locale-field locale \
+  --key-field key \
+  --slug-field slug \
+  --default-locale en
+```
+
+Defaults:
+
+- host: `127.0.0.1`
+- port: first free port starting at `4377`
+- browser: opens automatically unless `--no-open` is passed
+
+## Read-only scope
+
+Studio v1 never mutates content. It does not:
+
+- rewrite source files
+- write `.contentbit/link-index.json`
+- run `contentbit links --fix`
+- watch files or refresh automatically
+
+Use the Refresh button after editing files. Use `contentbit links --fix`
+explicitly when you want alias references rewritten.
+
+Future Studio capabilities may include editing, live file watching, alias
+fixing, and richer per-project preview configuration.

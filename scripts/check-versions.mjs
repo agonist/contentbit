@@ -3,7 +3,7 @@ import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
-const packageDirs = ['astro', 'blocks', 'cli', 'core', 'html', 'react']
+const packageDirs = ['astro', 'blocks', 'cli', 'core', 'html', 'react', 'studio']
 
 const packages = await Promise.all(
   packageDirs.map(async (dir) => {

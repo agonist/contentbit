@@ -1,0 +1,140 @@
+import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createServer, type Plugin, type ViteDevServer } from 'vite'
+import type { BlockComponent } from '@contentbit/react'
+
+import { handleStudioApiRequest } from './api.js'
+import type { StartStudioOptions, StudioOptions } from './types.js'
+
+export type {
+  StartStudioOptions,
+  StudioDocument,
+  StudioFileSummary,
+  StudioFinding,
+  StudioGraph,
+  StudioProject,
+} from './types.js'
+export { scanDocument, scanGraph, scanProject } from './scan.js'
+
+export interface StudioServer {
+  url: string
+  close(): Promise<void>
+  closed: Promise<void>
+  vite: ViteDevServer
+}
+
+export async function startStudio(options: StartStudioOptions): Promise<StudioServer> {
+  const root = findPackageRoot()
+  const host = options.host ?? '127.0.0.1'
+  const port = options.port ?? 4377
+  const cwd = options.cwd ?? process.cwd()
+  const apiOptions: StudioOptions = {
+    globs: options.globs,
+    cwd,
+    registryPath: options.registryPath,
+    linkOptions: options.linkOptions,
+    minSectionWords: options.minSectionWords,
+  }
+
+  const vite = await createServer({
+    root,
+    configFile: join(root, 'vite.config.ts'),
+    plugins: [studioApiPlugin(apiOptions)],
+    server: {
+      host,
+      port,
+      strictPort: options.port !== undefined && options.port !== 0,
+      open: false,
+      fs: {
+        allow: [root, cwd],
+      },
+    },
+  })
+  apiOptions.previewComponents = () =>
+    loadProjectComponents(vite, { cwd, registryPath: options.registryPath })
+
+  await vite.listen()
+  const address = vite.httpServer?.address()
+  const resolvedPort = typeof address === 'object' && address ? address.port : port
+  const url = `http://${host}:${resolvedPort}/`
+  if (options.open !== false) openBrowser(url)
+
+  return {
+    url,
+    vite,
+    close: () => vite.close(),
+    closed: new Promise((resolve) => {
+      vite.httpServer?.once('close', () => resolve())
+    }),
+  }
+}
+
+async function loadProjectComponents(
+  vite: ViteDevServer,
+  options: { cwd: string; registryPath?: string },
+): Promise<Record<string, BlockComponent> | undefined> {
+  for (const candidate of componentCandidates(options)) {
+    if (!existsSync(candidate)) continue
+    const mod = (await vite.ssrLoadModule(candidate)) as {
+      blockComponents?: Record<string, BlockComponent>
+      components?: Record<string, BlockComponent>
+      default?: Record<string, BlockComponent>
+    }
+    const components = mod.blockComponents ?? mod.components ?? mod.default
+    if (components && typeof components === 'object') return components
+  }
+  return undefined
+}
+
+function componentCandidates(options: { cwd: string; registryPath?: string }): string[] {
+  const dirs = new Set<string>()
+  if (options.registryPath) {
+    const registryPath = isAbsolute(options.registryPath)
+      ? options.registryPath
+      : resolve(options.cwd, options.registryPath)
+    dirs.add(dirname(registryPath))
+  }
+  dirs.add(join(options.cwd, 'blocks'))
+
+  return [...dirs].flatMap((dir) => [
+    join(dir, 'components.tsx'),
+    join(dir, 'components.ts'),
+    join(dir, 'preview.tsx'),
+    join(dir, 'preview.ts'),
+    join(dir, 'renderers.tsx'),
+    join(dir, 'renderers.ts'),
+  ])
+}
+
+function studioApiPlugin(options: StudioOptions): Plugin {
+  return {
+    name: 'contentbit-studio-api',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        void handleStudioApiRequest(options, req, res).then((handled) => {
+          if (!handled) next()
+        })
+      })
+    },
+  }
+}
+
+function findPackageRoot(): string {
+  let dir = dirname(fileURLToPath(import.meta.url))
+  for (;;) {
+    if (existsSync(join(dir, 'package.json'))) return dir
+    const next = dirname(dir)
+    if (next === dir) throw new Error('Could not locate @contentbit/studio package root.')
+    dir = next
+  }
+}
+
+function openBrowser(url: string): void {
+  const command =
+    process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'cmd' : 'xdg-open'
+  const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url]
+  const child = spawn(command, args, { detached: true, stdio: 'ignore' })
+  child.unref()
+}
