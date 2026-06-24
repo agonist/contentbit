@@ -132,6 +132,15 @@ usage by name, link domains, and a validation summary. Full field reference and
 recipes: [Document stats & auditing](/docs/guides/stats). Doctor behavior:
 [Content doctor](/docs/guides/doctor).
 
+For a human review pass over the same content set, open the read-only Studio:
+
+```bash
+pnpm studio
+```
+
+Studio is for browsing previews, links, backlinks, keywords, and findings.
+Agents should keep using `doctor --json` and `stats` when they need stable data.
+
 For internal-link health, use the graph command next to stats:
 
 ```bash

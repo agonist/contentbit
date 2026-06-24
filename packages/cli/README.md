@@ -14,6 +14,9 @@ pnpm dlx contentbit@latest init
 # run the generated validate script, including your custom registry
 pnpm run content:check
 
+# open the local read-only Studio dashboard
+pnpm run studio
+
 # inspect validation, links, and content-quality suggestions together
 pnpm run content:doctor
 
@@ -30,6 +33,10 @@ contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 # ranked repair plan: validation, links, thin sections, block-less long docs,
 # and missing image alt text; add --json for agents/CI
 contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
+
+# local read-only web app for previews, stats, diagnostics, links, and keywords
+contentbit studio "content/**/*.md" --registry ./blocks/registry.ts
+contentbit studio "content/**/*.md" --registry ./blocks/registry.ts --no-open
 
 # structured JSON stats for one document: outline, word counts,
 # block census, links, validation summary — quick context for LLMs

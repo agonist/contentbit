@@ -71,6 +71,7 @@ It detects your framework and package manager, asks two questions (or none with
     { text: 'added script: content:check' },
     { text: 'added script: content:links' },
     { text: 'added script: content:doctor' },
+    { text: 'added script: studio' },
     { text: 'created: contentbit-guide.md (LLM authoring instructions)' },
     { text: 'created: AGENTS.md (contentbit block)' },
     { text: 'installed: .claude/skills/contentbit-author/SKILL.md' },
@@ -85,6 +86,7 @@ That gives you a working content system, not just a package install:
 - **Content to edit:** `content/example.md` and `content/related.md`
 - **A schema source of truth:** `blocks/registry.ts`
 - **A visible render target:** `/example` when your framework supports it
+- **A local browser:** `studio` for read-only previews, health, links, and keywords
 - **Quality gates:** `content:doctor`, `content:check`, and `content:links` scripts
 - **Agent context:** `contentbit-guide.md`, `AGENTS.md`, and Claude Code skills
   when a `.claude/` directory exists
@@ -212,6 +214,7 @@ pnpm dlx shadcn@latest add @contentbit/generic-pack
 - [Plug in your Markdown library](/docs/guides/markdown)
 - Learn the [block syntax](/docs/concepts/syntax)
 - Define [custom blocks](/docs/guides/custom-blocks)
+- [Content Studio](/docs/guides/studio) — browse previews, diagnostics, links, backlinks, and keywords locally
 - [Content doctor](/docs/guides/doctor) — one ranked repair plan across validation, links, and content health
 - [Document stats & auditing](/docs/guides/stats) — raw outlines, block usage, links, and validation summaries
 - [Internal linking](/docs/guides/internal-linking) — generate backlinks and catch broken slug references

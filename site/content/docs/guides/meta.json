@@ -6,6 +6,7 @@
     "renderers",
     "astro",
     "custom-blocks",
+    "studio",
     "doctor",
     "stats",
     "internal-linking"

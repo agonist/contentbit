@@ -609,10 +609,15 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
       'contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts'
     io.stdout('added script: content:doctor')
   }
+  if (!fresh.scripts.studio) {
+    fresh.scripts.studio = 'contentbit studio "content/**/*.md" --registry ./blocks/registry.ts'
+    io.stdout('added script: studio')
+  }
   if (
     !pkg.scripts?.['content:check'] ||
     !pkg.scripts?.['content:links'] ||
-    !pkg.scripts?.['content:doctor']
+    !pkg.scripts?.['content:doctor'] ||
+    !pkg.scripts?.studio
   ) {
     await writeFile(pkgPath, `${JSON.stringify(fresh, null, 2)}\n`, 'utf8')
   }
@@ -639,7 +644,8 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   io.stdout('')
   io.stdout('Done. Next steps:')
-  io.stdout(`  1. Inspect content health: ${detectPackageManager(cwd)} run content:doctor`)
+  io.stdout(`  1. Browse content locally: ${detectPackageManager(cwd)} run studio`)
+  io.stdout(`     Inspect content health: ${detectPackageManager(cwd)} run content:doctor`)
   io.stdout(`     Validate the starter content: ${detectPackageManager(cwd)} run content:check`)
   io.stdout(`     Build the link index: ${detectPackageManager(cwd)} run content:links`)
   if (target === 'react') {
