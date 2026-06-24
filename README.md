@@ -13,15 +13,15 @@
 
 # contentbit
 
-**The agent-friendly content layer for Markdown.**
+**The content layer for LLM-written Markdown.**
 
-Run one command, then ask your coding agent to write content. contentbit gives
-the agent a live authoring guide, validates every structured block, and renders
+Run one command, then let an LLM agent write content. contentbit gives
+the model a live authoring guide, validates every structured block, and renders
 the same document in React, Astro, static HTML, or plain Markdown.
 
-Use it when Markdown is still the right authoring format, but free-form
-Markdown is too loose for production content. Authors and agents write normal
-Markdown plus directive blocks:
+Use it when Markdown is still the right authoring format, but free-form LLM
+output is too loose for production content. LLMs write normal Markdown plus
+directive blocks:
 
 ```md
 :::comparison{left="Basic" right="Pro"}
@@ -39,8 +39,8 @@ article.md:12:1 error CB_PROPS_INVALID
 hint: Did you mean type="warning"?
 ```
 
-The same registry that validates content also generates the agent instructions,
-so your schemas, docs, and prompts stay in sync.
+The same registry that validates content also generates the LLM authoring
+instructions, so your schemas, docs, and prompts stay in sync.
 
 ## Quick start
 
@@ -49,7 +49,7 @@ npx contentbit@latest init
 pnpm run content:check   # use the package manager init picked
 ```
 
-Then ask your agent:
+Then ask your LLM agent:
 
 ```text
 write a blog post about our new dark mode
@@ -57,7 +57,7 @@ write a blog post about our new dark mode
 
 `init` detects your framework and package manager, installs the right packages,
 creates starter content, wires a rendered `/example` page when possible, adds
-validation scripts, generates an authoring guide, and installs the agent
+validation scripts, generates an LLM guide, and installs LLM-agent
 instructions.
 
 Prefer the pieces? `pnpm add @contentbit/core @contentbit/blocks` plus the
@@ -69,16 +69,16 @@ renderer of your choice. Full walkthrough:
 | File or command          | Why it matters                                                                 |
 | ------------------------ | ------------------------------------------------------------------------------ |
 | `content/example.md`     | A working Markdown document with built-in blocks and one custom block          |
-| `blocks/registry.ts`     | The block schema registry shared by the CLI, renderers, docs, and agents      |
+| `blocks/registry.ts`     | The block schema registry shared by the CLI, renderers, docs, and LLM agents  |
 | `content:check`          | A package script that runs `contentbit validate` with the right content glob   |
-| `contentbit-guide.md`    | Generated authoring rules your agent can read before writing                  |
-| `AGENTS.md`              | Compact repo instructions for Codex, Cursor, Copilot, and other coding agents |
+| `contentbit-guide.md`    | Generated LLM authoring rules to read before writing                          |
+| `AGENTS.md`              | Compact repo instructions for Codex, Cursor, Copilot, and other LLM agents    |
 | `.claude/skills/*`       | Claude Code author/audit skills when a `.claude` directory is present         |
 | `/example`               | A rendered page when your framework supports it (TanStack Start, Next.js, Astro) |
 
-## Agent loop
+## LLM loop
 
-After `init`, your agent has enough context to write and repair content:
+After `init`, your LLM agent has enough context to write and repair content:
 
 1. Read the project's `content:check` script to find the content glob and
    registry.
@@ -94,7 +94,7 @@ contentbit agents
 ```
 
 The skills hold no schemas; they read everything from the CLI at runtime, so
-custom blocks are picked up automatically. See
+custom blocks are picked up automatically by the model. See
 [contentbit.dev/docs/guides/agents](https://contentbit.dev/docs/guides/agents).
 
 ## Internal links
@@ -119,7 +119,7 @@ resolved `linksTo` and derived `linkedFrom` backlinks. `contentbit validate`
 runs the same link checks automatically when files declare slugs, and
 `contentbit links --fix` rewrites stale alias references in `linksTo`.
 
-## Without an agent
+## Without an LLM agent
 
 The loop above is just CLI commands, so you can drive it by hand: generate the
 guide with `contentbit instructions --audience llm`, write plain Markdown with
@@ -149,7 +149,7 @@ The styled component pack ships through a shadcn registry:
 - [Playground](https://contentbit.dev/playground), validates as you type
 - [Blog](https://contentbit.dev/blog), every post is a validated Content Blocks document
 - [Changelog](https://contentbit.dev/docs/changelog), what shipped in each release
-- [llms.txt](https://contentbit.dev/llms.txt) / [authoring guide](https://contentbit.dev/contentbit-guide.md) for agents
+- [llms.txt](https://contentbit.dev/llms.txt) / [authoring guide](https://contentbit.dev/contentbit-guide.md) for LLMs
 
 ## Development
 

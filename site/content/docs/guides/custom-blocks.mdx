@@ -6,9 +6,9 @@ description: Add project-specific blocks in under 20 lines with defineBlock.
 Every block is a `BlockDefinition`: a name, a props schema, a content model, and
 authoring guidance. The registry is the single source of truth — the same definition
 validates content, drives renderers, and generates LLM instructions. Define a
-block today and every [agent wired to this project](/docs/guides/agents) writes
-it correctly on its next run, because skills read the registry live through the
-CLI.
+block today and every [LLM agent wired to this project](/docs/guides/agents)
+writes it correctly on its next run, because skills read the registry live
+through the CLI.
 
 ## A complete custom block
 
@@ -53,7 +53,7 @@ the block, and any renderer can map `pricing-table` to an implementation.
   validation; violations become `CB_PROPS_INVALID` diagnostics with the zod path.
   Generated authoring guides document every prop — name, type with enum values
   spelled out, required/optional, default, and any `.describe()` text — so
-  describing props pays off: your agent reads those descriptions.
+  describing props pays off: your LLM agent reads those descriptions.
 - **content** — a content model (below) that parses the body into typed `data`.
 - **childOnly** — set `true` for blocks that only make sense inside a parent
   (like `tab` inside `tabs`).

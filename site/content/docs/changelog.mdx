@@ -16,7 +16,7 @@ Terse by design — each release links its announcement post.
   heals alias references with `--fix`. `contentbit validate` now runs link
   checks automatically when matched files declare slugs. See
   [Internal linking](/docs/guides/internal-linking).
-- **Agent link context.** `contentbit agents` now teaches generated skills and
+- **LLM link context.** `contentbit agents` now teaches generated skills and
   `AGENTS.md` blocks to load the link index, choose existing slugs, and validate
   the full graph when authoring linked content.
 
@@ -25,12 +25,12 @@ Terse by design — each release links its announcement post.
 All packages now share one version number — this is the first synchronized
 release. [Read the announcement →](/blog/contentbit-0-2-0)
 
-- **Coding-agent integration.** New `contentbit agents` command (also run by
+- **LLM-agent integration.** New `contentbit agents` command (also run by
   `init`, skip with `--no-agents`): installs the `contentbit-author` and
   `contentbit-audit` Claude Code skills and manages a fenced instruction block
-  in `AGENTS.md` for every other agent. Skills hold no schemas — they read
+  in `AGENTS.md` for every other LLM agent. Skills hold no schemas — they read
   everything from the CLI at runtime, so custom blocks are picked up
-  automatically. See [Coding-agent integration](/docs/guides/agents).
+  automatically. See [LLM-agent integration](/docs/guides/agents).
 - **Document stats.** `analyzeDocument` in `@contentbit/core` and a
   `contentbit stats` command: heading outlines with per-section word counts,
   block usage, link domains, and a validation summary, as JSON. Accepts
@@ -40,8 +40,8 @@ release. [Read the announcement →](/blog/contentbit-0-2-0)
   [Astro](/docs/guides/astro).
 - **Every prop, documented.** Generated authoring guides now list every prop
   from the block's schema — name, type (enums spelled out), required/optional,
-  default, and description — so agents that never guess props can discover
-  all of them.
+  default, and description — so LLMs that never guess props can discover
+  all of them. See [LLM-agent integration](/docs/guides/agents).
 
 ## 0.1.0
 

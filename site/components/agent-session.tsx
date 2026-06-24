@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 /*
- * Scripted coding-agent transcript — a terminal/chat hybrid showing the
+ * Scripted LLM-agent transcript — a terminal/chat hybrid showing the
  * author-skill loop (instructions → write → validate → fix → exit 0).
  * Steps render visible by default; once mounted with motion allowed, they
  * stagger in on scroll as progressive enhancement.

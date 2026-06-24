@@ -6,7 +6,7 @@ description: analyzeDocument and contentbit stats — outlines, block usage, lin
 `contentbit validate` is a gate: it exits 1 and blocks the pipeline. `contentbit
 stats` is the read tool next to it: it analyzes documents and prints JSON to
 stdout, always exiting 0 — even when documents have validation errors. It exists
-so you (or your agent) can rank what needs attention across a whole content
+so you (or your LLM agent) can rank what needs attention across a whole content
 directory without opening a single file.
 
 ## Try it
@@ -108,7 +108,7 @@ const result = validateDocument(parseDocument(stripFrontmatter(source)), registr
 The live demo above is exactly this — `analyzeDocument` plus
 `validateDocument`, running in your browser.
 
-## Auditing with an agent
+## Auditing with an LLM agent
 
 The `contentbit-audit` skill installed by [`contentbit agents`](/docs/guides/agents)
 turns this JSON into a ranked report. Its priority order is worth stealing for
@@ -120,7 +120,7 @@ your own tooling:
 4. **Missing or inconsistent frontmatter** compared to siblings.
 5. **Structural imbalance** — skipped heading levels, single-section walls of text.
 
-Ask your agent to "audit my content" and this is the loop it runs.
+Ask your LLM agent to "audit my content" and this is the loop it runs.
 
 ## Recipes
 

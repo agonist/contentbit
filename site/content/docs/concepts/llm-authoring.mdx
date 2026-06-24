@@ -50,19 +50,19 @@ Generation is half the story; the other half is checking the output:
 contentbit validate "content/**/*.md"
 ```
 
-Exit code 1 on errors, with `file:line:col` diagnostics an agent can act on:
+Exit code 1 on errors, with `file:line:col` diagnostics an LLM can act on:
 
 ```text
 recipes/dough.md:31:1 error CB_CHILD_COUNT
 :::tabs needs at least 2 children, found 1.
 ```
 
-A typical agent skill wires both ends: include the generated guide in the prompt,
-then run `validate` on the result and feed diagnostics back until clean.
+A typical LLM-agent skill wires both ends: include the generated guide in the
+prompt, then run `validate` on the result and feed diagnostics back until clean.
 
 There's a third leg for existing content: [`contentbit stats`](/docs/guides/stats)
-reports outlines, block usage, and validation summaries as JSON, so an agent can
-rank what needs attention across the whole content directory.
+reports outlines, block usage, and validation summaries as JSON, so an LLM agent
+can rank what needs attention across the whole content directory.
 
 ## Custom registries on the CLI
 
@@ -74,9 +74,9 @@ contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 
 The generic pack is always loaded first; your module adds to it.
 
-## Let your agent run the loop
+## Let your LLM agent run the loop
 
 You don't have to wire any of this yourself. `contentbit agents` (run
 automatically by `init`) installs skills and `AGENTS.md` instructions that do
 exactly what this page describes — fetch the guide, write, validate until
-clean, audit with stats. See [Coding-agent integration](/docs/guides/agents).
+clean, audit with stats. See [LLM-agent integration](/docs/guides/agents).

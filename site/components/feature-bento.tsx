@@ -121,7 +121,7 @@ function LlmCell() {
         </p>
       </Visual>
       <CellHeading
-        title="Made for generated content"
+        title="Made for LLM output"
         body="The registry that validates content also writes the authoring instructions for LLMs, so prompts never drift from the rules."
       />
     </div>

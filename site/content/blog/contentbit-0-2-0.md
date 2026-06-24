@@ -1,13 +1,14 @@
 ---
-title: contentbit 0.2.0 — your coding agent writes validated content
-description: One command installs agent skills that fetch the live authoring guide, write, and validate until clean. Plus document stats, an Astro renderer, and fully documented props.
+title: contentbit 0.2.0 — LLM agents write validated content
+description: One command installs LLM-agent skills that fetch the live authoring guide, write, and validate until clean. Plus document stats, an Astro renderer, and fully documented props.
 date: 2026-06-12
 slug: contentbit-0-2-0
 linksTo:
   - llm-markdown-that-cannot-break
+  - contentbit-0-3-0
 keywords:
-  primary: coding agent content workflow
-  secondary: [contentbit agents, content validation, document stats]
+  primary: LLM content workflow
+  secondary: [LLM agents, contentbit agents, content validation, document stats]
 ---
 
 0.1.0 gave you the contract: every block has a schema, validation runs before
@@ -15,8 +16,8 @@ anything renders, and bad output gets rejected with a `file:line:col`
 diagnostic and a fix hint. That closed the loop in principle. In practice,
 someone still had to run it — fetch the guide, write, validate, fix, repeat.
 
-0.2.0 ships the operator. Your coding agent already lives in your repo; now
-one command teaches it to run the whole loop itself.
+0.2.0 ships the operator. Your LLM agent already lives in your repo; now one
+command teaches it to run the whole loop itself.
 
 :::callout{type="tldr"}
 0.2.0 adds `contentbit agents` (Claude Code skills + `AGENTS.md` instructions,
@@ -25,7 +26,7 @@ renderer-only `@contentbit/astro` package, and authoring guides that document
 every prop. All packages now share one version number.
 :::
 
-## Your agent, wired in
+## Your LLM agent, wired in
 
 ```sh
 npx contentbit@latest agents
@@ -50,7 +51,7 @@ a careful human would:
 The design decision that makes this hold up: the skills contain no block
 schemas. Nothing about your blocks is copied into the skill files. The skills
 read everything from the CLI at runtime, so when you add a custom block to
-your registry, every agent picks it up on the next run. There is nothing to
+your registry, every LLM agent picks it up on the next run. There is nothing to
 regenerate, and the prompts can never drift from the code. That drift is the
 failure mode this library was built to prevent.
 
@@ -109,16 +110,16 @@ Generated authoring guides now document every prop from the block's schema:
 name, type with enum values spelled out, required or optional, default value,
 and the schema's `.describe()` text.
 
-Before, props were only visible through examples — so an agent obeying "never
+Before, props were only visible through examples — so an LLM obeying "never
 guess props" had no way to discover an optional prop the example didn't use.
-Now the rule is satisfiable. If you define custom blocks, this is
-your nudge to `.describe()` their props: your agent reads those descriptions.
+Now the rule is satisfiable. If you define custom blocks, this is your nudge to
+`.describe()` their props: your LLM agent reads those descriptions.
 
 ## One version number
 
 This is the first synchronized release — every package moves to 0.2.0
 together, and will move together from here on. Upgrading is one command, and
-existing projects can refresh their agent integration with
+existing projects can refresh their LLM-agent integration with
 `npx contentbit@latest agents`. The terse version of all of the above lives in
 the new [changelog](/docs/changelog).
 

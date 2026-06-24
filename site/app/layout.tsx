@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: '%s · contentbit',
   },
   description:
-    'Give LLMs validated, structured Markdown blocks. Render generated content anywhere: React, static HTML, or plain Markdown.',
+    'Give LLMs validated, structured Markdown blocks. Render LLM output anywhere: React, static HTML, or plain Markdown.',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
