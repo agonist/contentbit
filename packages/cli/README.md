@@ -1,8 +1,9 @@
 # contentbit
 
 CLI for [contentbit](https://contentbit.dev): initialize projects, validate
-structured Markdown blocks, build internal-link indexes, render content, and
-give LLMs live authoring instructions from your registry.
+structured Markdown blocks, print ranked health reports, build internal-link
+indexes, render content, and give LLMs live authoring instructions from your
+registry.
 
 Fast path:
 
@@ -13,6 +14,9 @@ pnpm dlx contentbit@latest init
 # run the generated validate script, including your custom registry
 pnpm run content:check
 
+# inspect validation, links, and content-quality suggestions together
+pnpm run content:doctor
+
 # refresh AGENTS.md and Claude Code skills for LLM agents
 contentbit agents
 ```
@@ -22,6 +26,10 @@ Everyday commands:
 ```bash
 # exits 1 with file:line:col diagnostics and fix hints
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
+
+# ranked repair plan: validation, links, thin sections, block-less long docs,
+# and missing image alt text; add --json for agents/CI
+contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
 
 # structured JSON stats for one document: outline, word counts,
 # block census, links, validation summary — quick context for LLMs

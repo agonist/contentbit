@@ -10,7 +10,7 @@ import type { Io } from '../run.js'
 // registry stays the single source of truth and nothing can drift. Bump the
 // frontmatter version when a template changes; `contentbit agents` re-runs
 // overwrite in place.
-const TEMPLATE_VERSION = 2
+const TEMPLATE_VERSION = 3
 
 const AUTHOR_SKILL = `---
 name: contentbit-author
@@ -105,32 +105,37 @@ version: ${TEMPLATE_VERSION}
 
 # Auditing contentbit content
 
-\`contentbit stats\` analyzes documents and prints JSON to stdout. It is a read
-tool: it always exits 0, even when documents have validation errors.
-\`contentbit links\` builds the frontmatter-authored internal-link graph and
-prints link diagnostics.
+\`contentbit doctor\` is the first audit command. It reads content once, runs
+block validation, link validation, and document stats, then prints a ranked
+repair plan. It is read-only: it does not write the link index and never edits
+source files. \`contentbit stats\` remains useful when you need raw JSON metrics.
+\`contentbit links\` builds the frontmatter-authored internal-link graph and can
+heal alias references with \`--fix\`.
 
 ## Gather
 
-Check \`package.json\` for the \`content:check\` script to find this project's
-content glob and \`--registry\` flag, then:
+Check \`package.json\` for \`content:doctor\` first. If it exists, run it. If it
+does not, use \`content:check\` to find this project's content glob and
+\`--registry\` flag, then run:
 
 \`\`\`sh
+contentbit doctor "content/**/*.md" [--registry <path>]
+contentbit doctor "content/**/*.md" [--registry <path>] --json
 contentbit stats "content/**/*.md" [--registry <path>]
 contentbit links "content/**/*.md"
 \`\`\`
 
-One matched file prints a single stats object; multiple files print an array.
-Each entry includes the file path, frontmatter data, a heading \`outline\` with
-per-section word counts, \`blocks.byName\` usage counts, \`links.domains\`, and
-a \`validation\` summary (\`errors\`/\`warnings\`).
-\`contentbit links\` also writes \`.contentbit/link-index.json\`, whose pages
-contain \`slug\`, resolved \`linksTo\`, derived \`linkedFrom\`, \`aliases\`, and
+\`doctor --json\` prints a stable report with summary counts and ranked
+findings. \`stats\` prints per-file metrics: frontmatter data, a heading
+\`outline\` with per-section word counts, \`blocks.byName\` usage counts,
+\`links.domains\`, and a \`validation\` summary (\`errors\`/\`warnings\`).
+\`contentbit links\` writes \`.contentbit/link-index.json\`, whose pages contain
+\`slug\`, resolved \`linksTo\`, derived \`linkedFrom\`, \`aliases\`, and
 \`keywords\`.
 
 ## Interpret
 
-Prioritize findings in this order:
+Prioritize findings in the order \`doctor\` reports them:
 
 1. **Validation errors and warnings** — broken content ships broken pages.
 2. **Internal-link errors** — unresolved links, duplicate slugs, and alias
@@ -177,10 +182,14 @@ When writing or editing content:
 
 When auditing content health:
 
-- \`contentbit stats "content/**/*.md" [--registry <path>]\` prints JSON stats
-  and always exits 0: outline word counts, block usage, link domains, and
-  validation error/warning counts. Flag validation issues, thin documents, and
-  block-less pages first.
+- \`contentbit doctor "content/**/*.md" [--registry <path>]\` prints a ranked,
+  read-only repair plan: validation issues, link issues, thin sections,
+  block-less long documents, and missing image alt text.
+- \`contentbit doctor "content/**/*.md" [--registry <path>] --json\` prints the
+  same findings as structured JSON for agents and CI.
+- \`contentbit stats "content/**/*.md" [--registry <path>]\` prints raw JSON
+  stats: outline word counts, block usage, link domains, and validation
+  error/warning counts.
 - \`contentbit links "content/**/*.md" [--fix]\` builds
   \`.contentbit/link-index.json\`, reports dangling links/orphans, and rewrites
   alias references in \`linksTo\` when \`--fix\` is used.
