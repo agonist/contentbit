@@ -1,5 +1,21 @@
 # contentbit
 
+## 0.4.0
+
+### Minor Changes
+
+- [#14](https://github.com/agonist/contentbit/pull/14) [`a0e8214`](https://github.com/agonist/contentbit/commit/a0e8214b0f3b77f6cc8b11065eeeea5f33a4b7e0) Thanks [@agonist](https://github.com/agonist)! - Add `contentbit doctor`, a read-only audit command that ranks block validation, internal-link diagnostics, thin sections, block-less long documents, and missing image alt text in one repair plan. Use `--json` for agents and CI.
+
+- [#15](https://github.com/agonist/contentbit/pull/15) [`efa6ab2`](https://github.com/agonist/contentbit/commit/efa6ab288cc3ec88090777628247a45ff03701ba) Thanks [@agonist](https://github.com/agonist)! - Add `contentbit studio`, a read-only local TanStack Studio for browsing content health, previews, stats, diagnostics, links, backlinks, keywords, and block usage. `contentbit init` now creates a `studio` script for `pnpm studio`.
+
+### Patch Changes
+
+- Updated dependencies [[`efa6ab2`](https://github.com/agonist/contentbit/commit/efa6ab288cc3ec88090777628247a45ff03701ba)]:
+  - @contentbit/studio@0.4.0
+  - @contentbit/core@0.4.0
+  - @contentbit/blocks@0.4.0
+  - @contentbit/html@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

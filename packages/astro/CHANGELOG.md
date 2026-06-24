@@ -1,5 +1,16 @@
 # @contentbit/astro
 
+## 0.4.0
+
+### Patch Changes
+
+- [#9](https://github.com/agonist/contentbit/pull/9) [`beddf85`](https://github.com/agonist/contentbit/commit/beddf85b4cfbf2b66254969671ebe201bc86b36d) Thanks [@agonist](https://github.com/agonist)! - Allow the Astro renderer to await host Markdown renderers, so projects can delegate prose back to Astro/Sätteri while contentbit handles block validation and rendering.
+
+- Updated dependencies []:
+  - @contentbit/core@0.4.0
+  - @contentbit/blocks@0.4.0
+  - @contentbit/html@0.4.0
+
 ## 0.3.0
 
 ### Patch Changes

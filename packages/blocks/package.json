@@ -1,6 +1,6 @@
 {
   "name": "@contentbit/blocks",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The generic block pack for Content Blocks: callout, steps, comparison, tabs, faq, and more.",
   "keywords": [
     "components",
