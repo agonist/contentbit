@@ -7,6 +7,8 @@
     "lint": "oxlint",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
+    "version:sync": "node scripts/sync-version.mjs",
+    "version:packages": "changeset version && pnpm version:sync",
     "version:check": "node scripts/check-versions.mjs",
     "changeset": "changeset",
     "release": "pnpm version:check && pnpm build && changeset publish"
