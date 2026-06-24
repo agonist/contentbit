@@ -1,4 +1,4 @@
-import { createSatteriMarkdownProcessor } from '@astrojs/markdown-satteri'
+import { createSatteriMarkdownProcessor } from "@astrojs/markdown-satteri"
 
 const processor = createSatteriMarkdownProcessor({
   features: {
