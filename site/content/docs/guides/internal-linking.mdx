@@ -40,7 +40,7 @@ The command reads frontmatter, resolves aliases, derives backlinks, writes
 index written to /site/.contentbit/link-index.json
 ```
 
-The JSON artifact is intentionally small and stable, so an agent or pipeline can
+The JSON artifact is intentionally small and stable, so an LLM agent or pipeline can
 load it before writing a page:
 
 ```json
@@ -172,10 +172,10 @@ graph when it exists:
    aliases, keywords, and backlinks.
 2. Pick `linksTo` values from existing slugs; never guess a slug from a title.
 3. For new linked pages, include `keywords.primary` and `keywords.secondary`
-   with search-intent phrases that help future agents choose related pages.
+   with search-intent phrases that help future LLM agents choose related pages.
 4. Run `contentbit links <content glob> --fix` after edits when aliases are
    present.
 5. Run `contentbit validate <content glob> --registry <path>` until clean.
 
-For projects without generated agents, add the same loop to your own skill or
+For projects without generated LLM-agent files, add the same loop to your own skill or
 rules file. The CLI stays the source of truth.

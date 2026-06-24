@@ -39,7 +39,7 @@ export default function Home() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
                   <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
                 </span>
-                New: your coding agent writes validated content
+                New: LLM agents write validated content
               </Link>
             </div>
             <h1
@@ -53,8 +53,7 @@ export default function Home() {
               className="text-muted-foreground animate-rise mx-auto mt-6 max-w-xl text-base text-pretty sm:text-lg"
               style={{ animationDelay: '160ms' }}
             >
-              Give coding agents validated, structured Markdown blocks. Render generated content
-              anywhere.
+              Give LLMs validated, structured Markdown blocks. Render LLM output anywhere.
             </p>
             <div
               className="animate-rise mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
@@ -100,7 +99,7 @@ export default function Home() {
               Markdown in, components out
             </h2>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-              Authors write directive blocks inside ordinary Markdown. The parser builds a
+              LLMs write directive blocks inside ordinary Markdown. The parser builds a
               source-mapped AST, the registry validates it, and your renderer of choice takes it
               from there. Below: the actual styled pack rendering live.
             </p>
@@ -131,7 +130,7 @@ export default function Home() {
                 Errors with line numbers, not broken pages
               </h2>
               <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                Validation runs before rendering: in your editor, your CI, or your agent loop.
+                Validation runs before rendering: in your editor, your CI, or your LLM loop.
                 Diagnostics carry a code, a position, and a fix hint, so an LLM can repair its own
                 output.
               </p>
@@ -148,11 +147,13 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="mb-8">
             <Eyebrow index="03">The operator</Eyebrow>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Your agent runs the loop</h2>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+              Your LLM agent runs the loop
+            </h2>
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
               <code className="font-mono">init</code>
               {
-                ' installs skills and AGENTS.md instructions, so “write a blog post” fetches the live authoring guide, writes, and validates until clean. The skills hold no schemas — they read everything from the CLI — so your custom blocks are picked up automatically.'
+                ' installs skills and AGENTS.md instructions, so an LLM can fetch the live authoring guide, write a post, and validate until clean. The skills hold no schemas — they read everything from the CLI — so your custom blocks are picked up automatically.'
               }
             </p>
           </div>
@@ -201,7 +202,7 @@ export default function Home() {
               className="group text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
             >
               <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-              works with Claude Code, Cursor, Codex, Copilot — see the agents guide
+              works with Claude Code, Cursor, Codex, Copilot — see the LLM agents guide
               <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>

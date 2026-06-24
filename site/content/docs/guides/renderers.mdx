@@ -39,7 +39,7 @@ All user content is escaped. Tabs render as static sections and FAQs as native
 - `strict` — throw. Use in CI and for repository-owned content.
 - `annotated` — render a visible box with `data-cb-invalid`. Use in development.
 - `fallback` (default) — render the escaped raw body. Use in production for
-  user- or CMS-supplied content.
+  user-supplied, imported, or generated content.
 
 The Astro renderer takes the same option but defaults to `annotated` — static
 builds surface invalid blocks loudly during dev. Set it explicitly if you want
