@@ -161,7 +161,6 @@ Prefer wiring things up manually? Install the pieces directly:
 
 ```bash
 pnpm add @contentbit/core @contentbit/blocks
-pnpm add @contentbit/html   # static HTML strings
 pnpm add @contentbit/react  # React components
 pnpm add @contentbit/astro  # .astro components
 ```
@@ -172,7 +171,6 @@ against the registry, render through the adapter of your choice:
 ```ts
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { genericBlocks } from '@contentbit/blocks'
-import { renderToHtml } from '@contentbit/html'
 
 const registry = createBlockRegistry().use(genericBlocks())
 
@@ -180,8 +178,6 @@ const result = validateDocument(parseDocument(markdown), registry)
 if (!result.ok) {
   console.error(result.diagnostics) // code, severity, message, exact position
 }
-
-const html = renderToHtml(result.document)
 ```
 
 In React, `ContentBlocks` ships headless, accessible defaults for every generic
@@ -190,7 +186,7 @@ block:
 ```tsx
 import { ContentBlocks } from '@contentbit/react'
 
-export function Article({ document }: { document: DocumentNode }) {
+export function Article({ document }: { document: ValidatedDocumentNode }) {
   return <ContentBlocks document={document} renderMarkdown={(md) => <Markdown source={md} />} />
 }
 ```

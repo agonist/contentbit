@@ -88,11 +88,6 @@ Renderers are adapter-side maps — block definitions never reference framework 
 <ContentBlocks document={doc} components={{ 'pricing-table': PricingTable }} />
 ```
 
-```ts
-// Static HTML
-renderToHtml(doc, { renderers: { 'pricing-table': renderPricingTableHtml } })
-```
-
 ```astro
 // Astro — a plain .astro component; props arrive validated, body via <slot />
 <ContentBlocks document={doc} components={{ 'pricing-table': PricingTable }} />

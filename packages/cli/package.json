@@ -44,7 +44,6 @@
     "@clack/prompts": "^1.5.1",
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
-    "@contentbit/html": "workspace:*",
     "@contentbit/studio": "workspace:*",
     "tinyglobby": "^0.2.10"
   },

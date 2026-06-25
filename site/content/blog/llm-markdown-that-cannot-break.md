@@ -78,7 +78,7 @@ prompt cannot drift apart, because they are one artifact.
 2. Let the model write plain Markdown with blocks. No JSX, no HTML, nothing executable.
 3. Validate the output. `contentbit validate` exits 1 with file:line:col diagnostics.
 4. Feed the diagnostics back to the model and let it repair its own output. Loop until clean.
-5. Render anywhere: React, static HTML, or plain Markdown for email and search indexes.
+5. Render anywhere: React, Astro, or plain Markdown for email and search indexes.
 :::
 
 Step four carries more weight than it looks. A diagnostic like `CB_ROW_COLUMNS

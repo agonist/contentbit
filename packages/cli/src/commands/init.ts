@@ -9,18 +9,17 @@ import type { Io } from '../run.js'
 import { loadRegistry } from '../load-registry.js'
 import { installAgentIntegration } from './agents.js'
 
-type Target = 'react' | 'html' | 'markdown' | 'astro'
+type Target = 'react' | 'markdown' | 'astro'
 
-const TARGETS: Target[] = ['react', 'html', 'markdown', 'astro']
+const TARGETS: Target[] = ['react', 'markdown', 'astro']
 
-type Md = 'react-markdown' | 'marked' | 'markdown-it' | 'none'
+type Md = 'react-markdown' | 'none'
 
 /** Markdown library choices per target; the first entry is the default. */
 const MD_CHOICES: Record<Target, Md[]> = {
   react: ['react-markdown', 'none'],
-  html: ['marked', 'markdown-it', 'none'],
   markdown: ['none'],
-  // @contentbit/astro ships its own marked-based default; nothing to install.
+  // Astro projects usually reuse their host Markdown pipeline.
   astro: ['none'],
 }
 
@@ -181,35 +180,6 @@ export function Content({ source }: { source: string }) {
     />
   )
 }
-`
-}
-
-function htmlRenderScript(md: 'marked' | 'markdown-it' | 'none'): string {
-  const wiring =
-    md === 'marked'
-      ? `import { marked } from 'marked'
-
-const renderMarkdown = (md) => marked.parse(md, { async: false })`
-      : md === 'markdown-it'
-        ? `import MarkdownIt from 'markdown-it'
-
-const mdIt = new MarkdownIt() // html: false by default — raw HTML stays escaped
-const renderMarkdown = (md) => mdIt.render(md)`
-        : `// TODO: plug a Markdown library in here (marked, markdown-it, remark).
-const renderMarkdown = undefined`
-  return `// Render content/example.md to example.html. Run: node scripts/render-example.mjs
-import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, stripFrontmatter, validateDocument } from '@contentbit/core'
-import { renderToHtml } from '@contentbit/html'
-import { readFile, writeFile } from 'node:fs/promises'
-${wiring}
-
-const source = await readFile('content/example.md', 'utf8')
-const registry = createBlockRegistry().use(genericBlocks())
-const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
-const html = renderToHtml(result.document, { renderMarkdown })
-await writeFile('example.html', html, 'utf8')
-console.log('wrote example.html')
 `
 }
 
@@ -454,7 +424,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   // Resolve the render target: flag > prompt (interactive) > detection.
   const hasReact = Boolean(pkg.dependencies?.react ?? pkg.devDependencies?.react)
   const hasAstro = Boolean(pkg.dependencies?.astro ?? pkg.devDependencies?.astro)
-  const detected: Target = hasAstro ? 'astro' : hasReact ? 'react' : 'html'
+  const detected: Target = hasAstro ? 'astro' : hasReact ? 'react' : 'markdown'
   let target: Target
   if (values.target) {
     if (!TARGETS.includes(values.target as Target)) {
@@ -470,7 +440,6 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
       options: [
         { value: 'react', label: 'React', hint: 'ContentBlocks component' },
         { value: 'astro', label: 'Astro', hint: 'content collections + .astro components' },
-        { value: 'html', label: 'Static HTML', hint: 'renderToHtml, no framework' },
         { value: 'markdown', label: 'Plain Markdown', hint: 'fallback rendering only' },
       ],
     })
@@ -510,7 +479,6 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   // Install runtime packages plus the CLI as a dev dependency.
   const runtime = ['@contentbit/core', '@contentbit/blocks', 'zod']
   if (target === 'react') runtime.push('@contentbit/react')
-  if (target === 'html') runtime.push('@contentbit/html')
   if (target === 'astro') runtime.push('@contentbit/astro')
   if (md !== 'none') runtime.push(md)
   if (values['no-install']) {
@@ -555,12 +523,6 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     if (!values['no-page'] && layout.pagePath) {
       files.push([layout.pagePath, layout.framework === 'tanstack' ? TANSTACK_PAGE : NEXT_PAGE])
     }
-  }
-  if (target === 'html') {
-    files.push([
-      'scripts/render-example.mjs',
-      htmlRenderScript(md as 'marked' | 'markdown-it' | 'none'),
-    ])
   }
   if (target === 'astro') {
     let astroStyled = false
@@ -659,10 +621,8 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   } else if (target === 'astro') {
     io.stdout('  2. Start the dev server and open /example to see the article rendered.')
     io.stdout('  3. Styled components: pnpm dlx shadcn@latest add @contentbit/astro-pack')
-  } else if (target === 'html') {
-    io.stdout('  2. Render it: node scripts/render-example.mjs && open example.html')
   } else {
-    io.stdout('  2. Render it: contentbit render content/example.md --target markdown')
+    io.stdout('  2. Render it: contentbit render content/example.md')
   }
   io.stdout('  Docs: https://contentbit.dev/docs')
   return 0

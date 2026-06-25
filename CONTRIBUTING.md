@@ -21,7 +21,6 @@ Lint and formatting run from the root: `pnpm lint` (oxlint) and `pnpm fmt`
 | ----------- | --------------------------------------------------------------------- |
 | `packages/core`   | Parser, AST, diagnostics, registry, validation                  |
 | `packages/blocks` | Generic block definitions                                       |
-| `packages/html`   | Static HTML renderer                                            |
 | `packages/react`  | React renderer                                                  |
 | `packages/astro`  | Astro renderer                                                  |
 | `packages/cli`    | The `contentbit` CLI (init, validate, render, instructions)     |

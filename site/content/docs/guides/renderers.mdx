@@ -1,49 +1,14 @@
 ---
 title: Renderers
-description: Static HTML, React, Astro, and plain-Markdown output from the same document.
+description: React, Astro, and plain-Markdown output from the same document.
 ---
 
 Renderers consume a validated document. The parser and registry know nothing about
 React, Astro, or HTML — every renderer is an adapter with a per-block renderer map
 you can override. Contentbit should complement your host renderer, not replace it:
 use it for block structure, validation, metadata, and link graphs, while your app
-keeps owning normal Markdown prose. Four targets ship today: static HTML, React,
-Astro, and a plain-Markdown fallback.
-
-## Static HTML
-
-```ts
-import { renderToHtml } from '@contentbit/html'
-
-const html = renderToHtml(result.document, {
-  classPrefix: 'cb-', // default
-  renderMarkdown: (md) => myMarkdownPipeline(md),
-  onInvalid: 'fallback',
-})
-```
-
-- **classPrefix** — every emitted class is prefixed (`cb-callout`, `cb-comparison`).
-- **renderMarkdown** — plug your Markdown pipeline for prose segments and Markdown
-  bodies. The built-in default only escapes and wraps paragraphs. Step-by-step
-  setups for marked, markdown-it, and remark: [Plug in your Markdown
-  library](/docs/guides/markdown).
-- **renderers** — merge custom block renderers over the generic defaults.
-
-All user content is escaped. Tabs render as static sections and FAQs as native
-`<details>`, so the output works without any JavaScript.
-
-### Error modes
-
-`onInvalid` controls what happens to blocks that failed validation:
-
-- `strict` — throw. Use in CI and for repository-owned content.
-- `annotated` — render a visible box with `data-cb-invalid`. Use in development.
-- `fallback` (default) — render the escaped raw body. Use in production for
-  user-supplied, imported, or generated content.
-
-The Astro renderer takes the same option but defaults to `annotated` — static
-builds surface invalid blocks loudly during dev. Set it explicitly if you want
-matching behavior across targets.
+keeps owning normal Markdown prose. Three targets ship today: React, Astro, and a
+plain-Markdown fallback.
 
 ## React
 
@@ -85,11 +50,9 @@ import QuoteBlock from '../blocks/QuoteBlock.astro'
 
 Per-block overrides are plain `.astro` components: validated props arrive as
 component props, nested content via `<slot />`, and the raw AST node as the
-reserved `node` prop. `renderMarkdown` ships with a marked-based default (GFM,
-raw HTML escaped), so prose works untouched, and it also accepts async host
-renderers when you want Astro/Sätteri or another site pipeline to render prose.
-Note the `onInvalid` default here is `annotated`, not `fallback`. Full guide:
-[Astro](/docs/guides/astro).
+reserved `node` prop. Pass `renderMarkdown` when you want Astro/Sätteri or
+another site pipeline to render prose. The `onInvalid` default is `annotated`,
+which keeps invalid blocks loud during dev. Full guide: [Astro](/docs/guides/astro).
 
 ## Plain Markdown fallback
 

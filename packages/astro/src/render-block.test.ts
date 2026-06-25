@@ -1,6 +1,6 @@
 import type { ValidatedBlockNode } from '@contentbit/core'
 
-import { genericBlocks, genericHtmlStringRenderers } from '@contentbit/blocks'
+import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { expect, test } from 'vitest'
 
@@ -29,10 +29,17 @@ test('a renderer that never calls renderNodes yields a single part', async () =>
   expect(shell!.parts[0]).toContain('<li>Mix</li>')
 })
 
-test('generic Astro defaults stay in lockstep with generic HTML defaults', () => {
-  expect(Object.keys(genericAstroRenderers).sort()).toEqual(
-    Object.keys(genericHtmlStringRenderers).sort(),
-  )
+test('generic Astro defaults cover the built-in generic block pack', () => {
+  expect(Object.keys(genericAstroRenderers).sort()).toEqual([
+    'callout',
+    'comparison',
+    'faq',
+    'key-metrics',
+    'pros-cons',
+    'quick-ref',
+    'steps',
+    'tabs',
+  ])
 })
 
 test('generic renderers can await host Markdown rendering', async () => {

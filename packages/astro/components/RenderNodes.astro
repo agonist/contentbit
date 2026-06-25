@@ -2,10 +2,9 @@
 import type { ContentNode, ValidatedBlockNode } from '@contentbit/core'
 import type { AstroBlockRenderer, AstroMarkdownRenderer } from '@contentbit/astro'
 
-import { fallbackMarkdown, invalidBlockHtml, unrenderableBlockError } from '@contentbit/blocks'
 import { isValidatedBlock } from '@contentbit/core'
 
-import { renderBlockShell } from '@contentbit/astro'
+import { fallbackMarkdown, invalidBlockHtml, renderBlockShell, unrenderableBlockError } from '@contentbit/astro'
 
 interface Props {
   nodes: ContentNode[]
@@ -34,9 +33,7 @@ const plans: Plan[] = await Promise.all(nodes.map(async (node) => {
     const shell = await renderBlockShell(node, { classPrefix, renderMarkdown, renderers })
     if (shell) return { kind: 'shell', ...shell }
   }
-  // Not validated, or validated with no renderer and no override. The
-  // invalid-block policy (markup, message, fallback escaping) is shared with
-  // renderToHtml so the two targets cannot drift.
+  // Not validated, or validated with no renderer and no override.
   if (onInvalid === 'strict') throw unrenderableBlockError(node.name)
   if (onInvalid === 'annotated') {
     return { kind: 'html', html: invalidBlockHtml(node, classPrefix) }

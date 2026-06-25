@@ -31,7 +31,7 @@ test('unknown command prints usage and exits 2', async () => {
 
 test('render on a missing file exits 1 with a clean error, no stack trace', async () => {
   const io = fakeIo()
-  expect(await run(['render', '/nonexistent/nope.md', '--target', 'html'], io)).toBe(1)
+  expect(await run(['render', '/nonexistent/nope.md'], io)).toBe(1)
   expect(io.err.join('\n')).toContain('contentbit render')
   expect(io.err.join('\n')).toContain('error ENOENT')
   expect(io.err.join('\n')).not.toContain('    at ') // no stack frames

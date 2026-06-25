@@ -41,7 +41,6 @@
   "dependencies": {
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
-    "@contentbit/html": "workspace:*",
     "@contentbit/react": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4",

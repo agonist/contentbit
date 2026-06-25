@@ -117,9 +117,9 @@ can use them without defensive parsing.
 ## Options
 
 - **`renderMarkdown`** — `(md: string) => string | Promise<string>` for prose
-  and block bodies. Ships with a marked-based default (GFM, raw HTML escaped),
-  so it works untouched; swap in your own to match the rest of your site. The
-  default is also exported as `defaultRenderMarkdown` from `@contentbit/astro`.
+  and block bodies. Pass your site's own Markdown pipeline to match the rest of
+  your output. The minimal fallback is exported as `defaultRenderMarkdown` from
+  `@contentbit/astro`.
 - **`classPrefix`** — prefix for the headless markup's class names, default
   `cb-`.
 - **`renderers`** — low-level per-block render functions, when a full `.astro`
@@ -127,8 +127,7 @@ can use them without defensive parsing.
 - **`onInvalid`** — what to do with a block that failed validation: `strict`
   (throw), `annotated` (visible dev box), or `fallback` (escaped body as
   prose). The Astro default is `annotated`, which keeps invalid blocks loud
-  during dev, while `@contentbit/html` defaults to `fallback`. Set it
-  explicitly if you want matching behavior across targets.
+  during dev.
 
 ## Validate in CI
 

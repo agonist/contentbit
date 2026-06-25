@@ -48,7 +48,7 @@ function LockInCell() {
             <span className="text-sky-600 dark:text-sky-400">&lt;React /&gt;</span>
           </Chip>
           <Chip className="fan-chip [animation-delay:350ms]">
-            <span className="text-amber-600 dark:text-amber-400">static .html</span>
+            <span className="text-amber-600 dark:text-amber-400">Astro</span>
           </Chip>
           <Chip className="fan-chip [animation-delay:500ms]">
             <span className="text-muted-foreground">plain .md</span>
@@ -57,7 +57,7 @@ function LockInCell() {
       </Visual>
       <CellHeading
         title="No framework lock-in"
-        body="The content is a protocol. Renderers are adapters: React and static HTML today, plain Markdown always."
+        body="The content is a protocol. Renderers are adapters: React and Astro today, plain Markdown always."
       />
     </div>
   )

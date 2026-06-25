@@ -52,8 +52,8 @@ contentbit links "content/**/*.md" --fix
 # compact LLM context generated from the registry
 contentbit instructions --audience llm --out guide.md
 
-# render to static HTML or plain Markdown
-contentbit render article.md --target html
+# render to plain Markdown
+contentbit render article.md
 ```
 
 Point `--registry ./blocks/registry.ts` at a module to add custom blocks.

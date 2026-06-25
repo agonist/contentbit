@@ -27,13 +27,13 @@
 
 Give an LLM normal Markdown plus a small set of typed directive blocks.
 contentbit validates those blocks before render, generates the authoring guide
-your agent reads, and renders the same document in React, Astro, static HTML, or
-plain Markdown.
+your agent reads, and renders the same document in React, Astro, or plain
+Markdown.
 
 - **Validate before render** with `file:line:col` diagnostics and fix hints.
 - **Keep prompts in sync** by generating LLM instructions from the same block
   registry that validates content.
-- **Render anywhere** with framework adapters, static HTML, or a Markdown
+- **Render anywhere** with framework adapters or a Markdown
   fallback for search, email, and AI context.
 
 ## Quick Start
@@ -131,7 +131,6 @@ own prose pipeline for Markdown between blocks, then choose the surface:
 
 - `@contentbit/react` for React components with headless accessible defaults.
 - `@contentbit/astro` for `.astro` components with per-block overrides.
-- `@contentbit/html` for static HTML with no framework or runtime JavaScript.
 - `renderToMarkdown()` for plain Markdown fallbacks.
 
 The styled React and Astro packs ship through a shadcn registry:
@@ -163,7 +162,7 @@ Read the [internal linking guide](https://contentbit.dev/docs/guides/internal-li
 
 Without an LLM agent, the same loop is just CLI commands: generate instructions,
 write Markdown with registered blocks, run `contentbit validate`, then render to
-React, Astro, static HTML, or plain Markdown.
+React, Astro, or plain Markdown.
 
 ## Packages
 
@@ -171,7 +170,6 @@ React, Astro, static HTML, or plain Markdown.
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | [`@contentbit/core`](https://www.npmjs.com/package/@contentbit/core)            | Parser, AST, diagnostics, registry, validation, Markdown output |
 | [`@contentbit/blocks`](https://www.npmjs.com/package/@contentbit/blocks)        | Generic blocks: callout, steps, comparison, tabs, faq, and more |
-| [`@contentbit/html`](https://www.npmjs.com/package/@contentbit/html)            | Static HTML renderer                                           |
 | [`@contentbit/react`](https://www.npmjs.com/package/@contentbit/react)          | React renderer                                                 |
 | [`@contentbit/astro`](https://www.npmjs.com/package/@contentbit/astro)          | Astro renderer                                                 |
 | [`@contentbit/studio`](https://www.npmjs.com/package/@contentbit/studio)        | Local read-only content studio                                 |

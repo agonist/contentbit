@@ -72,7 +72,7 @@ const llms = `# contentbit (Content Blocks)
 > Structured Markdown components for LLM-written content. LLMs write plain
 > Markdown with directive blocks (:::callout, :::comparison, ...). The library
 > parses to a source-mapped AST, validates against per-block schemas with
-> file:line:col diagnostics, and renders through React, static HTML, or a
+> file:line:col diagnostics, and renders through React, Astro, or a
 > plain-Markdown fallback. npm scope: @contentbit. CLI:
 > \`npx contentbit@latest init\`.
 
@@ -94,7 +94,6 @@ ${posts.map((p) => `- [${p.meta.title}](${SITE_URL}/blog/${p.file.replace(/\.md$
 - @contentbit/core: parser, validator, registry, authoring-guide generation
 - @contentbit/blocks: the generic block pack
 - @contentbit/react: React renderer (headless defaults)
-- @contentbit/html: static HTML renderer
 - contentbit: CLI — init, validate, stats, render, instructions, agents
 `
 
