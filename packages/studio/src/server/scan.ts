@@ -1,17 +1,12 @@
 import { genericBlocks } from '@contentbit/blocks'
 import {
-  analyzeDocument,
-  buildLinkIndex,
   createBlockRegistry,
-  extractFrontmatter,
-  parseDocument,
-  stripFrontmatter,
-  validateDocument,
-  validateLinks,
+  scanContentProject,
   type BlockDefinition,
   type BlockRegistry,
-  type Diagnostic,
-  type LinkInput,
+  type ContentProjectFinding,
+  type ContentProjectScan,
+  type DocumentStats,
 } from '@contentbit/core'
 import { readFile } from 'node:fs/promises'
 import { basename, isAbsolute, join, relative } from 'node:path'
@@ -32,18 +27,12 @@ import type {
   StudioStatus,
 } from './types.js'
 
-const DEFAULT_MIN_SECTION_WORDS = 25
-const BLOCKLESS_WORDS = 250
-
 interface ScanContext {
   files: string[]
-  registry: BlockRegistry
-  sources: Map<string, string>
-  frontmatter: Map<string, Record<string, unknown>>
+  scan: ContentProjectScan
   findings: StudioFinding[]
   summaries: StudioFileSummary[]
-  linkInputs: LinkInput[]
-  index?: ReturnType<typeof buildLinkIndex>
+  index?: ContentProjectScan['linkIndex']
 }
 
 export async function scanProject(options: StudioOptions): Promise<StudioProject> {
@@ -88,7 +77,7 @@ export async function scanProject(options: StudioOptions): Promise<StudioProject
       withPrimary,
       withSecondary,
     },
-    ...(context.index ? { linkGraph: graphSummary(context.index) } : {}),
+    ...(context.scan.linkGraph ? { linkGraph: context.scan.linkGraph } : {}),
     findings: context.findings,
   }
 }
@@ -100,26 +89,25 @@ export async function scanDocument(
   const context = await scanContext(options)
   const file = findAllowedFile(context, options.cwd ?? process.cwd(), requestedPath)
   if (!file) return null
-  const source = context.sources.get(file)!
+  const scanned = context.scan.files.find((item) => item.path === file)
+  if (!scanned) return null
   const summary = context.summaries.find((item) => item.path === file)
   if (!summary) return null
 
-  const validation = validateDocument(parseDocument(stripFrontmatter(source)), context.registry)
   const previewHtml = renderStudioPreview(
-    validation.document,
+    scanned.validation.document,
     (await options.previewComponents?.()) ?? {},
     { includeGenericComponents: options.includeGenericBlocks !== false },
   )
-  const stats = analyzeDocument(source, { path: file })
   const page = context.index
     ? [...context.index.pages.values()].find((entry) => entry.path === file)
     : undefined
 
   return {
     file: summary,
-    source,
-    frontmatter: context.frontmatter.get(file) ?? {},
-    stats,
+    source: scanned.source,
+    frontmatter: scanned.frontmatter,
+    stats: scanned.stats,
     findings: context.findings.filter((finding) => finding.file === file),
     linksTo: page ? (page.linkRefs.length > 0 ? page.linkRefs : page.linksTo) : [],
     linkedFrom: page
@@ -192,51 +180,30 @@ async function scanContext(options: StudioOptions): Promise<ScanContext> {
   if (files.length === 0) throw new Error(`studio: no files matched ${options.globs.join(' ')}`)
 
   const registry = await loadStudioRegistry(options.registryPath, cwd, options.includeGenericBlocks)
-  const sources = new Map<string, string>()
-  const frontmatter = new Map<string, Record<string, unknown>>()
-  const findings: StudioFinding[] = []
-  const summaries: StudioFileSummary[] = []
-  const linkInputs: LinkInput[] = []
+  const sourceFiles = await Promise.all(
+    files.map(async (file) => ({ path: file, source: await readFile(file, 'utf8') })),
+  )
+  const scan = scanContentProject(sourceFiles, registry, {
+    linkOptions: options.linkOptions,
+    minSectionWords: options.minSectionWords,
+  })
+  const findings = scan.findings
+    .map((finding) => findingFromProjectFinding(finding, cwd))
+    .sort(compareFindings)
+  const summaries = scan.files.map((file) =>
+    fileSummary(
+      file.path,
+      cwd,
+      file.frontmatter,
+      file.stats,
+      findings.filter((finding) => finding.file === file.path),
+      options,
+    ),
+  )
 
-  for (const file of files) {
-    const source = await readFile(file, 'utf8')
-    const fm = extractFrontmatter(source)?.data ?? {}
-    sources.set(file, source)
-    frontmatter.set(file, fm)
-    linkInputs.push({ path: file, data: fm })
-
-    const validation = validateDocument(parseDocument(stripFrontmatter(source)), registry)
-    for (const diagnostic of validation.diagnostics) {
-      findings.push(findingFromDiagnostic('validation', file, cwd, diagnostic))
-    }
-
-    const stats = analyzeDocument(source, { path: file })
-    findings.push(
-      ...statsFindings(file, cwd, stats, options.minSectionWords ?? DEFAULT_MIN_SECTION_WORDS),
-    )
-    summaries.push(
-      fileSummary(
-        file,
-        cwd,
-        fm,
-        stats,
-        findings.filter((finding) => finding.file === file),
-        options,
-      ),
-    )
-  }
-
-  let index: ScanContext['index']
-  if (hasLinkFrontmatter(linkInputs, options.linkOptions?.slugField)) {
-    for (const { file, diagnostic } of validateLinks(linkInputs, options.linkOptions)) {
-      findings.push(findingFromDiagnostic('links', file, cwd, diagnostic))
-    }
-    index = buildLinkIndex(linkInputs, options.linkOptions)
-    refreshSummaryFindings(summaries, findings)
-  }
-
+  const index = scan.linkIndex
   findings.sort(compareFindings)
-  return { files, registry, sources, frontmatter, findings, summaries, linkInputs, index }
+  return { files, scan, findings, summaries, index }
 }
 
 async function loadStudioRegistry(
@@ -261,69 +228,17 @@ async function loadStudioRegistry(
   return registry
 }
 
-function statsFindings(
-  file: string,
-  cwd: string,
-  stats: ReturnType<typeof analyzeDocument>,
-  minSectionWords: number,
-): StudioFinding[] {
-  const findings: StudioFinding[] = []
-  for (const section of stats.outline) {
-    if (section.words < minSectionWords) {
-      findings.push({
-        severity: 'info',
-        source: 'stats',
-        code: 'CB_THIN_SECTION',
-        file,
-        relativePath: relativePath(cwd, file),
-        line: section.line,
-        column: 1,
-        message: `section "${section.text}" has ${section.words} words`,
-        hint: `Add detail or merge it with a nearby section. Threshold: ${minSectionWords} words.`,
-      })
-    }
-  }
-  if (stats.length.words >= BLOCKLESS_WORDS && stats.blocks.total === 0) {
-    findings.push({
-      severity: 'info',
-      source: 'stats',
-      code: 'CB_BLOCKLESS_DOCUMENT',
-      file,
-      relativePath: relativePath(cwd, file),
-      message: `document has ${stats.length.words} words and no structured blocks`,
-      hint: 'Consider a callout, steps, comparison, FAQ, or another registered block if it clarifies the page.',
-    })
-  }
-  if (stats.images.missingAlt > 0) {
-    findings.push({
-      severity: 'info',
-      source: 'stats',
-      code: 'CB_IMAGE_ALT_MISSING',
-      file,
-      relativePath: relativePath(cwd, file),
-      message: `${stats.images.missingAlt} image(s) are missing alt text`,
-      hint: 'Add descriptive alt text for meaningful images; use empty alt only for decorative images.',
-    })
-  }
-  return findings
-}
-
-function findingFromDiagnostic(
-  source: 'validation' | 'links',
-  file: string,
-  cwd: string,
-  diagnostic: Diagnostic,
-): StudioFinding {
+function findingFromProjectFinding(finding: ContentProjectFinding, cwd: string): StudioFinding {
   return {
-    severity: diagnostic.severity,
-    source,
-    code: diagnostic.code,
-    file,
-    relativePath: relativePath(cwd, file),
-    line: diagnostic.position.start.line,
-    column: diagnostic.position.start.column,
-    message: diagnostic.message,
-    ...(diagnostic.hint ? { hint: diagnostic.hint } : {}),
+    severity: finding.severity,
+    source: finding.source,
+    code: finding.code,
+    file: finding.file,
+    relativePath: relativePath(cwd, finding.file),
+    ...(finding.line !== undefined ? { line: finding.line } : {}),
+    ...(finding.column !== undefined ? { column: finding.column } : {}),
+    message: finding.message,
+    ...(finding.hint ? { hint: finding.hint } : {}),
   }
 }
 
@@ -331,7 +246,7 @@ function fileSummary(
   file: string,
   cwd: string,
   frontmatter: Record<string, unknown>,
-  stats: ReturnType<typeof analyzeDocument>,
+  stats: DocumentStats,
   findings: StudioFinding[],
   options: StudioOptions,
 ): StudioFileSummary {
@@ -360,17 +275,10 @@ function fileSummary(
   }
 }
 
-function refreshSummaryFindings(summaries: StudioFileSummary[], findings: StudioFinding[]): void {
-  for (const summary of summaries) {
-    summary.findings = summarize(findings.filter((finding) => finding.file === summary.path))
-    summary.status = statusFor(summary.findings)
-  }
-}
-
 function titleFor(
   file: string,
   frontmatter: Record<string, unknown>,
-  stats: ReturnType<typeof analyzeDocument>,
+  stats: DocumentStats,
 ): string {
   return stringValue(frontmatter.title) ?? stats.outline[0]?.text ?? basename(file)
 }
@@ -400,21 +308,6 @@ function statusFor(findings: StudioFileSummary['findings']): StudioStatus {
   if (findings.warnings > 0) return 'warning'
   if (findings.suggestions > 0) return 'suggestion'
   return 'healthy'
-}
-
-function graphSummary(index: NonNullable<ScanContext['index']>): StudioProject['linkGraph'] {
-  let links = 0
-  for (const page of index.pages.values()) links += page.linksTo.length
-  return {
-    pages: index.pages.size,
-    links,
-    orphans: [...index.pages.values()].filter((page) => page.linkedFrom.length === 0).length,
-  }
-}
-
-function hasLinkFrontmatter(inputs: LinkInput[], configuredSlugField: string | undefined): boolean {
-  const slugField = configuredSlugField ?? 'slug'
-  return inputs.some((input) => Object.prototype.hasOwnProperty.call(input.data, slugField))
 }
 
 function findAllowedFile(context: ScanContext, cwd: string, requestedPath: string): string | null {

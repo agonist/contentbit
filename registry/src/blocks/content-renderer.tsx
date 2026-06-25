@@ -1,4 +1,4 @@
-import type { DocumentNode } from '@contentbit/core'
+import type { ValidatedDocumentNode } from '@contentbit/core'
 import type { ReactNode } from 'react'
 
 import { ContentBlocks, type BlockComponent } from '@contentbit/react'
@@ -24,7 +24,7 @@ export const styledComponents: Record<string, BlockComponent> = {
 }
 
 export interface ContentRendererProps {
-  document: DocumentNode
+  document: ValidatedDocumentNode
   /** Plug your app's Markdown pipeline here. Defaults to plain paragraphs. */
   renderMarkdown?: (md: string) => ReactNode
   components?: Record<string, BlockComponent>

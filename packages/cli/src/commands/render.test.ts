@@ -15,10 +15,10 @@ async function fixtureFile(): Promise<string> {
   return file
 }
 
-test('render --target html writes html to stdout', async () => {
+test('render writes markdown to stdout by default', async () => {
   const io = fakeIo()
-  expect(await run(['render', await fixtureFile(), '--target', 'html'], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('class="cb-key-metrics"')
+  expect(await run(['render', await fixtureFile()], io)).toBe(0)
+  expect(io.out.join('\n')).toContain('- **42%** — Lift')
 })
 
 test('render --target markdown uses the fallback renderers', async () => {
@@ -43,7 +43,7 @@ test('render refuses invalid content (exit 1) and prints diagnostics', async () 
   const file = join(dir, 'bad.md')
   await writeFile(file, ':::steps\n1. only one\n:::\n', 'utf8')
   const io = fakeIo()
-  expect(await run(['render', file, '--target', 'html'], io)).toBe(1)
+  expect(await run(['render', file], io)).toBe(1)
   expect(io.err.join('\n')).toContain('CB_ITEM_COUNT')
 })
 
@@ -53,9 +53,13 @@ test('--out writes to a file instead of stdout', async () => {
     ...fakeIo(),
     writeFile: async (path: string, content: string) => void writes.push({ path, content }),
   }
-  expect(
-    await run(['render', await fixtureFile(), '--target', 'html', '--out', '/tmp/out.html'], io),
-  ).toBe(0)
-  expect(writes[0].path).toBe('/tmp/out.html')
-  expect(writes[0].content).toContain('cb-key-metrics')
+  expect(await run(['render', await fixtureFile(), '--out', '/tmp/out.md'], io)).toBe(0)
+  expect(writes[0].path).toBe('/tmp/out.md')
+  expect(writes[0].content).toContain('- **42%** — Lift')
+})
+
+test('render rejects the removed html target', async () => {
+  const io = fakeIo()
+  expect(await run(['render', await fixtureFile(), '--target', 'html'], io)).toBe(2)
+  expect(io.err.join('\n')).toContain('--target markdown')
 })

@@ -6,6 +6,21 @@ export interface Io {
   writeFile(path: string, content: string): Promise<void>
 }
 
+/**
+ * A command-input failure with a chosen exit code and a ready-to-print message
+ * (e.g. no positionals, no files matched). `run()` prints the plain message and
+ * returns `exitCode`; any other throw is treated as an unexpected crash.
+ */
+export class CliError extends Error {
+  constructor(
+    readonly exitCode: number,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'CliError'
+  }
+}
+
 export const USAGE = `contentbit
 
 Usage:
@@ -17,14 +32,14 @@ Commands:
   doctor        inspect content health and repair suggestions
   studio        browse content locally
   stats         print document stats as JSON
-  render        render one file to HTML or Markdown
+  render        render one file to plain Markdown
   instructions  print LLM authoring instructions
   docs          print human authoring docs
   agents        install coding-agent guidance
   links         build or fix the internal link index
 
 Setup:
-  init [-t react|html|markdown|astro] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
+  init [-t react|markdown|astro] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
   agents [--claude] [--no-agents-md]
 
 Common:
@@ -32,7 +47,7 @@ Common:
   doctor <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--json] [--min-section-words <n>] [--link-resolve <mode>]
   studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--link-resolve <mode>]
   stats <globs...> [--registry <module.ts>] [--no-generic-blocks] [--no-validate]
-  render <file> --target html|markdown [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
+  render <file> [--target markdown] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   instructions [--audience llm|human] [--no-examples] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   docs [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   links <globs...> [--fix] [--out <file>] [--link-resolve <mode>]`
@@ -63,6 +78,10 @@ export async function run(argv: string[], io: Io): Promise<number> {
     const command = await loader()
     return await command(rest, io)
   } catch (err) {
+    if (err instanceof CliError) {
+      io.stderr(err.message)
+      return err.exitCode
+    }
     io.stderr(
       [
         section(`contentbit ${name}`),

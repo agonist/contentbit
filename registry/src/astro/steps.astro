@@ -1,30 +1,32 @@
 ---
 import type { StepsData } from '@contentbit/blocks'
 import type { ValidatedBlockNode } from '@contentbit/core'
-
-// Item text is rendered with the package default: marked with raw HTML
-// escaped (safe for untrusted content). Swap in your own pipeline here.
-import { defaultRenderMarkdown } from '@contentbit/astro'
+import type { AstroBlockContext } from '@contentbit/astro'
 
 interface Props {
   node: ValidatedBlockNode<unknown>
+  ctx: AstroBlockContext
 }
 
-const { node } = Astro.props
+const { node, ctx } = Astro.props
 const data = node.data as StepsData
 const last = data.items.length - 1
+const items = await Promise.all(
+  data.items.map(async (item) => ({
+    html: await ctx.renderMarkdown(item.text),
+  })),
+)
 ---
 
 <ol data-cb-styled class="my-6 list-none p-0">
   {
-    data.items.map((item, i) => (
+    items.map((item, i) => (
       <li class="relative flex gap-4 pb-7 last:pb-0">
         {i < last ? <span class="bg-border absolute top-7 bottom-1 left-[13px] w-px" aria-hidden="true" /> : null}
         <span class="bg-card text-foreground z-10 flex size-7 shrink-0 items-center justify-center rounded-full border font-mono text-xs font-semibold shadow-sm">
           {i + 1}
         </span>
-        {/* Step text is Markdown — inline code and emphasis are common. */}
-        <div class="min-w-0 pt-1 text-sm leading-relaxed [&>p]:m-0 [&>p+p]:mt-2" set:html={defaultRenderMarkdown(item.text)} />
+        <div class="min-w-0 pt-1 text-sm leading-relaxed [&>p]:m-0 [&>p+p]:mt-2" set:html={item.html} />
       </li>
     ))
   }

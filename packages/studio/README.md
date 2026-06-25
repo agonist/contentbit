@@ -24,10 +24,11 @@ shadcn dashboard with:
 - document previews, source, stats, outgoing links, backlinks, keywords, and
   findings
 
-Generic blocks render through `@contentbit/react`. Studio automatically loads
-custom React block components from the registry folder when it finds
-`components.tsx`, `components.ts`, `preview.tsx`, `preview.ts`, `renderers.tsx`,
-or `renderers.ts`.
+Studio automatically loads React block components from the registry folder when
+it finds `components.tsx`, `components.ts`, `preview.tsx`, `preview.ts`,
+`renderers.tsx`, or `renderers.ts`. If you installed the shadcn pack, Studio
+also looks for copied `components/content-blocks/content-renderer.tsx` files and
+uses their exported `styledComponents`.
 
 Studio is intentionally read-only in v1. It does not edit source files, write
 `.contentbit/link-index.json`, or run `contentbit links --fix`.
@@ -45,5 +46,5 @@ contentbit studio <globs...> \
 
 The CLI binds `127.0.0.1` by default, starts at port `4377` and lets Vite choose
 the next free port, and opens the browser unless `--no-open` is passed.
-Studio loads the generic block definitions and preview components by default;
-pass `--no-generic-blocks` when your registry should own the full block set.
+Studio loads the generic block definitions by default; pass `--no-generic-blocks`
+when your registry should own the full block set.

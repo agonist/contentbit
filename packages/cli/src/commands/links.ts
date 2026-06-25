@@ -8,11 +8,11 @@ import {
 import { mkdir, readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { parseArgs } from 'node:util'
-import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
 import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
+import { resolveContentFiles } from '../content-project.js'
 import { linkResolverOptions } from '../link-options.js'
 import { collectLinkInputs } from '../links-io.js'
 
@@ -30,15 +30,7 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
       'default-locale': { type: 'string' },
     },
   })
-  if (positionals.length === 0) {
-    io.stderr('links: provide at least one file or glob.')
-    return 2
-  }
-  const files = (await glob(positionals, { absolute: true })).sort()
-  if (files.length === 0) {
-    io.stderr(`links: no files matched ${positionals.join(' ')}`)
-    return 2
-  }
+  const files = await resolveContentFiles(positionals, 'links')
 
   const inputs = await collectLinkInputs(files)
   const linkOptions = linkResolverOptions(values)

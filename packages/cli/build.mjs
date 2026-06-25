@@ -11,6 +11,7 @@ await build({
   platform: 'node',
   format: 'esm',
   outdir: 'dist',
+  loader: { '.md': 'text' },
   // Only keep true external node modules plus the Studio app runtime.
   external: ['node:*', 'tinyglobby', '@clack/prompts', '@contentbit/studio'],
 })

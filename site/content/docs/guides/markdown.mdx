@@ -8,14 +8,11 @@ Content Blocks is **not** a Markdown renderer. It parses the block layer (`:::ca
 Markdown bodies *inside* blocks — to one function you provide:
 
 - React: the `renderMarkdown` prop → returns a `ReactNode`
-- Static HTML: the `renderMarkdown` option → returns an HTML string
-- Astro: the `renderMarkdown` prop → returns an HTML string; ships a
-  marked-based default (GFM, raw HTML escaped), so it works untouched
+- Astro: the `renderMarkdown` prop → returns an HTML string
 
-If you don't provide it, the React and HTML built-in default only escapes text
-and wraps paragraphs in `<p>` tags. `**bold**`, links, and lists will show as
-literal characters. **Wiring your Markdown library is step one of any real
-setup** (Astro excepted — its default is already a full renderer).
+If you don't provide it, the built-in default only escapes text and wraps
+paragraphs in `<p>` tags. `**bold**`, links, and lists will show as literal
+characters. **Wiring your Markdown library is step one of any real setup**.
 
 ## What your library sees (and never sees)
 
@@ -75,70 +72,6 @@ the contract is just `(md: string) => ReactNode`:
 <ContentBlocks document={doc} renderMarkdown={(md) => <YourExistingMarkdown source={md} />} />
 ```
 
-## Static HTML + marked
-
-**Step 1 — install:**
-
-```bash
-pnpm add marked dompurify
-```
-
-**Step 2 — wire it:**
-
-```ts
-import { renderToHtml } from '@contentbit/html'
-import DOMPurify from 'dompurify'
-import { marked } from 'marked'
-
-const html = renderToHtml(result.document, {
-  renderMarkdown: (md) => DOMPurify.sanitize(marked.parse(md, { async: false })),
-})
-```
-
-Why DOMPurify: `renderMarkdown` output is inserted **as-is** (it has to be — it's
-HTML). marked passes raw HTML in the source through by default, so sanitize unless
-every author is trusted.
-
-## Static HTML + markdown-it
-
-```bash
-pnpm add markdown-it
-```
-
-```ts
-import { renderToHtml } from '@contentbit/html'
-import MarkdownIt from 'markdown-it'
-
-const md = new MarkdownIt() // html: false by default — raw HTML stays escaped
-
-const html = renderToHtml(result.document, {
-  renderMarkdown: (src) => md.render(src),
-})
-```
-
-markdown-it's default (`html: false`) already refuses raw HTML, so no sanitizer is
-needed for that vector.
-
-## Static HTML + unified/remark
-
-```bash
-pnpm add unified remark-parse remark-rehype rehype-stringify
-```
-
-```ts
-import { renderToHtml } from '@contentbit/html'
-import rehypeStringify from 'rehype-stringify'
-import remarkParse from 'remark-parse'
-import remarkRehype from 'remark-rehype'
-import { unified } from 'unified'
-
-const processor = unified().use(remarkParse).use(remarkRehype).use(rehypeStringify)
-
-const html = renderToHtml(result.document, {
-  renderMarkdown: (md) => String(processor.processSync(md)),
-})
-```
-
 ## Plain Markdown target
 
 `renderToMarkdown` needs nothing — its output *is* Markdown:
@@ -156,8 +89,8 @@ const md = renderToMarkdown(result.document, { renderers: genericMarkdownRendere
   else. If formatting "doesn't work", you haven't wired this page yet.
 - **One function covers everything.** Prose between blocks and Markdown bodies inside
   blocks (`callout`, `tab`, `faq-item`) all flow through the same `renderMarkdown`.
+  Astro block components receive that function as `ctx.renderMarkdown`.
 - **Security split:** Content Blocks escapes everything *it* renders (props, rows,
-  titles). Whatever your `renderMarkdown` returns is your responsibility — see the
-  marked note above.
+  titles). Whatever your `renderMarkdown` returns is your responsibility.
 - **Headings inside prose work normally** — but keep document structure (H1/H2) in
   your page chrome, not in block bodies.

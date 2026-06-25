@@ -74,12 +74,13 @@ test('--md none scaffolds the unwired component', async () => {
   expect(component).toContain('TODO')
 })
 
-test('html init scaffolds a wired render script', async () => {
+test('init without a framework defaults to the markdown target', async () => {
   const dir = await project({ name: 'x' })
-  expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
-  const script = await readFile(join(dir, 'scripts/render-example.mjs'), 'utf8')
-  expect(script).toContain("from 'marked'")
-  expect(script).toContain('renderToHtml')
+  const io = fakeIo()
+  expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
+  await expect(readFile(join(dir, 'scripts/render-example.mjs'), 'utf8')).rejects.toThrow()
+  expect(io.out.join('\n')).toContain('contentbit render content/example.md')
+  expect(io.out.join('\n')).not.toContain('@contentbit/html')
 })
 
 test('init rejects an unknown markdown library', async () => {
@@ -148,10 +149,9 @@ test('--no-styled keeps the headless wrapper in shadcn projects', async () => {
   expect(wrapper).not.toContain('ContentRenderer')
 })
 
-test('init without react defaults to the html target', async () => {
+test('init without react does not scaffold a component renderer', async () => {
   const dir = await project({ name: 'x' })
   expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
-  // No react component scaffolded for the html target.
   await expect(readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')).rejects.toThrow()
 })
 

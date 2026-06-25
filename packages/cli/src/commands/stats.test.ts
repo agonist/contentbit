@@ -97,3 +97,32 @@ test('no files matched exits 2', async () => {
   const dir = await fixture({})
   expect(await run(['stats', join(dir, '*.md')], fakeIo())).toBe(2)
 })
+
+test('validation counts match doctor for the same files (one validation path)', async () => {
+  const dir = await fixture({
+    'bad.md': ':::comparison\n- only | two\n:::\n',
+    'good.md': ':::callout{type="tip"}\nWeigh your flour.\n:::\n',
+  })
+
+  const statsIo = fakeIo()
+  await run(['stats', join(dir, '*.md')], statsIo)
+  const statsOut = JSON.parse(statsIo.out.join('\n')) as Array<{
+    validation: { errors: number; warnings: number }
+  }>
+  const statsTotals = statsOut.reduce(
+    (acc, s) => ({
+      errors: acc.errors + s.validation.errors,
+      warnings: acc.warnings + s.validation.warnings,
+    }),
+    { errors: 0, warnings: 0 },
+  )
+
+  const doctorIo = fakeIo()
+  await run(['doctor', join(dir, '*.md'), '--json'], doctorIo)
+  const doctorReport = JSON.parse(doctorIo.out.join('\n')) as {
+    summary: { errors: number; warnings: number }
+  }
+
+  expect(statsTotals.errors).toBe(doctorReport.summary.errors)
+  expect(statsTotals.warnings).toBe(doctorReport.summary.warnings)
+})

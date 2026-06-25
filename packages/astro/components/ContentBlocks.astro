@@ -1,26 +1,21 @@
 ---
-import type { DocumentNode } from '@contentbit/core'
-import type { AstroBlockRenderer, AstroMarkdownRenderer } from '@contentbit/astro'
+import type { ValidatedDocumentNode } from '@contentbit/core'
+import type { AstroBlockContext, AstroMarkdownRenderer } from '@contentbit/astro'
 
-import { defaultRenderMarkdown, genericAstroRenderers } from '@contentbit/astro'
+import { defaultRenderMarkdown } from '@contentbit/astro'
 import RenderNodes from './RenderNodes.astro'
 
 interface Props {
   /** A validated document: validateDocument(parseDocument(entry.body), registry).document. */
-  document: DocumentNode
+  document: ValidatedDocumentNode
   /**
    * Per-block Astro component overrides, keyed by block name. An override
-   * receives the block's validated props spread as component props, plus a
-   * reserved `node` prop (the full ValidatedBlockNode); nested content
-   * arrives through the default <slot />. A block prop literally named
-   * "node" is shadowed by the reserved prop.
+   * receives the block's validated props spread as component props, plus
+   * reserved `node` and `ctx` props; nested content arrives through the
+   * default <slot />. Block props literally named "node" or "ctx" are shadowed.
   */
   components?: Record<string, unknown>
-  /** Per-block string renderers, merged over the generic html defaults. */
-  renderers?: Record<string, AstroBlockRenderer>
-  /** CSS class prefix for default renderers. Default "cb-". */
-  classPrefix?: string
-  /** Prose pipeline. Default: marked (GFM) with raw HTML escaped. */
+  /** Prose pipeline. Default: escaped paragraphs; pass your host Markdown renderer for full Markdown. */
   renderMarkdown?: AstroMarkdownRenderer
   /** Invalid-block behavior: throw, visible dev box, or escaped body. Default "annotated". */
   onInvalid?: 'strict' | 'annotated' | 'fallback'
@@ -29,18 +24,15 @@ interface Props {
 const {
   document,
   components = {},
-  renderers,
-  classPrefix = 'cb-',
   renderMarkdown = defaultRenderMarkdown,
   onInvalid = 'annotated',
 } = Astro.props
+const ctx: AstroBlockContext = { renderMarkdown }
 ---
 
 <RenderNodes
   nodes={document.children}
   components={components}
-  renderers={{ ...genericAstroRenderers, ...renderers }}
-  classPrefix={classPrefix}
-  renderMarkdown={renderMarkdown}
+  ctx={ctx}
   onInvalid={onInvalid}
 />

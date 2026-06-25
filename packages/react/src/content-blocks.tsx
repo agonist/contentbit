@@ -1,12 +1,10 @@
 'use client'
 
-import type { ContentNode, DocumentNode, ValidatedBlockNode } from '@contentbit/core'
+import type { ContentNode, ValidatedBlockNode, ValidatedDocumentNode } from '@contentbit/core'
 import type { ComponentType, ReactNode } from 'react'
 
 import { isValidatedBlock } from '@contentbit/core'
 import { Fragment } from 'react'
-
-import { defaultComponents } from './components.js'
 
 // Bundlers statically replace process.env.NODE_ENV; this keeps tsc happy
 // without pulling Node types into a browser-facing package.
@@ -37,8 +35,8 @@ export interface BlockComponentProps<TData = unknown> {
 export type BlockComponent = ComponentType<BlockComponentProps>
 
 export interface ContentBlocksProps {
-  document: DocumentNode
-  /** Per-block components; merged over the headless defaults. */
+  document: ValidatedDocumentNode
+  /** Per-block components, keyed by block name. */
   components?: Record<string, BlockComponent>
   /** Host markdown renderer for prose segments. Default: paragraphs of plain text. */
   renderMarkdown?: (md: string) => ReactNode
@@ -58,7 +56,7 @@ function DefaultFallback({ body }: { name: string; body: string }): ReactNode {
 }
 
 export function ContentBlocks(props: ContentBlocksProps): ReactNode {
-  const components = { ...defaultComponents, ...props.components }
+  const components = props.components ?? {}
   const renderMarkdown = props.renderMarkdown ?? ((md: string) => <DefaultMarkdown md={md} />)
   const Fallback = props.fallback ?? DefaultFallback
 

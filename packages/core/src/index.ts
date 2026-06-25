@@ -12,6 +12,20 @@ export {
   type BlockInstance,
   type LinkItem,
 } from './analyze.js'
+export {
+  DEFAULT_MIN_SECTION_WORDS,
+  compareContentProjectFindings,
+  scanContentProject,
+  summarizeContentProjectFindings,
+  type ContentProjectFileScan,
+  type ContentProjectFinding,
+  type ContentProjectFindingSource,
+  type ContentProjectFindingSummary,
+  type ContentProjectLinkGraph,
+  type ContentProjectScan,
+  type ContentProjectSourceFile,
+  type ScanContentProjectOptions,
+} from './project-scan.js'
 export { parseProps } from './props.js'
 export { bodyLineRange } from './position.js'
 export {
@@ -37,9 +51,11 @@ export {
 export {
   validateDocument,
   isValidatedBlock,
+  isValidatedDocument,
   type ValidateOptions,
   type ValidationResult,
   type ValidatedBlockNode,
+  type ValidatedDocumentNode,
 } from './validate.js'
 export { generateAuthoringGuide, type AuthoringGuideOptions } from './authoring.js'
 export {

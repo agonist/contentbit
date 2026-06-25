@@ -9,6 +9,5 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@contentbit/blocks@0.3.0'
   - '@contentbit/core@0.3.0'
-  - '@contentbit/html@0.3.0'
   - '@contentbit/react@0.3.0'
   - contentbit@0.3.0

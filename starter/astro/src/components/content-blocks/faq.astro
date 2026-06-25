@@ -1,20 +1,21 @@
 ---
 import type { FaqData, FaqItemData } from '@contentbit/blocks'
 import type { ValidatedBlockNode } from '@contentbit/core'
+import type { AstroBlockContext } from '@contentbit/astro'
 
 import { isValidatedBlock } from '@contentbit/core'
-import { renderMarkdownToHtml } from '@/lib/markdown'
 
 interface Props {
   node: ValidatedBlockNode<unknown>
+  ctx: AstroBlockContext
 }
 
-const { node } = Astro.props
+const { node, ctx } = Astro.props
 const data = node.data as FaqData
 const items = await Promise.all(
   data.blocks.map(async (item) => ({
     question: String(item.props.question),
-    html: await renderMarkdownToHtml(isValidatedBlock(item) ? (item.data as FaqItemData).markdown : item.body),
+    html: await ctx.renderMarkdown(isValidatedBlock(item) ? (item.data as FaqItemData).markdown : item.body),
   })),
 )
 

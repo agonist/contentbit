@@ -8,7 +8,7 @@ import { promisify } from 'node:util'
 const exec = promisify(execFile)
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 
-const packageDirs = ['astro', 'blocks', 'cli', 'core', 'html', 'react', 'studio']
+const packageDirs = ['astro', 'blocks', 'cli', 'core', 'react', 'studio']
 const dependencyFields = [
   'dependencies',
   'devDependencies',

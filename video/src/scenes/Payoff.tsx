@@ -20,7 +20,7 @@ const SOURCE = `:::key-metrics
 :::
 
 :::callout{type="tip" title="Same source, every target"}
-React, static HTML, or plain Markdown. **The content is a protocol.**
+React, Astro, or plain Markdown. **The content is a protocol.**
 :::
 
 :::steps

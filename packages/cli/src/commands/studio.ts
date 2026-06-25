@@ -1,9 +1,9 @@
 import { parseArgs } from 'node:util'
-import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
 import { formatRows, section } from '../cli-format.js'
+import { resolveContentFiles } from '../content-project.js'
 import { linkResolverOptions } from '../link-options.js'
 
 export async function studioCommand(args: string[], io: Io): Promise<number> {
@@ -25,11 +25,6 @@ export async function studioCommand(args: string[], io: Io): Promise<number> {
     },
   })
 
-  if (positionals.length === 0) {
-    io.stderr('studio: provide at least one file or glob.')
-    return 2
-  }
-
   const port = parsePort(values.port)
   if (port === null) {
     io.stderr('studio: --port must be an integer between 0 and 65535.')
@@ -42,11 +37,9 @@ export async function studioCommand(args: string[], io: Io): Promise<number> {
     return 2
   }
 
-  const files = await glob(positionals, { absolute: true })
-  if (files.length === 0) {
-    io.stderr(`studio: no files matched ${positionals.join(' ')}`)
-    return 2
-  }
+  // Guard empty/no-match the same way the read-commands do; startStudio does its
+  // own globbing from `positionals`, so we only need the shared check here.
+  await resolveContentFiles(positionals, 'studio')
 
   const { startStudio } =
     (await import('@contentbit/studio')) as typeof import('@contentbit/studio')

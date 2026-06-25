@@ -1,15 +1,16 @@
 ---
 import type { TabData, TabsData } from '@contentbit/blocks'
 import type { ValidatedBlockNode } from '@contentbit/core'
+import type { AstroBlockContext } from '@contentbit/astro'
 
 import { isValidatedBlock } from '@contentbit/core'
-import { renderMarkdownToHtml } from '@/lib/markdown'
 
 interface Props {
   node: ValidatedBlockNode<unknown>
+  ctx: AstroBlockContext
 }
 
-const { node } = Astro.props
+const { node, ctx } = Astro.props
 const data = node.data as TabsData
 // The source offset alone collides when two documents render on one page, so
 // a per-render suffix keeps tab/panel ids (and their ARIA wiring) unique.
@@ -17,7 +18,7 @@ const id = `cb-tabs-${node.position.start.offset}-${Math.random().toString(36).s
 const tabs = await Promise.all(
   data.blocks.map(async (tab, i) => ({
     title: String(tab.props.title),
-    html: await renderMarkdownToHtml(isValidatedBlock(tab) ? (tab.data as TabData).markdown : tab.body),
+    html: await ctx.renderMarkdown(isValidatedBlock(tab) ? (tab.data as TabData).markdown : tab.body),
     selected: i === 0,
   })),
 )

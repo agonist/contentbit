@@ -58,6 +58,11 @@ const result = validateDocument(parseDocument(entry.body), registry)
 Static pages render at build time, so this is a real safety net: invalid blocks
 fail the build, not the reader.
 
+`ContentBlocks` is intentionally headless. It walks the validated document,
+renders Markdown through `renderMarkdown`, and dispatches blocks to the
+components you pass. The pre-made block UI lives in the shadcn registry as
+editable `.astro` files, not inside the package.
+
 ## Use Astro/Sätteri for prose
 
 Astro 7 uses Sätteri for Markdown and MDX. Contentbit can stay complementary by
@@ -88,47 +93,56 @@ features stay owned by Astro.
 ## Component overrides
 
 Map block names to your own `.astro` components. Validated props arrive as
-component props, nested block content arrives via `<slot />`, and the raw AST
-node is available as the reserved `node` prop:
+component props, nested block content arrives via `<slot />`, and two reserved
+props are passed alongside them:
+
+- `node` — the full validated AST node, including parsed `node.data`
+- `ctx` — the render context, currently `{ renderMarkdown }`
 
 ```astro
 ---
-// QuoteBlock.astro — renders the custom `quote` block
+// RichNoteBlock.astro
+import type { AstroBlockContext } from '@contentbit/astro'
+import type { ValidatedBlockNode } from '@contentbit/core'
+
 interface Props {
-  author: string
-  role?: string
+  node: ValidatedBlockNode<unknown>
+  ctx: AstroBlockContext
+  title?: string
 }
-const { author, role } = Astro.props
+
+const { node, ctx, title } = Astro.props
+const data = node.data as { markdown: string }
+const html = await ctx.renderMarkdown(data.markdown)
 ---
 
-<figure>
-  <blockquote><slot /></blockquote>
-  <figcaption>— {author}{role ? `, ${role}` : null}</figcaption>
-</figure>
+<aside>
+  {title ? <h3>{title}</h3> : null}
+  <div set:html={html} />
+</aside>
 ```
 
 ```astro
-<ContentBlocks document={result.document} components={{ quote: QuoteBlock }} />
+<ContentBlocks document={result.document} components={{ 'rich-note': RichNoteBlock }} />
 ```
 
 Because props were already validated against the block's schema, your component
-can use them without defensive parsing.
+can use them without defensive parsing. Use `<slot />` for nested content and
+`ctx.renderMarkdown(...)` for Markdown strings stored in `node.data`.
 
 ## Options
 
 - **`renderMarkdown`** — `(md: string) => string | Promise<string>` for prose
-  and block bodies. Ships with a marked-based default (GFM, raw HTML escaped),
-  so it works untouched; swap in your own to match the rest of your site. The
-  default is also exported as `defaultRenderMarkdown` from `@contentbit/astro`.
-- **`classPrefix`** — prefix for the headless markup's class names, default
-  `cb-`.
-- **`renderers`** — low-level per-block render functions, when a full `.astro`
-  component is more than you need.
+  and block bodies. It is also passed to block components as
+  `ctx.renderMarkdown`, so copied shadcn components and your custom components
+  share the same host-owned Markdown pipeline. The minimal fallback is exported
+  as `defaultRenderMarkdown` from `@contentbit/astro`.
+- **`components`** — block-name to `.astro` component map. This is the only
+  block UI path in the Astro runtime.
 - **`onInvalid`** — what to do with a block that failed validation: `strict`
   (throw), `annotated` (visible dev box), or `fallback` (escaped body as
   prose). The Astro default is `annotated`, which keeps invalid blocks loud
-  during dev, while `@contentbit/html` defaults to `fallback`. Set it
-  explicitly if you want matching behavior across targets.
+  during dev.
 
 ## Validate in CI
 

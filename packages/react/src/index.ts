@@ -5,4 +5,3 @@ export {
   type BlockRenderContext,
   type ContentBlocksProps,
 } from './content-blocks.js'
-export { defaultComponents } from './components.js'

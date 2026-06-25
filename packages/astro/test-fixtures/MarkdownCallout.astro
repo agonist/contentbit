@@ -1,0 +1,16 @@
+---
+import type { CalloutData } from '@contentbit/blocks'
+import type { ValidatedBlockNode } from '@contentbit/core'
+import type { AstroBlockContext } from '@contentbit/astro'
+
+interface Props {
+  node: ValidatedBlockNode<unknown>
+  ctx: AstroBlockContext
+}
+
+const { node, ctx } = Astro.props
+const data = node.data as CalloutData
+const html = await ctx.renderMarkdown(data.markdown)
+---
+
+<aside data-ctx-rendered set:html={html} />
