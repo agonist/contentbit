@@ -30,9 +30,17 @@ export async function startStudio(options: StartStudioOptions): Promise<StudioSe
   const host = options.host ?? '127.0.0.1'
   const port = options.port ?? 4377
   const cwd = options.cwd ?? process.cwd()
-  const fsAllow = [
-    ...new Set([root, cwd, searchForWorkspaceRoot(root), searchForWorkspaceRoot(cwd)]),
-  ]
+  // Vite serves only files under `fs.allow`. We need:
+  // - `root`: the Studio package itself (its built UI and source).
+  // - `searchForWorkspaceRoot(root)`: the workspace that hoists Studio's deps,
+  //   so packaged fonts and other Vite-served dependency assets resolve when
+  //   Studio is installed into a monorepo.
+  // - `cwd`: the consuming project, so Studio can read its content/blocks.
+  // We deliberately do NOT add `searchForWorkspaceRoot(cwd)`: in a project with
+  // no workspace marker, Vite walks up past the git root to the nearest ancestor
+  // `package.json`, which can expose an unexpectedly broad directory over HTTP
+  // (notably with `--host`).
+  const fsAllow = [...new Set([root, searchForWorkspaceRoot(root), cwd])]
   const apiOptions: StudioOptions = {
     globs: options.globs,
     cwd,

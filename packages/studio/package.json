@@ -9,7 +9,12 @@
     "directory": "packages/studio"
   },
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "public",
+    "components.json",
+    "vite.config.ts",
+    "tsconfig.json"
   ],
   "type": "module",
   "sideEffects": false,
