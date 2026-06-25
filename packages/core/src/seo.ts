@@ -274,6 +274,7 @@ function normalizeSeoPages(
   linkIndex: LinkIndex | undefined,
 ): SeoPage[] {
   const byId = new Map<string, SeoPage>()
+  const byConfigId = new Map<string, SeoPage>()
   for (const [id, page] of Object.entries(config.pages)) {
     const key = page.key ?? id
     const slug = page.slug
@@ -291,6 +292,7 @@ function normalizeSeoPages(
       frontmatter: pageToFrontmatter(page),
     }
     byId.set(normalized.id, normalized)
+    byConfigId.set(id, normalized)
   }
 
   const linkPageByPath = new Map(
@@ -301,7 +303,10 @@ function normalizeSeoPages(
     const key = stringValue(fm.key)
     const slug = stringValue(fm.slug)
     const id = key ?? slug ?? file.path
-    const planned = byId.get(id) ?? (slug ? byId.get(slug) : undefined)
+    const planned =
+      byId.get(id) ??
+      (slug ? byId.get(slug) : undefined) ??
+      findPlannedByPath(byConfigId, file.path)
     const linkPage = linkPageByPath.get(file.path)
     const page: SeoPage = {
       ...(planned ?? {
@@ -528,6 +533,22 @@ function severityRank(severity: Diagnostic['severity']): number {
 
 function findSeoPage(pages: SeoPage[], target: string): SeoPage | undefined {
   return pages.find((page) => page.key === target || page.slug === target || page.id === target)
+}
+
+function findPlannedByPath(byId: Map<string, SeoPage>, filePath: string): SeoPage | undefined {
+  const normalizedFilePath = normalizePath(filePath)
+  for (const [id, page] of byId) {
+    if (pathMatches(normalizePath(id), normalizedFilePath)) return page
+  }
+  return undefined
+}
+
+function pathMatches(configId: string, filePath: string): boolean {
+  return filePath === configId || filePath.endsWith(`/${configId}`)
+}
+
+function normalizePath(path: string): string {
+  return path.replaceAll('\\', '/').replace(/^\.\/+/, '')
 }
 
 function plannedLinks(page: SeoPage): string[] {

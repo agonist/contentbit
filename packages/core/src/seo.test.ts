@@ -154,3 +154,55 @@ test('createSeoBrief works for planned pages', () => {
   ])
   expect(brief.acceptanceChecks).toContain('Create the Markdown source file for this planned page.')
 })
+
+test('relative path config entries merge with absolute scanned file paths', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/repo/site/content/docs/guides/doctor.mdx',
+        source: `---
+title: Content doctor
+description: Repair plan.
+---
+
+# Content doctor
+
+## Overview
+
+Useful overview text.
+`,
+      },
+    ],
+    registry(),
+    {
+      seoConfig: defineSeoConfig({
+        pageTypes: {
+          guide: {
+            requiredFrontmatter: ['type', 'title', 'description', 'slug', 'keywords.primary'],
+            requiredSections: ['Overview'],
+          },
+        },
+        pages: {
+          'content/docs/guides/doctor.mdx': {
+            type: 'guide',
+            key: 'doctor',
+            slug: 'docs/guides/doctor',
+            intent: 'informational',
+            keywords: { primary: 'contentbit doctor' },
+          },
+        },
+      }),
+    },
+  )
+
+  expect(scan.seo?.pages).toHaveLength(1)
+  expect(scan.seo?.pages[0]).toMatchObject({
+    id: 'doctor',
+    source: 'existing',
+    key: 'doctor',
+    slug: 'docs/guides/doctor',
+    type: 'guide',
+    title: 'Content doctor',
+  })
+  expect(scan.seo?.findings).toEqual([])
+})
