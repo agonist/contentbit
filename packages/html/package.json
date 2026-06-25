@@ -1,6 +1,6 @@
 {
   "name": "@contentbit/html",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Static HTML renderer for Content Blocks documents. No framework, no JavaScript required.",
   "keywords": [
     "content-blocks",

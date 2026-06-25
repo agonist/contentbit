@@ -1,5 +1,11 @@
 # @contentbit/core
 
+## 0.4.1
+
+### Patch Changes
+
+- 7bdd4b8: Guard publishing so package manifests are packed through pnpm and workspace dependencies are rewritten to publishable semver ranges.
+
 ## 0.4.0
 
 ## 0.3.0
