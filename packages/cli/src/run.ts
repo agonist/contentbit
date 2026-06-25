@@ -6,6 +6,21 @@ export interface Io {
   writeFile(path: string, content: string): Promise<void>
 }
 
+/**
+ * A command-input failure with a chosen exit code and a ready-to-print message
+ * (e.g. no positionals, no files matched). `run()` prints the plain message and
+ * returns `exitCode`; any other throw is treated as an unexpected crash.
+ */
+export class CliError extends Error {
+  constructor(
+    readonly exitCode: number,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'CliError'
+  }
+}
+
 export const USAGE = `contentbit
 
 Usage:
@@ -63,6 +78,10 @@ export async function run(argv: string[], io: Io): Promise<number> {
     const command = await loader()
     return await command(rest, io)
   } catch (err) {
+    if (err instanceof CliError) {
+      io.stderr(err.message)
+      return err.exitCode
+    }
     io.stderr(
       [
         section(`contentbit ${name}`),

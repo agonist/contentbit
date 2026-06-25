@@ -1,13 +1,11 @@
-import { scanContentProject, type ContentProjectFinding, type Diagnostic } from '@contentbit/core'
-import { readFile } from 'node:fs/promises'
+import { type ContentProjectFinding, type Diagnostic } from '@contentbit/core'
 import { parseArgs } from 'node:util'
-import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
 import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
+import { loadContentProject } from '../content-project.js'
 import { linkResolverOptions } from '../link-options.js'
-import { loadRegistry } from '../load-registry.js'
 
 export async function validateCommand(args: string[], io: Io): Promise<number> {
   const { values, positionals } = parseArgs({
@@ -24,29 +22,17 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
       'default-locale': { type: 'string' },
     },
   })
-  if (positionals.length === 0) {
-    io.stderr('validate: provide at least one file or glob.')
-    return 2
-  }
-  const files = await glob(positionals, { absolute: true })
-  if (files.length === 0) {
-    io.stderr(`validate: no files matched ${positionals.join(' ')}`)
-    return 2
-  }
-  const registry = await loadRegistry(values.registry, {
+  const { files, scan } = await loadContentProject({
+    cmd: 'validate',
+    positionals,
+    registry: values.registry,
     includeGenericBlocks: !values['no-generic-blocks'],
+    linkOptions: linkResolverOptions(values),
+    scan: { includeStatsFindings: false },
   })
-  const linkOptions = linkResolverOptions(values)
 
   let errors = 0
   let warnings = 0
-  const sources = await Promise.all(
-    files.sort().map(async (file) => ({ path: file, source: await readFile(file, 'utf8') })),
-  )
-  const scan = scanContentProject(sources, registry, {
-    linkOptions,
-    includeStatsFindings: false,
-  })
   for (const finding of scan.findings) {
     io.stderr(formatDiagnosticForCli(diagnosticFromFinding(finding), finding.file))
     if (finding.severity === 'error') errors++

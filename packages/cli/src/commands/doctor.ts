@@ -1,12 +1,9 @@
 import {
   DEFAULT_MIN_SECTION_WORDS,
-  scanContentProject,
   type ContentProjectFinding,
   type LinkInput,
 } from '@contentbit/core'
-import { readFile } from 'node:fs/promises'
 import { parseArgs } from 'node:util'
-import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
@@ -18,8 +15,8 @@ import {
   section,
   severityLabel,
 } from '../cli-format.js'
+import { loadContentProject } from '../content-project.js'
 import { linkResolverOptions } from '../link-options.js'
-import { loadRegistry } from '../load-registry.js'
 
 type DoctorFinding = ContentProjectFinding
 
@@ -47,30 +44,21 @@ export async function doctorCommand(args: string[], io: Io): Promise<number> {
       'default-locale': { type: 'string' },
     },
   })
-  if (positionals.length === 0) {
-    io.stderr('doctor: provide at least one file or glob.')
-    return 2
-  }
-
   const minSectionWords = parseMinSectionWords(values['min-section-words'])
   if (minSectionWords === null) {
     io.stderr('doctor: --min-section-words must be a non-negative integer.')
     return 2
   }
 
-  const files = (await glob(positionals, { absolute: true })).sort()
-  if (files.length === 0) {
-    io.stderr(`doctor: no files matched ${positionals.join(' ')}`)
-    return 2
-  }
-
   const includeGenericBlocks = !values['no-generic-blocks']
-  const registry = await loadRegistry(values.registry, { includeGenericBlocks })
-  const linkOptions = linkResolverOptions(values)
-  const sources = await Promise.all(
-    files.map(async (file) => ({ path: file, source: await readFile(file, 'utf8') })),
-  )
-  const scan = scanContentProject(sources, registry, { linkOptions, minSectionWords })
+  const { files, scan } = await loadContentProject({
+    cmd: 'doctor',
+    positionals,
+    registry: values.registry,
+    includeGenericBlocks,
+    linkOptions: linkResolverOptions(values),
+    scan: { minSectionWords },
+  })
   const report: DoctorReport = {
     files: files.length,
     summary: scan.summary,
