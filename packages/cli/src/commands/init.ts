@@ -8,20 +8,7 @@ import type { Io } from '../run.js'
 
 import { loadRegistry } from '../load-registry.js'
 import { installAgentIntegration } from './agents.js'
-
-type Target = 'react' | 'markdown' | 'astro'
-
-const TARGETS: Target[] = ['react', 'markdown', 'astro']
-
-type Md = 'react-markdown' | 'none'
-
-/** Markdown library choices per target; the first entry is the default. */
-const MD_CHOICES: Record<Target, Md[]> = {
-  react: ['react-markdown', 'none'],
-  markdown: ['none'],
-  // Astro projects usually reuse their host Markdown pipeline.
-  astro: ['none'],
-}
+import { detectTarget, TARGET_ADAPTERS, TARGETS, type Md, type Target } from './init-targets.js'
 
 const REGISTRY_TEMPLATE = `// Custom block definitions for this project. The CLI and your app share
 // this module — Node 22.18+ imports TypeScript directly:
@@ -52,43 +39,6 @@ export const quote = defineBlock({
 
 export default [quote] satisfies BlockDefinition<unknown>[]
 `
-
-/** blocks/components.tsx — React components for custom blocks, next to their definitions. */
-function blockComponentsTemplate(styled: boolean): string {
-  const body = styled
-    ? `  return (
-    <figure className="my-6 border-s-2 ps-4">
-      <blockquote className="text-lg italic">{ctx.renderMarkdown(data.markdown)}</blockquote>
-      <figcaption className="text-muted-foreground mt-2 text-sm">
-        — {String(node.props.author)}
-        {node.props.role ? \`, \${String(node.props.role)}\` : null}
-      </figcaption>
-    </figure>
-  )`
-    : `  return (
-    <figure style={{ margin: '1.5rem 0', borderLeft: '2px solid #d4d4d4', paddingLeft: '1rem' }}>
-      <blockquote style={{ fontStyle: 'italic' }}>{ctx.renderMarkdown(data.markdown)}</blockquote>
-      <figcaption style={{ marginTop: '0.5rem', fontSize: '0.875rem', opacity: 0.7 }}>
-        — {String(node.props.author)}
-        {node.props.role ? \`, \${String(node.props.role)}\` : null}
-      </figcaption>
-    </figure>
-  )`
-  return `import type { BlockComponent, BlockComponentProps } from '@contentbit/react'
-
-// One React component per custom block, keyed by block name. Definitions
-// live in ./registry.ts — add a block there, add its component here, and
-// the rest of the app never changes.
-function QuoteBlock({ node, ctx }: BlockComponentProps) {
-  const data = node.data as { markdown: string }
-${body}
-}
-
-export const blockComponents: Record<string, BlockComponent> = {
-  quote: QuoteBlock,
-}
-`
-}
 
 const EXAMPLE_CONTENT = `---
 slug: hello-content-blocks
@@ -145,173 +95,6 @@ references in \`linksTo\` are rewritten to the current slug, while \`aliases\`
 stays as the rename record.
 :::
 `
-
-/** The wrapper component: styled pack or headless, with or without a Markdown lib. */
-function reactComponent(styled: boolean, mdWired: boolean, blocksImport: string): string {
-  const mdImport = mdWired ? "import ReactMarkdown from 'react-markdown'\n" : ''
-  const mdProp = mdWired
-    ? '\n      renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}'
-    : `\n      // TODO: plug your Markdown library in here, e.g. react-markdown.
-      // One function renders all prose: https://contentbit.dev/docs/guides/markdown
-      // renderMarkdown={(md) => <Markdown source={md} />}`
-  const rendererImport = styled
-    ? `\n// The styled pack installed by shadcn. Yours to edit.
-import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
-    : ''
-  const renderer = styled ? 'ContentRenderer' : 'ContentBlocks'
-  const reactImport = styled ? '' : "import { ContentBlocks } from '@contentbit/react'\n"
-  return `'use client'
-
-import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, stripFrontmatter, validateDocument } from '@contentbit/core'
-${reactImport}${mdImport}${rendererImport}
-// Everything block-related lives in the blocks/ folder: definitions in
-// registry.ts (shared with the validate CLI), components in components.tsx.
-import customBlocks from '${blocksImport}/registry'
-import { blockComponents } from '${blocksImport}/components'
-
-const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
-
-export function Content({ source }: { source: string }) {
-  const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
-  return (
-    <${renderer}
-      document={result.document}
-      components={blockComponents}${mdProp}
-    />
-  )
-}
-`
-}
-
-type Framework = 'tanstack' | 'next' | null
-
-interface FrameworkLayout {
-  framework: Framework
-  componentPath: string
-  pagePath: string | null
-}
-
-/** Where the component and example page belong for the detected framework. */
-function detectFramework(cwd: string, deps: Record<string, string>): FrameworkLayout {
-  if (
-    (deps['@tanstack/react-start'] || deps['@tanstack/react-router']) &&
-    existsSync(join(cwd, 'src/routes'))
-  ) {
-    return {
-      framework: 'tanstack',
-      componentPath: 'src/components/content-blocks.tsx',
-      pagePath: 'src/routes/example.tsx',
-    }
-  }
-  if (deps.next) {
-    const appDir = existsSync(join(cwd, 'src/app')) ? 'src/app' : 'app'
-    if (existsSync(join(cwd, appDir))) {
-      return {
-        framework: 'next',
-        componentPath: 'components/content-blocks.tsx',
-        pagePath: `${appDir}/example/page.tsx`,
-      }
-    }
-  }
-  return { framework: null, componentPath: 'components/content-blocks.tsx', pagePath: null }
-}
-
-const TANSTACK_PAGE = `import { createFileRoute } from '@tanstack/react-router'
-
-import { Content } from '../components/content-blocks'
-// Vite's ?raw import inlines the Markdown as a string at build time.
-import source from '../../content/example.md?raw'
-
-export const Route = createFileRoute('/example')({ component: ExamplePage })
-
-function ExamplePage() {
-  return (
-    <main style={{ maxWidth: '42rem', margin: '0 auto', padding: '3rem 1.5rem' }}>
-      <Content source={source} />
-    </main>
-  )
-}
-`
-
-const NEXT_PAGE = `import { readFile } from 'node:fs/promises'
-
-// If your project has no "@/" path alias, switch to a relative import.
-import { Content } from '@/components/content-blocks'
-
-export default async function ExamplePage() {
-  const source = await readFile('content/example.md', 'utf8')
-  return (
-    <main style={{ maxWidth: '42rem', margin: '0 auto', padding: '3rem 1.5rem' }}>
-      <Content source={source} />
-    </main>
-  )
-}
-`
-
-const ASTRO_CONTENT_CONFIG = `import { defineCollection } from 'astro:content'
-import { glob } from 'astro/loaders'
-
-export const collections = {
-  articles: defineCollection({
-    // Astro's builtin Markdown loader. Entry bodies are parsed and validated
-    // where they render (see src/pages/example.astro); \`contentbit validate\`
-    // covers the same files in CI.
-    loader: glob({ pattern: '**/*.md', base: './content' }),
-  }),
-}
-`
-
-const ASTRO_QUOTE_BLOCK = `---
-// The Astro component for the custom \`quote\` block defined in blocks/registry.ts.
-// Block props arrive as component props; nested content arrives via <slot />.
-interface Props {
-  author: string
-  role?: string
-}
-
-const { author, role } = Astro.props
----
-
-<figure style="margin: 1.5rem 0; border-left: 2px solid #d4d4d4; padding-left: 1rem;">
-  <blockquote style="font-style: italic;"><slot /></blockquote>
-  <figcaption style="margin-top: 0.5rem; font-size: 0.875rem; opacity: 0.7;">
-    — {author}{role ? \`, \${role}\` : null}
-  </figcaption>
-</figure>
-`
-
-/** The example page: styled pack renderer or the headless ContentBlocks. */
-function astroPage(styled: boolean): string {
-  const importLine = styled
-    ? "import ContentRenderer from '../components/content-blocks/content-renderer.astro'"
-    : "import { ContentBlocks } from '@contentbit/astro/components'"
-  const renderer = styled ? 'ContentRenderer' : 'ContentBlocks'
-  return `---
-import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-import { getEntry } from 'astro:content'
-
-${importLine}
-
-// Definitions in blocks/registry.ts are shared with the validate CLI.
-import customBlocks from '../../blocks/registry'
-import QuoteBlock from '../../blocks/QuoteBlock.astro'
-
-// Entry ids are the file path relative to the collection base, minus ".md".
-const entry = await getEntry('articles', 'example')
-if (!entry?.body) throw new Error('Entry "example" not found in the articles collection.')
-
-const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
-// Static pages render at build time, so invalid blocks fail the build here.
-const result = validateDocument(parseDocument(entry.body), registry)
----
-
-<main style="max-width: 42rem; margin: 0 auto; padding: 3rem 1.5rem;">
-  <${renderer} document={result.document} components={{ quote: QuoteBlock }} />
-</main>
-`
-}
 
 function detectPackageManager(cwd: string): string {
   // The project's lockfile outranks however the CLI itself was launched.
@@ -422,10 +205,10 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     return 1
   }
 
+  const deps: Record<string, string> = { ...pkg.dependencies, ...pkg.devDependencies }
+
   // Resolve the render target: flag > prompt (interactive) > detection.
-  const hasReact = Boolean(pkg.dependencies?.react ?? pkg.devDependencies?.react)
-  const hasAstro = Boolean(pkg.dependencies?.astro ?? pkg.devDependencies?.astro)
-  const detected: Target = hasAstro ? 'astro' : hasReact ? 'react' : 'markdown'
+  const detected = detectTarget(deps)
   let target: Target
   if (values.target) {
     if (!TARGETS.includes(values.target as Target)) {
@@ -449,10 +232,11 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   } else {
     target = detected
   }
+  const adapter = TARGET_ADAPTERS[target]
 
   // Resolve the Markdown library: flag > prompt (interactive) > target default.
   // The default gives working prose rendering out of the box; 'none' opts out.
-  const choices = MD_CHOICES[target]
+  const choices = adapter.markdownChoices
   let md: Md
   if (values.md) {
     if (!choices.includes(values.md as Md)) {
@@ -478,10 +262,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   }
 
   // Install runtime packages plus the CLI as a dev dependency.
-  const runtime = ['@contentbit/core', '@contentbit/blocks', 'zod']
-  if (target === 'react') runtime.push('@contentbit/react')
-  if (target === 'astro') runtime.push('@contentbit/astro')
-  if (md !== 'none') runtime.push(md)
+  const runtime = adapter.runtimeDependencies(md)
   if (values['no-install']) {
     io.stdout(`skipped install: ${runtime.join(' ')} + contentbit (dev)`)
   } else {
@@ -497,57 +278,23 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     }
   }
 
+  const plan = await adapter.createPlan({
+    cwd,
+    deps,
+    md,
+    noPage: Boolean(values['no-page']),
+    noStyled: Boolean(values['no-styled']),
+    io,
+    installStyledPack: (pack) => installStyledPack(cwd, pack, values['no-install'], io),
+  })
+
   // Scaffold project files; never overwrite.
   const files: Array<[string, string]> = [
     ['blocks/registry.ts', REGISTRY_TEMPLATE],
     ['content/example.md', EXAMPLE_CONTENT],
     ['content/related.md', RELATED_CONTENT],
+    ...plan.files,
   ]
-  const layout = detectFramework(cwd, { ...pkg.dependencies, ...pkg.devDependencies })
-
-  // shadcn project? Pull the styled component pack from the contentbit registry.
-  let styled = false
-  const componentsJsonPath = join(cwd, 'components.json')
-  if (target === 'react' && !values['no-styled'] && existsSync(componentsJsonPath)) {
-    styled = await installStyledPack(cwd, '@contentbit/generic-pack', values['no-install'], io)
-  }
-
-  if (target === 'react') {
-    const depth = layout.componentPath.split('/').length - 1
-    const blocksImport = `${'../'.repeat(depth)}blocks`
-    files.push(['blocks/components.tsx', blockComponentsTemplate(styled)])
-    files.push([
-      layout.componentPath,
-      reactComponent(styled, md === 'react-markdown', blocksImport),
-    ])
-    // A visible page in the framework's own routing convention.
-    if (!values['no-page'] && layout.pagePath) {
-      files.push([layout.pagePath, layout.framework === 'tanstack' ? TANSTACK_PAGE : NEXT_PAGE])
-    }
-  }
-  if (target === 'astro') {
-    let astroStyled = false
-    if (!values['no-styled'] && existsSync(componentsJsonPath)) {
-      astroStyled = await installStyledPack(cwd, '@contentbit/astro-pack', values['no-install'], io)
-    }
-    files.push(['blocks/QuoteBlock.astro', ASTRO_QUOTE_BLOCK])
-    // Every config filename Astro resolves (src/content.config.* plus the
-    // legacy src/content/config.* location), so we never scaffold a second
-    // config that Astro would silently ignore.
-    const configCandidates = ['ts', 'mts', 'mjs', 'js'].flatMap((ext) => [
-      `src/content.config.${ext}`,
-      `src/content/config.${ext}`,
-    ])
-    const existingConfig = configCandidates.find((p) => existsSync(join(cwd, p)))
-    if (existingConfig) {
-      io.stdout(`content config exists (${existingConfig}); add this collection manually:`)
-      io.stdout(ASTRO_CONTENT_CONFIG)
-      io.stdout('the example page expects the "articles" collection above')
-    } else {
-      files.push(['src/content.config.ts', ASTRO_CONTENT_CONFIG])
-    }
-    if (!values['no-page']) files.push(['src/pages/example.astro', astroPage(astroStyled)])
-  }
   for (const [rel, content] of files) {
     const result = await scaffold(join(cwd, rel), content)
     io.stdout(`${result}: ${rel}`)
@@ -607,24 +354,12 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   io.stdout('')
   io.stdout('Done. Next steps:')
-  io.stdout(`  1. Browse content locally: ${detectPackageManager(cwd)} run studio`)
-  io.stdout(`     Inspect content health: ${detectPackageManager(cwd)} run content:doctor`)
-  io.stdout(`     Validate the starter content: ${detectPackageManager(cwd)} run content:check`)
-  io.stdout(`     Build the link index: ${detectPackageManager(cwd)} run content:links`)
-  if (target === 'react') {
-    if (!values['no-page'] && layout.pagePath) {
-      io.stdout('  2. Start the dev server and open /example to see the article rendered.')
-    } else {
-      io.stdout('  2. Render it: import { Content } from "./components/content-blocks"')
-      io.stdout('     <Content source={...content/example.md as a string} />')
-    }
-    io.stdout('  3. Styled components: pnpm dlx shadcn@latest add @contentbit/generic-pack')
-  } else if (target === 'astro') {
-    io.stdout('  2. Start the dev server and open /example to see the article rendered.')
-    io.stdout('  3. Styled components: pnpm dlx shadcn@latest add @contentbit/astro-pack')
-  } else {
-    io.stdout('  2. Render it: contentbit render content/example.md')
-  }
+  const pm = detectPackageManager(cwd)
+  io.stdout(`  1. Browse content locally: ${pm} run studio`)
+  io.stdout(`     Inspect content health: ${pm} run content:doctor`)
+  io.stdout(`     Validate the starter content: ${pm} run content:check`)
+  io.stdout(`     Build the link index: ${pm} run content:links`)
+  for (const line of plan.nextSteps) io.stdout(line)
   io.stdout('  Docs: https://contentbit.dev/docs')
   return 0
 }
