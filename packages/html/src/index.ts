@@ -1,5 +1,5 @@
-export { escapeHtml } from './escape.js'
 export {
+  escapeHtml,
   fallbackMarkdown,
   invalidBlockHtml,
   renderToHtml,

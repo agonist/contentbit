@@ -2,8 +2,8 @@
 import type { ContentNode, ValidatedBlockNode } from '@contentbit/core'
 import type { AstroBlockRenderer, AstroMarkdownRenderer } from '@contentbit/astro'
 
+import { fallbackMarkdown, invalidBlockHtml, unrenderableBlockError } from '@contentbit/blocks'
 import { isValidatedBlock } from '@contentbit/core'
-import { fallbackMarkdown, invalidBlockHtml, unrenderableBlockError } from '@contentbit/html'
 
 import { renderBlockShell } from '@contentbit/astro'
 

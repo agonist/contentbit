@@ -42,9 +42,7 @@
   },
   "dependencies": {
     "@contentbit/blocks": "workspace:*",
-    "@contentbit/core": "workspace:*",
-    "@contentbit/html": "workspace:*",
-    "marked": "^18.0.5"
+    "@contentbit/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",

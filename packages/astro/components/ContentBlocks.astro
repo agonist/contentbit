@@ -16,11 +16,11 @@ interface Props {
    * "node" is shadowed by the reserved prop.
   */
   components?: Record<string, unknown>
-  /** Per-block string renderers, merged over the generic html defaults. */
+  /** Per-block string renderers, merged over the generic block defaults. */
   renderers?: Record<string, AstroBlockRenderer>
   /** CSS class prefix for default renderers. Default "cb-". */
   classPrefix?: string
-  /** Prose pipeline. Default: marked (GFM) with raw HTML escaped. */
+  /** Prose pipeline. Default: escaped paragraphs; pass your host Markdown renderer for full Markdown. */
   renderMarkdown?: AstroMarkdownRenderer
   /** Invalid-block behavior: throw, visible dev box, or escaped body. Default "annotated". */
   onInvalid?: 'strict' | 'annotated' | 'fallback'

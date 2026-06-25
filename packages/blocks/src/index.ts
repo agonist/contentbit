@@ -17,6 +17,7 @@ export * from './blocks/pros-cons.js'
 export * from './blocks/quick-ref.js'
 export * from './blocks/steps.js'
 export * from './blocks/tabs.js'
+export * from './render-html.js'
 
 /** The default generic block pack: 8 blocks + 2 child blocks. */
 export function genericBlocks(): BlockDefinition<unknown>[] {

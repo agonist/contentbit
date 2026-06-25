@@ -1,11 +1,9 @@
 import { genericBlocks } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-import { renderToHtml } from '@contentbit/html'
 import { experimental_AstroContainer as AstroContainer } from 'astro/container'
 import { expect, test } from 'vitest'
 
 import ContentBlocks from '../components/ContentBlocks.astro'
-import { defaultRenderMarkdown } from './markdown.js'
 
 const FIXTURE = `# Pizza dough, three ways
 
@@ -54,8 +52,6 @@ Yes — after balling, up to 3 months.
 :::
 `
 
-// Collapse whitespace differences (renderToHtml joins with \n; Astro's
-// template emits its own spacing) and strip Astro's HTML comments.
 const norm = (s: string) =>
   s
     .replace(/<!--[\s\S]*?-->/g, '')
@@ -63,16 +59,27 @@ const norm = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim()
 
-test('default Astro output matches renderToHtml for the full generic pack', async () => {
+test('default Astro output renders the full generic pack without depending on html', async () => {
   const registry = createBlockRegistry().use(genericBlocks())
   const result = validateDocument(parseDocument(FIXTURE), registry)
   expect(result.diagnostics).toEqual([])
 
-  const html = renderToHtml(result.document, { renderMarkdown: defaultRenderMarkdown })
   const container = await AstroContainer.create()
   const astro = await container.renderToString(ContentBlocks, {
     props: { document: result.document },
   })
 
-  expect(norm(astro)).toBe(norm(html))
+  const out = norm(astro)
+  for (const expected of [
+    'class="cb-callout cb-callout-tldr"',
+    'class="cb-steps"',
+    'class="cb-key-metrics"',
+    'class="cb-quick-ref"',
+    'class="cb-comparison"',
+    'class="cb-pros-cons"',
+    'class="cb-tabs"',
+    'class="cb-faq"',
+  ]) {
+    expect(out).toContain(expected)
+  }
 })

@@ -35,10 +35,11 @@ async function render(props: Record<string, unknown>): Promise<string> {
   return container.renderToString(ContentBlocks, { props })
 }
 
-test('renders markdown prose through marked by default', async () => {
+test('renders markdown prose through the safe paragraph fallback by default', async () => {
   const out = await render({ document: doc('# Hi\n\nHello *world*.\n') })
-  expect(out).toContain('<h1>Hi</h1>')
-  expect(out).toContain('<em>world</em>')
+  expect(out).toContain('<p># Hi</p>')
+  expect(out).toContain('<p>Hello *world*.</p>')
+  expect(out).not.toContain('<h1>')
 })
 
 test('renders default blocks with cb- classes via the html renderers', async () => {

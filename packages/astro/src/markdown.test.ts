@@ -2,11 +2,12 @@ import { expect, test } from 'vitest'
 
 import { defaultRenderMarkdown } from './markdown.js'
 
-test('renders GFM markdown', () => {
+test('renders escaped paragraphs without bringing a markdown engine', () => {
   const out = defaultRenderMarkdown('# Hi\n\nHello *world* and ~~gone~~.\n')
-  expect(out).toContain('<h1>Hi</h1>')
-  expect(out).toContain('<em>world</em>')
-  expect(out).toContain('<del>gone</del>')
+  expect(out).toContain('<p># Hi</p>')
+  expect(out).toContain('<p>Hello *world* and ~~gone~~.</p>')
+  expect(out).not.toContain('<h1>')
+  expect(out).not.toContain('<em>')
 })
 
 test('escapes block-level raw HTML', () => {

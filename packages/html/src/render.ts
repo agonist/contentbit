@@ -1,14 +1,21 @@
-import type {
-  BlockNode,
-  ContentNode,
-  ValidatedBlockNode,
-  ValidatedDocumentNode,
-} from '@contentbit/core'
+import type { ContentNode, ValidatedBlockNode, ValidatedDocumentNode } from '@contentbit/core'
 
+import {
+  escapeHtml,
+  fallbackMarkdown,
+  invalidBlockHtml,
+  unrenderableBlockError,
+} from '@contentbit/blocks'
 import { isValidatedBlock } from '@contentbit/core'
 
 import { genericHtmlRenderers } from './blocks.js'
-import { escapeHtml } from './escape.js'
+
+export {
+  escapeHtml,
+  fallbackMarkdown,
+  invalidBlockHtml,
+  unrenderableBlockError,
+} from '@contentbit/blocks'
 
 export interface HtmlRenderContext {
   cls(name: string): string
@@ -34,29 +41,6 @@ export interface RenderToHtmlOptions {
    * strict = throw, annotated = visible dev box, fallback = escaped body. Default "fallback".
    */
   onInvalid?: 'strict' | 'annotated' | 'fallback'
-}
-
-/**
- * The minimal prose fallback shared by every renderer that has no Markdown
- * pipeline wired: escaped paragraphs, never raw HTML. Also used for
- * onInvalid: "fallback" block bodies.
- */
-export function fallbackMarkdown(md: string): string {
-  return md
-    .trim()
-    .split(/\n{2,}/)
-    .map((p) => `<p>${escapeHtml(p)}</p>`)
-    .join('\n')
-}
-
-/** The onInvalid: "annotated" box. One definition so CSS contracts (.{prefix}invalid, data-cb-invalid) cannot drift between render targets. */
-export function invalidBlockHtml(node: Pick<BlockNode, 'name' | 'body'>, prefix: string): string {
-  return `<div class="${prefix}invalid" data-cb-invalid="${escapeHtml(node.name)}"><pre>${escapeHtml(node.body)}</pre></div>`
-}
-
-/** The onInvalid: "strict" error, shared verbatim across render targets. */
-export function unrenderableBlockError(name: string): Error {
-  return new Error(`Cannot render block "${name}": not validated or no renderer registered.`)
 }
 
 export function renderToHtml(

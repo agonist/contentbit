@@ -1,6 +1,6 @@
 import type { ValidatedBlockNode } from '@contentbit/core'
 
-import { genericBlocks } from '@contentbit/blocks'
+import { genericBlocks, genericHtmlStringRenderers } from '@contentbit/blocks'
 import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
 import { expect, test } from 'vitest'
 
@@ -27,6 +27,21 @@ test('a renderer that never calls renderNodes yields a single part', async () =>
   expect(shell!.parts).toHaveLength(1)
   expect(shell!.parts[0]).toContain('<ol class="cb-steps">')
   expect(shell!.parts[0]).toContain('<li>Mix</li>')
+})
+
+test('generic Astro defaults stay in lockstep with generic HTML defaults', () => {
+  expect(Object.keys(genericAstroRenderers).sort()).toEqual(
+    Object.keys(genericHtmlStringRenderers).sort(),
+  )
+})
+
+test('generic renderers can await host Markdown rendering', async () => {
+  const node = block(':::faq\n::faq-item{question="Freeze it?"}\nYes.\n:::\n')
+  const shell = await renderBlockShell(node, {
+    ...opts,
+    renderMarkdown: async (md) => `<p>async ${md.trim()}</p>`,
+  })
+  expect(shell!.parts[0]).toContain('<p>async Yes.</p>')
 })
 
 test('renderNodes call sites become child slots between parts', async () => {
