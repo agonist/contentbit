@@ -21,7 +21,8 @@ test('builds an index and exits 0 for a valid graph', async () => {
   })
   const io = fakeIo()
   expect(await run(['links', join(dir, '*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('2 page(s)')
+  expect(io.out.join('\n')).toContain('Link Index')
+  expect(io.out.join('\n')).toMatch(/Pages\s+2/)
 })
 
 test('exits 1 and reports a dangling link', async () => {

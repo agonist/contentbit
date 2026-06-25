@@ -1,14 +1,33 @@
+import { color, section } from './cli-format.js'
+
 export interface Io {
   stdout(line: string): void
   stderr(line: string): void
   writeFile(path: string, content: string): Promise<void>
 }
 
-export const USAGE = `Usage: contentbit <init|validate|doctor|studio|stats|render|instructions|docs|agents|links> [options]
+export const USAGE = `contentbit
 
+Usage:
+  contentbit <command> [options]
+
+Commands:
+  init          scaffold Content Blocks into a project
+  validate      check Markdown blocks and internal links
+  doctor        inspect content health and repair suggestions
+  studio        browse content locally
+  stats         print document stats as JSON
+  render        render one file to HTML or Markdown
+  instructions  print LLM authoring instructions
+  docs          print human authoring docs
+  agents        install coding-agent guidance
+  links         build or fix the internal link index
+
+Setup:
   init [-t react|html|markdown|astro] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
   agents [--claude] [--no-agents-md]
 
+Common:
   validate <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
   doctor <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--json] [--min-section-words <n>] [--link-resolve <mode>]
   studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--link-resolve <mode>]
@@ -44,7 +63,12 @@ export async function run(argv: string[], io: Io): Promise<number> {
     const command = await loader()
     return await command(rest, io)
   } catch (err) {
-    io.stderr(`contentbit ${name}: ${err instanceof Error ? err.message : String(err)}`)
+    io.stderr(
+      [
+        section(`contentbit ${name}`),
+        `  ${color('error', 'error')} ${err instanceof Error ? err.message : String(err)}`,
+      ].join('\n'),
+    )
     return 1
   }
 }

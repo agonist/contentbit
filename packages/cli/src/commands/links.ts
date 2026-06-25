@@ -2,7 +2,6 @@ import {
   aliasReplacementsForPage,
   buildLinkIndex,
   extractFrontmatter,
-  formatDiagnostic,
   serializeLinkIndex,
   validateLinks,
 } from '@contentbit/core'
@@ -13,6 +12,7 @@ import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
+import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
 import { linkResolverOptions } from '../link-options.js'
 import { collectLinkInputs } from '../links-io.js'
 
@@ -46,7 +46,7 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
   let errors = 0
   let warnings = 0
   for (const { file, diagnostic } of validateLinks(inputs, linkOptions)) {
-    io.stderr(formatDiagnostic(diagnostic, file))
+    io.stderr(formatDiagnosticForCli(diagnostic, file))
     if (diagnostic.severity === 'error') errors++
     else if (diagnostic.severity === 'warning') warnings++
   }
@@ -99,9 +99,20 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
   for (const p of index.pages.values()) edges += p.linksTo.length
   const orphans = [...index.pages.values()].filter((p) => p.linkedFrom.length === 0).length
   io.stdout(
-    `${index.pages.size} page(s), ${edges} link(s), ${orphans} orphan(s): ${errors} errors, ${warnings} warnings`,
+    [
+      section('Link Index'),
+      ...formatRows([
+        { label: 'Pages', value: index.pages.size },
+        { label: 'Links', value: edges },
+        { label: 'Orphans', value: orphans, tone: orphans > 0 ? 'warning' : 'success' },
+        { label: 'Errors', value: errors, tone: errors > 0 ? 'error' : 'success' },
+        { label: 'Warnings', value: warnings, tone: warnings > 0 ? 'warning' : 'success' },
+      ]),
+      '',
+      section('Written'),
+      `  ${outPath}`,
+    ].join('\n'),
   )
-  io.stdout(`index written to ${outPath}`)
   return errors > 0 ? 1 : 0
 }
 

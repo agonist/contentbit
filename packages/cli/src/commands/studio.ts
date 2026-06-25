@@ -3,6 +3,7 @@ import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
+import { formatRows, section } from '../cli-format.js'
 import { linkResolverOptions } from '../link-options.js'
 
 export async function studioCommand(args: string[], io: Io): Promise<number> {
@@ -60,8 +61,15 @@ export async function studioCommand(args: string[], io: Io): Promise<number> {
     minSectionWords,
   })
 
-  io.stdout(`contentbit studio running at ${server.url}`)
-  io.stdout('Press Ctrl+C to stop.')
+  io.stdout(
+    [
+      section('contentbit studio'),
+      ...formatRows([
+        { label: 'URL', value: server.url, tone: 'info' },
+        { label: 'Stop', value: 'Ctrl+C' },
+      ]),
+    ].join('\n'),
+  )
 
   const close = () => {
     void server.close()

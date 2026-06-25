@@ -15,6 +15,14 @@ import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
+import {
+  color,
+  displayPath,
+  formatCommandList,
+  formatRows,
+  section,
+  severityLabel,
+} from '../cli-format.js'
 import { linkResolverOptions } from '../link-options.js'
 import { loadRegistry } from '../load-registry.js'
 
@@ -236,49 +244,84 @@ function formatReport(
   aliasFixMayApply: boolean,
 ): string {
   const lines: string[] = []
-  lines.push('contentbit doctor')
+  lines.push(section('contentbit doctor'))
+  lines.push('')
+  lines.push(section('Health'))
   lines.push(
-    `${report.files} file(s): ${report.summary.errors} errors, ${report.summary.warnings} warnings, ${report.summary.suggestions} suggestions`,
+    ...formatRows([
+      { label: 'Files', value: report.files },
+      {
+        label: 'Errors',
+        value: report.summary.errors,
+        tone: report.summary.errors > 0 ? 'error' : 'success',
+      },
+      {
+        label: 'Warnings',
+        value: report.summary.warnings,
+        tone: report.summary.warnings > 0 ? 'warning' : 'success',
+      },
+      {
+        label: 'Suggestions',
+        value: report.summary.suggestions,
+        tone: report.summary.suggestions > 0 ? 'info' : 'success',
+      },
+    ]),
   )
   if (report.linkGraph) {
+    lines.push('')
+    lines.push(section('Link Graph'))
     lines.push(
-      `${report.linkGraph.pages} linked page(s), ${report.linkGraph.links} link(s), ${report.linkGraph.orphans} orphan(s)`,
+      ...formatRows([
+        { label: 'Pages', value: report.linkGraph.pages },
+        { label: 'Links', value: report.linkGraph.links },
+        {
+          label: 'Orphans',
+          value: report.linkGraph.orphans,
+          tone: report.linkGraph.orphans > 0 ? 'warning' : 'success',
+        },
+      ]),
     )
   }
   lines.push('')
 
   if (report.findings.length === 0) {
-    lines.push('No findings. Content looks healthy.')
+    lines.push(color('No findings. Content looks healthy.', 'success'))
   } else {
-    lines.push('Repair plan:')
+    lines.push(section('Repair Plan'))
     report.findings.forEach((finding, index) => {
-      lines.push(`${index + 1}. ${formatFinding(finding)}`)
-      if (finding.hint) lines.push(`   hint: ${finding.hint}`)
+      lines.push(...formatFinding(index + 1, finding))
     })
   }
 
   lines.push('')
-  lines.push('Next commands:')
-  lines.push(
-    `- contentbit validate ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)}`,
-  )
+  lines.push(section('Next Commands'))
+  const commands = [
+    `contentbit validate ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)}`,
+  ]
   if (report.linkGraph) {
-    lines.push(`- contentbit links ${formatGlobs(globs)}`)
+    commands.push(`contentbit links ${formatGlobs(globs)}`)
     if (aliasFixMayApply && report.summary.errors === 0)
-      lines.push(`- contentbit links ${formatGlobs(globs)} --fix`)
+      commands.push(`contentbit links ${formatGlobs(globs)} --fix`)
   }
-  lines.push(
-    `- contentbit doctor ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)} --json`,
+  commands.push(
+    `contentbit doctor ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)} --json`,
   )
+  lines.push(...formatCommandList(commands))
   return lines.join('\n')
 }
 
-function formatFinding(finding: DoctorFinding): string {
+function formatFinding(index: number, finding: DoctorFinding): string[] {
   const location =
     finding.line !== undefined && finding.column !== undefined
-      ? `${finding.file}:${finding.line}:${finding.column}`
-      : finding.file
-  return `[${finding.severity}] ${finding.source} ${finding.code} ${location} - ${finding.message}`
+      ? `${displayPath(finding.file)}:${finding.line}:${finding.column}`
+      : displayPath(finding.file)
+  const lines = [
+    `  ${index}. ${severityLabel(finding.severity)} ${finding.source} ${finding.code}`,
+    `     ${color('at', 'muted')} ${location}`,
+    `     ${finding.message}`,
+  ]
+  if (finding.hint) lines.push(`     ${color('hint', 'muted')} ${finding.hint}`)
+  return lines
 }
 
 function formatGlobs(globs: string[]): string {
