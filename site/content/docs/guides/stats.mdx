@@ -44,6 +44,9 @@ Point `stats` at files or globs (quote globs so your shell doesn't expand them):
 contentbit stats "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
+If your registry owns the full block set and includes names from the generic
+pack, add `--no-generic-blocks`.
+
 One matched file prints a single stats object; multiple files print an array.
 Validation runs against the same registry `validate` uses and lands in a
 `validation` summary per file — skip it with `--no-validate`. No files matched

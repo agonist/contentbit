@@ -4,6 +4,7 @@ declare module '@contentbit/studio' {
   export interface StartStudioOptions {
     globs: string[]
     registryPath?: string
+    includeGenericBlocks?: boolean
     cwd?: string
     host?: string
     port?: number

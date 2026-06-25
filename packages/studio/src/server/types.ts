@@ -96,6 +96,7 @@ export interface StudioGraph {
 export interface StudioOptions {
   globs: string[]
   registryPath?: string
+  includeGenericBlocks?: boolean
   cwd?: string
   linkOptions?: LinkResolverOptions
   minSectionWords?: number

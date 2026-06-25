@@ -9,10 +9,13 @@ export async function docsCommand(args: string[], io: Io): Promise<number> {
     args,
     options: {
       registry: { type: 'string' },
+      'no-generic-blocks': { type: 'boolean', default: false },
       out: { type: 'string' },
     },
   })
-  const registry = await loadRegistry(values.registry)
+  const registry = await loadRegistry(values.registry, {
+    includeGenericBlocks: !values['no-generic-blocks'],
+  })
   const guide = registry.toAuthoringGuide({ audience: 'human', includeExamples: true })
   if (values.out) await io.writeFile(values.out, guide)
   else io.stdout(guide)

@@ -47,6 +47,7 @@ export async function doctorCommand(args: string[], io: Io): Promise<number> {
     allowPositionals: true,
     options: {
       registry: { type: 'string' },
+      'no-generic-blocks': { type: 'boolean', default: false },
       'strict-warnings': { type: 'boolean', default: false },
       json: { type: 'boolean', default: false },
       'min-section-words': { type: 'string' },
@@ -74,7 +75,8 @@ export async function doctorCommand(args: string[], io: Io): Promise<number> {
     return 2
   }
 
-  const registry = await loadRegistry(values.registry)
+  const includeGenericBlocks = !values['no-generic-blocks']
+  const registry = await loadRegistry(values.registry, { includeGenericBlocks })
   const linkOptions = linkResolverOptions(values)
   const findings: DoctorFinding[] = []
   const linkInputs: LinkInput[] = []
@@ -150,7 +152,16 @@ export async function doctorCommand(args: string[], io: Io): Promise<number> {
   }
 
   if (values.json) io.stdout(JSON.stringify(report, null, 2))
-  else io.stdout(formatReport(report, positionals, values.registry, hasAliases(linkInputs)))
+  else
+    io.stdout(
+      formatReport(
+        report,
+        positionals,
+        values.registry,
+        includeGenericBlocks,
+        hasAliases(linkInputs),
+      ),
+    )
 
   if (report.summary.errors > 0) return 1
   if (report.summary.warnings > 0 && values['strict-warnings']) return 1
@@ -221,6 +232,7 @@ function formatReport(
   report: DoctorReport,
   globs: string[],
   registryPath: string | undefined,
+  includeGenericBlocks: boolean,
   aliasFixMayApply: boolean,
 ): string {
   const lines: string[] = []
@@ -248,14 +260,16 @@ function formatReport(
   lines.push('')
   lines.push('Next commands:')
   lines.push(
-    `- contentbit validate ${formatGlobs(globs)}${registryPath ? ` --registry ${formatArg(registryPath)}` : ''}`,
+    `- contentbit validate ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)}`,
   )
   if (report.linkGraph) {
     lines.push(`- contentbit links ${formatGlobs(globs)}`)
     if (aliasFixMayApply && report.summary.errors === 0)
       lines.push(`- contentbit links ${formatGlobs(globs)} --fix`)
   }
-  lines.push(`- contentbit doctor ${formatGlobs(globs)} --json`)
+  lines.push(
+    `- contentbit doctor ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)} --json`,
+  )
   return lines.join('\n')
 }
 
@@ -273,4 +287,14 @@ function formatGlobs(globs: string[]): string {
 
 function formatArg(value: string): string {
   return /\s/.test(value) ? JSON.stringify(value) : value
+}
+
+function formatRegistryArgs(
+  registryPath: string | undefined,
+  includeGenericBlocks: boolean,
+): string {
+  const args: string[] = []
+  if (registryPath) args.push('--registry', formatArg(registryPath))
+  if (!includeGenericBlocks) args.push('--no-generic-blocks')
+  return args.length > 0 ? ` ${args.join(' ')}` : ''
 }

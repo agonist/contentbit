@@ -73,6 +73,50 @@ export default [
   ).toBe(0)
 })
 
+test('--no-generic-blocks lets a registry own generic block names', async () => {
+  const coreUrl = pathToFileURL(
+    join(new URL('../../..', import.meta.url).pathname, 'core/dist/index.js'),
+  ).href
+  const dir = await fixture({
+    'custom.md': ':::quick-ref\nProject-owned quick reference content.\n:::\n',
+    'registry.mjs': `
+import { defineBlock, markdownBody } from "${coreUrl}";
+export default [
+  defineBlock({
+    name: "quick-ref",
+    description: "Project quick reference.",
+    content: markdownBody(),
+    authoring: { useWhen: [], avoidWhen: [], example: "" },
+  }),
+];
+`,
+  })
+
+  const duplicate = fakeIo()
+  expect(
+    await run(
+      ['validate', join(dir, 'custom.md'), '--registry', join(dir, 'registry.mjs')],
+      duplicate,
+    ),
+  ).toBe(1)
+  expect(duplicate.err.join('\n')).toContain('Duplicate block "quick-ref"')
+
+  const owned = fakeIo()
+  expect(
+    await run(
+      [
+        'validate',
+        join(dir, 'custom.md'),
+        '--registry',
+        join(dir, 'registry.mjs'),
+        '--no-generic-blocks',
+      ],
+      owned,
+    ),
+  ).toBe(0)
+  expect(owned.out.join('\n')).toContain('0 errors')
+})
+
 test('no matching files exits 2', async () => {
   const dir = await fixture({})
   expect(await run(['validate', join(dir, '*.md')], fakeIo())).toBe(2)

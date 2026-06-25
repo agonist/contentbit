@@ -29,14 +29,17 @@ Everyday commands:
 ```bash
 # exits 1 with file:line:col diagnostics and fix hints
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
+contentbit validate "content/**/*.md" --registry ./blocks/registry.ts --no-generic-blocks
 
 # ranked repair plan: validation, links, thin sections, block-less long docs,
 # and missing image alt text; add --json for agents/CI
 contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
+contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --no-generic-blocks
 
 # local read-only web app for previews, stats, diagnostics, links, and keywords
 contentbit studio "content/**/*.md" --registry ./blocks/registry.ts
 contentbit studio "content/**/*.md" --registry ./blocks/registry.ts --no-open
+contentbit studio "content/**/*.md" --registry ./blocks/registry.ts --no-generic-blocks
 
 # structured JSON stats for one document: outline, word counts,
 # block census, links, validation summary — quick context for LLMs
@@ -54,6 +57,8 @@ contentbit render article.md --target html
 ```
 
 Point `--registry ./blocks/registry.ts` at a module to add custom blocks.
+Pass `--no-generic-blocks` when that registry owns the full block set, including
+names that overlap the generic pack.
 LLM agents should read the same registry with `contentbit instructions`, write
 plain Markdown with registered blocks, then run `contentbit validate` until it
 exits 0.

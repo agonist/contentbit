@@ -45,6 +45,7 @@ export async function startStudio(options: StartStudioOptions): Promise<StudioSe
     globs: options.globs,
     cwd,
     registryPath: options.registryPath,
+    includeGenericBlocks: options.includeGenericBlocks,
     linkOptions: options.linkOptions,
     minSectionWords: options.minSectionWords,
   }

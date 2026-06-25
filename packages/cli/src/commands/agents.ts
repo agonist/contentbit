@@ -10,7 +10,7 @@ import type { Io } from '../run.js'
 // registry stays the single source of truth and nothing can drift. Bump the
 // frontmatter version when a template changes; `contentbit agents` re-runs
 // overwrite in place.
-const TEMPLATE_VERSION = 3
+const TEMPLATE_VERSION = 4
 
 const AUTHOR_SKILL = `---
 name: contentbit-author
@@ -32,7 +32,7 @@ props, or body shapes — fetch the live guide from the project's registry first
 
 Check \`package.json\` for a \`content:check\` script. It holds the canonical
 validate invocation for this project: the content glob and, if present, the
-\`--registry <path>\` flag pointing at custom block definitions. Reuse both
+\`--registry <path>\` and \`--no-generic-blocks\` flags. Reuse those arguments
 below. No script? Default to \`content/**/*.md\` with no \`--registry\` flag.
 If the project has a \`content:links\` script, use it for the internal-link
 index; otherwise run \`contentbit links <content glob>\` directly.
@@ -42,7 +42,7 @@ index; otherwise run \`contentbit links <content glob>\` directly.
 1. **Fetch the authoring guide** (always — it covers this project's custom blocks):
 
    \`\`\`sh
-   contentbit instructions --audience llm [--registry <path from content:check>]
+   contentbit instructions --audience llm [--registry <path from content:check>] [--no-generic-blocks]
    \`\`\`
 
    Read it before writing. It documents every available block: props, body
@@ -67,7 +67,7 @@ index; otherwise run \`contentbit links <content glob>\` directly.
 3. **Validate and fix until clean:**
 
    \`\`\`sh
-   contentbit validate <file> [--registry <path>]
+   contentbit validate <file> [--registry <path>] [--no-generic-blocks]
    \`\`\`
 
    Diagnostics print to stderr as \`file:line:col severity CODE message\`, often
@@ -116,12 +116,12 @@ heal alias references with \`--fix\`.
 
 Check \`package.json\` for \`content:doctor\` first. If it exists, run it. If it
 does not, use \`content:check\` to find this project's content glob and
-\`--registry\` flag, then run:
+\`--registry\` / \`--no-generic-blocks\` flags, then run:
 
 \`\`\`sh
-contentbit doctor "content/**/*.md" [--registry <path>]
-contentbit doctor "content/**/*.md" [--registry <path>] --json
-contentbit stats "content/**/*.md" [--registry <path>]
+contentbit doctor "content/**/*.md" [--registry <path>] [--no-generic-blocks]
+contentbit doctor "content/**/*.md" [--registry <path>] [--no-generic-blocks] --json
+contentbit stats "content/**/*.md" [--registry <path>] [--no-generic-blocks]
 contentbit links "content/**/*.md"
 \`\`\`
 
@@ -162,32 +162,33 @@ const AGENTS_MD_BLOCK = `<!-- contentbit:start -->
 This project validates Markdown content with contentbit. Documents are plain
 Markdown plus directive blocks (\`:::name{props} ... :::\`), each with a schema.
 The \`content:check\` script in package.json holds the canonical validate
-command — the content glob and the \`--registry\` flag — reuse its arguments.
+command — the content glob plus any \`--registry\` and \`--no-generic-blocks\`
+flags — reuse its arguments.
 If the project has a \`content:links\` script, use it to build the internal-link
 index; otherwise run \`contentbit links <content glob>\`.
 
 When writing or editing content:
 
 1. Fetch the live authoring guide first — never guess block syntax:
-   \`contentbit instructions --audience llm [--registry <path>]\`
+   \`contentbit instructions --audience llm [--registry <path>] [--no-generic-blocks]\`
 2. Write plain Markdown; use blocks where the guide's use-when guidance fits.
 3. If sibling documents use \`slug\` / \`linksTo\`, read
    \`.contentbit/link-index.json\` from \`contentbit links <content glob>\` and
    author frontmatter links with existing slugs. When creating a linked page,
    include \`keywords.primary\` and \`keywords.secondary\` with search-intent
    phrases future agents can use to choose related pages.
-4. Validate until clean (exit 0): \`contentbit validate <file> [--registry <path>]\`.
+4. Validate until clean (exit 0): \`contentbit validate <file> [--registry <path>] [--no-generic-blocks]\`.
    Diagnostics print as \`file:line:col severity CODE message\` with fix hints.
    For link frontmatter, validate the full content glob so cross-file checks run.
 
 When auditing content health:
 
-- \`contentbit doctor "content/**/*.md" [--registry <path>]\` prints a ranked,
+- \`contentbit doctor "content/**/*.md" [--registry <path>] [--no-generic-blocks]\` prints a ranked,
   read-only repair plan: validation issues, link issues, thin sections,
   block-less long documents, and missing image alt text.
-- \`contentbit doctor "content/**/*.md" [--registry <path>] --json\` prints the
+- \`contentbit doctor "content/**/*.md" [--registry <path>] [--no-generic-blocks] --json\` prints the
   same findings as structured JSON for agents and CI.
-- \`contentbit stats "content/**/*.md" [--registry <path>]\` prints raw JSON
+- \`contentbit stats "content/**/*.md" [--registry <path>] [--no-generic-blocks]\` prints raw JSON
   stats: outline word counts, block usage, link domains, and validation
   error/warning counts.
 - \`contentbit links "content/**/*.md" [--fix]\` builds

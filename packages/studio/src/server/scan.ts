@@ -108,6 +108,7 @@ export async function scanDocument(
   const previewHtml = renderStudioPreview(
     validation.document,
     (await options.previewComponents?.()) ?? {},
+    { includeGenericComponents: options.includeGenericBlocks !== false },
   )
   const stats = analyzeDocument(source, { path: file })
   const page = context.index
@@ -190,7 +191,7 @@ async function scanContext(options: StudioOptions): Promise<ScanContext> {
   const files = (await glob(options.globs, { absolute: true, cwd })).sort()
   if (files.length === 0) throw new Error(`studio: no files matched ${options.globs.join(' ')}`)
 
-  const registry = await loadStudioRegistry(options.registryPath, cwd)
+  const registry = await loadStudioRegistry(options.registryPath, cwd, options.includeGenericBlocks)
   const sources = new Map<string, string>()
   const frontmatter = new Map<string, Record<string, unknown>>()
   const findings: StudioFinding[] = []
@@ -241,8 +242,10 @@ async function scanContext(options: StudioOptions): Promise<ScanContext> {
 async function loadStudioRegistry(
   registryPath?: string,
   cwd = process.cwd(),
+  includeGenericBlocks = true,
 ): Promise<BlockRegistry> {
-  const registry = createBlockRegistry().use(genericBlocks())
+  const registry = createBlockRegistry()
+  if (includeGenericBlocks) registry.use(genericBlocks())
   if (!registryPath) return registry
 
   const resolvedPath = isAbsolute(registryPath) ? registryPath : join(cwd, registryPath)

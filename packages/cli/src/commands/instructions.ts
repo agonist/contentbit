@@ -11,10 +11,13 @@ export async function instructionsCommand(args: string[], io: Io): Promise<numbe
       audience: { type: 'string', default: 'llm' },
       'no-examples': { type: 'boolean', default: false },
       registry: { type: 'string' },
+      'no-generic-blocks': { type: 'boolean', default: false },
       out: { type: 'string' },
     },
   })
-  const registry = await loadRegistry(values.registry)
+  const registry = await loadRegistry(values.registry, {
+    includeGenericBlocks: !values['no-generic-blocks'],
+  })
   const guide = registry.toAuthoringGuide({
     audience: values.audience === 'human' ? 'human' : 'llm',
     includeExamples: !values['no-examples'],

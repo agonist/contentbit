@@ -9,13 +9,13 @@ export const USAGE = `Usage: contentbit <init|validate|doctor|studio|stats|rende
   init [-t react|html|markdown|astro] [--md ...] [-y] [--no-install] [--no-page] [--no-agents]
   agents [--claude] [--no-agents-md]
 
-  validate <globs...> [--registry <module.ts>] [--strict-warnings] [--link-resolve <mode>]
-  doctor <globs...> [--registry <module.ts>] [--strict-warnings] [--json] [--min-section-words <n>] [--link-resolve <mode>]
-  studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--link-resolve <mode>]
-  stats <globs...> [--registry <module.ts>] [--no-validate]
-  render <file> --target html|markdown [--registry <module.ts>] [--out <file>]
-  instructions [--audience llm|human] [--no-examples] [--registry <module.ts>] [--out <file>]
-  docs [--registry <module.ts>] [--out <file>]
+  validate <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
+  doctor <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--json] [--min-section-words <n>] [--link-resolve <mode>]
+  studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--link-resolve <mode>]
+  stats <globs...> [--registry <module.ts>] [--no-generic-blocks] [--no-validate]
+  render <file> --target html|markdown [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
+  instructions [--audience llm|human] [--no-examples] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
+  docs [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   links <globs...> [--fix] [--out <file>] [--link-resolve <mode>]`
 
 type Command = (args: string[], io: Io) => Promise<number>
