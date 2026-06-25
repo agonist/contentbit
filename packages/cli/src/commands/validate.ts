@@ -22,6 +22,7 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
     allowPositionals: true,
     options: {
       registry: { type: 'string' },
+      'no-generic-blocks': { type: 'boolean', default: false },
       'strict-warnings': { type: 'boolean', default: false },
       'link-resolve': { type: 'string' },
       'locale-field': { type: 'string' },
@@ -39,7 +40,9 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
     io.stderr(`validate: no files matched ${positionals.join(' ')}`)
     return 2
   }
-  const registry = await loadRegistry(values.registry)
+  const registry = await loadRegistry(values.registry, {
+    includeGenericBlocks: !values['no-generic-blocks'],
+  })
   const linkOptions = linkResolverOptions(values)
 
   let errors = 0

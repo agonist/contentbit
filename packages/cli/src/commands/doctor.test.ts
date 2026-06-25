@@ -110,6 +110,43 @@ export default [
   expect(io.out.join('\n')).toContain('0 errors')
 })
 
+test('--no-generic-blocks lets doctor use a registry that owns generic block names', async () => {
+  const coreUrl = pathToFileURL(
+    join(new URL('../../..', import.meta.url).pathname, 'core/dist/index.js'),
+  ).href
+  const dir = await fixture({
+    'custom.md': ':::quick-ref\nProject-owned quick reference content.\n:::\n',
+    'registry.mjs': `
+import { defineBlock, markdownBody } from "${coreUrl}";
+export default [
+  defineBlock({
+    name: "quick-ref",
+    description: "Project quick reference.",
+    content: markdownBody(),
+    authoring: { useWhen: [], avoidWhen: [], example: "" },
+  }),
+];
+`,
+  })
+
+  const io = fakeIo()
+  expect(
+    await run(
+      [
+        'doctor',
+        join(dir, 'custom.md'),
+        '--registry',
+        join(dir, 'registry.mjs'),
+        '--no-generic-blocks',
+      ],
+      io,
+    ),
+  ).toBe(0)
+  const out = io.out.join('\n')
+  expect(out).toContain('0 errors')
+  expect(out).toContain('--no-generic-blocks')
+})
+
 test('requires at least one file', async () => {
   expect(await run(['doctor'], fakeIo())).toBe(2)
 })

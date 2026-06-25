@@ -152,6 +152,48 @@ Custom block content for the local registry.
   expect(document?.previewHtml).toContain('<p>Custom block content for the local registry.</p>')
 })
 
+test('scanDocument can let a project registry own generic block names', async () => {
+  const dir = await fixture({
+    'blocks/registry.mjs': `import { defineBlock, markdownBody } from '@contentbit/core'
+import { z } from 'zod'
+
+const quickRef = defineBlock({
+  name: 'quick-ref',
+  props: z.object({}),
+  content: markdownBody({ minLength: 3 }),
+})
+
+export default [quickRef]
+`,
+    'content/a.md': `---
+slug: alpha
+---
+
+# Alpha
+
+:::quick-ref
+Project-owned quick reference content.
+:::
+`,
+  })
+  await linkContentbitCore(dir)
+
+  const document = await scanDocument(
+    {
+      globs: ['content/*.md'],
+      cwd: dir,
+      registryPath: 'blocks/registry.mjs',
+      includeGenericBlocks: false,
+      minSectionWords: 0,
+    },
+    'content/a.md',
+  )
+
+  expect(document?.findings.filter((finding) => finding.source === 'validation')).toEqual([])
+  expect(document?.file.blockNames['quick-ref']).toBe(1)
+  expect(document?.previewHtml).toContain('data-cb-custom="quick-ref"')
+})
+
 test('scanGraph returns resolved and unresolved edges', async () => {
   const dir = await fixture({
     'content/a.md': '---\nslug: alpha\nlinksTo:\n  - beta\n  - missing\n---\n\n# Alpha\n\nBody.',

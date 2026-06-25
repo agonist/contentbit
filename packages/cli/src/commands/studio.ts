@@ -14,6 +14,7 @@ export async function studioCommand(args: string[], io: Io): Promise<number> {
       port: { type: 'string' },
       host: { type: 'string' },
       'no-open': { type: 'boolean', default: false },
+      'no-generic-blocks': { type: 'boolean', default: false },
       'min-section-words': { type: 'string' },
       'link-resolve': { type: 'string' },
       'locale-field': { type: 'string' },
@@ -51,6 +52,7 @@ export async function studioCommand(args: string[], io: Io): Promise<number> {
   const server = await startStudio({
     globs: positionals,
     registryPath: values.registry,
+    includeGenericBlocks: !values['no-generic-blocks'],
     host: values.host,
     ...(port !== undefined ? { port } : {}),
     open: !values['no-open'],

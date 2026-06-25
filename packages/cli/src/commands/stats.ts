@@ -39,6 +39,7 @@ export async function statsCommand(args: string[], io: Io): Promise<number> {
     allowPositionals: true,
     options: {
       registry: { type: 'string' },
+      'no-generic-blocks': { type: 'boolean', default: false },
       'no-validate': { type: 'boolean', default: false },
     },
   })
@@ -51,7 +52,9 @@ export async function statsCommand(args: string[], io: Io): Promise<number> {
     io.stderr(`stats: no files matched ${positionals.join(' ')}`)
     return 2
   }
-  const registry = values['no-validate'] ? null : await loadRegistry(values.registry)
+  const registry = values['no-validate']
+    ? null
+    : await loadRegistry(values.registry, { includeGenericBlocks: !values['no-generic-blocks'] })
 
   const all: StatsOutput[] = []
   for (const file of files.sort()) {

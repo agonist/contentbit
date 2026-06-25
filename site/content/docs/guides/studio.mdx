@@ -46,8 +46,8 @@ Open a document to inspect:
 - keywords
 - validation, link, and content-health findings
 
-Generic blocks render through `@contentbit/react`. Custom blocks are still
-validated from your registry, and Studio automatically looks for project
+By default, generic blocks render through `@contentbit/react`. Custom blocks are
+still validated from your registry, and Studio automatically looks for project
 components next to the registry (`blocks/components.tsx` from `contentbit init`,
 or `components.ts`, `preview.tsx`, and `renderers.tsx`). If no component exists,
 Studio falls back to a safe labelled block that shows the body as Markdown.
@@ -55,7 +55,7 @@ Studio falls back to a safe labelled block that shows the body as Markdown.
 ## Options
 
 ```bash
-contentbit studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open]
+contentbit studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks]
 ```
 
 Link resolver options match `contentbit links` and `contentbit doctor`:
@@ -75,6 +75,11 @@ Defaults:
 - host: `127.0.0.1`
 - port: first free port starting at `4377`
 - browser: opens automatically unless `--no-open` is passed
+- generic blocks: definitions and preview components load automatically unless
+  `--no-generic-blocks` is passed
+
+Use `--no-generic-blocks` when your registry intentionally owns the whole block
+set, including names such as `quick-ref` that exist in the generic pack.
 
 ## Read-only scope
 

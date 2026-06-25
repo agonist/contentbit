@@ -11,6 +11,9 @@ links, analyzes document structure, and prints the issues in repair order.
 contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
+If your registry owns the full block set and includes names from the generic
+pack, add `--no-generic-blocks`.
+
 The default report is meant for humans:
 
 ```text

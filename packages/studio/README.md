@@ -39,8 +39,11 @@ contentbit studio <globs...> \
   --registry ./blocks/registry.ts \
   --port 4377 \
   --host 127.0.0.1 \
+  --no-generic-blocks \
   --no-open
 ```
 
 The CLI binds `127.0.0.1` by default, starts at port `4377` and lets Vite choose
 the next free port, and opens the browser unless `--no-open` is passed.
+Studio loads the generic block definitions and preview components by default;
+pass `--no-generic-blocks` when your registry should own the full block set.
