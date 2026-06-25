@@ -1,5 +1,15 @@
 # @contentbit/studio
 
+## 0.4.2
+
+### Patch Changes
+
+- 0bc308d: Resolve Studio's internal source alias explicitly so the published dashboard can load its routes from installed packages.
+  - @contentbit/core@0.4.2
+  - @contentbit/blocks@0.4.2
+  - @contentbit/html@0.4.2
+  - @contentbit/react@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes
