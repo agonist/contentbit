@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">contentbit product flow</title>
+  <desc id="desc">A three-step flow showing Markdown input, schema validation, and rendered output for LLM-written content.</desc>
+  <defs>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M 64 0 L 0 0 0 64" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="emerald" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#10b981"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="78%" cy="22%" r="54%">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#07110d"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="34" y="34" width="1132" height="562" fill="none" stroke="#ffffff" stroke-opacity="0.13"/>
+  <rect x="1159" y="34" width="7" height="562" fill="#10b981"/>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace">
+    <text x="72" y="86" fill="#ffffff" font-size="31" font-weight="760" letter-spacing="-1.5">contentbit</text>
+    <rect x="72" y="106" width="118" height="4" fill="url(#emerald)"/>
+    <text x="748" y="84" fill="#f6fff9" fill-opacity="0.56" font-size="16" letter-spacing="2.2">MARKDOWN -&gt; VALIDATION -&gt; UI</text>
+  </g>
+
+  <g font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="72" y="165" fill="#ffffff" font-size="54" font-weight="760" letter-spacing="-2.5">LLM-written Markdown</text>
+    <text x="72" y="207" fill="#cbd5d1" font-size="22">validated, repairable, and ready to render anywhere.</text>
+  </g>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="72" y="262" width="314" height="228" rx="10" fill="#0c1712" stroke="#ffffff" stroke-opacity="0.14"/>
+    <rect x="72" y="262" width="314" height="48" rx="10" fill="#111d17"/>
+    <circle cx="96" cy="286" r="6" fill="#ef6f6c"/>
+    <circle cx="116" cy="286" r="6" fill="#e7b84b"/>
+    <circle cx="136" cy="286" r="6" fill="#34d399"/>
+    <text x="158" y="292" fill="#f6fff9" fill-opacity="0.58" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">article.md</text>
+    <text x="100" y="345" fill="#ffffff" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="19" font-weight="700">:::comparison</text>
+    <text x="100" y="382" fill="#aeb9b3" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">- Price | Free | $12/mo</text>
+    <text x="100" y="419" fill="#aeb9b3" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">- Support | Community | Pro</text>
+    <text x="100" y="456" fill="#10b981" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="19" font-weight="700">:::</text>
+  </g>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="443" y="262" width="314" height="228" rx="10" fill="#0c1712" stroke="#ffffff" stroke-opacity="0.14"/>
+    <rect x="443" y="262" width="314" height="48" rx="10" fill="#111d17"/>
+    <text x="470" y="292" fill="#f6fff9" fill-opacity="0.58" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">contentbit validate</text>
+    <rect x="476" y="332" width="126" height="29" rx="6" fill="#10b981" fill-opacity="0.15"/>
+    <text x="492" y="353" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700">schema pass</text>
+    <text x="476" y="393" fill="#f6fff9" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">0 errors</text>
+    <text x="476" y="424" fill="#aeb9b3" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">guide generated</text>
+    <text x="476" y="455" fill="#aeb9b3" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17">agent can repair drift</text>
+  </g>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="814" y="262" width="314" height="228" rx="10" fill="#f7faf8" stroke="#ffffff" stroke-opacity="0.14"/>
+    <rect x="842" y="292" width="258" height="40" rx="8" fill="#e8f5ef"/>
+    <text x="864" y="318" fill="#064e3b" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="720">Basic vs Pro</text>
+    <rect x="842" y="354" width="258" height="34" rx="7" fill="#ffffff" stroke="#dce7e1"/>
+    <text x="862" y="377" fill="#24332d" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">Price</text>
+    <text x="958" y="377" fill="#50615a" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">Free</text>
+    <text x="1034" y="377" fill="#064e3b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">$12/mo</text>
+    <rect x="842" y="397" width="258" height="34" rx="7" fill="#ffffff" stroke="#dce7e1"/>
+    <text x="862" y="420" fill="#24332d" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">Support</text>
+    <text x="958" y="420" fill="#50615a" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">Community</text>
+    <text x="1058" y="420" fill="#064e3b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">Pro</text>
+    <text x="842" y="464" fill="#60746b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14">React / Astro / HTML / Markdown</text>
+  </g>
+
+  <g fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M399 376 H426"/>
+    <path d="M418 368 L426 376 L418 384"/>
+    <path d="M770 376 H797"/>
+    <path d="M789 368 L797 376 L789 384"/>
+  </g>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace" font-size="16" font-weight="700">
+    <rect x="72" y="532" width="176" height="38" rx="7" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.13"/>
+    <text x="91" y="557" fill="#d7e0db">plain markdown</text>
+    <rect x="264" y="532" width="158" height="38" rx="7" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.13"/>
+    <text x="283" y="557" fill="#d7e0db">typed blocks</text>
+    <rect x="438" y="532" width="166" height="38" rx="7" fill="#10b981"/>
+    <text x="457" y="557" fill="#03110c">0 diagnostics</text>
+  </g>
+</svg>

@@ -1,27 +1,75 @@
 <p align="center">
   <a href="https://contentbit.dev">
-    <img src="https://contentbit.dev/opengraph-image" alt="contentbit" width="640" />
+    <img src="./site/public/readme-flow.svg" alt="contentbit turns LLM-written Markdown into validated, rendered content" width="760" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/contentbit"><img src="https://img.shields.io/npm/v/contentbit?label=contentbit&color=10b981" alt="npm" /></a>
-  <a href="https://www.npmjs.com/package/@contentbit/core"><img src="https://img.shields.io/npm/v/@contentbit/core?label=%40contentbit%2Fcore&color=10b981" alt="npm" /></a>
-  <a href="https://github.com/agonist/contentbit/actions/workflows/ci.yml"><img src="https://github.com/agonist/contentbit/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT" /></a>
+  <a href="https://www.npmjs.com/package/contentbit"><img src="https://img.shields.io/npm/v/contentbit?label=contentbit&color=10b981" alt="contentbit npm version" /></a>
+  <a href="https://www.npmjs.com/package/contentbit"><img src="https://img.shields.io/npm/dm/contentbit?label=downloads&color=0f766e" alt="contentbit monthly downloads" /></a>
+  <a href="https://github.com/agonist/contentbit/actions/workflows/ci.yml"><img src="https://github.com/agonist/contentbit/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D22.18-339933" alt="Node >=22.18" /></a>
+  <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-11.5-F69220" alt="pnpm 11.5" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" /></a>
+</p>
+
+<p align="center">
+  <a href="https://contentbit.dev/docs">Docs</a>
+  ·
+  <a href="https://contentbit.dev/playground">Playground</a>
+  ·
+  <a href="https://contentbit.dev/blocks">Blocks</a>
 </p>
 
 # contentbit
 
-**The content layer for LLM-written Markdown.**
+**Structured Markdown components for LLM-written content.**
 
-Run one command, then let an LLM agent write content. contentbit gives
-the model a live authoring guide, validates every structured block, and renders
-the same document in React, Astro, static HTML, or plain Markdown.
+Give an LLM normal Markdown plus a small set of typed directive blocks.
+contentbit validates those blocks before render, generates the authoring guide
+your agent reads, and renders the same document in React, Astro, static HTML, or
+plain Markdown.
 
-Use it when Markdown is still the right authoring format, but free-form LLM
-output is too loose for production content. LLMs write normal Markdown plus
-directive blocks:
+- **Validate before render** with `file:line:col` diagnostics and fix hints.
+- **Keep prompts in sync** by generating LLM instructions from the same block
+  registry that validates content.
+- **Render anywhere** with framework adapters, static HTML, or a Markdown
+  fallback for search, email, and AI context.
+
+## Quick Start
+
+```bash
+npx contentbit@latest init
+```
+
+`init` detects your framework and package manager, installs the right packages,
+creates starter content, wires a rendered `/example` page when possible, adds
+validation scripts, generates an LLM guide, and installs agent instructions.
+
+Then use the generated scripts:
+
+```bash
+pnpm run studio          # browse previews, links, keywords, and diagnostics
+pnpm run content:doctor  # ranked repair plan
+pnpm run content:check   # validate content with the generated registry
+```
+
+Ask your LLM agent for content:
+
+```text
+write a blog post about our new dark mode
+```
+
+Prefer the pieces? Install the core packages and a renderer:
+
+```bash
+pnpm add @contentbit/core @contentbit/blocks @contentbit/react
+```
+
+## Why Contentbit
+
+Markdown is still the right authoring format for a lot of teams. Free-form LLM
+Markdown is just too easy to ship broken.
 
 ```md
 :::comparison{left="Basic" right="Pro"}
@@ -30,8 +78,8 @@ directive blocks:
 :::
 ```
 
-Every block has a schema. Invalid content fails before render with diagnostics
-a human or model can fix:
+Every block has a schema. Invalid content fails with diagnostics a human or
+model can fix:
 
 ```text
 article.md:12:1 error CB_PROPS_INVALID
@@ -39,60 +87,18 @@ article.md:12:1 error CB_PROPS_INVALID
 hint: Did you mean type="warning"?
 ```
 
-The same registry that validates content also generates the LLM authoring
-instructions, so your schemas, docs, and prompts stay in sync.
+The same registry also writes the authoring rules your LLM sees, so custom
+blocks, validation, docs, and prompts stay together.
 
-## Quick start
+## LLM Loop
 
-```bash
-npx contentbit@latest init
-pnpm run studio          # browse content locally
-pnpm run content:doctor  # ranked repair plan
-pnpm run content:check   # use the package manager init picked
-```
-
-Then ask your LLM agent:
-
-```text
-write a blog post about our new dark mode
-```
-
-`init` detects your framework and package manager, installs the right packages,
-creates starter content, wires a rendered `/example` page when possible, adds
-validation scripts, generates an LLM guide, and installs LLM-agent
-instructions.
-
-Prefer the pieces? `pnpm add @contentbit/core @contentbit/blocks` plus the
-renderer of your choice. Full walkthrough:
-[contentbit.dev/docs](https://contentbit.dev/docs).
-
-## What you get
-
-| File or command          | Why it matters                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------ |
-| `content/example.md`     | A working Markdown document with built-in blocks and one custom block          |
-| `blocks/registry.ts`     | The block schema registry shared by the CLI, renderers, docs, and LLM agents  |
-| `studio`                 | A read-only local browser for content health, previews, links, and keywords   |
-| `content:doctor`         | A ranked health report: validation, links, thin sections, missing alt text    |
-| `content:check`          | A package script that runs `contentbit validate` with the right content glob   |
-| `contentbit-guide.md`    | Generated LLM authoring rules to read before writing                          |
-| `AGENTS.md`              | Compact repo instructions for Codex, Cursor, Copilot, and other LLM agents    |
-| `.claude/skills/*`       | Claude Code author/audit skills when a `.claude` directory is present         |
-| `/example`               | A rendered page when your framework supports it (TanStack Start, Next.js, Astro) |
-
-## LLM loop
-
-After `init`, your LLM agent has enough context to write and repair content:
+After `init`, your agent has a short, repeatable writing loop:
 
 1. Read the project's `content:check` script to find the content glob and
    registry.
-2. Run `contentbit instructions --audience llm` to fetch the live block guide.
+2. Run `contentbit instructions --audience llm` for the live block guide.
 3. Write plain Markdown, using blocks only when the guide says they fit.
 4. Run `contentbit validate ...` and fix every diagnostic until it exits 0.
-5. For audits, run `contentbit doctor ...` for a ranked repair plan; use
-   `contentbit stats ...` when you need raw JSON metrics.
-6. For human review, run `contentbit studio ...` or the generated `pnpm studio`
-   script to browse previews, diagnostics, links, backlinks, and keywords.
 
 Refresh or add the integration at any time:
 
@@ -100,14 +106,45 @@ Refresh or add the integration at any time:
 contentbit agents
 ```
 
-The skills hold no schemas; they read everything from the CLI at runtime, so
-custom blocks are picked up automatically by the model. See
-[contentbit.dev/docs/guides/agents](https://contentbit.dev/docs/guides/agents).
+The installed agent files hold no schemas. They read from the CLI at runtime, so
+custom blocks are picked up automatically. See the
+[LLM agents guide](https://contentbit.dev/docs/guides/agents).
 
-## Internal links
+## What You Get
 
-Author content relationships in frontmatter and let contentbit keep the graph
-honest:
+| File or command       | Why it matters                                                     |
+| --------------------- | ------------------------------------------------------------------ |
+| `content/example.md`  | Starter content with built-in blocks and one custom block          |
+| `blocks/registry.ts`  | Shared block schemas for validation, renderers, docs, and agents   |
+| `contentbit-guide.md` | Generated authoring rules for LLMs                                 |
+| `AGENTS.md`           | Compact instructions for Codex, Cursor, Copilot, and other agents  |
+| `.claude/skills/*`    | Claude Code author/audit skills when `.claude` is present          |
+| `content:check`       | Validates content with the right glob and registry                 |
+| `content:doctor`      | Ranks validation, link, thin-section, and image-alt issues         |
+| `studio`              | Read-only browser for previews, stats, links, keywords, and health |
+| `/example`            | Rendered route when the detected framework supports it             |
+
+## Render Anywhere
+
+contentbit treats structured Markdown as the portable content format. Use your
+own prose pipeline for Markdown between blocks, then choose the surface:
+
+- `@contentbit/react` for React components with headless accessible defaults.
+- `@contentbit/astro` for `.astro` components with per-block overrides.
+- `@contentbit/html` for static HTML with no framework or runtime JavaScript.
+- `renderToMarkdown()` for plain Markdown fallbacks.
+
+The styled React and Astro packs ship through a shadcn registry:
+
+```bash
+pnpm dlx shadcn@latest add @contentbit/generic-pack
+```
+
+Registry URL: `https://contentbit.dev/r/{name}.json`.
+
+## Content Graph
+
+Use frontmatter to declare relationships and let contentbit keep links honest:
 
 ```yaml
 ---
@@ -116,48 +153,39 @@ linksTo:
   - cold-fermentation-pizza
 aliases:
   - intro-pizza-dough
-keywords:
-  primary: how to make pizza dough
 ---
 ```
 
-`contentbit links "content/**/*.md"` writes `.contentbit/link-index.json` with
-resolved `linksTo` and derived `linkedFrom` backlinks. `contentbit validate`
-runs the same link checks automatically when files declare slugs, and
-`contentbit links --fix` rewrites stale alias references in `linksTo`.
+`contentbit links "content/**/*.md"` builds `.contentbit/link-index.json` with
+resolved links and backlinks. `contentbit validate` runs link checks when files
+declare slugs, and `contentbit links --fix` can rewrite stale alias references.
+Read the [internal linking guide](https://contentbit.dev/docs/guides/internal-linking).
 
-## Without an LLM agent
-
-The loop above is just CLI commands, so you can drive it by hand: generate the
-guide with `contentbit instructions --audience llm`, write plain Markdown with
-registered blocks, run `contentbit validate "content/**/*.md" --registry
-./blocks/registry.ts` until it's clean, then render anywhere — React, Astro,
-static HTML, or plain Markdown.
+Without an LLM agent, the same loop is just CLI commands: generate instructions,
+write Markdown with registered blocks, run `contentbit validate`, then render to
+React, Astro, static HTML, or plain Markdown.
 
 ## Packages
 
-| Package              | Purpose                                                                                            |
-| -------------------- | -------------------------------------------------------------------------------------------------- |
-| `@contentbit/core`   | Parser, AST, diagnostics, registry, validation, content models, authoring guide, Markdown fallback |
-| `@contentbit/blocks` | Generic block definitions (callout, steps, comparison, tabs, faq, ...)                             |
-| `@contentbit/html`   | Static HTML renderer, works without JavaScript                                                     |
-| `@contentbit/react`  | React renderer with headless accessible defaults                                                   |
-| `@contentbit/astro`  | Astro renderer: `.astro` components with per-block overrides                                       |
-| `@contentbit/studio` | Local read-only TanStack Studio for browsing content health, previews, links, and keywords         |
-| `contentbit`         | CLI: init / validate / doctor / studio / stats / links / render / instructions / docs / agents     |
-
-The styled component pack ships through a shadcn registry:
-`pnpm dlx shadcn@latest add @contentbit/generic-pack`
-(registry: `https://contentbit.dev/r/{name}.json`).
+| Package                                                                         | Purpose                                                        |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [`@contentbit/core`](https://www.npmjs.com/package/@contentbit/core)            | Parser, AST, diagnostics, registry, validation, Markdown output |
+| [`@contentbit/blocks`](https://www.npmjs.com/package/@contentbit/blocks)        | Generic blocks: callout, steps, comparison, tabs, faq, and more |
+| [`@contentbit/html`](https://www.npmjs.com/package/@contentbit/html)            | Static HTML renderer                                           |
+| [`@contentbit/react`](https://www.npmjs.com/package/@contentbit/react)          | React renderer                                                 |
+| [`@contentbit/astro`](https://www.npmjs.com/package/@contentbit/astro)          | Astro renderer                                                 |
+| [`@contentbit/studio`](https://www.npmjs.com/package/@contentbit/studio)        | Local read-only content studio                                 |
+| [`contentbit`](https://www.npmjs.com/package/contentbit)                        | CLI: init, validate, doctor, studio, stats, links, render       |
 
 ## Explore
 
-- [Docs](https://contentbit.dev/docs), with every example rendered live by the library
-- [All blocks](https://contentbit.dev/blocks), the generic pack with authoring guidance
-- [Playground](https://contentbit.dev/playground), validates as you type
-- [Blog](https://contentbit.dev/blog), every post is a validated Content Blocks document
-- [Changelog](https://contentbit.dev/docs/changelog), what shipped in each release
-- [llms.txt](https://contentbit.dev/llms.txt) / [authoring guide](https://contentbit.dev/contentbit-guide.md) for LLMs
+- [Docs](https://contentbit.dev/docs) with live-rendered examples
+- [All blocks](https://contentbit.dev/blocks) from the generic pack
+- [Playground](https://contentbit.dev/playground) with live validation
+- [Blog](https://contentbit.dev/blog) written as validated contentbit documents
+- [Changelog](https://contentbit.dev/docs/changelog) for release notes
+- [llms.txt](https://contentbit.dev/llms.txt) and the
+  [authoring guide](https://contentbit.dev/contentbit-guide.md) for LLM context
 
 ## Development
 
