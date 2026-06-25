@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Search,
   ChevronsUpDown,
+  Target,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
@@ -224,6 +225,20 @@ function Dashboard() {
         </div>
 
         <aside className="flex flex-col gap-4">
+          {project?.seo && (
+            <Panel title="SEO">
+              <div className="grid grid-cols-3 gap-px overflow-hidden border bg-border text-center">
+                <TinyMetric value={project.seo.pages} label="pages" />
+                <TinyMetric value={project.seo.planned} label="planned" />
+                <TinyMetric value={project.seo.findings} label="findings" />
+              </div>
+              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <Target className="size-4" />
+                <span>{project.seo.schemaVersion}</span>
+              </div>
+            </Panel>
+          )}
+
           <Panel title="Link graph">
             {project?.linkGraph ? (
               <div className="grid grid-cols-3 gap-px overflow-hidden border bg-border text-center">

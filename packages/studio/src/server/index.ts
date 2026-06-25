@@ -48,6 +48,8 @@ export async function startStudio(options: StartStudioOptions): Promise<StudioSe
     includeGenericBlocks: options.includeGenericBlocks,
     linkOptions: options.linkOptions,
     minSectionWords: options.minSectionWords,
+    seoConfig: options.seoConfig,
+    seoConfigPath: options.seoConfigPath,
   }
 
   const vite = await createServer({

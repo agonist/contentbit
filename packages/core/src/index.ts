@@ -26,6 +26,30 @@ export {
   type ContentProjectSourceFile,
   type ScanContentProjectOptions,
 } from './project-scan.js'
+export {
+  SEO_BRIEF_SCHEMA_VERSION,
+  SEO_RESULT_SCHEMA_VERSION,
+  createSeoBrief,
+  defineSeoConfig,
+  evaluateSeoProject,
+  formatSeoBriefMarkdown,
+  parseSeoConfig,
+  type EvaluateSeoProjectInput,
+  type NormalizedSeoSection,
+  type ParseSeoConfigResult,
+  type SeoBrief,
+  type SeoConfig,
+  type SeoConfigDiagnostic,
+  type SeoConfigInput,
+  type SeoConfigPage,
+  type SeoFinding,
+  type SeoFindingCode,
+  type SeoPage,
+  type SeoPageTypeContract,
+  type SeoProjectEvaluation,
+  type SeoProjectFile,
+  type SeoRequiredSectionInput,
+} from './seo.js'
 export { parseProps } from './props.js'
 export { bodyLineRange } from './position.js'
 export {

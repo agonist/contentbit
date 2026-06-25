@@ -67,6 +67,16 @@ test('react init wires react-markdown by default and installs it', async () => {
   expect(io.out.join('\n')).toContain('react-markdown')
 })
 
+test('init --seo scaffolds a starter SEO config', async () => {
+  const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
+  expect(await run(['init', '-y', '--seo', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+  const config = await readFile(join(dir, 'contentbit.seo.config.ts'), 'utf8')
+
+  expect(config).toContain('defineSeoConfig')
+  expect(config).toContain('alternative')
+  expect(config).toContain('requiredSections')
+})
+
 test('--md none scaffolds the unwired component', async () => {
   const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
   expect(await run(['init', '-y', '--md', 'none', '--no-install', '--cwd', dir], fakeIo())).toBe(0)

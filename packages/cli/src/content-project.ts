@@ -32,7 +32,12 @@ export interface LoadContentProjectInput {
   includeGenericBlocks: boolean
   linkOptions: LinkResolverOptions
   /** Forwarded to `scanContentProject` (per-command knobs). */
-  scan?: { includeStatsFindings?: boolean; minSectionWords?: number }
+  scan?: {
+    includeStatsFindings?: boolean
+    minSectionWords?: number
+    seoConfig?: unknown
+    seoConfigPath?: string
+  }
 }
 
 export interface LoadedContentProject {

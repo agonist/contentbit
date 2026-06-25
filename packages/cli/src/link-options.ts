@@ -1,6 +1,11 @@
 import type { LinkResolverOptions } from '@contentbit/core'
 
 export interface LinkOptionValues {
+  linkResolve?: string | boolean
+  localeField?: string | boolean
+  slugField?: string | boolean
+  keyField?: string | boolean
+  defaultLocale?: string | boolean
   'link-resolve'?: string | boolean
   'locale-field'?: string | boolean
   'slug-field'?: string | boolean
@@ -10,15 +15,15 @@ export interface LinkOptionValues {
 
 export function linkResolverOptions(values: LinkOptionValues): LinkResolverOptions {
   const out: LinkResolverOptions = {}
-  const resolve = stringValue(values['link-resolve'])
+  const resolve = stringValue(values.linkResolve ?? values['link-resolve'])
   if (resolve) {
     if (!isResolveMode(resolve)) throw new Error(`invalid --link-resolve ${resolve}`)
     out.resolve = resolve
   }
-  const localeField = stringValue(values['locale-field'])
-  const slugField = stringValue(values['slug-field'])
-  const keyField = stringValue(values['key-field'])
-  const defaultLocale = stringValue(values['default-locale'])
+  const localeField = stringValue(values.localeField ?? values['locale-field'])
+  const slugField = stringValue(values.slugField ?? values['slug-field'])
+  const keyField = stringValue(values.keyField ?? values['key-field'])
+  const defaultLocale = stringValue(values.defaultLocale ?? values['default-locale'])
   if (localeField) out.localeField = localeField
   if (slugField) out.slugField = slugField
   if (keyField) out.keyField = keyField

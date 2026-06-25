@@ -1,12 +1,14 @@
 import { genericBlocks } from '@contentbit/blocks'
 import {
   createBlockRegistry,
+  createSeoBrief,
   scanContentProject,
   type BlockDefinition,
   type BlockRegistry,
   type ContentProjectFinding,
   type ContentProjectScan,
   type DocumentStats,
+  type SeoPage,
 } from '@contentbit/core'
 import { readFile } from 'node:fs/promises'
 import { basename, isAbsolute, join, relative } from 'node:path'
@@ -78,6 +80,17 @@ export async function scanProject(options: StudioOptions): Promise<StudioProject
       withSecondary,
     },
     ...(context.scan.linkGraph ? { linkGraph: context.scan.linkGraph } : {}),
+    ...(context.scan.seo
+      ? {
+          seo: {
+            schemaVersion: context.scan.seo.schemaVersion,
+            pages: context.scan.seo.pages.length,
+            existing: context.scan.seo.pages.filter((page) => page.source === 'existing').length,
+            planned: context.scan.seo.pages.filter((page) => page.source === 'planned').length,
+            findings: context.scan.seo.findings.length,
+          },
+        }
+      : {}),
     findings: context.findings,
   }
 }
@@ -102,6 +115,9 @@ export async function scanDocument(
   const page = context.index
     ? [...context.index.pages.values()].find((entry) => entry.path === file)
     : undefined
+  const seoPage = context.scan.seo?.pages.find((entry) => entry.path === file)
+  const seoBrief =
+    context.scan.seo && seoPage ? createSeoBrief(context.scan.seo, seoPage.id) : undefined
 
   return {
     file: summary,
@@ -115,6 +131,7 @@ export async function scanDocument(
         ? page.linkedFromRefs
         : page.linkedFrom
       : [],
+    ...(seoBrief ? { seoBrief } : {}),
     previewHtml,
   }
 }
@@ -186,6 +203,8 @@ async function scanContext(options: StudioOptions): Promise<ScanContext> {
   const scan = scanContentProject(sourceFiles, registry, {
     linkOptions: options.linkOptions,
     minSectionWords: options.minSectionWords,
+    seoConfig: options.seoConfig,
+    seoConfigPath: options.seoConfigPath,
   })
   const findings = scan.findings
     .map((finding) => findingFromProjectFinding(finding, cwd))
@@ -198,6 +217,7 @@ async function scanContext(options: StudioOptions): Promise<ScanContext> {
       file.stats,
       findings.filter((finding) => finding.file === file.path),
       options,
+      scan.seo?.pages.find((page) => page.path === file.path),
     ),
   )
 
@@ -249,6 +269,7 @@ function fileSummary(
   stats: DocumentStats,
   findings: StudioFinding[],
   options: StudioOptions,
+  seoPage?: SeoPage,
 ): StudioFileSummary {
   const counts = summarize(findings)
   const keywords = keywordData(frontmatter.keywords)
@@ -270,6 +291,17 @@ function fileSummary(
     links: stats.links.total,
     externalLinks: stats.links.external,
     missingAlt: stats.images.missingAlt,
+    ...(seoPage
+      ? {
+          seo: {
+            id: seoPage.id,
+            source: seoPage.source,
+            ...(seoPage.type ? { type: seoPage.type } : {}),
+            ...(seoPage.intent ? { intent: seoPage.intent } : {}),
+            findings: findings.filter((finding) => finding.source === 'seo').length,
+          },
+        }
+      : {}),
     findings: counts,
     status: statusFor(counts),
   }

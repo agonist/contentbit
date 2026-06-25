@@ -1,9 +1,9 @@
-import type { DocumentStats, LinkReference, LinkResolverOptions } from '@contentbit/core'
+import type { DocumentStats, LinkReference, LinkResolverOptions, SeoBrief } from '@contentbit/core'
 import type { BlockComponent } from '@contentbit/react'
 
 export type StudioSeverity = 'error' | 'warning' | 'info'
 export type StudioStatus = 'error' | 'warning' | 'suggestion' | 'healthy'
-export type StudioFindingSource = 'validation' | 'links' | 'stats'
+export type StudioFindingSource = 'validation' | 'links' | 'stats' | 'seo'
 
 export interface StudioFinding {
   severity: StudioSeverity
@@ -37,6 +37,13 @@ export interface StudioFileSummary {
   links: number
   externalLinks: number
   missingAlt: number
+  seo?: {
+    id: string
+    source: 'existing' | 'planned'
+    type?: string
+    intent?: string
+    findings: number
+  }
   findings: { errors: number; warnings: number; suggestions: number }
   status: StudioStatus
 }
@@ -57,6 +64,13 @@ export interface StudioProject {
   blockUsage: Record<string, number>
   keywordCoverage: { total: number; withPrimary: number; withSecondary: number }
   linkGraph?: { pages: number; links: number; orphans: number }
+  seo?: {
+    schemaVersion: string
+    pages: number
+    existing: number
+    planned: number
+    findings: number
+  }
   findings: StudioFinding[]
 }
 
@@ -68,6 +82,7 @@ export interface StudioDocument {
   findings: StudioFinding[]
   linksTo: string[] | LinkReference[]
   linkedFrom: string[] | LinkReference[]
+  seoBrief?: SeoBrief
   previewHtml: string
 }
 
@@ -100,6 +115,8 @@ export interface StudioOptions {
   cwd?: string
   linkOptions?: LinkResolverOptions
   minSectionWords?: number
+  seoConfig?: unknown
+  seoConfigPath?: string
   previewComponents?: () => Promise<Record<string, BlockComponent> | undefined>
 }
 

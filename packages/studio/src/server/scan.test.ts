@@ -211,6 +211,70 @@ test('scanGraph returns resolved and unresolved edges', async () => {
   ).toBe(true)
 })
 
+test('scanProject and scanDocument expose SEO status and briefs', async () => {
+  const dir = await fixture({
+    'content/a.md': `---
+key: alpha-alternatives
+slug: alpha-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: alpha alternatives
+---
+
+# Alpha Alternatives
+
+## Overview
+
+Useful overview body.
+`,
+  })
+  const seoConfig = {
+    pageTypes: {
+      alternative: {
+        requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+        requiredSections: [
+          { id: 'overview', headings: ['Overview'] },
+          { id: 'alternatives', headings: ['Best alternatives'] },
+        ],
+        minOutgoingLinks: 1,
+      },
+    },
+  }
+
+  const project = await scanProject({
+    globs: ['content/*.md'],
+    cwd: dir,
+    minSectionWords: 0,
+    seoConfig,
+  })
+  expect(project.seo).toMatchObject({
+    schemaVersion: 'contentbit.seo.v1',
+    pages: 1,
+    existing: 1,
+    planned: 0,
+  })
+  expect(project.files[0].seo).toMatchObject({
+    id: 'alpha-alternatives',
+    source: 'existing',
+    type: 'alternative',
+    intent: 'commercial',
+  })
+  expect(project.findings.map((finding) => finding.code)).toContain('CB_SEO_SECTION_MISSING')
+
+  const document = await scanDocument(
+    { globs: ['content/*.md'], cwd: dir, minSectionWords: 0, seoConfig },
+    'content/a.md',
+  )
+  expect(document?.seoBrief).toMatchObject({
+    schemaVersion: 'contentbit.seo.brief.v1',
+    target: { id: 'alpha-alternatives' },
+  })
+  expect(document?.seoBrief?.acceptanceChecks).toContain(
+    'Document includes section: Best alternatives.',
+  )
+})
+
 test('startStudio serves read-only local API responses on port 0', async () => {
   const dir = await fixture({
     'content/a.md': '---\nslug: alpha\n---\n\n# Alpha\n\nReadable body.',

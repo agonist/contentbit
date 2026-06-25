@@ -15,6 +15,23 @@ async function fixture(files: Record<string, string>): Promise<string> {
   return dir
 }
 
+function seoConfig(): string {
+  return `
+export default {
+  pageTypes: {
+    alternative: {
+      requiredFrontmatter: ["type", "intent", "keywords.primary"],
+      requiredSections: [
+        { id: "overview", headings: ["Overview"] },
+        { id: "alternatives", headings: ["Best alternatives"] }
+      ],
+      minOutgoingLinks: 1
+    }
+  }
+};
+`
+}
+
 test('clean content exits 0 with a healthy text report', async () => {
   const dir = await fixture({ 'post.md': 'Plain prose with enough shape to be valid.\n' })
   const io = fakeIo()
@@ -91,6 +108,81 @@ test('--strict-warnings turns warnings into failures', async () => {
   const dir = await fixture({ 'orphan.md': '---\nslug: orphan\n---\n\nProse.\n' })
   expect(await run(['doctor', join(dir, '*.md')], fakeIo())).toBe(0)
   expect(await run(['doctor', join(dir, '*.md'), '--strict-warnings'], fakeIo())).toBe(1)
+})
+
+test('SEO config adds SEO warnings to doctor without failing by default', async () => {
+  const dir = await fixture({
+    'seo.mjs': seoConfig(),
+    'page.md': `---
+key: ahrefs-alternatives
+slug: ahrefs-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: ahrefs alternatives
+---
+
+# Ahrefs Alternatives
+
+## Overview
+
+Good overview.
+`,
+  })
+  const io = fakeIo()
+
+  expect(await run(['doctor', join(dir, '*.md'), '--seo-config', join(dir, 'seo.mjs')], io)).toBe(0)
+  const out = io.out.join('\n')
+  expect(out).toContain('SEO')
+  expect(out).toContain('warning seo CB_SEO_SECTION_MISSING')
+  expect(out).toContain('warning seo CB_SEO_OUTGOING_LINKS_MIN')
+})
+
+test('--strict-seo turns SEO warnings into failures', async () => {
+  const dir = await fixture({
+    'seo.mjs': seoConfig(),
+    'page.md': `---
+key: ahrefs-alternatives
+slug: ahrefs-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: ahrefs alternatives
+---
+
+# Ahrefs Alternatives
+`,
+  })
+
+  expect(
+    await run(
+      ['doctor', join(dir, '*.md'), '--seo-config', join(dir, 'seo.mjs'), '--strict-seo'],
+      fakeIo(),
+    ),
+  ).toBe(1)
+})
+
+test('--no-seo disables SEO config checks', async () => {
+  const dir = await fixture({
+    'seo.mjs': seoConfig(),
+    'page.md': `---
+key: ahrefs-alternatives
+slug: ahrefs-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: ahrefs alternatives
+---
+
+# Ahrefs Alternatives
+`,
+  })
+  const io = fakeIo()
+
+  expect(
+    await run(['doctor', join(dir, '*.md'), '--seo-config', join(dir, 'seo.mjs'), '--no-seo'], io),
+  ).toBe(0)
+  expect(io.out.join('\n')).not.toContain('seo CB_SEO')
 })
 
 test('a custom --registry module adds blocks', async () => {

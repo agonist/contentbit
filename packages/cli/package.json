@@ -45,6 +45,7 @@
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
     "@contentbit/studio": "workspace:*",
+    "commander": "^15.0.0",
     "tinyglobby": "^0.2.10"
   },
   "devDependencies": {

@@ -7,33 +7,25 @@ import {
 } from '@contentbit/core'
 import { mkdir, readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { parseArgs } from 'node:util'
 
 import type { Io } from '../run.js'
 
 import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
 import { resolveContentFiles } from '../content-project.js'
-import { linkResolverOptions } from '../link-options.js'
+import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
 import { collectLinkInputs } from '../links-io.js'
 
-export async function linksCommand(args: string[], io: Io): Promise<number> {
-  const { values, positionals } = parseArgs({
-    args,
-    allowPositionals: true,
-    options: {
-      out: { type: 'string' },
-      fix: { type: 'boolean', default: false },
-      'link-resolve': { type: 'string' },
-      'locale-field': { type: 'string' },
-      'slug-field': { type: 'string' },
-      'key-field': { type: 'string' },
-      'default-locale': { type: 'string' },
-    },
-  })
-  const files = await resolveContentFiles(positionals, 'links')
+export interface LinksCommandInput extends LinkOptionValues {
+  globs: string[]
+  out?: string
+  fix?: boolean
+}
+
+export async function linksCommand(input: LinksCommandInput, io: Io): Promise<number> {
+  const files = await resolveContentFiles(input.globs, 'links')
 
   const inputs = await collectLinkInputs(files)
-  const linkOptions = linkResolverOptions(values)
+  const linkOptions = linkResolverOptions(input)
 
   let errors = 0
   let warnings = 0
@@ -45,9 +37,9 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
 
   const index = buildLinkIndex(inputs, linkOptions)
 
-  if (values.fix && errors > 0) {
+  if (input.fix && errors > 0) {
     io.stderr('links: --fix skipped because link errors must be resolved first.')
-  } else if (values.fix && index.aliases.size > 0) {
+  } else if (input.fix && index.aliases.size > 0) {
     for (const file of files) {
       const source = await readFile(file, 'utf8')
       const fm = extractFrontmatter(source)
@@ -81,7 +73,7 @@ export async function linksCommand(args: string[], io: Io): Promise<number> {
     }
   }
 
-  const outPath = values.out ?? join(process.cwd(), '.contentbit', 'link-index.json')
+  const outPath = input.out ?? join(process.cwd(), '.contentbit', 'link-index.json')
   // The default target lives in a .contentbit/ dir that may not exist yet, and
   // the shared Io.writeFile is a thin fs wrapper that won't create it.
   await mkdir(dirname(outPath), { recursive: true })

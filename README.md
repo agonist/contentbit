@@ -33,6 +33,8 @@ Markdown.
 - **Validate before render** with `file:line:col` diagnostics and fix hints.
 - **Keep prompts in sync** by generating LLM instructions from the same block
   registry that validates content.
+- **Plan SEO structure** with reusable page contracts, `doctor` findings, and
+  agent-ready briefs for existing or planned pages.
 - **Render anywhere** with framework adapters or a Markdown
   fallback for search, email, and AI context.
 
@@ -116,11 +118,13 @@ custom blocks are picked up automatically. See the
 | --------------------- | ------------------------------------------------------------------ |
 | `content/example.md`  | Starter content with built-in blocks and one custom block          |
 | `blocks/registry.ts`  | Shared block schemas for validation, renderers, docs, and agents   |
+| `contentbit.seo.config.ts` | Optional SEO contracts for briefs and doctor checks          |
 | `contentbit-guide.md` | Generated authoring rules for LLMs                                 |
 | `AGENTS.md`           | Compact instructions for Codex, Cursor, Copilot, and other agents  |
 | `.claude/skills/*`    | Claude Code author/audit skills when `.claude` is present          |
 | `content:check`       | Validates content with the right glob and registry                 |
 | `content:doctor`      | Ranks validation, link, thin-section, and image-alt issues         |
+| `contentbit brief`    | Prints an agent-ready SEO brief for an existing or planned page    |
 | `studio`              | Read-only browser for previews, stats, links, keywords, and health |
 | `/example`            | Rendered route when the detected framework supports it             |
 
@@ -159,6 +163,14 @@ aliases:
 resolved links and backlinks. `contentbit validate` runs link checks when files
 declare slugs, and `contentbit links --fix` can rewrite stale alias references.
 Read the [internal linking guide](https://contentbit.dev/docs/guides/internal-linking).
+
+## SEO Briefs
+
+Create `contentbit.seo.config.ts` with reusable page-type contracts and planned
+pages, or let `contentbit init --seo` scaffold a starter. When that file exists,
+`contentbit doctor` folds SEO contract findings into the normal repair plan,
+and `contentbit brief <key-or-slug>` prints the structure, links, required
+blocks, and acceptance checks an agent should satisfy before publishing.
 
 Without an LLM agent, the same loop is just CLI commands: generate instructions,
 write Markdown with registered blocks, run `contentbit validate`, then render to

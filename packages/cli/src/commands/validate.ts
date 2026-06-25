@@ -1,33 +1,25 @@
 import { type ContentProjectFinding, type Diagnostic } from '@contentbit/core'
-import { parseArgs } from 'node:util'
 
 import type { Io } from '../run.js'
 
 import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
 import { loadContentProject } from '../content-project.js'
-import { linkResolverOptions } from '../link-options.js'
+import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
 
-export async function validateCommand(args: string[], io: Io): Promise<number> {
-  const { values, positionals } = parseArgs({
-    args,
-    allowPositionals: true,
-    options: {
-      registry: { type: 'string' },
-      'no-generic-blocks': { type: 'boolean', default: false },
-      'strict-warnings': { type: 'boolean', default: false },
-      'link-resolve': { type: 'string' },
-      'locale-field': { type: 'string' },
-      'slug-field': { type: 'string' },
-      'key-field': { type: 'string' },
-      'default-locale': { type: 'string' },
-    },
-  })
+export interface ValidateCommandInput extends LinkOptionValues {
+  globs: string[]
+  registry?: string
+  noGenericBlocks?: boolean
+  strictWarnings?: boolean
+}
+
+export async function validateCommand(input: ValidateCommandInput, io: Io): Promise<number> {
   const { files, scan } = await loadContentProject({
     cmd: 'validate',
-    positionals,
-    registry: values.registry,
-    includeGenericBlocks: !values['no-generic-blocks'],
-    linkOptions: linkResolverOptions(values),
+    positionals: input.globs,
+    registry: input.registry,
+    includeGenericBlocks: !input.noGenericBlocks,
+    linkOptions: linkResolverOptions(input),
     scan: { includeStatsFindings: false },
   })
 
@@ -50,7 +42,7 @@ export async function validateCommand(args: string[], io: Io): Promise<number> {
     ].join('\n'),
   )
   if (errors > 0) return 1
-  if (warnings > 0 && values['strict-warnings']) return 1
+  if (warnings > 0 && input.strictWarnings) return 1
   return 0
 }
 

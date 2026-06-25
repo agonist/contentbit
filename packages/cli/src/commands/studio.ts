@@ -1,37 +1,30 @@
-import { parseArgs } from 'node:util'
-
 import type { Io } from '../run.js'
 
 import { formatRows, section } from '../cli-format.js'
 import { resolveContentFiles } from '../content-project.js'
-import { linkResolverOptions } from '../link-options.js'
+import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
+import { loadSeoConfig } from '../seo-config.js'
 
-export async function studioCommand(args: string[], io: Io): Promise<number> {
-  const { values, positionals } = parseArgs({
-    args,
-    allowPositionals: true,
-    options: {
-      registry: { type: 'string' },
-      port: { type: 'string' },
-      host: { type: 'string' },
-      'no-open': { type: 'boolean', default: false },
-      'no-generic-blocks': { type: 'boolean', default: false },
-      'min-section-words': { type: 'string' },
-      'link-resolve': { type: 'string' },
-      'locale-field': { type: 'string' },
-      'slug-field': { type: 'string' },
-      'key-field': { type: 'string' },
-      'default-locale': { type: 'string' },
-    },
-  })
+export interface StudioCommandInput extends LinkOptionValues {
+  globs: string[]
+  registry?: string
+  port?: string
+  host?: string
+  noOpen?: boolean
+  noGenericBlocks?: boolean
+  minSectionWords?: string
+  seoConfig?: string
+  noSeo?: boolean
+}
 
-  const port = parsePort(values.port)
+export async function studioCommand(input: StudioCommandInput, io: Io): Promise<number> {
+  const port = parsePort(input.port)
   if (port === null) {
     io.stderr('studio: --port must be an integer between 0 and 65535.')
     return 2
   }
 
-  const minSectionWords = parseMinSectionWords(values['min-section-words'])
+  const minSectionWords = parseMinSectionWords(input.minSectionWords)
   if (minSectionWords === null) {
     io.stderr('studio: --min-section-words must be a non-negative integer.')
     return 2
@@ -39,20 +32,24 @@ export async function studioCommand(args: string[], io: Io): Promise<number> {
 
   // Guard empty/no-match the same way the read-commands do; startStudio does its
   // own globbing from `positionals`, so we only need the shared check here.
-  await resolveContentFiles(positionals, 'studio')
+  await resolveContentFiles(input.globs, 'studio')
+  const seoConfig = await loadSeoConfig({ seoConfig: input.seoConfig, noSeo: input.noSeo })
 
   const { startStudio } =
     (await import('@contentbit/studio')) as typeof import('@contentbit/studio')
-  const server = await startStudio({
-    globs: positionals,
-    registryPath: values.registry,
-    includeGenericBlocks: !values['no-generic-blocks'],
-    host: values.host,
+  const studioOptions = {
+    globs: input.globs,
+    registryPath: input.registry,
+    includeGenericBlocks: !input.noGenericBlocks,
+    host: input.host,
     ...(port !== undefined ? { port } : {}),
-    open: !values['no-open'],
-    linkOptions: linkResolverOptions(values),
+    open: !input.noOpen,
+    linkOptions: linkResolverOptions(input),
     minSectionWords,
-  })
+    seoConfig: seoConfig.config,
+    seoConfigPath: seoConfig.path,
+  }
+  const server = await startStudio(studioOptions)
 
   io.stdout(
     [

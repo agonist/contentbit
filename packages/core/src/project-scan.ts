@@ -8,9 +8,10 @@ import { analyzeDocument } from './analyze.js'
 import { extractFrontmatter, stripFrontmatter } from './frontmatter.js'
 import { buildLinkIndex, validateLinks } from './links.js'
 import { parseDocument } from './parser.js'
+import { evaluateSeoProject, type SeoProjectEvaluation } from './seo.js'
 import { validateDocument } from './validate.js'
 
-export type ContentProjectFindingSource = 'validation' | 'links' | 'stats'
+export type ContentProjectFindingSource = 'validation' | 'links' | 'stats' | 'seo'
 
 export interface ContentProjectSourceFile {
   path: string
@@ -56,12 +57,15 @@ export interface ContentProjectScan {
   linkInputs: LinkInput[]
   linkIndex?: LinkIndex
   linkGraph?: ContentProjectLinkGraph
+  seo?: SeoProjectEvaluation
 }
 
 export interface ScanContentProjectOptions {
   linkOptions?: LinkResolverOptions
   minSectionWords?: number
   includeStatsFindings?: boolean
+  seoConfig?: unknown
+  seoConfigPath?: string
 }
 
 export const DEFAULT_MIN_SECTION_WORDS = 25
@@ -116,6 +120,26 @@ export function scanContentProject(
     linkGraph = linkGraphSummary(linkIndex)
   }
 
+  const seo = options.seoConfig
+    ? evaluateSeoProject({
+        config: options.seoConfig,
+        configPath: options.seoConfigPath,
+        files: scannedFiles.map((file) => ({
+          path: file.path,
+          frontmatter: file.frontmatter,
+          stats: file.stats,
+        })),
+        linkIndex,
+      })
+    : undefined
+  if (seo) {
+    findings.push(...seo.findings)
+    for (const finding of seo.findings) {
+      const scanned = scannedFiles.find((item) => item.path === finding.file)
+      if (scanned) scanned.findings.push(finding)
+    }
+  }
+
   findings.sort(compareContentProjectFindings)
   for (const file of scannedFiles) file.findings.sort(compareContentProjectFindings)
 
@@ -126,6 +150,7 @@ export function scanContentProject(
     linkInputs,
     ...(linkIndex ? { linkIndex } : {}),
     ...(linkGraph ? { linkGraph } : {}),
+    ...(seo ? { seo } : {}),
   }
 }
 
@@ -230,9 +255,10 @@ function linkGraphSummary(index: LinkIndex): ContentProjectLinkGraph {
 function findingRank(finding: ContentProjectFinding): number {
   if (finding.severity === 'error' && finding.source === 'validation') return 0
   if (finding.severity === 'error' && finding.source === 'links') return 1
-  if (finding.severity === 'warning') return 2
-  if (finding.code === 'CB_THIN_SECTION') return 3
-  if (finding.code === 'CB_BLOCKLESS_DOCUMENT') return 4
-  if (finding.code === 'CB_IMAGE_ALT_MISSING') return 5
-  return 6
+  if (finding.severity === 'error' && finding.source === 'seo') return 2
+  if (finding.severity === 'warning') return 3
+  if (finding.code === 'CB_THIN_SECTION') return 4
+  if (finding.code === 'CB_BLOCKLESS_DOCUMENT') return 5
+  if (finding.code === 'CB_IMAGE_ALT_MISSING') return 6
+  return 7
 }

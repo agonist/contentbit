@@ -7,44 +7,40 @@ import {
   validateDocument,
 } from '@contentbit/core'
 import { readFile } from 'node:fs/promises'
-import { parseArgs } from 'node:util'
 
 import type { Io } from '../run.js'
 
 import { formatDiagnosticForCli } from '../cli-format.js'
 import { loadRegistry } from '../load-registry.js'
 
-export async function renderCommand(args: string[], io: Io): Promise<number> {
-  const { values, positionals } = parseArgs({
-    args,
-    allowPositionals: true,
-    options: {
-      target: { type: 'string', default: 'markdown' },
-      registry: { type: 'string' },
-      'no-generic-blocks': { type: 'boolean', default: false },
-      out: { type: 'string' },
-    },
-  })
-  const file = positionals[0]
-  if (!file || values.target !== 'markdown') {
+export interface RenderCommandInput {
+  file?: string
+  target?: string
+  registry?: string
+  noGenericBlocks?: boolean
+  out?: string
+}
+
+export async function renderCommand(input: RenderCommandInput, io: Io): Promise<number> {
+  if (!input.file || (input.target ?? 'markdown') !== 'markdown') {
     io.stderr(
       'render: usage: render <file> [--target markdown] ' +
         '[--registry <module.ts>] [--no-generic-blocks] [--out <file>]',
     )
     return 2
   }
-  const includeGenericBlocks = !values['no-generic-blocks']
-  const registry = await loadRegistry(values.registry, { includeGenericBlocks })
-  const source = await readFile(file, 'utf8')
+  const includeGenericBlocks = !input.noGenericBlocks
+  const registry = await loadRegistry(input.registry, { includeGenericBlocks })
+  const source = await readFile(input.file, 'utf8')
   const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
   if (!result.ok) {
-    for (const d of result.diagnostics) io.stderr(formatDiagnosticForCli(d, file))
+    for (const d of result.diagnostics) io.stderr(formatDiagnosticForCli(d, input.file))
     return 1
   }
   const output = renderToMarkdown(result.document, {
     renderers: includeGenericBlocks ? genericMarkdownRenderers : genericMarkdownFallbackRenderers,
   })
-  if (values.out) await io.writeFile(values.out, output)
+  if (input.out) await io.writeFile(input.out, output)
   else io.stdout(output)
   return 0
 }
