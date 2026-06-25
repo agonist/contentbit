@@ -50,9 +50,11 @@ import QuoteBlock from '../blocks/QuoteBlock.astro'
 
 Per-block overrides are plain `.astro` components: validated props arrive as
 component props, nested content via `<slot />`, and the raw AST node as the
-reserved `node` prop. Pass `renderMarkdown` when you want Astro/Sätteri or
-another site pipeline to render prose. The `onInvalid` default is `annotated`,
-which keeps invalid blocks loud during dev. Full guide: [Astro](/docs/guides/astro).
+reserved `node` prop. They also receive `ctx`, currently `{ renderMarkdown }`,
+so Markdown strings inside `node.data` can use the same site pipeline as normal
+prose. Pass `renderMarkdown` when you want Astro/Sätteri or another site
+pipeline to render prose. The `onInvalid` default is `annotated`, which keeps
+invalid blocks loud during dev. Full guide: [Astro](/docs/guides/astro).
 
 For pre-made Astro components:
 

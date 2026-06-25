@@ -42,9 +42,10 @@ run the CLI: `contentbit validate "content/**/*.md"`.
 
 Render blocks with your own Astro components via
 `components={{ callout: MyCallout }}`. Components receive the block's validated
-props as component props, a reserved `node` prop with the full block node
-(`node.data` holds the parsed content), and the block's nested content via
-`<slot />`.
+props as component props, reserved `node` and `ctx` props, and the block's
+nested content via `<slot />`. `node.data` holds the parsed content; use
+`ctx.renderMarkdown(...)` for any Markdown strings inside that data so your
+component stays on the host app's prose pipeline.
 
 The default prose pipeline is only a tiny escaped-paragraph fallback. Contentbit
 does not bring a Markdown engine into your Astro app: pass your own

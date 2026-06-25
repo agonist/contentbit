@@ -1,19 +1,19 @@
 ---
 import type { StepsData } from '@contentbit/blocks'
 import type { ValidatedBlockNode } from '@contentbit/core'
-
-import { renderMarkdownToHtml } from '@/lib/markdown'
+import type { AstroBlockContext } from '@contentbit/astro'
 
 interface Props {
   node: ValidatedBlockNode<unknown>
+  ctx: AstroBlockContext
 }
 
-const { node } = Astro.props
+const { node, ctx } = Astro.props
 const data = node.data as StepsData
 const last = data.items.length - 1
 const items = await Promise.all(
   data.items.map(async (item) => ({
-    html: await renderMarkdownToHtml(item.text),
+    html: await ctx.renderMarkdown(item.text),
   })),
 )
 ---

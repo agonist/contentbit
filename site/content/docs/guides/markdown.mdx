@@ -89,6 +89,7 @@ const md = renderToMarkdown(result.document, { renderers: genericMarkdownRendere
   else. If formatting "doesn't work", you haven't wired this page yet.
 - **One function covers everything.** Prose between blocks and Markdown bodies inside
   blocks (`callout`, `tab`, `faq-item`) all flow through the same `renderMarkdown`.
+  Astro block components receive that function as `ctx.renderMarkdown`.
 - **Security split:** Content Blocks escapes everything *it* renders (props, rows,
   titles). Whatever your `renderMarkdown` returns is your responsibility.
 - **Headings inside prose work normally** — but keep document structure (H1/H2) in

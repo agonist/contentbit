@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@contentbit/astro": "workspace:*",
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
     "@contentbit/react": "workspace:*"

@@ -1,19 +1,20 @@
 ---
 import type { ProsConsData } from '@contentbit/blocks'
 import type { ValidatedBlockNode } from '@contentbit/core'
+import type { AstroBlockContext } from '@contentbit/astro'
 
 import { splitProsCons } from '@contentbit/blocks'
-import { renderMarkdownToHtml } from '@/lib/markdown'
 
 interface Props {
   node: ValidatedBlockNode<unknown>
+  ctx: AstroBlockContext
 }
 
-const { node } = Astro.props
+const { node, ctx } = Astro.props
 const { pros, cons } = splitProsCons(node.data as ProsConsData)
 const [renderedPros, renderedCons] = await Promise.all([
-  Promise.all(pros.map(renderMarkdownToHtml)),
-  Promise.all(cons.map(renderMarkdownToHtml)),
+  Promise.all(pros.map((item) => ctx.renderMarkdown(item))),
+  Promise.all(cons.map((item) => ctx.renderMarkdown(item))),
 ])
 
 // Inline lucide paths: check, x.

@@ -1,6 +1,6 @@
 ---
 import type { ContentNode, ValidatedBlockNode } from '@contentbit/core'
-import type { AstroMarkdownRenderer } from '@contentbit/astro'
+import type { AstroBlockContext } from '@contentbit/astro'
 
 import { isValidatedBlock } from '@contentbit/core'
 
@@ -9,12 +9,12 @@ import { fallbackMarkdown, invalidBlockHtml, unrenderableBlockError } from '@con
 interface Props {
   nodes: ContentNode[]
   components: Record<string, unknown>
-  renderMarkdown: AstroMarkdownRenderer
+  ctx: AstroBlockContext
   onInvalid: 'strict' | 'annotated' | 'fallback'
 }
 
-const { nodes, components, renderMarkdown, onInvalid } = Astro.props
-const childProps = { components, renderMarkdown, onInvalid }
+const { nodes, components, ctx, onInvalid } = Astro.props
+const childProps = { components, ctx, onInvalid }
 
 type OverrideComponent = (props: Record<string, unknown>) => unknown
 
@@ -23,7 +23,7 @@ type Plan =
   | { kind: 'override'; node: ValidatedBlockNode<unknown>; Component: OverrideComponent }
 
 const plans: Plan[] = await Promise.all(nodes.map(async (node) => {
-  if (node.type === 'markdown') return { kind: 'html', html: await renderMarkdown(node.value) }
+  if (node.type === 'markdown') return { kind: 'html', html: await ctx.renderMarkdown(node.value) }
   if (isValidatedBlock(node)) {
     const override = components[node.name]
     if (override) return { kind: 'override', node, Component: override as OverrideComponent }
@@ -43,7 +43,7 @@ const plans: Plan[] = await Promise.all(nodes.map(async (node) => {
     if (plan.kind === 'override') {
       const Override = plan.Component
       return (
-        <Override {...plan.node.props} node={plan.node}>
+        <Override {...plan.node.props} node={plan.node} ctx={ctx}>
           <Astro.self nodes={plan.node.children} {...childProps} />
         </Override>
       )

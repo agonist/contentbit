@@ -12,6 +12,7 @@ import { expect, test } from 'vitest'
 
 import ContentBlocks from '../components/ContentBlocks.astro'
 import FancyCallout from '../test-fixtures/FancyCallout.astro'
+import MarkdownCallout from '../test-fixtures/MarkdownCallout.astro'
 
 const boxBlock = defineBlock({
   name: 'box',
@@ -109,4 +110,14 @@ test('renderMarkdown prop can be async for prose and component slots', async () 
   })
   expect(out).toContain('<host>Prose.</host>')
   expect(out).toContain('<host>Body.</host>')
+})
+
+test('ctx passes the host Markdown adapter to block components', async () => {
+  const out = await render({
+    document: doc(':::callout{type="tip"}\nBody **from ctx**.\n:::\n'),
+    components: { callout: MarkdownCallout },
+    renderMarkdown: async (md: string) => `<host>${md.trim()}</host>`,
+  })
+  expect(out).toContain('data-ctx-rendered')
+  expect(out).toContain('<host>Body **from ctx**.</host>')
 })

@@ -230,6 +230,9 @@ importers:
 
   registry:
     dependencies:
+      '@contentbit/astro':
+        specifier: workspace:*
+        version: link:../packages/astro
       '@contentbit/blocks':
         specifier: workspace:*
         version: link:../packages/blocks
