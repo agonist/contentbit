@@ -5,8 +5,7 @@ allowBuilds:
   sharp: true
   msw: false
 
-minimumReleaseAgeExclude:
-  - "@contentbit/astro@0.3.0"
-  - "@contentbit/blocks@0.3.0"
-  - "@contentbit/core@0.3.0"
-  - contentbit@0.3.0
+# Starters intentionally track the just-published @contentbit/* release, so the
+# default supply-chain release-age delay works against their purpose. Disable it
+# here rather than chasing a per-version exclude list on every release.
+minimumReleaseAge: 0

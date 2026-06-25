@@ -1,7 +1,6 @@
 import { genericBlocks } from "@contentbit/blocks"
 import {
   createBlockRegistry,
-  type ContentNode,
   parseDocument,
   parseLinkFrontmatter,
   validateDocument,
@@ -10,7 +9,6 @@ import type { LinkTarget } from "@contentbit/core"
 import { getCollection } from "astro:content"
 
 import customBlocks from "../../blocks/registry"
-import { renderMarkdownToHtml } from "./markdown"
 
 export const blogSlugs = [
   "dialing-in-espresso",
@@ -41,10 +39,7 @@ export async function getBlogArticles() {
 
       // Static pages render at build time, so invalid blocks fail the build here.
       const result = validateDocument(parseDocument(entry.body), registry)
-      const markdownHtml = await renderMarkdownSegments(
-        result.document.children,
-      )
-      return { entry, meta: parsed.value, result, markdownHtml }
+      return { entry, meta: parsed.value, result }
     }),
   )
 }
@@ -87,32 +82,4 @@ export function keywordCount(article: BlogArticle): number {
     (article.meta.keywords?.primary ? 1 : 0) +
     (article.meta.keywords?.secondary?.length ?? 0)
   )
-}
-
-function collectMarkdownSegments(
-  nodes: ContentNode[],
-  segments = new Set<string>(),
-): Set<string> {
-  for (const node of nodes) {
-    if (node.type === "markdown") {
-      segments.add(node.value)
-      continue
-    }
-
-    collectMarkdownSegments(node.children, segments)
-  }
-
-  return segments
-}
-
-async function renderMarkdownSegments(
-  nodes: ContentNode[],
-): Promise<Map<string, string>> {
-  const segments = collectMarkdownSegments(nodes)
-  const rendered = await Promise.all(
-    [...segments].map(
-      async (source) => [source, await renderMarkdownToHtml(source)] as const,
-    ),
-  )
-  return new Map(rendered)
 }

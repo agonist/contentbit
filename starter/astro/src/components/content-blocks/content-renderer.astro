@@ -31,8 +31,9 @@ interface Props {
   components?: Record<string, unknown>
   /**
    * Host prose pipeline for Markdown between block islands and nested block
-   * children. The blog routes pass prerendered Sätteri output here so
-   * contentbit complements Astro's Markdown renderer instead of replacing it.
+   * children. The blog routes pass the Sätteri renderer directly (it may be
+   * async), so contentbit complements Astro's Markdown renderer instead of
+   * replacing it.
    */
   renderMarkdown?: ComponentProps<typeof ContentBlocks>['renderMarkdown']
   onInvalid?: 'strict' | 'annotated' | 'fallback'
