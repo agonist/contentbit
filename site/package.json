@@ -9,7 +9,8 @@
     "dev": "next dev",
     "prebuild": "node scripts/copy-registry.mjs && node scripts/gen-reference.mjs && node scripts/gen-llms.mjs",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "studio": "contentbit studio \"content/**/*.{md,mdx}\""
   },
   "dependencies": {
     "@contentbit/blocks": "workspace:*",
@@ -34,10 +35,12 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@contentbit/studio": "workspace:*",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "^25.0.9",
     "@types/react": "^19.0.0",
+    "contentbit": "workspace:*",
     "serve": "^14.2.6",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.3"

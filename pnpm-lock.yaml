@@ -374,6 +374,9 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
     devDependencies:
+      '@contentbit/studio':
+        specifier: workspace:*
+        version: link:../packages/studio
       '@tailwindcss/postcss':
         specifier: ^4.1.0
         version: 4.3.0
@@ -386,6 +389,9 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.17
+      contentbit:
+        specifier: workspace:*
+        version: link:../packages/cli
       serve:
         specifier: ^14.2.6
         version: 14.2.6
