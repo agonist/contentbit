@@ -19,8 +19,13 @@ test('clean content exits 0 with a healthy text report', async () => {
   const dir = await fixture({ 'post.md': 'Plain prose with enough shape to be valid.\n' })
   const io = fakeIo()
   expect(await run(['doctor', join(dir, '*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('1 file(s): 0 errors, 0 warnings, 0 suggestions')
-  expect(io.out.join('\n')).toContain('No findings')
+  const out = io.out.join('\n')
+  expect(out).toContain('Health')
+  expect(out).toMatch(/Files\s+1/)
+  expect(out).toMatch(/Errors\s+0/)
+  expect(out).toMatch(/Warnings\s+0/)
+  expect(out).toMatch(/Suggestions\s+0/)
+  expect(out).toContain('No findings')
 })
 
 test('invalid blocks are reported as validation errors', async () => {
@@ -28,7 +33,7 @@ test('invalid blocks are reported as validation errors', async () => {
   const io = fakeIo()
   expect(await run(['doctor', join(dir, '*.md')], io)).toBe(1)
   const out = io.out.join('\n')
-  expect(out).toContain('[error] validation CB_PROPS_INVALID')
+  expect(out).toContain('error validation CB_PROPS_INVALID')
   expect(out).toContain('bad.md:1:1')
 })
 
@@ -39,15 +44,18 @@ test('dangling frontmatter links are reported as link errors', async () => {
   const io = fakeIo()
   expect(await run(['doctor', join(dir, '*.md')], io)).toBe(1)
   const out = io.out.join('\n')
-  expect(out).toContain('[error] links CB_LINK_UNRESOLVED')
-  expect(out).toContain('1 linked page(s), 1 link(s), 1 orphan(s)')
+  expect(out).toContain('error links CB_LINK_UNRESOLVED')
+  expect(out).toContain('Link Graph')
+  expect(out).toMatch(/Pages\s+1/)
+  expect(out).toMatch(/Links\s+1/)
+  expect(out).toMatch(/Orphans\s+1/)
 })
 
 test('thin sections are suggestions', async () => {
   const dir = await fixture({ 'thin.md': '## Deploy\nSoon.\n' })
   const io = fakeIo()
   expect(await run(['doctor', join(dir, '*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('[info] stats CB_THIN_SECTION')
+  expect(io.out.join('\n')).toContain('info stats CB_THIN_SECTION')
 })
 
 test('blockless long documents are suggestions', async () => {
@@ -55,14 +63,14 @@ test('blockless long documents are suggestions', async () => {
   const dir = await fixture({ 'long.md': `${words}\n` })
   const io = fakeIo()
   expect(await run(['doctor', join(dir, '*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('[info] stats CB_BLOCKLESS_DOCUMENT')
+  expect(io.out.join('\n')).toContain('info stats CB_BLOCKLESS_DOCUMENT')
 })
 
 test('missing image alt text is a suggestion', async () => {
   const dir = await fixture({ 'image.md': 'Look:\n\n![](/hero.png)\n' })
   const io = fakeIo()
   expect(await run(['doctor', join(dir, '*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('[info] stats CB_IMAGE_ALT_MISSING')
+  expect(io.out.join('\n')).toContain('info stats CB_IMAGE_ALT_MISSING')
 })
 
 test('--json prints the stable report shape', async () => {
@@ -107,7 +115,7 @@ export default [
   expect(
     await run(['doctor', join(dir, 'custom.md'), '--registry', join(dir, 'registry.mjs')], io),
   ).toBe(0)
-  expect(io.out.join('\n')).toContain('0 errors')
+  expect(io.out.join('\n')).toMatch(/Errors\s+0/)
 })
 
 test('--no-generic-blocks lets doctor use a registry that owns generic block names', async () => {
@@ -143,7 +151,7 @@ export default [
     ),
   ).toBe(0)
   const out = io.out.join('\n')
-  expect(out).toContain('0 errors')
+  expect(out).toMatch(/Errors\s+0/)
   expect(out).toContain('--no-generic-blocks')
 })
 

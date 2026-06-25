@@ -1,6 +1,5 @@
 import { genericMarkdownRenderers } from '@contentbit/blocks'
 import {
-  formatDiagnostic,
   type MarkdownBlockRenderer,
   parseDocument,
   renderToMarkdown,
@@ -13,6 +12,7 @@ import { parseArgs } from 'node:util'
 
 import type { Io } from '../run.js'
 
+import { formatDiagnosticForCli } from '../cli-format.js'
 import { loadRegistry } from '../load-registry.js'
 
 export async function renderCommand(args: string[], io: Io): Promise<number> {
@@ -39,7 +39,7 @@ export async function renderCommand(args: string[], io: Io): Promise<number> {
   const source = await readFile(file, 'utf8')
   const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
   if (!result.ok) {
-    for (const d of result.diagnostics) io.stderr(formatDiagnostic(d, file))
+    for (const d of result.diagnostics) io.stderr(formatDiagnosticForCli(d, file))
     return 1
   }
   const output =

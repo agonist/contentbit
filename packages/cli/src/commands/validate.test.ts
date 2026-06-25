@@ -19,8 +19,9 @@ test('valid files exit 0 with a summary', async () => {
   const dir = await fixture({ 'good.md': ':::callout{type="tip"}\nWeigh your flour.\n:::\n' })
   const io = fakeIo()
   expect(await run(['validate', join(dir, '*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('1 file')
-  expect(io.out.join('\n')).toContain('0 errors')
+  expect(io.out.join('\n')).toContain('Validation')
+  expect(io.out.join('\n')).toContain('Files     1')
+  expect(io.out.join('\n')).toContain('Errors    0')
 })
 
 test('invalid files exit 1 and print formatted line-level diagnostics', async () => {
@@ -37,7 +38,7 @@ test('block syntax inside YAML frontmatter is not validated as content', async (
   })
   const io = fakeIo()
   expect(await run(['validate', join(dir, '*.md')], io)).toBe(0)
-  expect(io.out.join('\n')).toContain('0 errors')
+  expect(io.out.join('\n')).toContain('Errors    0')
 })
 
 test('--strict-warnings turns warnings into failures', async () => {
@@ -114,7 +115,7 @@ export default [
       owned,
     ),
   ).toBe(0)
-  expect(owned.out.join('\n')).toContain('0 errors')
+  expect(owned.out.join('\n')).toContain('Errors    0')
 })
 
 test('no matching files exits 2', async () => {

@@ -184,13 +184,14 @@ test('the scaffolded content validates against the scaffolded registry', async (
     [bin, 'validate', join(dir, 'content/*.md'), '--registry', join(dir, 'blocks/registry.ts')],
     { encoding: 'utf8' },
   )
-  expect(out).toContain('0 errors')
+  expect(out).toMatch(/Errors\s+0/)
   // With modules resolvable, the generated guide covers the custom block too.
   await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::quote')
   const linkOut = execFileSync('node', [bin, 'links', join(dir, 'content/*.md')], {
     encoding: 'utf8',
   })
-  expect(linkOut).toContain('0 errors, 0 warnings')
+  expect(linkOut).toMatch(/Errors\s+0/)
+  expect(linkOut).toMatch(/Warnings\s+0/)
 })
 
 test('init installs the agent integration by default', async () => {
