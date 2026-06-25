@@ -3,12 +3,11 @@ title: Renderers
 description: React, Astro, and plain-Markdown output from the same document.
 ---
 
-Renderers consume a validated document. The parser and registry know nothing about
-React, Astro, or HTML — every renderer is an adapter with a per-block renderer map
-you can override. Contentbit should complement your host renderer, not replace it:
-use it for block structure, validation, metadata, and link graphs, while your app
-keeps owning normal Markdown prose. Three targets ship today: React, Astro, and a
-plain-Markdown fallback.
+Renderers consume a validated document. The parser and registry know nothing
+about React or Astro. Contentbit should complement your host renderer, not
+replace it: use it for block structure, validation, metadata, and link graphs,
+while your app keeps owning normal Markdown prose and block UI. Three targets
+ship today: React, Astro, and a plain-Markdown fallback.
 
 ## React
 
@@ -17,17 +16,18 @@ import { ContentBlocks } from '@contentbit/react'
 
 <ContentBlocks
   document={result.document}
-  components={{ comparison: MyComparison }} // override any default
+  components={{ comparison: MyComparison }}
   renderMarkdown={(md) => <Markdown source={md} />}
   fallback={MyInvalidBlock}
 />
 ```
 
-The headless defaults cover every generic block with accessible semantics: tabs use
-`tablist`/`tab`/`tabpanel` with keyboard-reachable buttons, FAQs use native
-`<details>`. Interactivity is opt-in per block — only `tabs` carries client state.
+`@contentbit/react` is a headless dispatcher: it renders Markdown segments
+through `renderMarkdown`, calls your block components by name, and uses
+`fallback` for invalid or unregistered blocks.
 
-For styled components, install the shadcn pack instead of writing your own:
+For pre-made components, install the shadcn pack. The files land in your app and
+are yours to edit:
 
 ```bash
 pnpm dlx shadcn@latest add @contentbit/generic-pack
@@ -53,6 +53,12 @@ component props, nested content via `<slot />`, and the raw AST node as the
 reserved `node` prop. Pass `renderMarkdown` when you want Astro/Sätteri or
 another site pipeline to render prose. The `onInvalid` default is `annotated`,
 which keeps invalid blocks loud during dev. Full guide: [Astro](/docs/guides/astro).
+
+For pre-made Astro components:
+
+```bash
+pnpm dlx shadcn@latest add @contentbit/astro-pack
+```
 
 ## Plain Markdown fallback
 

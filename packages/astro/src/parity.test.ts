@@ -59,7 +59,7 @@ const norm = (s: string) =>
     .replace(/\s+/g, ' ')
     .trim()
 
-test('default Astro output renders the full generic pack without depending on html', async () => {
+test('default Astro output stays headless for the full generic pack', async () => {
   const registry = createBlockRegistry().use(genericBlocks())
   const result = validateDocument(parseDocument(FIXTURE), registry)
   expect(result.diagnostics).toEqual([])
@@ -71,15 +71,16 @@ test('default Astro output renders the full generic pack without depending on ht
 
   const out = norm(astro)
   for (const expected of [
-    'class="cb-callout cb-callout-tldr"',
-    'class="cb-steps"',
-    'class="cb-key-metrics"',
-    'class="cb-quick-ref"',
-    'class="cb-comparison"',
-    'class="cb-pros-cons"',
-    'class="cb-tabs"',
-    'class="cb-faq"',
+    'data-cb-invalid="callout"',
+    'data-cb-invalid="steps"',
+    'data-cb-invalid="key-metrics"',
+    'data-cb-invalid="quick-ref"',
+    'data-cb-invalid="comparison"',
+    'data-cb-invalid="pros-cons"',
+    'data-cb-invalid="tabs"',
+    'data-cb-invalid="faq"',
   ]) {
     expect(out).toContain(expected)
   }
+  expect(out).not.toContain('cb-callout-tldr')
 })

@@ -20,13 +20,13 @@ importers:
 
   packages/astro:
     dependencies:
-      '@contentbit/blocks':
-        specifier: workspace:*
-        version: link:../blocks
       '@contentbit/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@contentbit/blocks':
+        specifier: workspace:*
+        version: link:../blocks
       '@types/node':
         specifier: ^25.9.2
         version: 25.9.2
@@ -102,13 +102,13 @@ importers:
 
   packages/react:
     dependencies:
-      '@contentbit/blocks':
-        specifier: workspace:*
-        version: link:../blocks
       '@contentbit/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@contentbit/blocks':
+        specifier: workspace:*
+        version: link:../blocks
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

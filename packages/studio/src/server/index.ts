@@ -87,20 +87,39 @@ async function loadProjectComponents(
   vite: ViteDevServer,
   options: { cwd: string; registryPath?: string },
 ): Promise<Record<string, BlockComponent> | undefined> {
+  const merged: Record<string, BlockComponent> = {}
   for (const candidate of componentCandidates(options)) {
-    if (!existsSync(candidate)) continue
-    const mod = (await vite.ssrLoadModule(candidate)) as {
+    if (!existsSync(candidate.path)) continue
+    let mod: {
+      styledComponents?: Record<string, BlockComponent>
       blockComponents?: Record<string, BlockComponent>
       components?: Record<string, BlockComponent>
       default?: Record<string, BlockComponent>
     }
-    const components = mod.blockComponents ?? mod.components ?? mod.default
-    if (components && typeof components === 'object') return components
+    try {
+      mod = (await vite.ssrLoadModule(candidate.path)) as typeof mod
+    } catch {
+      if (!candidate.bestEffort)
+        throw new Error(`Failed to load block components: ${candidate.path}`)
+      continue
+    }
+    const maps = [mod.styledComponents, mod.blockComponents, mod.components, mod.default]
+    for (const components of maps) {
+      if (components && typeof components === 'object') Object.assign(merged, components)
+    }
   }
-  return undefined
+  return Object.keys(merged).length > 0 ? merged : undefined
 }
 
-function componentCandidates(options: { cwd: string; registryPath?: string }): string[] {
+interface ComponentCandidate {
+  path: string
+  bestEffort: boolean
+}
+
+function componentCandidates(options: {
+  cwd: string
+  registryPath?: string
+}): ComponentCandidate[] {
   const dirs = new Set<string>()
   if (options.registryPath) {
     const registryPath = isAbsolute(options.registryPath)
@@ -110,14 +129,21 @@ function componentCandidates(options: { cwd: string; registryPath?: string }): s
   }
   dirs.add(join(options.cwd, 'blocks'))
 
-  return [...dirs].flatMap((dir) => [
-    join(dir, 'components.tsx'),
-    join(dir, 'components.ts'),
-    join(dir, 'preview.tsx'),
-    join(dir, 'preview.ts'),
-    join(dir, 'renderers.tsx'),
-    join(dir, 'renderers.ts'),
-  ])
+  const rendererCandidates = [
+    join(options.cwd, 'components/content-blocks/content-renderer.tsx'),
+    join(options.cwd, 'src/components/content-blocks/content-renderer.tsx'),
+  ].map((path) => ({ path, bestEffort: true }))
+  const blockComponentCandidates = [...dirs].flatMap((dir) =>
+    [
+      join(dir, 'components.tsx'),
+      join(dir, 'components.ts'),
+      join(dir, 'preview.tsx'),
+      join(dir, 'preview.ts'),
+      join(dir, 'renderers.tsx'),
+      join(dir, 'renderers.ts'),
+    ].map((path) => ({ path, bestEffort: false })),
+  )
+  return [...rendererCandidates, ...blockComponentCandidates]
 }
 
 function studioApiPlugin(options: StudioOptions): Plugin {

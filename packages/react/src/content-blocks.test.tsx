@@ -3,15 +3,26 @@ import { createBlockRegistry, parseDocument, validateDocument } from '@contentbi
 import { render, screen } from '@testing-library/react'
 import { expect, test } from 'vitest'
 
-import { ContentBlocks } from './content-blocks.js'
+import { ContentBlocks, type BlockComponent } from './content-blocks.js'
 
 const registry = createBlockRegistry().use(genericBlocks())
 const doc = (src: string) => validateDocument(parseDocument(src), registry).document
 
-test('renders markdown segments through renderMarkdown and blocks through components', () => {
+const Callout: BlockComponent = ({ node, ctx }) => {
+  const data = node.data as { markdown: string }
+  return (
+    <aside data-testid="callout">
+      <strong>{String(node.props.title)}</strong>
+      {ctx.renderMarkdown(data.markdown)}
+    </aside>
+  )
+}
+
+test('renders markdown segments through renderMarkdown and blocks through supplied components', () => {
   render(
     <ContentBlocks
       document={doc('intro\n\n:::callout{type="tip" title="Scale"}\nWeigh it.\n:::\n')}
+      components={{ callout: Callout }}
       renderMarkdown={(md) => <p>{md.trim()}</p>}
     />,
   )
@@ -20,7 +31,7 @@ test('renders markdown segments through renderMarkdown and blocks through compon
   expect(screen.getByText('Weigh it.')).toBeDefined()
 })
 
-test('component overrides win over defaults', () => {
+test('matching supplied components receive the validated block node', () => {
   render(
     <ContentBlocks
       document={doc(':::steps\n1. a\n2. b\n:::\n')}
@@ -28,6 +39,11 @@ test('component overrides win over defaults', () => {
     />,
   )
   expect(screen.getByTestId('custom').textContent).toBe('steps')
+})
+
+test('valid blocks without a component render the fallback', () => {
+  render(<ContentBlocks document={doc(':::callout{type="tip"}\nraw text\n:::\n')} />)
+  expect(screen.getByText('raw text')).toBeDefined()
 })
 
 test('invalid blocks render the fallback (escaped body)', () => {

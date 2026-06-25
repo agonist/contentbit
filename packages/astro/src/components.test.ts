@@ -42,24 +42,14 @@ test('renders markdown prose through the safe paragraph fallback by default', as
   expect(out).not.toContain('<h1>')
 })
 
-test('renders default blocks with cb- classes via the html renderers', async () => {
+test('valid blocks without a component render as annotated boxes by default', async () => {
   const out = await render({ document: doc(':::callout{type="tip" title="Hey"}\nBody.\n:::\n') })
-  expect(out).toContain('cb-callout')
-  expect(out).toContain('cb-callout-tip')
-  expect(out).toContain('cb-callout-title')
+  expect(out).toContain('data-cb-invalid="callout"')
+  expect(out).toContain('<pre>')
   expect(out).toContain('Body.')
 })
 
-test('classPrefix changes every class', async () => {
-  const out = await render({
-    document: doc(':::steps\n1. One\n2. Two\n:::\n'),
-    classPrefix: 'x-',
-  })
-  expect(out).toContain('x-steps')
-  expect(out).not.toContain('cb-steps')
-})
-
-test('a components override replaces the default and receives props + slot', async () => {
+test('a component renders the block and receives props + slot', async () => {
   const out = await render({
     document: doc(':::callout{type="tip" title="Hey"}\nBody.\n:::\n'),
     components: { callout: FancyCallout },
@@ -72,17 +62,13 @@ test('a components override replaces the default and receives props + slot', asy
   expect(out).not.toContain('cb-callout')
 })
 
-test('overrides apply inside custom string renderers via renderNodes (shell)', async () => {
+test('components apply recursively through child block slots', async () => {
   const source = ':::box\n::callout{type="tip" title="In"}\nNested.\n::\n:::\n'
   const out = await render({
     document: doc(source),
-    components: { callout: FancyCallout },
-    renderers: {
-      box: (node: { data: { blocks: never[] } }, ctx: { renderNodes(n: never[]): string }) =>
-        `<div class="box">${ctx.renderNodes(node.data.blocks)}</div>`,
-    },
+    components: { box: FancyCallout, callout: FancyCallout },
   })
-  expect(out).toContain('class="box"')
+  expect(out).toContain('data-block="box"')
   expect(out).toContain('class="fancy"') // override applied inside the shell
 })
 
@@ -115,9 +101,10 @@ test('renderMarkdown prop overrides the default pipeline', async () => {
   expect(out).toContain('<custom>Prose.</custom>')
 })
 
-test('renderMarkdown prop can be async for prose and default block bodies', async () => {
+test('renderMarkdown prop can be async for prose and component slots', async () => {
   const out = await render({
     document: doc('Prose.\n\n:::callout{type="tip"}\nBody.\n:::\n'),
+    components: { callout: FancyCallout },
     renderMarkdown: async (md: string) => `<host>${md.trim()}</host>`,
   })
   expect(out).toContain('<host>Prose.</host>')

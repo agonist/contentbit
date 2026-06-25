@@ -93,7 +93,7 @@ ${posts.map((p) => `- [${p.meta.title}](${SITE_URL}/blog/${p.file.replace(/\.md$
 
 - @contentbit/core: parser, validator, registry, authoring-guide generation
 - @contentbit/blocks: the generic block pack
-- @contentbit/react: React renderer (headless defaults)
+- @contentbit/react: headless React renderer
 - contentbit: CLI — init, validate, stats, render, instructions, agents
 `
 

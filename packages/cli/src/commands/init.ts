@@ -29,7 +29,8 @@ const REGISTRY_TEMPLATE = `// Custom block definitions for this project. The CLI
 //   contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 //
 // Definitions stay framework-free (the CLI and every render target use
-// them); React components live next door in blocks/components.tsx.
+// them); render components live next door in blocks/components.tsx or
+// framework-specific component files copied from the shadcn registry.
 // Docs: https://contentbit.dev/docs/guides/custom-blocks
 import { defineBlock, markdownBody, type BlockDefinition } from '@contentbit/core'
 import { z } from 'zod'
@@ -375,7 +376,7 @@ async function installStyledPack(
   const [bin, prefix] = dlxCommand(detectPackageManager(cwd))
   io.stdout(`installing the styled pack: shadcn add ${pack}`)
   const code = await runInstall(bin, [...prefix, 'shadcn@latest', 'add', pack, '--yes'], cwd)
-  if (code !== 0) io.stderr('styled pack install failed; falling back to headless defaults')
+  if (code !== 0) io.stderr('styled pack install failed; falling back to the headless renderer')
   return code === 0
 }
 

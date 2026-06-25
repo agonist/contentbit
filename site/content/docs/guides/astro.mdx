@@ -58,6 +58,11 @@ const result = validateDocument(parseDocument(entry.body), registry)
 Static pages render at build time, so this is a real safety net: invalid blocks
 fail the build, not the reader.
 
+`ContentBlocks` is intentionally headless. It walks the validated document,
+renders Markdown through `renderMarkdown`, and dispatches blocks to the
+components you pass. The pre-made block UI lives in the shadcn registry as
+editable `.astro` files, not inside the package.
+
 ## Use Astro/Sätteri for prose
 
 Astro 7 uses Sätteri for Markdown and MDX. Contentbit can stay complementary by
@@ -120,10 +125,8 @@ can use them without defensive parsing.
   and block bodies. Pass your site's own Markdown pipeline to match the rest of
   your output. The minimal fallback is exported as `defaultRenderMarkdown` from
   `@contentbit/astro`.
-- **`classPrefix`** — prefix for the headless markup's class names, default
-  `cb-`.
-- **`renderers`** — low-level per-block render functions, when a full `.astro`
-  component is more than you need.
+- **`components`** — block-name to `.astro` component map. This is the only
+  block UI path in the Astro runtime.
 - **`onInvalid`** — what to do with a block that failed validation: `strict`
   (throw), `annotated` (visible dev box), or `fallback` (escaped body as
   prose). The Astro default is `annotated`, which keeps invalid blocks loud

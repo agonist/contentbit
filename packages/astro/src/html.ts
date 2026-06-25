@@ -21,5 +21,5 @@ export function invalidBlockHtml(node: Pick<BlockNode, 'name' | 'body'>, prefix:
 }
 
 export function unrenderableBlockError(name: string): Error {
-  return new Error(`Cannot render block "${name}": not validated or no renderer registered.`)
+  return new Error(`Cannot render block "${name}": not validated or no component registered.`)
 }

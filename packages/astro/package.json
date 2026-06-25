@@ -41,10 +41,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*"
   },
   "devDependencies": {
+    "@contentbit/blocks": "workspace:*",
     "@types/node": "^25.9.2",
     "astro": "^7.0.0",
     "typescript": "^5.9.3",
