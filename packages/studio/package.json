@@ -1,6 +1,6 @@
 {
   "name": "@contentbit/studio",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Local read-only content studio for contentbit projects.",
   "license": "MIT",
   "repository": {

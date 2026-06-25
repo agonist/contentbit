@@ -1,5 +1,45 @@
 # contentbit
 
+## 0.5.0
+
+### Minor Changes
+
+- a1c099f: Add `scanContentProject()` to core — a single entry point that runs the per-file
+  pipeline (frontmatter → parse → validate → analyze) plus the cross-file link
+  graph and returns aggregated findings. The CLI's `validate`, `doctor`, `stats`,
+  and `studio` build on it.
+
+  Add `--no-generic-blocks` so a project registry can own generic block names
+  without colliding with the built-in pack, and polish CLI output formatting.
+
+- a1c099f: Make the React and Astro renderers headless. Renderers no longer ship built-in
+  styled components; callers supply their own components and a host Markdown
+  renderer, and unrendered blocks fall back to their raw body (Astro can annotate
+  or throw via `onInvalid`).
+
+  Breaking (Astro): `genericAstroRenderers`, `renderBlockShell`,
+  `AstroBlockRenderContext`, `AstroBlockRenderer`, `BlockShell`, and
+  `RenderBlockOptions` are removed. The renderer now exposes
+  `AstroBlockContext` (the `ctx` passed to block components), plus
+  `fallbackMarkdown`, `invalidBlockHtml`, and `unrenderableBlockError` for
+  fallback handling.
+
+  Core now re-exports `ValidatedDocumentNode` / `ValidatedBlockNode` for renderer
+  typing. The generic block pack owns the Astro prose fallback, and validated
+  documents are marked so renderers can type-guard them.
+
+### Patch Changes
+
+- 05d5cbd: Internal: centralize CLI content-project loading behind a single
+  `loadContentProject` seam. `validate`, `doctor`, and `stats` now share one
+  glob → registry-load → read → scan path, and `stats` no longer runs its own
+  separate validation pass. No user-facing behavior change.
+- Updated dependencies [a1c099f]
+- Updated dependencies [a1c099f]
+  - @contentbit/core@0.5.0
+  - @contentbit/studio@0.5.0
+  - @contentbit/blocks@0.5.0
+
 ## 0.4.2
 
 ### Patch Changes
