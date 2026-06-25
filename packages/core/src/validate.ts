@@ -14,13 +14,21 @@ export interface ValidateOptions {
 
 export interface ValidationResult {
   ok: boolean
-  document: DocumentNode
+  document: ValidatedDocumentNode
   diagnostics: Diagnostic[]
+}
+
+export type ValidatedDocumentNode = DocumentNode & {
+  readonly __contentbitValidatedDocument: true
 }
 
 export type ValidatedBlockNode<TData = unknown> = BlockNode & {
   data: TData
   definition: BlockDefinition<TData>
+}
+
+export function isValidatedDocument(document: DocumentNode): document is ValidatedDocumentNode {
+  return (document as Partial<ValidatedDocumentNode>).__contentbitValidatedDocument === true
 }
 
 export function isValidatedBlock(node: ContentNode): node is ValidatedBlockNode {
@@ -148,5 +156,15 @@ export function validateDocument(
 
   walk(parsed.document.children, null, 1)
   const ok = !diagnostics.some((d) => d.severity === 'error')
-  return { ok, document: parsed.document, diagnostics }
+  return { ok, document: markValidatedDocument(parsed.document), diagnostics }
+}
+
+function markValidatedDocument(document: DocumentNode): ValidatedDocumentNode {
+  if (!isValidatedDocument(document)) {
+    Object.defineProperty(document, '__contentbitValidatedDocument', {
+      value: true,
+      enumerable: false,
+    })
+  }
+  return document as ValidatedDocumentNode
 }

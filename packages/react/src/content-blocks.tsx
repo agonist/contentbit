@@ -1,6 +1,6 @@
 'use client'
 
-import type { ContentNode, DocumentNode, ValidatedBlockNode } from '@contentbit/core'
+import type { ContentNode, ValidatedBlockNode, ValidatedDocumentNode } from '@contentbit/core'
 import type { ComponentType, ReactNode } from 'react'
 
 import { isValidatedBlock } from '@contentbit/core'
@@ -37,7 +37,7 @@ export interface BlockComponentProps<TData = unknown> {
 export type BlockComponent = ComponentType<BlockComponentProps>
 
 export interface ContentBlocksProps {
-  document: DocumentNode
+  document: ValidatedDocumentNode
   /** Per-block components; merged over the headless defaults. */
   components?: Record<string, BlockComponent>
   /** Host markdown renderer for prose segments. Default: paragraphs of plain text. */

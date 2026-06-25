@@ -6,7 +6,7 @@ import type { BlockNode } from './ast.js'
 import { childBlocks, markdownBody, pipeRows } from './content-models.js'
 import { parseDocument } from './parser.js'
 import { createBlockRegistry, defineBlock } from './registry.js'
-import { isValidatedBlock, validateDocument } from './validate.js'
+import { isValidatedBlock, isValidatedDocument, validateDocument } from './validate.js'
 
 const calloutDef = defineBlock({
   name: 'callout',
@@ -44,9 +44,11 @@ const registry = () => createBlockRegistry().use([calloutDef, tabDef, tabsDef])
 
 test('valid document: ok=true, data and definition attached, defaults applied', () => {
   const parsed = parseDocument(':::callout{type="tip"}\nUse a scale.\n:::\n')
+  expect(isValidatedDocument(parsed.document)).toBe(false)
   const result = validateDocument(parsed, registry())
   expect(result.ok).toBe(true)
   expect(result.diagnostics).toEqual([])
+  expect(isValidatedDocument(result.document)).toBe(true)
   const block = result.document.children[0] as BlockNode
   expect(isValidatedBlock(block)).toBe(true)
   if (isValidatedBlock(block)) {

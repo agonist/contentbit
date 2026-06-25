@@ -1,4 +1,9 @@
-import type { BlockNode, ContentNode, DocumentNode, ValidatedBlockNode } from '@contentbit/core'
+import type {
+  BlockNode,
+  ContentNode,
+  ValidatedBlockNode,
+  ValidatedDocumentNode,
+} from '@contentbit/core'
 
 import { isValidatedBlock } from '@contentbit/core'
 
@@ -54,7 +59,10 @@ export function unrenderableBlockError(name: string): Error {
   return new Error(`Cannot render block "${name}": not validated or no renderer registered.`)
 }
 
-export function renderToHtml(document: DocumentNode, opts: RenderToHtmlOptions = {}): string {
+export function renderToHtml(
+  document: ValidatedDocumentNode,
+  opts: RenderToHtmlOptions = {},
+): string {
   const prefix = opts.classPrefix ?? 'cb-'
   const renderMarkdown = opts.renderMarkdown ?? fallbackMarkdown
   const renderers = { ...genericHtmlRenderers, ...opts.renderers }

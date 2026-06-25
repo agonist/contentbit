@@ -51,9 +51,11 @@ export {
 export {
   validateDocument,
   isValidatedBlock,
+  isValidatedDocument,
   type ValidateOptions,
   type ValidationResult,
   type ValidatedBlockNode,
+  type ValidatedDocumentNode,
 } from './validate.js'
 export { generateAuthoringGuide, type AuthoringGuideOptions } from './authoring.js'
 export {

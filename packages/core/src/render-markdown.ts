@@ -1,6 +1,10 @@
-import type { ContentNode, DocumentNode } from './ast.js'
+import type { ContentNode } from './ast.js'
 
-import { isValidatedBlock, type ValidatedBlockNode } from './validate.js'
+import {
+  isValidatedBlock,
+  type ValidatedBlockNode,
+  type ValidatedDocumentNode,
+} from './validate.js'
 
 export interface MarkdownRenderContext {
   renderNodes(nodes: ContentNode[]): string
@@ -21,7 +25,7 @@ export interface RenderToMarkdownOptions {
  * no information is lost (spec: Markdown fallback renderer).
  */
 export function renderToMarkdown(
-  document: DocumentNode,
+  document: ValidatedDocumentNode,
   opts: RenderToMarkdownOptions = {},
 ): string {
   const ctx: MarkdownRenderContext = {

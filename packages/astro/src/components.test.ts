@@ -5,7 +5,7 @@ import {
   childBlocks,
   parseDocument,
   validateDocument,
-  type DocumentNode,
+  type ValidatedDocumentNode,
 } from '@contentbit/core'
 import { experimental_AstroContainer as AstroContainer } from 'astro/container'
 import { expect, test } from 'vitest'
@@ -26,7 +26,7 @@ const boxBlock = defineBlock({
 
 const registry = createBlockRegistry().use(genericBlocks()).use([boxBlock])
 
-function doc(source: string): DocumentNode {
+function doc(source: string): ValidatedDocumentNode {
   return validateDocument(parseDocument(source), registry).document
 }
 
