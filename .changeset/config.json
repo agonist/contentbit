@@ -7,7 +7,6 @@
       "contentbit",
       "@contentbit/core",
       "@contentbit/blocks",
-      "@contentbit/html",
       "@contentbit/react",
       "@contentbit/astro",
       "@contentbit/studio"
