@@ -36,6 +36,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node build.mjs",
+    "prepublishOnly": "node ../../scripts/require-pnpm-publish.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
