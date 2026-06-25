@@ -1,5 +1,14 @@
 # @contentbit/react
 
+## 0.4.1
+
+### Patch Changes
+
+- 7bdd4b8: Guard publishing so package manifests are packed through pnpm and workspace dependencies are rewritten to publishable semver ranges.
+- Updated dependencies [7bdd4b8]
+  - @contentbit/blocks@0.4.1
+  - @contentbit/core@0.4.1
+
 ## 0.4.0
 
 ### Patch Changes
