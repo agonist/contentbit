@@ -1,5 +1,15 @@
 # contentbit
 
+## 0.4.2
+
+### Patch Changes
+
+- Updated dependencies [0bc308d]
+  - @contentbit/studio@0.4.2
+  - @contentbit/core@0.4.2
+  - @contentbit/blocks@0.4.2
+  - @contentbit/html@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes
