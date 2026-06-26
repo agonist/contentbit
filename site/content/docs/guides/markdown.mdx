@@ -4,15 +4,18 @@ description: One function connects Content Blocks to react-markdown, marked, mar
 ---
 
 Content Blocks is **not** a Markdown renderer. It parses the block layer (`:::callout`,
-`::tab`, pipe rows) and hands every prose segment — paragraphs between blocks, and
-Markdown bodies *inside* blocks — to one function you provide:
+`::tab`, pipe rows) and hands every prose segment to one function you provide:
 
-- React: the `renderMarkdown` prop → returns a `ReactNode`
-- Astro: the `renderMarkdown` prop → returns an HTML string
+- paragraphs between blocks
+- Markdown bodies inside blocks
+- Markdown strings stored in parsed block data
 
-If you don't provide it, the built-in default only escapes text and wraps
+React returns a `ReactNode`. Astro returns an HTML string or promise. If you do
+not provide this function, the built-in default only escapes text and wraps
 paragraphs in `<p>` tags. `**bold**`, links, and lists will show as literal
-characters. **Wiring your Markdown library is step one of any real setup**.
+characters.
+
+For the bigger picture, see [Rendering model](/docs/concepts/rendering-model).
 
 ## What your library sees (and never sees)
 

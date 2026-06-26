@@ -1,15 +1,14 @@
 ---
 title: Getting started
-description: Set up contentbit, validate your first document, and let an LLM agent start writing.
+description: Install contentbit, validate starter Markdown, open Studio, and run the LLM-agent loop.
 ---
 
-contentbit is the shortest path from "an LLM wrote some Markdown" to
-"this content is structured, validated, and ready to render." It adds a small
-block protocol to Markdown, generates authoring instructions from your block
-schemas, and gives your LLM agent a repeatable write -> validate -> fix loop.
+This tutorial takes a project from plain Markdown to a validated content loop:
+install contentbit, inspect the starter document, run the quality gates, and ask
+an LLM agent to write content that can be checked before it renders.
 
-The contract is simple: LLMs write Markdown with directive-style blocks; every
-block has a schema; validation runs before anything renders:
+Contentbit adds typed directive blocks to Markdown. The blocks stay readable in
+source, but each one has a schema:
 
 <Live>
 {`:::comparison{left="Basic" right="Pro"}
@@ -21,8 +20,9 @@ block has a schema; validation runs before anything renders:
 First-time flow:
 
 1. Run `init`.
-2. Validate the starter document.
-3. Ask your LLM agent to write or audit content.
+2. Validate the generated example.
+3. Open the local content dashboard.
+4. Ask your LLM agent to write or audit content.
 
 ## 1. One command
 
@@ -54,8 +54,9 @@ yarn dlx contentbit@latest init
 
 </Tabs>
 
-It detects your framework and package manager, asks two questions (or none with
-`-y`), and leaves you with everything wired:
+`init` detects your framework and package manager, asks a couple of setup
+questions, and wires a small working content system. Use `-y` when you want the
+defaults.
 
 <TerminalDemo
   title="~/my-app"
@@ -76,12 +77,12 @@ It detects your framework and package manager, asks two questions (or none with
     { text: 'created: AGENTS.md (contentbit block)' },
     { text: 'installed: .claude/skills/contentbit-author/SKILL.md' },
     { text: 'installed: .claude/skills/contentbit-audit/SKILL.md', delay: 350 },
-    { text: 'Agent integration installed — try asking your LLM agent:', type: 'success' },
+    { text: 'Agent integration installed. Try asking your LLM agent:', type: 'success' },
     { text: '  "write a blog post about X" or "audit my content"', type: 'success' },
   ]}
 />
 
-That gives you a working content system, not just a package install:
+The generated files matter:
 
 - **Content to edit:** `content/example.md` and `content/related.md`
 - **A schema source of truth:** `blocks/registry.ts`
@@ -93,7 +94,43 @@ That gives you a working content system, not just a package install:
 
 Skip the agent files with `--no-agents` if you only want the library and CLI.
 
-## 2. Ask your LLM agent
+## 2. Validate the starter content
+
+Run the generated validation script before editing anything:
+
+```bash
+pnpm run content:check
+```
+
+The script expands to a `contentbit validate` command with the right content
+glob and registry path for your project. Validation checks directive syntax,
+block props, block body shape, and frontmatter-authored internal links when
+your files declare slugs.
+
+When validation fails, contentbit prints diagnostics with source positions and
+fix hints:
+
+```text
+content/dark-mode.md:18:1 error CB_ROW_COLUMNS
+:::comparison rows require 3 columns (label | left | right). Found 2.
+hint: Format: - label | left | right
+```
+
+The exact same gate can run locally, in CI, and inside an LLM-agent repair loop.
+
+## 3. Open Studio
+
+Start the read-only dashboard:
+
+```bash
+pnpm run studio
+```
+
+Studio lets you browse rendered previews, source Markdown, validation findings,
+document stats, links, backlinks, keywords, and block usage. It is a human view
+over the same project scan that powers `contentbit doctor`.
+
+## 4. Ask your LLM agent
 
 Your LLM agent now has project-local instructions. Start with one of these:
 
@@ -117,14 +154,14 @@ specific source line, stable error code, and fix hint.
     { kind: 'user', text: 'write a short post about our new dark mode' },
     { kind: 'skill', name: 'contentbit-author' },
     { kind: 'command', command: 'contentbit instructions --audience llm --registry ./blocks/registry.ts', exitCode: 0 },
-    { kind: 'assistant', text: 'Drafting content/dark-mode.md with a callout and a before/after comparison…' },
+    { kind: 'assistant', text: 'Drafting content/dark-mode.md with a callout and a before/after comparison.' },
     {
       kind: 'command',
       command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
       exitCode: 1,
       output: 'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
     },
-    { kind: 'assistant', text: 'The comparison row is missing its second value — fixing and revalidating.' },
+    { kind: 'assistant', text: 'The comparison row is missing its second value. Fixing and revalidating.' },
     {
       kind: 'command',
       command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
@@ -134,85 +171,38 @@ specific source line, stable error code, and fix hint.
   ]}
 />
 
-This is reliable because the skills contain no schemas. They read everything
-from the CLI at runtime (the authoring guide, the diagnostics, doctor reports, and stats), so
-when you add a custom block, every LLM agent picks it up on the next run with
-nothing to regenerate. Works beyond Claude Code too: `AGENTS.md` carries the
-same instructions for Cursor, Codex, Copilot, and friends.
+The installed agent files contain no copied block schemas. They ask the CLI for
+the current authoring guide, diagnostics, doctor reports, stats, and link graph
+when they run. Add a custom block to `blocks/registry.ts`, and the next agent
+session sees it without prompt surgery.
 
-## The validation contract
-
-What makes the loop converge is the diagnostic format. Invalid content never
-renders; it produces errors a machine can act on:
-
-```text
-content.md:12:3 error CB_ROW_COLUMNS
-:::comparison rows require 3 columns (label | left | right). Found 2.
-hint: Format: - label | left | right
-```
-
-Each diagnostic carries the exact source position, a stable code, and a fix
-hint, so your LLM agent (or your CI) can act on it. The same gate runs in the
-editor loop, in `pnpm run content:check`, and before every render.
-
-## Under the hood
-
-Prefer wiring things up manually? Install the pieces directly:
-
-```bash
-pnpm add @contentbit/core @contentbit/blocks
-pnpm add @contentbit/react  # React components
-pnpm add @contentbit/astro  # .astro components
-```
-
-The whole pipeline is three calls — parse to a source-mapped AST, validate
-against the registry, render through the adapter of your choice:
-
-```ts
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
-import { genericBlocks } from '@contentbit/blocks'
-
-const registry = createBlockRegistry().use(genericBlocks())
-
-const result = validateDocument(parseDocument(markdown), registry)
-if (!result.ok) {
-  console.error(result.diagnostics) // code, severity, message, exact position
-}
-```
-
-In React, `ContentBlocks` ships headless, accessible defaults for every generic
-block:
-
-```tsx
-import { ContentBlocks } from '@contentbit/react'
-
-export function Article({ document }: { document: ValidatedDocumentNode }) {
-  return <ContentBlocks document={document} renderMarkdown={(md) => <Markdown source={md} />} />
-}
-```
-
-One thing not to skip: Content Blocks parses **blocks only** — prose and block
-bodies are handed to a `renderMarkdown` function you provide (react-markdown,
-marked, markdown-it, remark…). Without it, `**bold**` renders as literal
-characters. Step-by-step wiring for each library:
-[Plug in your Markdown library](/docs/guides/markdown).
-
-And if headless isn't your thing, a polished Tailwind-styled pack installs
-through the shadcn registry — components land as editable source files you own:
+## 5. Install styled components
 
 ```bash
 pnpm dlx shadcn@latest add @contentbit/generic-pack
 ```
 
+The pack copies editable Tailwind React components into your app. Astro projects
+can use:
+
+```bash
+pnpm dlx shadcn@latest add @contentbit/astro-pack
+```
+
+Headless rendering still works without these packs. Styled packs are only UI
+source files you own after install.
+
 ## Next steps
 
-- [LLM-agent integration](/docs/guides/agents) — what `init` installed, and how to wire other LLM tools
+- [Why contentbit?](/docs/concepts/why-contentbit)
+- [CLI reference](/docs/reference/cli)
+- [Block syntax](/docs/reference/syntax)
+- [LLM-agent integration](/docs/guides/agents) - what `init` installed, and how to wire other LLM tools
 - [Plug in your Markdown library](/docs/guides/markdown)
-- Learn the [block syntax](/docs/concepts/syntax)
 - Define [custom blocks](/docs/guides/custom-blocks)
-- [Content Studio](/docs/guides/studio) — browse previews, diagnostics, links, backlinks, and keywords locally
-- [Content doctor](/docs/guides/doctor) — one ranked repair plan across validation, links, and content health
-- [Document stats & auditing](/docs/guides/stats) — raw outlines, block usage, links, and validation summaries
-- [Internal linking](/docs/guides/internal-linking) — generate backlinks and catch broken slug references
+- [Content Studio](/docs/guides/studio) - browse previews, diagnostics, links, backlinks, and keywords locally
+- [Content doctor](/docs/guides/doctor) - one ranked repair plan across validation, links, and content health
+- [Document stats & auditing](/docs/guides/stats) - raw outlines, block usage, links, and validation summaries
+- [Internal linking](/docs/guides/internal-linking) - generate backlinks and catch broken slug references
 - Render with [Astro](/docs/guides/astro)
 - Browse the [block reference](/docs/reference/blocks) and the [changelog](/docs/changelog)

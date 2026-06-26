@@ -1,0 +1,298 @@
+---
+title: CLI reference
+description: Commands, options, shared flags, and exit behavior for the contentbit CLI.
+---
+
+Use `contentbit` for project setup, validation, content health reports,
+rendering, internal-link indexes, generated authoring docs, and LLM-agent
+integration.
+
+Quote globs so your shell does not expand them before contentbit receives them:
+
+```bash
+contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
+```
+
+## Commands
+
+```text
+contentbit <command> [options]
+```
+
+| Command | Purpose |
+| --- | --- |
+| `init` | Scaffold contentbit into a project. |
+| `validate` | Check block syntax, block schemas, and internal links. |
+| `brief` | Print an agent-ready SEO brief. |
+| `doctor` | Print a ranked content repair plan. |
+| `studio` | Open the local read-only content dashboard. |
+| `stats` | Print document stats as JSON. |
+| `render` | Render one file to plain Markdown. |
+| `instructions` | Print generated LLM or human authoring instructions. |
+| `docs` | Print generated human block docs. |
+| `agents` | Install or refresh coding-agent guidance. |
+| `links` | Build or fix the internal-link index. |
+
+## init
+
+Scaffold packages, starter content, a block registry, renderer files, scripts,
+and agent instructions.
+
+```bash
+contentbit init [-t react|markdown|astro] [--md <library>] [-y] [--seo]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `-t, --target <target>` | Force the target instead of detecting it. |
+| `--md <library>` | Choose the Markdown library wiring when supported. |
+| `-y, --yes` | Accept defaults. |
+| `--cwd <path>` | Run setup in another directory. |
+| `--no-install` | Write files without installing packages. |
+| `--no-page` | Skip generated example route/page files. |
+| `--no-styled` | Skip styled component pack setup. |
+| `--no-agents` | Skip `AGENTS.md` and Claude Code skills. |
+| `--seo` | Scaffold `contentbit.seo.config.ts`. |
+
+## validate
+
+Check content and print `file:line:col` diagnostics.
+
+```bash
+contentbit validate <globs...> [--registry <module.ts>] [--strict-warnings]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--registry <module>` | Load custom blocks from a registry module. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--strict-warnings` | Exit 1 when warnings are present. |
+| Link resolver options | See [Shared link options](#shared-link-options). |
+
+Exit codes:
+
+- `0` when no errors are found.
+- `1` when errors are found.
+- `1` when warnings are found and `--strict-warnings` is passed.
+- `2` for command input problems such as missing or unmatched globs.
+
+## brief
+
+Print a page brief from `contentbit.seo.config.ts`, existing content, or both.
+
+```bash
+contentbit brief <key-or-slug> [globs...] [--json]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--registry <module>` | Load custom blocks before checking required blocks. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--seo-config <module>` | Use a non-default SEO config file. |
+| `--json` | Print machine-readable JSON. |
+| Link resolver options | See [Shared link options](#shared-link-options). |
+
+Targets resolve by page `key` first, then by `slug`.
+
+## doctor
+
+Print a ranked repair plan across validation, internal links, document stats,
+image alt text, and optional SEO contracts.
+
+```bash
+contentbit doctor <globs...> [--registry <module.ts>] [--json]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--registry <module>` | Load custom block definitions. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--strict-warnings` | Exit 1 when warnings are present. |
+| `--strict-seo` | Treat required SEO contract findings as build failures. |
+| `--json` | Print stable JSON for agents and CI. |
+| `--min-section-words <n>` | Change the thin-section threshold. |
+| `--seo-config <module>` | Use a non-default SEO config file. |
+| `--no-seo` | Ignore SEO config even when one exists. |
+| Link resolver options | See [Shared link options](#shared-link-options). |
+
+Use [Content doctor](/docs/guides/doctor) for workflow guidance.
+
+## studio
+
+Open the local read-only dashboard for previews, diagnostics, links, backlinks,
+keywords, and stats.
+
+```bash
+contentbit studio <globs...> [--registry <module.ts>] [--no-open]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--registry <module>` | Load custom blocks and preview components. |
+| `--port <n>` | Choose the first port to try. |
+| `--host <host>` | Bind to a custom host. |
+| `--no-open` | Start the server without opening a browser. |
+| `--no-generic-blocks` | Do not load generic blocks or preview components. |
+| `--min-section-words <n>` | Change the thin-section threshold. |
+| `--seo-config <module>` | Use a non-default SEO config file. |
+| `--no-seo` | Ignore SEO config even when one exists. |
+| Link resolver options | See [Shared link options](#shared-link-options). |
+
+Use [Content Studio](/docs/guides/studio) for workflow guidance.
+
+## stats
+
+Print raw document stats as JSON.
+
+```bash
+contentbit stats <globs...> [--registry <module.ts>]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--registry <module>` | Include validation summaries from this registry. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--no-validate` | Analyze Markdown only, without loading a registry. |
+
+One matched file prints one JSON object. Multiple files print an array. No
+matched files is a command input error.
+
+## render
+
+Render one file to plain Markdown.
+
+```bash
+contentbit render <file> [--out <file>]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--target <target>` | Render target. Today this is `markdown`. |
+| `--registry <module>` | Load custom block definitions before rendering. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--out <file>` | Write output to a file instead of stdout. |
+
+## instructions
+
+Print generated authoring instructions from the block registry.
+
+```bash
+contentbit instructions [--audience llm|human] [--out <file>]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--audience <audience>` | `llm` by default, or `human`. |
+| `--no-examples` | Omit block examples. |
+| `--registry <module>` | Load custom blocks. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--out <file>` | Write the guide to a file. |
+
+## docs
+
+Print generated human block docs from the block registry.
+
+```bash
+contentbit docs [--registry <module.ts>] [--out <file>]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--registry <module>` | Load custom blocks. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--out <file>` | Write docs to a file. |
+
+The site's [Block reference](/docs/reference/blocks) is generated from this kind
+of registry data.
+
+## agents
+
+Install or refresh agent guidance.
+
+```bash
+contentbit agents [--claude] [--no-agents-md]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--claude` | Install Claude Code skills even when `.claude/` is absent. |
+| `--no-agents-md` | Skip `AGENTS.md` updates. |
+| `--cwd <path>` | Run in another directory. |
+
+`AGENTS.md` is updated between `<!-- contentbit:start -->` and
+`<!-- contentbit:end -->` markers. Content outside those markers is left alone.
+
+## links
+
+Build `.contentbit/link-index.json` from frontmatter slugs, aliases, and
+`linksTo` values.
+
+```bash
+contentbit links <globs...> [--fix] [--out <file>]
+```
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--fix` | Rewrite stale alias references inside `linksTo`. |
+| `--out <file>` | Write the index somewhere other than `.contentbit/link-index.json`. |
+| Link resolver options | See [Shared link options](#shared-link-options). |
+
+`--fix` is narrow. It only rewrites `linksTo` values that point at known aliases.
+
+## Shared registry options
+
+Commands that validate or render blocks load the generic block pack by default.
+Pass a registry when your project adds custom blocks:
+
+```bash
+contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
+```
+
+Use `--no-generic-blocks` when the registry intentionally owns the complete
+block set, including generic names such as `callout` or `comparison`.
+
+## Shared link options
+
+`validate`, `brief`, `doctor`, `studio`, and `links` accept the same internal
+link resolver options:
+
+| Option | Meaning |
+| --- | --- |
+| `--link-resolve <mode>` | Choose how `linksTo` targets resolve. |
+| `--locale-field <name>` | Frontmatter field for locale. |
+| `--slug-field <name>` | Frontmatter field for slug. |
+| `--key-field <name>` | Frontmatter field for stable content key. |
+| `--default-locale <locale>` | Locale to assume when a page omits one. |
+
+Resolver modes:
+
+| Mode | Use when |
+| --- | --- |
+| `global-slug` | Slugs are globally unique. |
+| `same-locale-slug` | Each locale has its own slug set. |
+| `same-locale-key` | Translations share stable keys and have localized slugs. |
+| `prefer-same-locale-key-fallback-slug` | Prefer keys, but allow same-locale slug links. |
+
+See [Internal linking](/docs/guides/internal-linking) for examples.

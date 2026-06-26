@@ -1,0 +1,121 @@
+---
+title: Block syntax
+description: Directive fences, props, child blocks, pipe rows, Markdown bodies, and raw HTML behavior.
+---
+
+## Blocks
+
+Blocks use fenced directive syntax. A block opens with three or more colons plus
+a kebab-case name, and closes with a line containing only colons:
+
+```md
+:::block-name{prop="value" count=3 enabled=true}
+Block body
+:::
+```
+
+Rules:
+
+- block names are lowercase kebab-case
+- props are optional
+- a block closes with `:::` on its own trimmed line
+- nested blocks are allowed only when the parent block permits them
+- unknown blocks produce diagnostics; they are never silently ignored
+- block delimiters inside fenced code blocks are literal text
+- a closing fence matches the innermost open block
+- use a longer fence such as `::::` on the outer block to disambiguate deep nesting
+
+## Props
+
+Props use a constrained grammar so generated content stays portable across
+renderers:
+
+```md
+{title="Quick Reference" count=3 variant="compact" featured=true}
+```
+
+Supported values:
+
+- quoted strings: `title="Hello \"world\""`
+- numbers: `count=3`, `ratio=-1.5`
+- booleans: `featured=true`
+- bare-key boolean shorthand: `featured` means `featured=true`
+- bare identifiers for enums: `variant=compact`
+
+Not supported: JavaScript expressions, object literals, arrays, function
+references, and JSX.
+
+## Child blocks
+
+Child blocks use two-colon syntax and close implicitly at the next sibling or
+the parent close:
+
+```md
+:::tabs
+::tab{title="Fast"}
+Use this when time matters.
+::tab{title="Cheap"}
+Use this when budget matters.
+:::
+```
+
+Three-colon blocks can nest inside child bodies. They must be balanced before
+the child ends.
+
+<Live>
+{[
+  ':::tabs',
+  '::tab{title="Fast"}',
+  'Use this when time matters.',
+  '::tab{title="Cheap"}',
+  'Use this when budget matters.',
+  ':::',
+].join('\n')}
+</Live>
+
+## Pipe rows
+
+Many blocks take rows of pipe-separated cells:
+
+```md
+:::key-metrics
+- 42% | Conversion lift
+- 18ms | Median parse time
+:::
+```
+
+Each block defines its own columns and limits, so diagnostics name the exact
+expectation. Escape a literal pipe inside a cell as `\|`.
+
+<Live>
+{`:::key-metrics
+- 42% | Conversion lift
+- 18ms | Median parse time
+:::`}
+</Live>
+
+When rows do not match the block's column count, validation fails before render:
+
+<Live>
+{`:::key-metrics
+- 42% | Conversion lift | extra column
+:::`}
+</Live>
+
+## Markdown bodies
+
+Blocks such as `callout` accept regular Markdown content:
+
+```md
+:::callout{type="tip" title="Worth knowing"}
+You can use **Markdown** inside this block.
+:::
+```
+
+The parser preserves the body verbatim. Your app's Markdown pipeline renders it
+through the `renderMarkdown` function you provide.
+
+## Raw HTML
+
+Raw HTML is disabled by default everywhere. If your project needs raw HTML, opt
+in at the renderer level and own sanitization there.

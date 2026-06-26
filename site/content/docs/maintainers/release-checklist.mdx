@@ -1,0 +1,58 @@
+---
+title: Release checklist
+description: The gates to run before publishing contentbit packages and starters.
+---
+
+Use this checklist before publishing packages or updating the starters. CI runs
+the same core gates, but doing them locally catches release drift before a PR
+waits on Actions.
+
+## Package gates
+
+```bash
+pnpm version:check
+pnpm fmt:check
+pnpm -r build
+pnpm -r test
+```
+
+`version:check` verifies that all `@contentbit/*` packages share the same version
+and that `@contentbit/core` exports the same `VERSION` as its `package.json`.
+
+## Starter gates
+
+Run each starter from its own directory because each is intentionally standalone:
+
+```bash
+cd starter/astro
+pnpm install --frozen-lockfile
+pnpm content:check
+pnpm content:links
+pnpm typecheck
+pnpm build
+pnpm smoke
+```
+
+```bash
+cd starter/tanstack
+pnpm install --frozen-lockfile
+pnpm content:check
+pnpm content:links
+pnpm typecheck
+pnpm build
+pnpm smoke
+```
+
+The smoke checks assert the `/blog` and `/blog/{slug}` demo, contentbit metadata,
+keyword usage, generated backlinks, and starter build output. They are not a
+replacement for visual review, but they catch broken demo wiring quickly.
+
+## Content and docs
+
+- Regenerate docs artifacts after docs changes with `pnpm --filter @contentbit/site prebuild`.
+- Confirm internal-link docs cover the active locale strategy when changing
+  resolver behavior.
+- Keep starter article keywords present in the article body, not only in
+  frontmatter.
+- When changing Astro rendering behavior, confirm the prose path still belongs to
+  Astro/Sätteri and contentbit remains the block validation/rendering layer.

@@ -7,9 +7,9 @@
     "astro",
     "custom-blocks",
     "studio",
-    "doctor",
-    "seo-briefs",
     "stats",
-    "internal-linking"
+    "doctor",
+    "internal-linking",
+    "seo-briefs"
   ]
 }

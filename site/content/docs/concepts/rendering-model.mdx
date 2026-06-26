@@ -1,0 +1,76 @@
+---
+title: Rendering model
+description: How parsing, validation, Markdown rendering, and framework adapters fit together.
+---
+
+Contentbit has one job before render: turn Markdown with directive blocks into a
+validated document tree. Framework adapters consume that tree. Your app still
+owns the prose renderer, component styling, routing, and page chrome.
+
+## Pipeline
+
+The runtime shape is:
+
+```text
+Markdown source
+  -> parseDocument()
+  -> validateDocument(registry)
+  -> ContentBlocks / renderToMarkdown()
+```
+
+Parsing finds block fences, props, rows, child blocks, and Markdown segments.
+Validation applies the registry. Rendering happens only after that.
+
+## Prose belongs to your Markdown pipeline
+
+Contentbit is not a full Markdown renderer. It extracts block structure and then
+hands prose back to one function you provide:
+
+- React: `renderMarkdown: (md: string) => ReactNode`
+- Astro: `renderMarkdown: (md: string) => string | Promise<string>`
+- Plain Markdown: `renderToMarkdown()` returns Markdown directly
+
+That includes paragraphs between blocks and Markdown bodies inside blocks.
+Without a real `renderMarkdown` function, rich Markdown such as `**bold**` or
+links will use the minimal escaped fallback.
+
+For setup steps, see [Plug in your Markdown library](/docs/guides/markdown).
+
+## Block UI belongs to your app
+
+The registry validates content. It does not import React, Astro, Tailwind, or
+your design system. Framework adapters map block names to components:
+
+```tsx
+<ContentBlocks
+  document={result.document}
+  components={{ comparison: MyComparison }}
+  renderMarkdown={(md) => <Markdown source={md} />}
+/>
+```
+
+Styled packs are distributed through the shadcn registry so components land as
+editable project files. They are a convenience layer, not a hidden runtime.
+
+## Invalid blocks stay visible
+
+Validation should usually run before render, in CI and in local scripts. Runtime
+renderers still need an invalid-block policy because preview tools and local dev
+often inspect broken work in progress.
+
+React exposes a `fallback` component. Astro exposes `onInvalid` with `strict`,
+`annotated`, and `fallback` modes. Use loud development behavior and strict
+build gates when publishing.
+
+## Render targets
+
+Use the renderer that matches the surface:
+
+- **React:** headless `ContentBlocks` with accessible generic defaults and
+  component overrides.
+- **Astro:** `.astro` components with validated props, `<slot />` content, and
+  `ctx.renderMarkdown`.
+- **Plain Markdown:** `renderToMarkdown()` for email, search indexing, exports,
+  and AI context.
+
+The source document does not need to know which target will consume it.
