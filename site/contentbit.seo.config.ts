@@ -2,25 +2,7 @@ import { defineSeoConfig } from '@contentbit/core'
 
 export default defineSeoConfig({
   pageTypes: {
-    'docs-home': {
-      requiredFrontmatter: ['title', 'description'],
-      requiredSections: ['Next steps'],
-    },
-    'docs-guide': {
-      requiredFrontmatter: ['title', 'description'],
-    },
-    'docs-concept': {
-      requiredFrontmatter: ['title', 'description'],
-    },
-    'docs-reference': {
-      requiredFrontmatter: ['title', 'description'],
-      requiredSections: ['callout', 'comparison', 'faq'],
-    },
-    changelog: {
-      requiredFrontmatter: ['title', 'description'],
-      requiredSections: ['Next'],
-    },
-    'ops-doc': {
+    'docs-page': {
       requiredFrontmatter: ['title', 'description'],
     },
     'blog-post': {
@@ -32,34 +14,9 @@ export default defineSeoConfig({
   },
   pageDefaults: [
     {
-      path: 'content/docs/index.mdx',
-      type: 'docs-home',
-      intent: 'product onboarding',
-    },
-    {
-      path: 'content/docs/changelog.mdx',
-      type: 'changelog',
-      intent: 'release discovery',
-    },
-    {
-      path: 'content/docs/release-checklist.mdx',
-      type: 'ops-doc',
-      intent: 'internal release operations',
-    },
-    {
-      pathPrefix: 'content/docs/guides/',
-      type: 'docs-guide',
+      pathPrefix: 'content/docs/',
+      type: 'docs-page',
       intent: 'documentation',
-    },
-    {
-      pathPrefix: 'content/docs/concepts/',
-      type: 'docs-concept',
-      intent: 'concept education',
-    },
-    {
-      pathPrefix: 'content/docs/reference/',
-      type: 'docs-reference',
-      intent: 'reference',
     },
     {
       pathPrefix: 'content/blog/',
@@ -69,7 +26,7 @@ export default defineSeoConfig({
   ],
   pages: {
     'content/docs/guides/seo-briefs.mdx': {
-      type: 'docs-guide',
+      type: 'docs-page',
       key: 'seo-briefs',
       slug: 'docs/guides/seo-briefs',
       title: 'SEO briefs and contracts',
