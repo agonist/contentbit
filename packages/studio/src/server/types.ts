@@ -20,6 +20,7 @@ export interface StudioFinding {
 export interface StudioKeywordData {
   primary?: string
   secondary?: string[]
+  lsi?: string[]
 }
 
 export interface StudioFileSummary {

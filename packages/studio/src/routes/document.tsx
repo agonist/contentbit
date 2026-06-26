@@ -164,6 +164,16 @@ function DocumentDetail() {
                       </div>
                     </div>
                   )}
+                  {(document.file.keywords.lsi?.length ?? 0) > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-muted-foreground">LSI</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {document.file.keywords.lsi?.map((keyword) => (
+                          <Badge key={keyword}>{keyword}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No keyword frontmatter found.</p>

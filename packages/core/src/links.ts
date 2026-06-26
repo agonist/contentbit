@@ -5,6 +5,7 @@ import type { Diagnostic, SourceRange } from './diagnostics.js'
 const Keywords = z.object({
   primary: z.string().optional(),
   secondary: z.array(z.string()).optional(),
+  lsi: z.array(z.string()).optional(),
 })
 
 const LinkTarget = z.union([
@@ -64,7 +65,7 @@ export interface IndexedPage {
   locale?: string
   path: string
   title?: string
-  keywords?: { primary?: string; secondary?: string[] }
+  keywords?: { primary?: string; secondary?: string[]; lsi?: string[] }
   linksTo: string[]
   linkedFrom: string[]
   aliases: string[]
@@ -314,13 +315,14 @@ export function validateLinks(
     }
   }
 
+  const ambiguousPageKeys = ambiguousValidationPageKeys(validInputs, resolvedOptions)
   const index = buildLinkIndex(inputs, resolvedOptions)
   const lookup = buildLookup(index.pages, resolvedOptions)
 
   for (const { fm } of validInputs) {
-    const page = index.pages.get(
-      pageMapKey(frontmatterIdentity(fm, resolvedOptions), resolvedOptions),
-    )
+    const mapKey = pageMapKey(frontmatterIdentity(fm, resolvedOptions), resolvedOptions)
+    if (ambiguousPageKeys.has(mapKey)) continue
+    const page = index.pages.get(mapKey)
     if (!page) continue
     // alias colliding with a real slug/key in the same scope
     for (const alias of page.aliases) {
@@ -383,6 +385,38 @@ export function validateLinks(
   return out
 }
 
+function ambiguousValidationPageKeys(
+  inputs: Array<{ path: string; fm: LinkFrontmatter }>,
+  options: LinkResolverOptions,
+): Set<string> {
+  const pageCounts = new Map<string, number>()
+  const keyCounts = new Map<string, number>()
+  for (const { fm } of inputs) {
+    const pageKey = pageMapKey(frontmatterIdentity(fm, options), options)
+    increment(pageCounts, pageKey)
+    if (resolvesTargetsByKey(options) && fm.key) {
+      increment(keyCounts, scopedKey(fm.key, effectiveLocale(fm, options), options))
+    }
+  }
+
+  const out = new Set<string>()
+  for (const { fm } of inputs) {
+    const pageKey = pageMapKey(frontmatterIdentity(fm, options), options)
+    const keyKey =
+      resolvesTargetsByKey(options) && fm.key
+        ? scopedKey(fm.key, effectiveLocale(fm, options), options)
+        : undefined
+    if ((pageCounts.get(pageKey) ?? 0) > 1 || (keyKey && (keyCounts.get(keyKey) ?? 0) > 1)) {
+      out.add(pageKey)
+    }
+  }
+  return out
+}
+
+function increment(map: Map<string, number>, key: string): void {
+  map.set(key, (map.get(key) ?? 0) + 1)
+}
+
 function normalizeFrontmatter(
   data: Record<string, unknown>,
   options: LinkResolverOptions,
@@ -391,6 +425,7 @@ function normalizeFrontmatter(
   copyConfiguredField(out, data, options.slugField, 'slug')
   copyConfiguredField(out, data, options.keyField, 'key')
   copyConfiguredField(out, data, options.localeField, 'locale')
+  copyFallbackField(out, data, 'seoKeywords', 'keywords')
   return out
 }
 
@@ -401,6 +436,16 @@ function copyConfiguredField(
   to: string,
 ): void {
   if (!from || from === to || !(from in data) || to in out) return
+  out[to] = data[from]
+}
+
+function copyFallbackField(
+  out: Record<string, unknown>,
+  data: Record<string, unknown>,
+  from: string,
+  to: string,
+): void {
+  if (to in out || !(from in data)) return
   out[to] = data[from]
 }
 
@@ -575,6 +620,13 @@ function single<T>(values: T[] | undefined): T | undefined {
 
 function usesKeyResolution(options: LinkResolverOptions): boolean {
   return options.resolve === 'same-locale-key'
+}
+
+function resolvesTargetsByKey(options: LinkResolverOptions): boolean {
+  return (
+    options.resolve === 'same-locale-key' ||
+    options.resolve === 'prefer-same-locale-key-fallback-slug'
+  )
 }
 
 function collidesWithPageIdentity(

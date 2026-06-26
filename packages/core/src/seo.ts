@@ -10,6 +10,7 @@ export const SEO_RESULT_SCHEMA_VERSION = 'contentbit.seo.v1'
 const KeywordsSchema = z.object({
   primary: z.string().min(1).optional(),
   secondary: z.array(z.string().min(1)).optional(),
+  lsi: z.array(z.string().min(1)).optional(),
 })
 
 const RequiredSectionSchema = z.union([
@@ -112,7 +113,7 @@ export interface SeoPage {
   description?: string
   type?: string
   intent?: string
-  keywords?: { primary?: string; secondary?: string[] }
+  keywords?: { primary?: string; secondary?: string[]; lsi?: string[] }
   linksTo: string[]
   linkedFrom: string[]
   frontmatter: Record<string, unknown>
@@ -251,6 +252,9 @@ export function formatSeoBriefMarkdown(brief: SeoBrief): string {
   if ((brief.target.keywords?.secondary?.length ?? 0) > 0) {
     lines.push(`- Secondary keywords: ${brief.target.keywords!.secondary!.join(', ')}`)
   }
+  if ((brief.target.keywords?.lsi?.length ?? 0) > 0) {
+    lines.push(`- LSI keywords: ${brief.target.keywords!.lsi!.join(', ')}`)
+  }
 
   addList(
     lines,
@@ -336,7 +340,11 @@ function normalizeSeoPages(
       description: stringValue(fm.description) ?? planned?.description ?? defaults?.description,
       type: stringValue(fm.type) ?? stringValue(fm.pageType) ?? planned?.type ?? defaults?.type,
       intent: stringValue(fm.intent) ?? planned?.intent ?? defaults?.intent,
-      keywords: keywordsValue(fm.keywords) ?? planned?.keywords ?? defaults?.keywords,
+      keywords:
+        keywordsValue(fm.keywords) ??
+        keywordsValue(fm.seoKeywords) ??
+        planned?.keywords ??
+        defaults?.keywords,
       linksTo:
         linkPage?.linksTo ?? stringArray(fm.linksTo) ?? planned?.linksTo ?? defaults?.linksTo ?? [],
       linkedFrom: linkPage?.linkedFrom ?? planned?.linkedFrom ?? [],

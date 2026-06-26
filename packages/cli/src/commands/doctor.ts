@@ -2,6 +2,7 @@ import {
   DEFAULT_MIN_SECTION_WORDS,
   type ContentProjectFinding,
   type LinkInput,
+  type LinkResolverOptions,
 } from '@contentbit/core'
 
 import type { Io } from '../run.js'
@@ -52,13 +53,14 @@ export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<
   }
 
   const includeGenericBlocks = !input.noGenericBlocks
+  const linkOptions = linkResolverOptions(input)
   const seoConfig = await loadSeoConfig({ seoConfig: input.seoConfig, noSeo: input.noSeo })
   const { files, scan } = await loadContentProject({
     cmd: 'doctor',
     positionals: input.globs,
     registry: input.registry,
     includeGenericBlocks,
-    linkOptions: linkResolverOptions(input),
+    linkOptions,
     scan: { minSectionWords, seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
   })
   const report: DoctorReport = {
@@ -85,6 +87,7 @@ export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<
         input.globs,
         input.registry,
         includeGenericBlocks,
+        linkOptions,
         hasAliases(scan.linkInputs),
       ),
     )
@@ -112,6 +115,7 @@ function formatReport(
   globs: string[],
   registryPath: string | undefined,
   includeGenericBlocks: boolean,
+  linkOptions: LinkResolverOptions,
   aliasFixMayApply: boolean,
 ): string {
   const lines: string[] = []
@@ -180,17 +184,15 @@ function formatReport(
 
   lines.push('')
   lines.push(section('Next Commands'))
-  const commands = [
-    `contentbit validate ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)}`,
-  ]
+  const registryArgs = formatRegistryArgs(registryPath, includeGenericBlocks)
+  const linkArgs = formatLinkArgs(linkOptions)
+  const commands = [`contentbit validate ${formatGlobs(globs)}${registryArgs}${linkArgs}`]
   if (report.linkGraph) {
-    commands.push(`contentbit links ${formatGlobs(globs)}`)
+    commands.push(`contentbit links ${formatGlobs(globs)}${linkArgs}`)
     if (aliasFixMayApply && report.summary.errors === 0)
-      commands.push(`contentbit links ${formatGlobs(globs)} --fix`)
+      commands.push(`contentbit links ${formatGlobs(globs)}${linkArgs} --fix`)
   }
-  commands.push(
-    `contentbit doctor ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)} --json`,
-  )
+  commands.push(`contentbit doctor ${formatGlobs(globs)}${registryArgs}${linkArgs} --json`)
   lines.push(...formatCommandList(commands))
   return lines.join('\n')
 }
@@ -224,5 +226,15 @@ function formatRegistryArgs(
   const args: string[] = []
   if (registryPath) args.push('--registry', formatArg(registryPath))
   if (!includeGenericBlocks) args.push('--no-generic-blocks')
+  return args.length > 0 ? ` ${args.join(' ')}` : ''
+}
+
+function formatLinkArgs(options: LinkResolverOptions): string {
+  const args: string[] = []
+  if (options.resolve) args.push('--link-resolve', options.resolve)
+  if (options.localeField) args.push('--locale-field', formatArg(options.localeField))
+  if (options.slugField) args.push('--slug-field', formatArg(options.slugField))
+  if (options.keyField) args.push('--key-field', formatArg(options.keyField))
+  if (options.defaultLocale) args.push('--default-locale', formatArg(options.defaultLocale))
   return args.length > 0 ? ` ${args.join(' ')}` : ''
 }

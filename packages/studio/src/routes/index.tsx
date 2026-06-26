@@ -78,6 +78,7 @@ function Dashboard() {
           file.locale,
           file.keywords?.primary,
           ...(file.keywords?.secondary ?? []),
+          ...(file.keywords?.lsi ?? []),
         ]
           .filter(Boolean)
           .join(' ')
@@ -462,7 +463,11 @@ function compareFiles(a: StudioFileSummary, b: StudioFileSummary, sort: SortKey,
 }
 
 function keywordScore(file: StudioFileSummary): number {
-  return (file.keywords?.primary ? 1 : 0) + (file.keywords?.secondary?.length ? 1 : 0)
+  return (
+    (file.keywords?.primary ? 1 : 0) +
+    (file.keywords?.secondary?.length ? 1 : 0) +
+    (file.keywords?.lsi?.length ? 1 : 0)
+  )
 }
 
 function findingScore(file: StudioFileSummary): number {

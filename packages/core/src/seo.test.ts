@@ -155,6 +155,54 @@ test('createSeoBrief works for planned pages', () => {
   expect(brief.acceptanceChecks).toContain('Create the Markdown source file for this planned page.')
 })
 
+test('existing seoKeywords populate SEO pages', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: 'oil.md',
+        source: `---
+key: blog/cooking-oil-smoke-points
+slug: cooking-oil-smoke-points
+type: guide
+seoKeywords:
+  primary: cooking oil smoke points
+  secondary:
+    - oil smoke point chart
+  lsi:
+    - avocado oil smoke point
+---
+
+# Cooking Oil Smoke Points
+
+## Overview
+
+Useful overview text.
+`,
+      },
+    ],
+    registry(),
+    {
+      minSectionWords: 0,
+      seoConfig: defineSeoConfig({
+        pageTypes: {
+          guide: {
+            requiredFrontmatter: ['seoKeywords.primary'],
+            requiredSections: ['Overview'],
+          },
+        },
+      }),
+    },
+  )
+
+  expect(scan.seo?.pages[0].keywords).toEqual({
+    primary: 'cooking oil smoke points',
+    secondary: ['oil smoke point chart'],
+    lsi: ['avocado oil smoke point'],
+  })
+  const brief = createSeoBrief(scan.seo!, 'blog/cooking-oil-smoke-points')
+  expect(brief.target.keywords?.primary).toBe('cooking oil smoke points')
+})
+
 test('relative path config entries merge with absolute scanned file paths', () => {
   const scan = scanContentProject(
     [

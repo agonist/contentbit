@@ -272,7 +272,7 @@ function fileSummary(
   seoPage?: SeoPage,
 ): StudioFileSummary {
   const counts = summarize(findings)
-  const keywords = keywordData(frontmatter.keywords)
+  const keywords = keywordData(frontmatter.keywords) ?? keywordData(frontmatter.seoKeywords)
   const slug = stringValue(frontmatter[options.linkOptions?.slugField ?? 'slug'])
   const key = stringValue(frontmatter[options.linkOptions?.keyField ?? 'key'])
   const locale = stringValue(frontmatter[options.linkOptions?.localeField ?? 'locale'])
@@ -322,8 +322,15 @@ function keywordData(value: unknown): StudioKeywordData | undefined {
   const secondary = Array.isArray(record.secondary)
     ? record.secondary.filter((item): item is string => typeof item === 'string')
     : undefined
-  return primary || (secondary?.length ?? 0) > 0
-    ? { ...(primary ? { primary } : {}), ...(secondary ? { secondary } : {}) }
+  const lsi = Array.isArray(record.lsi)
+    ? record.lsi.filter((item): item is string => typeof item === 'string')
+    : undefined
+  return primary || (secondary?.length ?? 0) > 0 || (lsi?.length ?? 0) > 0
+    ? {
+        ...(primary ? { primary } : {}),
+        ...(secondary ? { secondary } : {}),
+        ...(lsi ? { lsi } : {}),
+      }
     : undefined
 }
 

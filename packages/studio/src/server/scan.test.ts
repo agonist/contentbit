@@ -102,6 +102,38 @@ ${Array.from({ length: 260 }, (_, index) => `word${index}`).join(' ')}
   expect(codes.indexOf('CB_PROPS_INVALID')).toBeLessThan(codes.indexOf('CB_LINK_UNRESOLVED'))
 })
 
+test('scanProject reads seoKeywords as keyword data', async () => {
+  const dir = await fixture({
+    'content/oil.md': `---
+slug: cooking-oil-smoke-points
+seoKeywords:
+  primary: cooking oil smoke points
+  secondary:
+    - oil smoke point chart
+  lsi:
+    - avocado oil smoke point
+---
+
+# Oil Smoke Points
+
+Useful body.
+`,
+  })
+
+  const project = await scanProject({
+    globs: ['content/*.md'],
+    cwd: dir,
+    minSectionWords: 0,
+  })
+
+  expect(project.keywordCoverage).toEqual({ total: 1, withPrimary: 1, withSecondary: 1 })
+  expect(project.files[0].keywords).toEqual({
+    primary: 'cooking oil smoke points',
+    secondary: ['oil smoke point chart'],
+    lsi: ['avocado oil smoke point'],
+  })
+})
+
 test('scanDocument rejects paths outside the matched content set', async () => {
   const dir = await fixture({
     'content/a.md': '---\nslug: alpha\n---\n\n# Alpha\n\nBody.',

@@ -247,6 +247,59 @@ export default [
   expect(out).toContain('--no-generic-blocks')
 })
 
+test('next commands preserve link resolver flags', async () => {
+  const dir = await fixture({
+    'a.md': `---
+lang: fr
+pathSlug: a
+canonicalKey: blog/a
+linksTo:
+  - blog/b
+---
+
+Prose.
+`,
+    'b.md': `---
+lang: fr
+pathSlug: b
+canonicalKey: blog/b
+linksTo:
+  - blog/a
+---
+
+Prose.
+`,
+  })
+
+  const io = fakeIo()
+  const glob = join(dir, '*.md')
+  expect(
+    await run(
+      [
+        'doctor',
+        glob,
+        '--link-resolve',
+        'same-locale-key',
+        '--locale-field',
+        'lang',
+        '--slug-field',
+        'pathSlug',
+        '--key-field',
+        'canonicalKey',
+        '--default-locale',
+        'en',
+      ],
+      io,
+    ),
+  ).toBe(0)
+  const out = io.out.join('\n')
+  const flags =
+    '--link-resolve same-locale-key --locale-field lang --slug-field pathSlug --key-field canonicalKey --default-locale en'
+  expect(out).toContain(`contentbit validate ${glob} ${flags}`)
+  expect(out).toContain(`contentbit links ${glob} ${flags}`)
+  expect(out).toContain(`contentbit doctor ${glob} ${flags} --json`)
+})
+
 test('requires at least one file', async () => {
   expect(await run(['doctor'], fakeIo())).toBe(2)
 })

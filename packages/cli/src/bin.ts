@@ -8,4 +8,4 @@ const code = await run(process.argv.slice(2), {
   stderr: (s: string) => console.error(s),
   writeFile: (path: string, content: string) => writeFile(path, content, 'utf8'),
 })
-process.exit(code)
+process.exitCode = code
