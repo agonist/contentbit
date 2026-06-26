@@ -1,6 +1,6 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { expect, test } from 'vitest'
 
 import { run } from '../run'
@@ -9,7 +9,9 @@ import { fakeIo } from '../run.test'
 async function fixture(files: Record<string, string>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'cb-brief-'))
   for (const [name, content] of Object.entries(files)) {
-    await writeFile(join(dir, name), content, 'utf8')
+    const path = join(dir, name)
+    await mkdir(dirname(path), { recursive: true })
+    await writeFile(path, content, 'utf8')
   }
   return dir
 }
@@ -73,6 +75,44 @@ test('brief --json emits a versioned contract', async () => {
     target: { id: 'ahrefs-alternatives', source: 'planned' },
   })
   expect(report.target.stats).toBeUndefined()
+})
+
+test('brief scans default content files when no globs are provided', async () => {
+  const dir = await fixture({
+    'contentbit.seo.config.ts': seoConfig(),
+    'content/ahrefs.md': `---
+key: ahrefs-alternatives
+slug: ahrefs-alternatives
+title: Actual Ahrefs Alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: actual ahrefs alternatives
+linksTo:
+  - seo-tools-comparison
+---
+
+# Actual Ahrefs Alternatives
+
+## Overview
+
+Useful overview.
+`,
+  })
+  const io = fakeIo()
+  const cwd = process.cwd()
+  process.chdir(dir)
+  try {
+    expect(await run(['brief', 'ahrefs-alternatives'], io)).toBe(0)
+  } finally {
+    process.chdir(cwd)
+  }
+
+  const out = io.out.join('\n')
+  expect(out).toContain('# SEO Brief: Actual Ahrefs Alternatives')
+  expect(out).toContain('- Status: existing')
+  expect(out).toContain('Primary keyword: actual ahrefs alternatives')
+  expect(out).not.toContain('Create the Markdown source file')
 })
 
 test('brief requires an SEO config', async () => {

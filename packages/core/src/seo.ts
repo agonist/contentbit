@@ -557,7 +557,11 @@ function severityRank(severity: Diagnostic['severity']): number {
 }
 
 function findSeoPage(pages: SeoPage[], target: string): SeoPage | undefined {
-  return pages.find((page) => page.key === target || page.slug === target || page.id === target)
+  return (
+    pages.find((page) => page.key === target) ??
+    pages.find((page) => page.slug === target) ??
+    pages.find((page) => page.id === target)
+  )
 }
 
 function pageDefaultsForPath(

@@ -155,6 +155,34 @@ test('createSeoBrief works for planned pages', () => {
   expect(brief.acceptanceChecks).toContain('Create the Markdown source file for this planned page.')
 })
 
+test('createSeoBrief resolves keys before slugs across the whole inventory', () => {
+  const evaluation = evaluateSeoProject({
+    config: defineSeoConfig({
+      pages: {
+        'slug-match': {
+          key: 'aaa',
+          slug: 'target',
+          title: 'Slug Match',
+        },
+        'key-match': {
+          key: 'target',
+          slug: 'other',
+          title: 'Key Match',
+        },
+      },
+    }),
+    files: [],
+  })
+
+  const brief = createSeoBrief(evaluation, 'target')
+
+  expect(brief.target).toMatchObject({
+    key: 'target',
+    slug: 'other',
+    title: 'Key Match',
+  })
+})
+
 test('existing seoKeywords populate SEO pages', () => {
   const scan = scanContentProject(
     [

@@ -1,4 +1,5 @@
 import { createSeoBrief, formatSeoBriefMarkdown, scanContentProject } from '@contentbit/core'
+import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
@@ -6,6 +7,8 @@ import { loadContentProject } from '../content-project.js'
 import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
 import { loadRegistry } from '../load-registry.js'
 import { loadSeoConfig } from '../seo-config.js'
+
+const DEFAULT_BRIEF_GLOBS = ['content/**/*.{md,mdx}']
 
 export interface BriefCommandInput extends LinkOptionValues {
   target: string
@@ -26,12 +29,13 @@ export async function briefCommand(input: BriefCommandInput, io: Io): Promise<nu
   }
 
   const includeGenericBlocks = !input.noGenericBlocks
+  const globs = input.globs.length > 0 ? input.globs : await defaultBriefGlobs()
   const scan =
-    input.globs.length > 0
+    globs.length > 0
       ? (
           await loadContentProject({
             cmd: 'brief',
-            positionals: input.globs,
+            positionals: globs,
             registry: input.registry,
             includeGenericBlocks,
             linkOptions: linkResolverOptions(input),
@@ -64,4 +68,9 @@ export async function briefCommand(input: BriefCommandInput, io: Io): Promise<nu
   if (input.json) io.stdout(JSON.stringify(brief, null, 2))
   else io.stdout(formatSeoBriefMarkdown(brief))
   return 0
+}
+
+async function defaultBriefGlobs(): Promise<string[]> {
+  const matches = await glob(DEFAULT_BRIEF_GLOBS)
+  return matches.length > 0 ? DEFAULT_BRIEF_GLOBS : []
 }
