@@ -67,6 +67,9 @@ importers:
       '@contentbit/core':
         specifier: workspace:*
         version: link:../core
+      '@contentbit/project':
+        specifier: workspace:*
+        version: link:../project
       '@contentbit/studio':
         specifier: workspace:*
         version: link:../studio
@@ -96,6 +99,28 @@ importers:
         specifier: ^4.0.0
         version: 4.4.3
     devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.17
+        version: 4.1.8(@types/node@25.9.2)(happy-dom@20.10.2)(jsdom@28.1.0)(vite@8.0.16(@types/node@25.9.2)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.48.0))
+
+  packages/project:
+    dependencies:
+      '@contentbit/blocks':
+        specifier: workspace:*
+        version: link:../blocks
+      '@contentbit/core':
+        specifier: workspace:*
+        version: link:../core
+      tinyglobby:
+        specifier: ^0.2.10
+        version: 0.2.17
+    devDependencies:
+      '@types/node':
+        specifier: ^25.0.9
+        version: 25.9.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -142,6 +167,9 @@ importers:
       '@contentbit/core':
         specifier: workspace:*
         version: link:../core
+      '@contentbit/project':
+        specifier: workspace:*
+        version: link:../project
       '@contentbit/react':
         specifier: workspace:*
         version: link:../react

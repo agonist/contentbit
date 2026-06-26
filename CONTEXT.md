@@ -18,15 +18,24 @@ concept earns a name, add it here.
   cross-file link graph over a set of source files. Produced by
   `scanContentProject()` in `@contentbit/core`; this is the deep module the CLI
   read-commands are built on.
+- **Page facts** (`ContentPageFacts`) — the canonical page-level facts derived
+  from frontmatter for a document: identity (`key`, `slug`, `locale`), title,
+  description, type, intent, keywords, and declared outgoing links. Page facts
+  normalize project-specific field names and accepted aliases such as
+  `seoKeywords` before SEO, links, or Studio read them.
+- **Link graph view** (`LinkGraphView`) — the read model of a link index for
+  adapters that need graph-shaped data: summary, nodes, edges, and edge status.
+  It is derived from the link index and structured link diagnostics, not from
+  formatted diagnostic messages.
 
 ## CLI
 
-- **Loaded content project** — the CLI-side bundle that turns *(positional
+- **Loaded content project** — the Node-side bundle that turns *(positional
   globs, flags)* into a ready-to-use project: the resolved source files, the
   loaded registry, the read sources, the parsed link options, and the produced
   **content project scan**. Created by `loadContentProject()` in
-  `packages/cli/src/content-project.ts`. It is the single seam the `validate`,
-  `doctor`, and `stats` read-commands cross to obtain their input, so the
+  `@contentbit/project`. It is the single seam the `validate`, `doctor`,
+  `stats`, `brief`, and Studio read paths cross to obtain their input, so the
   glob → registry-load → read → scan plumbing lives in exactly one place.
 - **CliError** — a typed error (`exitCode` + user-facing `message`) thrown by
   CLI input resolution (e.g. no positionals, no files matched) from

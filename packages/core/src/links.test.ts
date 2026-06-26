@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 
+import { createLinkGraphView } from './link-graph.js'
 import { buildLinkIndex, parseLinkFrontmatter, serializeLinkIndex, validateLinks } from './links.js'
 
 test('parses a full authored link frontmatter', () => {
@@ -300,4 +301,26 @@ test('explicit object targets can resolve cross-locale links', () => {
     { resolve: 'same-locale-slug' },
   )
   expect(codes(rows)).toContain('CB_LINK_CROSS_LOCALE')
+})
+
+test('link graph view exposes summary and unresolved edges from structured diagnostics', () => {
+  const inputs = [
+    { path: 'a.md', data: { slug: 'alpha', linksTo: ['beta', 'missing'] } },
+    { path: 'b.md', data: { slug: 'beta', linksTo: ['alpha'] } },
+  ]
+  const diagnostics = validateLinks(inputs)
+  const view = createLinkGraphView(buildLinkIndex(inputs), diagnostics)
+
+  expect(view.summary).toEqual({ pages: 2, links: 3, orphans: 0 })
+  expect(view.edges).toContainEqual({
+    from: '\0alpha',
+    to: '\0beta',
+    target: 'beta',
+    status: 'resolved',
+  })
+  expect(view.edges).toContainEqual({
+    from: '\0alpha',
+    target: 'missing',
+    status: 'unresolved',
+  })
 })

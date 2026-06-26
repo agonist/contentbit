@@ -27,6 +27,23 @@ export {
   type ScanContentProjectOptions,
 } from './project-scan.js'
 export {
+  contentPageIdentity,
+  keywordsValue,
+  normalizeContentPageFrontmatter,
+  readContentPageFacts,
+  type ContentPageFacts,
+  type ContentPageKeywords,
+} from './page-facts.js'
+export {
+  createLinkGraphView,
+  linkGraphSummary,
+  pageIdentity,
+  type LinkGraphEdge,
+  type LinkGraphNode,
+  type LinkGraphSummary,
+  type LinkGraphView,
+} from './link-graph.js'
+export {
   SEO_BRIEF_SCHEMA_VERSION,
   SEO_RESULT_SCHEMA_VERSION,
   createSeoBrief,

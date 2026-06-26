@@ -2,7 +2,12 @@ import { z } from 'zod'
 
 import type { Diagnostic } from './diagnostics.js'
 import type { DocumentStats } from './analyze.js'
-import type { LinkIndex } from './links.js'
+import type { LinkIndex, LinkResolverOptions } from './links.js'
+import {
+  contentPageIdentity,
+  readContentPageFacts,
+  type ContentPageKeywords,
+} from './page-facts.js'
 
 export const SEO_BRIEF_SCHEMA_VERSION = 'contentbit.seo.brief.v1'
 export const SEO_RESULT_SCHEMA_VERSION = 'contentbit.seo.v1'
@@ -109,11 +114,12 @@ export interface SeoPage {
   path?: string
   key?: string
   slug?: string
+  locale?: string
   title?: string
   description?: string
   type?: string
   intent?: string
-  keywords?: { primary?: string; secondary?: string[]; lsi?: string[] }
+  keywords?: ContentPageKeywords
   linksTo: string[]
   linkedFrom: string[]
   frontmatter: Record<string, unknown>
@@ -144,6 +150,7 @@ export interface EvaluateSeoProjectInput {
   config: unknown
   files: SeoProjectFile[]
   linkIndex?: LinkIndex
+  linkOptions?: LinkResolverOptions
   configPath?: string
 }
 
@@ -184,7 +191,7 @@ export function evaluateSeoProject(input: EvaluateSeoProjectInput): SeoProjectEv
     }
   }
 
-  const pages = normalizeSeoPages(parsed.config, input.files, input.linkIndex)
+  const pages = normalizeSeoPages(parsed.config, input.files, input.linkIndex, input.linkOptions)
   const findings: SeoFinding[] = []
   for (const page of pages) {
     if (page.source === 'planned') continue
@@ -285,6 +292,7 @@ function normalizeSeoPages(
   config: SeoConfig,
   files: SeoProjectFile[],
   linkIndex: LinkIndex | undefined,
+  linkOptions: LinkResolverOptions = {},
 ): SeoPage[] {
   const byId = new Map<string, SeoPage>()
   const byConfigId = new Map<string, SeoPage>()
@@ -313,14 +321,13 @@ function normalizeSeoPages(
     linkIndex ? [...linkIndex.pages.values()].map((page) => [page.path, page]) : [],
   )
   for (const file of files) {
-    const fm = file.frontmatter
-    const key = stringValue(fm.key)
-    const slug = stringValue(fm.slug)
-    const id = key ?? slug ?? file.path
+    const facts = readContentPageFacts(file.frontmatter, linkOptions)
+    const fm = facts.frontmatter
+    const id = contentPageIdentity(facts, file.path)
     const defaults = pageDefaultsForPath(config.pageDefaults, file.path)
     const planned =
       byId.get(id) ??
-      (slug ? byId.get(slug) : undefined) ??
+      (facts.slug ? byId.get(facts.slug) : undefined) ??
       findPlannedByPath(byConfigId, file.path)
     const linkPage = linkPageByPath.get(file.path)
     const page: SeoPage = {
@@ -334,19 +341,15 @@ function normalizeSeoPages(
       id: planned?.id ?? id,
       source: 'existing',
       path: file.path,
-      key: key ?? planned?.key,
-      slug: slug ?? planned?.slug,
-      title: stringValue(fm.title) ?? planned?.title ?? file.stats.outline[0]?.text,
-      description: stringValue(fm.description) ?? planned?.description ?? defaults?.description,
-      type: stringValue(fm.type) ?? stringValue(fm.pageType) ?? planned?.type ?? defaults?.type,
-      intent: stringValue(fm.intent) ?? planned?.intent ?? defaults?.intent,
-      keywords:
-        keywordsValue(fm.keywords) ??
-        keywordsValue(fm.seoKeywords) ??
-        planned?.keywords ??
-        defaults?.keywords,
-      linksTo:
-        linkPage?.linksTo ?? stringArray(fm.linksTo) ?? planned?.linksTo ?? defaults?.linksTo ?? [],
+      key: facts.key ?? planned?.key,
+      slug: facts.slug ?? planned?.slug,
+      locale: facts.locale,
+      title: facts.title ?? planned?.title ?? file.stats.outline[0]?.text,
+      description: facts.description ?? planned?.description ?? defaults?.description,
+      type: facts.type ?? planned?.type ?? defaults?.type,
+      intent: facts.intent ?? planned?.intent ?? defaults?.intent,
+      keywords: facts.keywords ?? planned?.keywords ?? defaults?.keywords,
+      linksTo: linkPage?.linksTo ?? facts.linksTo ?? planned?.linksTo ?? defaults?.linksTo ?? [],
       linkedFrom: linkPage?.linkedFrom ?? planned?.linkedFrom ?? [],
       frontmatter: { ...pageToFrontmatter(defaults), ...planned?.frontmatter, ...fm },
       stats: file.stats,
@@ -513,17 +516,8 @@ function pageToFrontmatter(
   }
 }
 
-function stringValue(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() ? value : undefined
-}
-
 function stringArray(value: unknown): string[] | undefined {
   return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : undefined
-}
-
-function keywordsValue(value: unknown): SeoPage['keywords'] | undefined {
-  const parsed = KeywordsSchema.safeParse(value)
-  return parsed.success ? parsed.data : undefined
 }
 
 function getPath(record: Record<string, unknown>, path: string): unknown {

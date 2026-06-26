@@ -1,51 +1,18 @@
 import {
-  scanContentProject,
-  type BlockRegistry,
-  type ContentProjectScan,
-  type ContentProjectSourceFile,
-  type LinkResolverOptions,
-} from '@contentbit/core'
-import { readFile } from 'node:fs/promises'
-import { glob } from 'tinyglobby'
+  loadContentProject as loadProjectContent,
+  ProjectLoadError,
+  resolveContentFiles as resolveProjectContentFiles,
+  type LoadedContentProject,
+  type LoadContentProjectInput,
+} from '@contentbit/project'
 
-import { loadRegistry } from './load-registry.js'
 import { CliError } from './run.js'
+
+export type { LoadedContentProject, LoadContentProjectInput }
 
 /** Glob the positionals into sorted absolute paths. Throws CliError (exit 2). */
 export async function resolveContentFiles(positionals: string[], cmd: string): Promise<string[]> {
-  if (positionals.length === 0) {
-    throw new CliError(2, `${cmd}: provide at least one file or glob.`)
-  }
-  const files = (await glob(positionals, { absolute: true })).sort()
-  if (files.length === 0) {
-    throw new CliError(2, `${cmd}: no files matched ${positionals.join(' ')}`)
-  }
-  return files
-}
-
-export interface LoadContentProjectInput {
-  /** Command name, used to namespace input-error messages. */
-  cmd: string
-  positionals: string[]
-  /** Path to a user `--registry` module, if any. */
-  registry?: string
-  includeGenericBlocks: boolean
-  linkOptions: LinkResolverOptions
-  /** Forwarded to `scanContentProject` (per-command knobs). */
-  scan?: {
-    includeStatsFindings?: boolean
-    minSectionWords?: number
-    seoConfig?: unknown
-    seoConfigPath?: string
-  }
-}
-
-export interface LoadedContentProject {
-  files: string[]
-  registry: BlockRegistry
-  sources: ContentProjectSourceFile[]
-  linkOptions: LinkResolverOptions
-  scan: ContentProjectScan
+  return withCliErrors(() => resolveProjectContentFiles(positionals, cmd))
 }
 
 /**
@@ -57,16 +24,14 @@ export interface LoadedContentProject {
 export async function loadContentProject(
   input: LoadContentProjectInput,
 ): Promise<LoadedContentProject> {
-  const files = await resolveContentFiles(input.positionals, input.cmd)
-  const registry = await loadRegistry(input.registry, {
-    includeGenericBlocks: input.includeGenericBlocks,
-  })
-  const sources = await Promise.all(
-    files.map(async (path) => ({ path, source: await readFile(path, 'utf8') })),
-  )
-  const scan = scanContentProject(sources, registry, {
-    linkOptions: input.linkOptions,
-    ...input.scan,
-  })
-  return { files, registry, sources, linkOptions: input.linkOptions, scan }
+  return withCliErrors(() => loadProjectContent(input))
+}
+
+async function withCliErrors<T>(load: () => Promise<T>): Promise<T> {
+  try {
+    return await load()
+  } catch (err) {
+    if (err instanceof ProjectLoadError) throw new CliError(err.exitCode, err.message)
+    throw err
+  }
 }

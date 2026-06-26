@@ -2,6 +2,7 @@ import {
   aliasReplacementsForPage,
   buildLinkIndex,
   extractFrontmatter,
+  linkGraphSummary,
   serializeLinkIndex,
   validateLinks,
 } from '@contentbit/core'
@@ -79,16 +80,14 @@ export async function linksCommand(input: LinksCommandInput, io: Io): Promise<nu
   await mkdir(dirname(outPath), { recursive: true })
   await io.writeFile(outPath, JSON.stringify(serializeLinkIndex(index), null, 2) + '\n')
 
-  let edges = 0
-  for (const p of index.pages.values()) edges += p.linksTo.length
-  const orphans = [...index.pages.values()].filter((p) => p.linkedFrom.length === 0).length
+  const graph = linkGraphSummary(index)
   io.stdout(
     [
       section('Link Index'),
       ...formatRows([
-        { label: 'Pages', value: index.pages.size },
-        { label: 'Links', value: edges },
-        { label: 'Orphans', value: orphans, tone: orphans > 0 ? 'warning' : 'success' },
+        { label: 'Pages', value: graph.pages },
+        { label: 'Links', value: graph.links },
+        { label: 'Orphans', value: graph.orphans, tone: graph.orphans > 0 ? 'warning' : 'success' },
         { label: 'Errors', value: errors, tone: errors > 0 ? 'error' : 'success' },
         { label: 'Warnings', value: warnings, tone: warnings > 0 ? 'warning' : 'success' },
       ]),

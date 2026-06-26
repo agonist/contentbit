@@ -231,6 +231,81 @@ Useful overview text.
   expect(brief.target.keywords?.primary).toBe('cooking oil smoke points')
 })
 
+test('SEO page facts honor configured identity fields and keyword aliases', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: 'fr/oil.md',
+        source: `---
+lang: fr
+pathSlug: points-de-fumee-huiles
+canonicalKey: blog/cooking-oil-smoke-points
+type: guide
+seoKeywords:
+  primary: points de fumee des huiles
+linksTo:
+  - blog/how-to-season-cast-iron
+---
+
+# Points de fumee des huiles
+
+## Overview
+
+Useful overview text.
+`,
+      },
+      {
+        path: 'fr/cast-iron.md',
+        source: `---
+lang: fr
+pathSlug: culotter-fonte
+canonicalKey: blog/how-to-season-cast-iron
+type: guide
+seoKeywords:
+  primary: culotter une poele en fonte
+linksTo:
+  - blog/cooking-oil-smoke-points
+---
+
+# Culotter une poele en fonte
+
+## Overview
+
+Useful overview text.
+`,
+      },
+    ],
+    registry(),
+    {
+      minSectionWords: 0,
+      linkOptions: {
+        resolve: 'same-locale-key',
+        localeField: 'lang',
+        slugField: 'pathSlug',
+        keyField: 'canonicalKey',
+      },
+      seoConfig: defineSeoConfig({
+        pageTypes: {
+          guide: {
+            requiredFrontmatter: ['key', 'slug', 'keywords.primary'],
+            requiredSections: ['Overview'],
+            minOutgoingLinks: 1,
+            minIncomingLinks: 1,
+          },
+        },
+      }),
+    },
+  )
+
+  expect(scan.seo?.pages.find((page) => page.path === 'fr/oil.md')).toMatchObject({
+    key: 'blog/cooking-oil-smoke-points',
+    slug: 'points-de-fumee-huiles',
+    locale: 'fr',
+    keywords: { primary: 'points de fumee des huiles' },
+  })
+  expect(scan.seo?.findings).toEqual([])
+})
+
 test('relative path config entries merge with absolute scanned file paths', () => {
   const scan = scanContentProject(
     [

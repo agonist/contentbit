@@ -1,11 +1,10 @@
-import { createSeoBrief, formatSeoBriefMarkdown, scanContentProject } from '@contentbit/core'
+import { createSeoBrief, formatSeoBriefMarkdown } from '@contentbit/core'
 import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
 import { loadContentProject } from '../content-project.js'
 import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
-import { loadRegistry } from '../load-registry.js'
 import { loadSeoConfig } from '../seo-config.js'
 
 const DEFAULT_BRIEF_GLOBS = ['content/**/*.{md,mdx}']
@@ -29,24 +28,17 @@ export async function briefCommand(input: BriefCommandInput, io: Io): Promise<nu
   }
 
   const includeGenericBlocks = !input.noGenericBlocks
-  const globs = input.globs.length > 0 ? input.globs : await defaultBriefGlobs()
-  const scan =
-    globs.length > 0
-      ? (
-          await loadContentProject({
-            cmd: 'brief',
-            positionals: globs,
-            registry: input.registry,
-            includeGenericBlocks,
-            linkOptions: linkResolverOptions(input),
-            scan: { seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
-          })
-        ).scan
-      : scanContentProject([], await loadRegistry(input.registry, { includeGenericBlocks }), {
-          linkOptions: linkResolverOptions(input),
-          seoConfig: seoConfig.config,
-          seoConfigPath: seoConfig.path,
-        })
+  const explicitGlobs = input.globs.length > 0
+  const globs = explicitGlobs ? input.globs : await defaultBriefGlobs()
+  const { scan } = await loadContentProject({
+    cmd: 'brief',
+    positionals: globs,
+    registry: input.registry,
+    includeGenericBlocks,
+    linkOptions: linkResolverOptions(input),
+    scan: { seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
+    allowEmpty: !explicitGlobs && globs.length === 0,
+  })
 
   if (!scan.seo) {
     io.stderr('brief: SEO scan did not produce a result.')

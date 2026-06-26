@@ -1,11 +1,12 @@
 import type { Diagnostic } from './diagnostics.js'
-import type { LinkIndex, LinkInput, LinkResolverOptions } from './links.js'
+import type { LinkDiagnostic, LinkIndex, LinkInput, LinkResolverOptions } from './links.js'
 import type { BlockRegistry } from './registry.js'
 import type { DocumentStats } from './analyze.js'
 import type { ValidationResult } from './validate.js'
 
 import { analyzeDocument } from './analyze.js'
 import { extractFrontmatter, stripFrontmatter } from './frontmatter.js'
+import { createLinkGraphView, type LinkGraphSummary } from './link-graph.js'
 import { buildLinkIndex, validateLinks } from './links.js'
 import { parseDocument } from './parser.js'
 import { evaluateSeoProject, type SeoProjectEvaluation } from './seo.js'
@@ -44,17 +45,14 @@ export interface ContentProjectFileScan {
   findings: ContentProjectFinding[]
 }
 
-export interface ContentProjectLinkGraph {
-  pages: number
-  links: number
-  orphans: number
-}
+export type ContentProjectLinkGraph = LinkGraphSummary
 
 export interface ContentProjectScan {
   files: ContentProjectFileScan[]
   findings: ContentProjectFinding[]
   summary: ContentProjectFindingSummary
   linkInputs: LinkInput[]
+  linkDiagnostics?: LinkDiagnostic[]
   linkIndex?: LinkIndex
   linkGraph?: ContentProjectLinkGraph
   seo?: SeoProjectEvaluation
@@ -109,15 +107,17 @@ export function scanContentProject(
 
   let linkIndex: LinkIndex | undefined
   let linkGraph: ContentProjectLinkGraph | undefined
+  let linkDiagnostics: LinkDiagnostic[] | undefined
   if (hasLinkFrontmatter(linkInputs, options.linkOptions?.slugField)) {
-    for (const { file, diagnostic } of validateLinks(linkInputs, options.linkOptions)) {
+    linkDiagnostics = validateLinks(linkInputs, options.linkOptions)
+    for (const { file, diagnostic } of linkDiagnostics) {
       const finding = findingFromDiagnostic('links', file, diagnostic)
       findings.push(finding)
       const scanned = scannedFiles.find((item) => item.path === file)
       if (scanned) scanned.findings.push(finding)
     }
     linkIndex = buildLinkIndex(linkInputs, options.linkOptions)
-    linkGraph = linkGraphSummary(linkIndex)
+    linkGraph = createLinkGraphView(linkIndex, linkDiagnostics).summary
   }
 
   const seo = options.seoConfig
@@ -130,6 +130,7 @@ export function scanContentProject(
           stats: file.stats,
         })),
         linkIndex,
+        linkOptions: options.linkOptions,
       })
     : undefined
   if (seo) {
@@ -148,6 +149,7 @@ export function scanContentProject(
     findings,
     summary: summarizeContentProjectFindings(findings),
     linkInputs,
+    ...(linkDiagnostics ? { linkDiagnostics } : {}),
     ...(linkIndex ? { linkIndex } : {}),
     ...(linkGraph ? { linkGraph } : {}),
     ...(seo ? { seo } : {}),
@@ -240,16 +242,6 @@ function statsFindings(
 function hasLinkFrontmatter(inputs: LinkInput[], configuredSlugField: string | undefined): boolean {
   const slugField = configuredSlugField ?? 'slug'
   return inputs.some((input) => Object.prototype.hasOwnProperty.call(input.data, slugField))
-}
-
-function linkGraphSummary(index: LinkIndex): ContentProjectLinkGraph {
-  let links = 0
-  for (const page of index.pages.values()) links += page.linksTo.length
-  return {
-    pages: index.pages.size,
-    links,
-    orphans: [...index.pages.values()].filter((page) => page.linkedFrom.length === 0).length,
-  }
 }
 
 function findingRank(finding: ContentProjectFinding): number {

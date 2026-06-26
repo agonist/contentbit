@@ -1,24 +1,14 @@
 {
-  "name": "contentbit",
+  "name": "@contentbit/project",
   "version": "0.5.0",
-  "description": "CLI for Content Blocks: validate, render, and generate LLM authoring instructions from your registry.",
-  "keywords": [
-    "cli",
-    "content-blocks",
-    "llm",
-    "markdown",
-    "validation"
-  ],
+  "description": "Node project loading utilities for contentbit adapters.",
   "homepage": "https://contentbit.dev",
   "bugs": "https://github.com/agonist/contentbit/issues",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/agonist/contentbit.git",
-    "directory": "packages/cli"
-  },
-  "bin": {
-    "contentbit": "./dist/bin.js"
+    "directory": "packages/project"
   },
   "files": [
     "dist"
@@ -27,31 +17,26 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/run.d.ts",
-      "import": "./dist/run.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node build.mjs",
+    "build": "tsc -p tsconfig.build.json",
     "prepublishOnly": "node ../../scripts/require-pnpm-publish.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@clack/prompts": "^1.5.1",
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
-    "@contentbit/project": "workspace:*",
-    "@contentbit/studio": "workspace:*",
-    "commander": "^15.0.0",
     "tinyglobby": "^0.2.10"
   },
   "devDependencies": {
     "@types/node": "^25.0.9",
-    "esbuild": "^0.28.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.17"
   },
