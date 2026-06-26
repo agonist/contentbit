@@ -35,13 +35,20 @@ const SeoConfigPageSchema = z.object({
   key: z.string().min(1).optional(),
   slug: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
   intent: z.string().min(1).optional(),
   keywords: KeywordsSchema.optional(),
   linksTo: z.array(z.string().min(1)).optional(),
 })
 
+const SeoPageDefaultsSchema = SeoConfigPageSchema.extend({
+  path: z.string().min(1).optional(),
+  pathPrefix: z.string().min(1).optional(),
+})
+
 const SeoConfigSchema = z.object({
   pageTypes: z.record(z.string().min(1), SeoPageTypeSchema).default({}),
+  pageDefaults: z.array(SeoPageDefaultsSchema).default([]),
   pages: z.record(z.string().min(1), SeoConfigPageSchema).default({}),
 })
 
@@ -49,6 +56,7 @@ export type SeoRequiredSectionInput = z.input<typeof RequiredSectionSchema>
 export type SeoConfigInput = z.input<typeof SeoConfigSchema>
 export type SeoPageTypeContract = z.infer<typeof SeoPageTypeSchema>
 export type SeoConfigPage = z.infer<typeof SeoConfigPageSchema>
+export type SeoPageDefaults = z.infer<typeof SeoPageDefaultsSchema>
 export type SeoConfig = z.infer<typeof SeoConfigSchema>
 
 export interface NormalizedSeoSection {
@@ -101,6 +109,7 @@ export interface SeoPage {
   key?: string
   slug?: string
   title?: string
+  description?: string
   type?: string
   intent?: string
   keywords?: { primary?: string; secondary?: string[] }
@@ -170,7 +179,7 @@ export function evaluateSeoProject(input: EvaluateSeoProjectInput): SeoProjectEv
       schemaVersion: SEO_RESULT_SCHEMA_VERSION,
       pages: [],
       findings: parsed.findings,
-      config: { pageTypes: {}, pages: {} },
+      config: { pageTypes: {}, pageDefaults: [], pages: {} },
     }
   }
 
@@ -284,6 +293,7 @@ function normalizeSeoPages(
       ...(key ? { key } : {}),
       ...(slug ? { slug } : {}),
       ...(page.title ? { title: page.title } : {}),
+      ...(page.description ? { description: page.description } : {}),
       ...(page.type ? { type: page.type } : {}),
       ...(page.intent ? { intent: page.intent } : {}),
       ...(page.keywords ? { keywords: page.keywords } : {}),
@@ -303,6 +313,7 @@ function normalizeSeoPages(
     const key = stringValue(fm.key)
     const slug = stringValue(fm.slug)
     const id = key ?? slug ?? file.path
+    const defaults = pageDefaultsForPath(config.pageDefaults, file.path)
     const planned =
       byId.get(id) ??
       (slug ? byId.get(slug) : undefined) ??
@@ -322,12 +333,14 @@ function normalizeSeoPages(
       key: key ?? planned?.key,
       slug: slug ?? planned?.slug,
       title: stringValue(fm.title) ?? planned?.title ?? file.stats.outline[0]?.text,
-      type: stringValue(fm.type) ?? stringValue(fm.pageType) ?? planned?.type,
-      intent: stringValue(fm.intent) ?? planned?.intent,
-      keywords: keywordsValue(fm.keywords) ?? planned?.keywords,
-      linksTo: linkPage?.linksTo ?? stringArray(fm.linksTo) ?? planned?.linksTo ?? [],
+      description: stringValue(fm.description) ?? planned?.description ?? defaults?.description,
+      type: stringValue(fm.type) ?? stringValue(fm.pageType) ?? planned?.type ?? defaults?.type,
+      intent: stringValue(fm.intent) ?? planned?.intent ?? defaults?.intent,
+      keywords: keywordsValue(fm.keywords) ?? planned?.keywords ?? defaults?.keywords,
+      linksTo:
+        linkPage?.linksTo ?? stringArray(fm.linksTo) ?? planned?.linksTo ?? defaults?.linksTo ?? [],
       linkedFrom: linkPage?.linkedFrom ?? planned?.linkedFrom ?? [],
-      frontmatter: { ...planned?.frontmatter, ...fm },
+      frontmatter: { ...pageToFrontmatter(defaults), ...planned?.frontmatter, ...fm },
       stats: file.stats,
     }
     byId.set(page.id, page)
@@ -476,12 +489,16 @@ function pageHasBlock(page: SeoPage, block: string): boolean {
   return (page.stats?.blocks.byName[block] ?? 0) > 0
 }
 
-function pageToFrontmatter(page: SeoConfigPage): Record<string, unknown> {
+function pageToFrontmatter(
+  page: SeoConfigPage | SeoPageDefaults | undefined,
+): Record<string, unknown> {
+  if (!page) return {}
   return {
     ...(page.type ? { type: page.type } : {}),
     ...(page.key ? { key: page.key } : {}),
     ...(page.slug ? { slug: page.slug } : {}),
     ...(page.title ? { title: page.title } : {}),
+    ...(page.description ? { description: page.description } : {}),
     ...(page.intent ? { intent: page.intent } : {}),
     ...(page.keywords ? { keywords: page.keywords } : {}),
     ...(page.linksTo ? { linksTo: page.linksTo } : {}),
@@ -533,6 +550,22 @@ function severityRank(severity: Diagnostic['severity']): number {
 
 function findSeoPage(pages: SeoPage[], target: string): SeoPage | undefined {
   return pages.find((page) => page.key === target || page.slug === target || page.id === target)
+}
+
+function pageDefaultsForPath(
+  defaults: SeoPageDefaults[],
+  filePath: string,
+): SeoPageDefaults | undefined {
+  const normalizedFilePath = normalizePath(filePath)
+  return defaults.find((defaultsEntry) => {
+    if (defaultsEntry.path && pathMatches(normalizePath(defaultsEntry.path), normalizedFilePath))
+      return true
+    if (defaultsEntry.pathPrefix) {
+      const prefix = normalizePath(defaultsEntry.pathPrefix).replace(/\/?$/, '/')
+      return normalizedFilePath.includes(`/${prefix}`) || normalizedFilePath.startsWith(prefix)
+    }
+    return false
+  })
 }
 
 function findPlannedByPath(byId: Map<string, SeoPage>, filePath: string): SeoPage | undefined {

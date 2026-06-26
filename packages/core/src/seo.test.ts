@@ -206,3 +206,62 @@ Useful overview text.
   })
   expect(scan.seo?.findings).toEqual([])
 })
+
+test('path defaults classify existing pages without repeating frontmatter facts', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/repo/site/content/blog/launch.md',
+        source: `---
+title: Launch post
+description: Ship note.
+slug: launch
+linksTo:
+  - docs
+keywords:
+  primary: launch post
+---
+
+# Launch post
+
+:::callout{type="tip"}
+Ship it.
+:::
+`,
+      },
+    ],
+    registry(),
+    {
+      seoConfig: defineSeoConfig({
+        pageTypes: {
+          'blog-post': {
+            requiredFrontmatter: ['title', 'description', 'slug', 'keywords.primary'],
+            requiredBlocks: ['callout'],
+            minOutgoingLinks: 1,
+          },
+        },
+        pageDefaults: [
+          {
+            pathPrefix: 'content/blog/',
+            type: 'blog-post',
+            intent: 'publication',
+          },
+        ],
+        pages: {},
+      }),
+    },
+  )
+
+  expect(scan.seo?.pages).toHaveLength(1)
+  expect(scan.seo?.pages[0]).toMatchObject({
+    id: 'launch',
+    source: 'existing',
+    slug: 'launch',
+    title: 'Launch post',
+    type: 'blog-post',
+    intent: 'publication',
+    keywords: { primary: 'launch post' },
+    linksTo: ['docs'],
+  })
+  expect(scan.seo?.findings).toEqual([])
+})
