@@ -2,7 +2,6 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { parseArgs } from 'node:util'
 
 import type { Io } from '../run.js'
 
@@ -96,6 +95,58 @@ stays as the rename record.
 :::
 `
 
+const SEO_CONFIG_TEMPLATE = `import { defineSeoConfig } from '@contentbit/core'
+
+export default defineSeoConfig({
+  pageTypes: {
+    alternative: {
+      requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+      requiredSections: [
+        { id: 'overview', headings: ['Overview', 'Summary'] },
+        { id: 'alternatives', headings: ['Best alternatives', 'Top alternatives'] },
+        { id: 'comparison', headings: ['Comparison', 'Feature comparison'] },
+        { id: 'faq', headings: ['FAQ', 'Frequently asked questions'] },
+      ],
+      requiredBlocks: ['comparison'],
+      recommendedBlocks: ['faq', 'key-metrics'],
+      minOutgoingLinks: 2,
+    },
+    comparison: {
+      requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+      requiredSections: [
+        { id: 'overview', headings: ['Overview', 'Summary'] },
+        { id: 'comparison', headings: ['Comparison', 'Feature comparison'] },
+        { id: 'recommendation', headings: ['Recommendation', 'Which should you choose?'] },
+      ],
+      requiredBlocks: ['comparison'],
+      recommendedBlocks: ['faq'],
+      minOutgoingLinks: 2,
+    },
+    integration: {
+      requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+      requiredSections: [
+        { id: 'overview', headings: ['Overview', 'Summary'] },
+        { id: 'setup', headings: ['Setup', 'How to connect'] },
+        { id: 'use-cases', headings: ['Use cases', 'Common workflows'] },
+      ],
+      recommendedBlocks: ['steps', 'faq'],
+      minOutgoingLinks: 2,
+    },
+    'use-case': {
+      requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+      requiredSections: [
+        { id: 'overview', headings: ['Overview', 'Summary'] },
+        { id: 'workflow', headings: ['Workflow', 'How it works'] },
+        { id: 'outcomes', headings: ['Outcomes', 'Results'] },
+      ],
+      recommendedBlocks: ['steps', 'key-metrics'],
+      minOutgoingLinks: 2,
+    },
+  },
+  pages: {},
+})
+`
+
 function detectPackageManager(cwd: string): string {
   // The project's lockfile outranks however the CLI itself was launched.
   const locks: Array<[string, string]> = [
@@ -175,21 +226,20 @@ async function scaffold(path: string, content: string): Promise<'created' | 'ski
   }
 }
 
-export async function initCommand(args: string[], io: Io): Promise<number> {
-  const { values } = parseArgs({
-    args,
-    options: {
-      target: { type: 'string', short: 't' },
-      md: { type: 'string' },
-      yes: { type: 'boolean', short: 'y', default: false },
-      cwd: { type: 'string', default: process.cwd() },
-      'no-install': { type: 'boolean', default: false },
-      'no-page': { type: 'boolean', default: false },
-      'no-styled': { type: 'boolean', default: false },
-      'no-agents': { type: 'boolean', default: false },
-    },
-  })
-  const cwd = values.cwd
+export interface InitCommandInput {
+  target?: string
+  md?: string
+  yes?: boolean
+  cwd?: string
+  noInstall?: boolean
+  noPage?: boolean
+  noStyled?: boolean
+  noAgents?: boolean
+  seo?: boolean
+}
+
+export async function initCommand(input: InitCommandInput, io: Io): Promise<number> {
+  const cwd = input.cwd ?? process.cwd()
 
   // A project to init into is required.
   let pkg: {
@@ -210,13 +260,13 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   // Resolve the render target: flag > prompt (interactive) > detection.
   const detected = detectTarget(deps)
   let target: Target
-  if (values.target) {
-    if (!TARGETS.includes(values.target as Target)) {
-      io.stderr(`Unknown target "${values.target}". Use one of: ${TARGETS.join(', ')}`)
+  if (input.target) {
+    if (!TARGETS.includes(input.target as Target)) {
+      io.stderr(`Unknown target "${input.target}". Use one of: ${TARGETS.join(', ')}`)
       return 2
     }
-    target = values.target as Target
-  } else if (!values.yes && process.stdin.isTTY && process.stdout.isTTY) {
+    target = input.target as Target
+  } else if (!input.yes && process.stdin.isTTY && process.stdout.isTTY) {
     const { isCancel, select } = await import('@clack/prompts')
     const answer = await select({
       message: 'Render target?',
@@ -238,13 +288,13 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
   // The default gives working prose rendering out of the box; 'none' opts out.
   const choices = adapter.markdownChoices
   let md: Md
-  if (values.md) {
-    if (!choices.includes(values.md as Md)) {
-      io.stderr(`Unknown markdown library "${values.md}". Use one of: ${choices.join(', ')}`)
+  if (input.md) {
+    if (!choices.includes(input.md as Md)) {
+      io.stderr(`Unknown markdown library "${input.md}". Use one of: ${choices.join(', ')}`)
       return 2
     }
-    md = values.md as Md
-  } else if (choices.length > 1 && !values.yes && process.stdin.isTTY && process.stdout.isTTY) {
+    md = input.md as Md
+  } else if (choices.length > 1 && !input.yes && process.stdin.isTTY && process.stdout.isTTY) {
     const { isCancel, select } = await import('@clack/prompts')
     const answer = await select({
       message: 'Markdown library for prose rendering?',
@@ -263,7 +313,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   // Install runtime packages plus the CLI as a dev dependency.
   const runtime = adapter.runtimeDependencies(md)
-  if (values['no-install']) {
+  if (input.noInstall) {
     io.stdout(`skipped install: ${runtime.join(' ')} + contentbit (dev)`)
   } else {
     const pm = detectPackageManager(cwd)
@@ -282,10 +332,10 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     cwd,
     deps,
     md,
-    noPage: Boolean(values['no-page']),
-    noStyled: Boolean(values['no-styled']),
+    noPage: Boolean(input.noPage),
+    noStyled: Boolean(input.noStyled),
     io,
-    installStyledPack: (pack) => installStyledPack(cwd, pack, values['no-install'], io),
+    installStyledPack: (pack) => installStyledPack(cwd, pack, Boolean(input.noInstall), io),
   })
 
   // Scaffold project files; never overwrite.
@@ -295,6 +345,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
     ['content/related.md', RELATED_CONTENT],
     ...plan.files,
   ]
+  if (input.seo) files.push(['contentbit.seo.config.ts', SEO_CONFIG_TEMPLATE])
   for (const [rel, content] of files) {
     const result = await scaffold(join(cwd, rel), content)
     io.stdout(`${result}: ${rel}`)
@@ -346,7 +397,7 @@ export async function initCommand(args: string[], io: Io): Promise<number> {
 
   // Coding-agent integration: an AGENTS.md block for every agent, plus Claude
   // Code skills when a .claude/ directory exists. `contentbit agents` refreshes.
-  if (!values['no-agents']) {
+  if (!input.noAgents) {
     await installAgentIntegration(cwd, {}, io)
     io.stdout('Agent integration installed — try asking your agent:')
     io.stdout('  "write a blog post about X" or "audit my content"')

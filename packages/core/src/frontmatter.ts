@@ -89,20 +89,39 @@ function parseValue(value: string, indented: string[]): unknown {
   return parseScalar(value)
 }
 
-// A one-level mapping: every dedented line is `key: scalar` (or `key:` with an
-// inline array value). Returns null if any line isn't a flat mapping entry —
-// e.g. a deeper-indented line or a `key:` with no inline value, which would
-// need its own nested block — so the caller keeps the raw-text fallback.
+// A small nested mapping parser for common frontmatter shapes: `key: scalar`,
+// inline arrays, and one-more-level dash lists. Returns null if the block uses
+// YAML we do not understand, so the caller keeps the raw-text fallback.
 function parseNestedMapping(items: string[]): Record<string, unknown> | null {
   const out: Record<string, unknown> = {}
-  for (const line of items) {
+  let i = 0
+  while (i < items.length) {
+    const line = items[i]
     if (/^[ \t]/.test(line)) return null
     const m = line.match(KEY_RE)
     if (!m) return null
     const [, key, rawValue] = m
     const v = rawValue.trim()
-    if (v === '') return null
-    out[key] = parseScalar(v)
+    i++
+    if (v !== '') {
+      out[key] = parseScalar(v)
+      continue
+    }
+
+    const childLines: string[] = []
+    while (i < items.length && /^[ \t]/.test(items[i]) && items[i].trim() !== '') {
+      childLines.push(items[i])
+      i++
+    }
+    if (childLines.length === 0) {
+      out[key] = null
+      continue
+    }
+
+    const nested = dedent(childLines)
+    const list = parseDashList(nested)
+    if (list) out[key] = list
+    else return null
   }
   return Object.keys(out).length > 0 ? out : null
 }

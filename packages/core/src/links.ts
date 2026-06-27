@@ -1,11 +1,7 @@
 import { z } from 'zod'
 
 import type { Diagnostic, SourceRange } from './diagnostics.js'
-
-const Keywords = z.object({
-  primary: z.string().optional(),
-  secondary: z.array(z.string()).optional(),
-})
+import { normalizeContentPageFrontmatter } from './page-facts.js'
 
 const LinkTarget = z.union([
   z.string(),
@@ -27,7 +23,13 @@ const LinkFrontmatter = z.object({
   title: z.string().optional(),
   linksTo: z.array(LinkTarget).optional(),
   aliases: z.array(z.string()).optional(),
-  keywords: Keywords.optional(),
+  keywords: z
+    .object({
+      primary: z.string().optional(),
+      secondary: z.array(z.string()).optional(),
+      lsi: z.array(z.string()).optional(),
+    })
+    .optional(),
 })
 
 export type LinkTarget = z.infer<typeof LinkTarget>
@@ -64,7 +66,7 @@ export interface IndexedPage {
   locale?: string
   path: string
   title?: string
-  keywords?: { primary?: string; secondary?: string[] }
+  keywords?: { primary?: string; secondary?: string[]; lsi?: string[] }
   linksTo: string[]
   linkedFrom: string[]
   aliases: string[]
@@ -104,6 +106,7 @@ export interface SerializedLinkIndex {
 export interface LinkDiagnostic {
   file: string
   diagnostic: Diagnostic
+  target?: string
 }
 
 interface ResolvedTarget {
@@ -130,7 +133,7 @@ export function parseLinkFrontmatter(
   data: Record<string, unknown>,
   options: LinkResolverOptions = {},
 ): ParseLinkResult {
-  const normalized = normalizeFrontmatter(data, options)
+  const normalized = normalizeContentPageFrontmatter(data, options)
   if (!('slug' in normalized)) return { ok: true, value: null }
   const parsed = LinkFrontmatter.safeParse(normalized)
   if (parsed.success) return { ok: true, value: parsed.data }
@@ -314,13 +317,14 @@ export function validateLinks(
     }
   }
 
+  const ambiguousPageKeys = ambiguousValidationPageKeys(validInputs, resolvedOptions)
   const index = buildLinkIndex(inputs, resolvedOptions)
   const lookup = buildLookup(index.pages, resolvedOptions)
 
   for (const { fm } of validInputs) {
-    const page = index.pages.get(
-      pageMapKey(frontmatterIdentity(fm, resolvedOptions), resolvedOptions),
-    )
+    const mapKey = pageMapKey(frontmatterIdentity(fm, resolvedOptions), resolvedOptions)
+    if (ambiguousPageKeys.has(mapKey)) continue
+    const page = index.pages.get(mapKey)
     if (!page) continue
     // alias colliding with a real slug/key in the same scope
     for (const alias of page.aliases) {
@@ -359,6 +363,8 @@ export function validateLinks(
               'CB_LINK_LOCALE_MISSING',
               'error',
               `linksTo "${resolved.target}" exists in another locale but not "${page.locale ?? 'default'}"`,
+              undefined,
+              resolved.target,
             ),
           )
           continue
@@ -371,6 +377,7 @@ export function validateLinks(
             'error',
             `linksTo "${resolved.target}" does not resolve to any page`,
             hint ? `Did you mean "${hint}"?` : undefined,
+            resolved.target,
           ),
         )
       }
@@ -383,25 +390,36 @@ export function validateLinks(
   return out
 }
 
-function normalizeFrontmatter(
-  data: Record<string, unknown>,
+function ambiguousValidationPageKeys(
+  inputs: Array<{ path: string; fm: LinkFrontmatter }>,
   options: LinkResolverOptions,
-): Record<string, unknown> {
-  const out = { ...data }
-  copyConfiguredField(out, data, options.slugField, 'slug')
-  copyConfiguredField(out, data, options.keyField, 'key')
-  copyConfiguredField(out, data, options.localeField, 'locale')
+): Set<string> {
+  const pageCounts = new Map<string, number>()
+  const keyCounts = new Map<string, number>()
+  for (const { fm } of inputs) {
+    const pageKey = pageMapKey(frontmatterIdentity(fm, options), options)
+    increment(pageCounts, pageKey)
+    if (resolvesTargetsByKey(options) && fm.key) {
+      increment(keyCounts, scopedKey(fm.key, effectiveLocale(fm, options), options))
+    }
+  }
+
+  const out = new Set<string>()
+  for (const { fm } of inputs) {
+    const pageKey = pageMapKey(frontmatterIdentity(fm, options), options)
+    const keyKey =
+      resolvesTargetsByKey(options) && fm.key
+        ? scopedKey(fm.key, effectiveLocale(fm, options), options)
+        : undefined
+    if ((pageCounts.get(pageKey) ?? 0) > 1 || (keyKey && (keyCounts.get(keyKey) ?? 0) > 1)) {
+      out.add(pageKey)
+    }
+  }
   return out
 }
 
-function copyConfiguredField(
-  out: Record<string, unknown>,
-  data: Record<string, unknown>,
-  from: string | undefined,
-  to: string,
-): void {
-  if (!from || from === to || !(from in data) || to in out) return
-  out[to] = data[from]
+function increment(map: Map<string, number>, key: string): void {
+  map.set(key, (map.get(key) ?? 0) + 1)
 }
 
 function effectiveLocale(
@@ -577,6 +595,13 @@ function usesKeyResolution(options: LinkResolverOptions): boolean {
   return options.resolve === 'same-locale-key'
 }
 
+function resolvesTargetsByKey(options: LinkResolverOptions): boolean {
+  return (
+    options.resolve === 'same-locale-key' ||
+    options.resolve === 'prefer-same-locale-key-fallback-slug'
+  )
+}
+
 function collidesWithPageIdentity(
   alias: string,
   locale: string | undefined,
@@ -636,8 +661,9 @@ function diag(
   severity: Diagnostic['severity'],
   message: string,
   hint?: string,
+  target?: string,
 ): LinkDiagnostic {
-  return { file, diagnostic: { code, severity, message, hint, position: FM_POSITION } }
+  return { file, diagnostic: { code, severity, message, hint, position: FM_POSITION }, target }
 }
 
 // Levenshtein distance for did-you-mean hints. Small inputs (slugs), so the

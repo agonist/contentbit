@@ -1,13 +1,24 @@
 ---
-title: Renderers
-description: React, Astro, and plain-Markdown output from the same document.
+title: Render documents
+description: Render a validated contentbit document in React, Astro, or plain Markdown.
 ---
 
-Renderers consume a validated document. The parser and registry know nothing
-about React or Astro. Contentbit should complement your host renderer, not
-replace it: use it for block structure, validation, metadata, and link graphs,
-while your app keeps owning normal Markdown prose and block UI. Three targets
-ship today: React, Astro, and a plain-Markdown fallback.
+Renderers consume a validated document. Parse and validate first, then hand the
+result to the target that matches your app:
+
+```ts
+import { genericBlocks } from '@contentbit/blocks'
+import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+
+const registry = createBlockRegistry().use(genericBlocks())
+const result = validateDocument(parseDocument(markdown), registry)
+
+if (!result.ok) {
+  throw new Error('Content did not validate.')
+}
+```
+
+For the design behind this split, see [Rendering model](/docs/concepts/rendering-model).
 
 ## React
 
@@ -22,9 +33,9 @@ import { ContentBlocks } from '@contentbit/react'
 />
 ```
 
-`@contentbit/react` is a headless dispatcher: it renders Markdown segments
-through `renderMarkdown`, calls your block components by name, and uses
-`fallback` for invalid or unregistered blocks.
+`@contentbit/react` renders Markdown segments through `renderMarkdown`, calls
+your block components by name, and uses `fallback` for invalid or unregistered
+blocks in development surfaces.
 
 For pre-made components, install the shadcn pack. The files land in your app and
 are yours to edit:
@@ -44,6 +55,7 @@ import QuoteBlock from '../blocks/QuoteBlock.astro'
 <ContentBlocks
   document={result.document}
   components={{ quote: QuoteBlock }}
+  renderMarkdown={renderMarkdown}
   onInvalid="annotated"
 />
 ```
@@ -52,9 +64,8 @@ Per-block overrides are plain `.astro` components: validated props arrive as
 component props, nested content via `<slot />`, and the raw AST node as the
 reserved `node` prop. They also receive `ctx`, currently `{ renderMarkdown }`,
 so Markdown strings inside `node.data` can use the same site pipeline as normal
-prose. Pass `renderMarkdown` when you want Astro/Sätteri or another site
-pipeline to render prose. The `onInvalid` default is `annotated`, which keeps
-invalid blocks loud during dev. Full guide: [Astro](/docs/guides/astro).
+prose. The `onInvalid` default is `annotated`, which keeps invalid blocks loud
+during dev. Full guide: [Astro](/docs/guides/astro).
 
 For pre-made Astro components:
 
@@ -74,4 +85,10 @@ const md = renderToMarkdown(result.document, { renderers: genericMarkdownRendere
 Comparisons become Markdown tables, key metrics become bold-value bullets, tabs
 become headed sections. Useful for email, exports, search indexing, and any
 environment without a component runtime. Blocks without a renderer degrade to their
-raw body — information is never lost.
+raw body, so information is not lost.
+
+## Markdown prose
+
+React and Astro renderers both need a Markdown prose function. Wire that once
+with [Plug in your Markdown library](/docs/guides/markdown), then reuse it for
+paragraphs between blocks and Markdown bodies inside blocks.

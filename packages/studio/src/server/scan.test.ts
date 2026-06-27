@@ -102,6 +102,38 @@ ${Array.from({ length: 260 }, (_, index) => `word${index}`).join(' ')}
   expect(codes.indexOf('CB_PROPS_INVALID')).toBeLessThan(codes.indexOf('CB_LINK_UNRESOLVED'))
 })
 
+test('scanProject reads seoKeywords as keyword data', async () => {
+  const dir = await fixture({
+    'content/oil.md': `---
+slug: cooking-oil-smoke-points
+seoKeywords:
+  primary: cooking oil smoke points
+  secondary:
+    - oil smoke point chart
+  lsi:
+    - avocado oil smoke point
+---
+
+# Oil Smoke Points
+
+Useful body.
+`,
+  })
+
+  const project = await scanProject({
+    globs: ['content/*.md'],
+    cwd: dir,
+    minSectionWords: 0,
+  })
+
+  expect(project.keywordCoverage).toEqual({ total: 1, withPrimary: 1, withSecondary: 1 })
+  expect(project.files[0].keywords).toEqual({
+    primary: 'cooking oil smoke points',
+    secondary: ['oil smoke point chart'],
+    lsi: ['avocado oil smoke point'],
+  })
+})
+
 test('scanDocument rejects paths outside the matched content set', async () => {
   const dir = await fixture({
     'content/a.md': '---\nslug: alpha\n---\n\n# Alpha\n\nBody.',
@@ -209,6 +241,70 @@ test('scanGraph returns resolved and unresolved edges', async () => {
   expect(
     graph.edges.some((edge) => edge.status === 'unresolved' && edge.target === 'missing'),
   ).toBe(true)
+})
+
+test('scanProject and scanDocument expose SEO status and briefs', async () => {
+  const dir = await fixture({
+    'content/a.md': `---
+key: alpha-alternatives
+slug: alpha-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: alpha alternatives
+---
+
+# Alpha Alternatives
+
+## Overview
+
+Useful overview body.
+`,
+  })
+  const seoConfig = {
+    pageTypes: {
+      alternative: {
+        requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+        requiredSections: [
+          { id: 'overview', headings: ['Overview'] },
+          { id: 'alternatives', headings: ['Best alternatives'] },
+        ],
+        minOutgoingLinks: 1,
+      },
+    },
+  }
+
+  const project = await scanProject({
+    globs: ['content/*.md'],
+    cwd: dir,
+    minSectionWords: 0,
+    seoConfig,
+  })
+  expect(project.seo).toMatchObject({
+    schemaVersion: 'contentbit.seo.v1',
+    pages: 1,
+    existing: 1,
+    planned: 0,
+  })
+  expect(project.files[0].seo).toMatchObject({
+    id: 'alpha-alternatives',
+    source: 'existing',
+    type: 'alternative',
+    intent: 'commercial',
+  })
+  expect(project.findings.map((finding) => finding.code)).toContain('CB_SEO_SECTION_MISSING')
+
+  const document = await scanDocument(
+    { globs: ['content/*.md'], cwd: dir, minSectionWords: 0, seoConfig },
+    'content/a.md',
+  )
+  expect(document?.seoBrief).toMatchObject({
+    schemaVersion: 'contentbit.seo.brief.v1',
+    target: { id: 'alpha-alternatives' },
+  })
+  expect(document?.seoBrief?.acceptanceChecks).toContain(
+    'Document includes section: Best alternatives.',
+  )
 })
 
 test('startStudio serves read-only local API responses on port 0', async () => {

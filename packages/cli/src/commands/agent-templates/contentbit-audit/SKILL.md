@@ -4,7 +4,7 @@ description: |
   Audit contentbit Markdown content health using document stats. Use when asked
   to audit, review, or find improvements across content — thin pages, missing
   structure, validation issues — in a project that uses contentbit.
-version: 4
+version: 5
 ---
 
 # Auditing contentbit content
@@ -15,6 +15,9 @@ repair plan. It is read-only: it does not write the link index and never edits
 source files. `contentbit stats` remains useful when you need raw JSON metrics.
 `contentbit links` builds the frontmatter-authored internal-link graph and can
 heal alias references with `--fix`.
+When `contentbit.seo.config.ts` exists, `doctor` also reports SEO contract
+findings, and `contentbit brief <key-or-slug> [content glob]` gives page-level
+structure requirements for an agent or human writer.
 
 ## Gather
 
@@ -51,6 +54,9 @@ Prioritize findings in the order `doctor` reports them:
    use blocks; structure (steps, callouts, comparisons, faq) may be missing.
 6. **Missing or inconsistent frontmatter** compared to sibling documents.
 7. **Structural imbalance** — skipped heading levels, single-section walls of text.
+8. **SEO contract findings** — missing page type, required sections, required
+   blocks, required link targets, or brief acceptance checks when SEO config is
+   present.
 
 ## Report
 

@@ -1,0 +1,69 @@
+---
+title: SEO briefs and contracts
+description: Use contentbit SEO contracts to give agents structure before they write.
+---
+
+`contentbit brief` turns a small SEO config into an agent-ready writing brief.
+Use it when a page needs more than prose polish: required sections, required
+blocks, internal links, page intent, and acceptance checks.
+
+## Add a config
+
+Create `contentbit.seo.config.ts` at the project root:
+
+```ts
+import { defineSeoConfig } from '@contentbit/core'
+
+export default defineSeoConfig({
+  pageTypes: {
+    alternative: {
+      requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+      requiredSections: [
+        { id: 'overview', headings: ['Overview', 'Summary'] },
+        { id: 'alternatives', headings: ['Best alternatives', 'Top alternatives'] },
+      ],
+      requiredBlocks: ['comparison'],
+      recommendedBlocks: ['faq'],
+      minOutgoingLinks: 2,
+    },
+  },
+  pages: {
+    'ahrefs-alternatives': {
+      type: 'alternative',
+      key: 'ahrefs-alternatives',
+      slug: 'ahrefs-alternatives',
+      title: 'Ahrefs Alternatives',
+      intent: 'commercial',
+      keywords: { primary: 'ahrefs alternatives' },
+    },
+  },
+})
+```
+
+`pageTypes` are reusable contracts. `pages` can describe planned pages before a
+Markdown file exists. Existing frontmatter still wins for page facts; config is
+the planning layer.
+
+## Print a brief
+
+```bash
+contentbit brief ahrefs-alternatives
+contentbit brief ahrefs-alternatives "content/**/*.md" --json
+```
+
+Targets resolve by `key` first, then `slug`. With no glob, `brief` scans the
+default `content/**/*.{md,mdx}` set when it exists, so existing pages and planned
+pages share one inventory.
+
+## Run doctor
+
+When `contentbit.seo.config.ts` exists, `doctor` includes SEO findings in the
+normal repair plan:
+
+```bash
+contentbit doctor "content/**/*.md" --strict-seo
+contentbit doctor "content/**/*.md" --no-seo
+```
+
+Use `--strict-seo` in CI when missing required SEO contract items should fail
+the build. Use `--no-seo` when you only want validation, link, and stats checks.

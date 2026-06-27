@@ -8,6 +8,7 @@ import {
   Link2,
   RefreshCw,
   Search,
+  Target,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
@@ -163,11 +164,49 @@ function DocumentDetail() {
                       </div>
                     </div>
                   )}
+                  {(document.file.keywords.lsi?.length ?? 0) > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-muted-foreground">LSI</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {document.file.keywords.lsi?.map((keyword) => (
+                          <Badge key={keyword}>{keyword}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No keyword frontmatter found.</p>
               )}
             </Panel>
+
+            {document.seoBrief && (
+              <Panel title="SEO Brief" icon={<Target className="size-4" />}>
+                <div className="space-y-3 text-sm">
+                  <div className="flex flex-wrap gap-1">
+                    {document.seoBrief.target.type && (
+                      <Badge>{document.seoBrief.target.type}</Badge>
+                    )}
+                    {document.seoBrief.target.intent && (
+                      <Badge>{document.seoBrief.target.intent}</Badge>
+                    )}
+                    <Badge>{document.seoBrief.target.source}</Badge>
+                  </div>
+                  {document.seoBrief.acceptanceChecks.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-muted-foreground">Acceptance</p>
+                      <ul className="mt-2 space-y-1">
+                        {document.seoBrief.acceptanceChecks.map((check) => (
+                          <li key={check} className="border bg-muted/40 px-2 py-1">
+                            {check}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </Panel>
+            )}
 
             <Panel title="Findings" icon={<AlertTriangle className="size-4" />}>
               {document.findings.length > 0 ? (

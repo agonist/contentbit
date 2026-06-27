@@ -1,17 +1,16 @@
-import { genericBlocks } from '@contentbit/blocks'
 import {
-  createBlockRegistry,
-  scanContentProject,
-  type BlockDefinition,
-  type BlockRegistry,
+  compareContentProjectFindings,
+  createLinkGraphView,
+  createSeoBrief,
+  readContentPageFacts,
+  summarizeContentProjectFindings,
   type ContentProjectFinding,
   type ContentProjectScan,
   type DocumentStats,
+  type SeoPage,
 } from '@contentbit/core'
-import { readFile } from 'node:fs/promises'
-import { basename, isAbsolute, join, relative } from 'node:path'
-import { pathToFileURL } from 'node:url'
-import { glob } from 'tinyglobby'
+import { loadContentProject } from '@contentbit/project'
+import { basename, relative } from 'node:path'
 
 import { renderStudioPreview } from './preview.js'
 import type {
@@ -21,7 +20,6 @@ import type {
   StudioGraph,
   StudioGraphEdge,
   StudioGraphNode,
-  StudioKeywordData,
   StudioOptions,
   StudioProject,
   StudioStatus,
@@ -78,6 +76,17 @@ export async function scanProject(options: StudioOptions): Promise<StudioProject
       withSecondary,
     },
     ...(context.scan.linkGraph ? { linkGraph: context.scan.linkGraph } : {}),
+    ...(context.scan.seo
+      ? {
+          seo: {
+            schemaVersion: context.scan.seo.schemaVersion,
+            pages: context.scan.seo.pages.length,
+            existing: context.scan.seo.pages.filter((page) => page.source === 'existing').length,
+            planned: context.scan.seo.pages.filter((page) => page.source === 'planned').length,
+            findings: context.scan.seo.findings.length,
+          },
+        }
+      : {}),
     findings: context.findings,
   }
 }
@@ -102,6 +111,9 @@ export async function scanDocument(
   const page = context.index
     ? [...context.index.pages.values()].find((entry) => entry.path === file)
     : undefined
+  const seoPage = context.scan.seo?.pages.find((entry) => entry.path === file)
+  const seoBrief =
+    context.scan.seo && seoPage ? createSeoBrief(context.scan.seo, seoPage.id) : undefined
 
   return {
     file: summary,
@@ -115,6 +127,7 @@ export async function scanDocument(
         ? page.linkedFromRefs
         : page.linkedFrom
       : [],
+    ...(seoBrief ? { seoBrief } : {}),
     previewHtml,
   }
 }
@@ -124,69 +137,36 @@ export async function scanGraph(options: StudioOptions): Promise<StudioGraph> {
   if (!context.index) return { nodes: [], edges: [] }
 
   const summaryByPath = new Map(context.summaries.map((summary) => [summary.path, summary]))
-  const nodes: StudioGraphNode[] = [...context.index.pages.values()].map((page) => ({
-    id: pageIdentity(page),
-    label: page.title ?? page.slug,
-    path: page.path,
-    status: summaryByPath.get(page.path)?.status ?? 'healthy',
-    slug: page.slug,
-    ...(page.key ? { key: page.key } : {}),
-    ...(page.locale ? { locale: page.locale } : {}),
+  const view = createLinkGraphView(context.index, context.scan.linkDiagnostics ?? [])
+  const nodes: StudioGraphNode[] = view.nodes.map((node) => ({
+    id: node.id,
+    label: node.label,
+    path: node.path,
+    status: summaryByPath.get(node.path)?.status ?? 'healthy',
+    slug: node.slug,
+    ...(node.key ? { key: node.key } : {}),
+    ...(node.locale ? { locale: node.locale } : {}),
   }))
-
-  const pageByPath = new Map([...context.index.pages.values()].map((page) => [page.path, page]))
-  const edges: StudioGraphEdge[] = []
-  for (const page of context.index.pages.values()) {
-    for (const ref of page.linkRefs) {
-      const target = [...context.index.pages.values()].find(
-        (candidate) =>
-          candidate.slug === ref.slug &&
-          candidate.key === ref.key &&
-          candidate.locale === ref.locale,
-      )
-      edges.push({
-        from: pageIdentity(page),
-        to: target ? pageIdentity(target) : undefined,
-        target: ref.target ?? ref.key ?? ref.slug,
-        status:
-          target === page
-            ? 'self'
-            : ref.locale && ref.locale !== page.locale
-              ? 'cross-locale'
-              : 'resolved',
-      })
-    }
-  }
-
-  for (const finding of context.findings) {
-    if (finding.source !== 'links') continue
-    if (finding.code !== 'CB_LINK_UNRESOLVED' && finding.code !== 'CB_LINK_LOCALE_MISSING') continue
-    const page = pageByPath.get(finding.file)
-    if (!page) continue
-    edges.push({
-      from: pageIdentity(page),
-      target: targetFromMessage(finding.message) ?? 'unresolved',
-      status: 'unresolved',
-    })
-  }
-
+  const edges: StudioGraphEdge[] = view.edges
   return { nodes, edges }
 }
 
 async function scanContext(options: StudioOptions): Promise<ScanContext> {
-  if (options.globs.length === 0) throw new Error('studio: provide at least one file or glob.')
   const cwd = options.cwd ?? process.cwd()
-  const files = (await glob(options.globs, { absolute: true, cwd })).sort()
-  if (files.length === 0) throw new Error(`studio: no files matched ${options.globs.join(' ')}`)
-
-  const registry = await loadStudioRegistry(options.registryPath, cwd, options.includeGenericBlocks)
-  const sourceFiles = await Promise.all(
-    files.map(async (file) => ({ path: file, source: await readFile(file, 'utf8') })),
-  )
-  const scan = scanContentProject(sourceFiles, registry, {
+  const project = await loadContentProject({
+    cmd: 'studio',
+    positionals: options.globs,
+    cwd,
+    registry: options.registryPath,
+    includeGenericBlocks: options.includeGenericBlocks,
     linkOptions: options.linkOptions,
-    minSectionWords: options.minSectionWords,
+    scan: {
+      minSectionWords: options.minSectionWords,
+      seoConfig: options.seoConfig,
+      seoConfigPath: options.seoConfigPath,
+    },
   })
+  const { files, scan } = project
   const findings = scan.findings
     .map((finding) => findingFromProjectFinding(finding, cwd))
     .sort(compareFindings)
@@ -198,34 +178,13 @@ async function scanContext(options: StudioOptions): Promise<ScanContext> {
       file.stats,
       findings.filter((finding) => finding.file === file.path),
       options,
+      scan.seo?.pages.find((page) => page.path === file.path),
     ),
   )
 
   const index = scan.linkIndex
   findings.sort(compareFindings)
   return { files, scan, findings, summaries, index }
-}
-
-async function loadStudioRegistry(
-  registryPath?: string,
-  cwd = process.cwd(),
-  includeGenericBlocks = true,
-): Promise<BlockRegistry> {
-  const registry = createBlockRegistry()
-  if (includeGenericBlocks) registry.use(genericBlocks())
-  if (!registryPath) return registry
-
-  const resolvedPath = isAbsolute(registryPath) ? registryPath : join(cwd, registryPath)
-  const mod = (await import(pathToFileURL(resolvedPath).href)) as {
-    default?: BlockDefinition<unknown>[]
-  }
-  if (!Array.isArray(mod.default)) {
-    throw new Error(
-      `--registry module must default-export an array of block definitions: ${resolvedPath}`,
-    )
-  }
-  registry.use(mod.default)
-  return registry
 }
 
 function findingFromProjectFinding(finding: ContentProjectFinding, cwd: string): StudioFinding {
@@ -249,20 +208,18 @@ function fileSummary(
   stats: DocumentStats,
   findings: StudioFinding[],
   options: StudioOptions,
+  seoPage?: SeoPage,
 ): StudioFileSummary {
   const counts = summarize(findings)
-  const keywords = keywordData(frontmatter.keywords)
-  const slug = stringValue(frontmatter[options.linkOptions?.slugField ?? 'slug'])
-  const key = stringValue(frontmatter[options.linkOptions?.keyField ?? 'key'])
-  const locale = stringValue(frontmatter[options.linkOptions?.localeField ?? 'locale'])
+  const facts = readContentPageFacts(frontmatter, options.linkOptions)
   return {
     path: file,
     relativePath: relativePath(cwd, file),
     title: titleFor(file, frontmatter, stats),
-    ...(slug ? { slug } : {}),
-    ...(key ? { key } : {}),
-    ...(locale ? { locale } : {}),
-    ...(keywords ? { keywords } : {}),
+    ...(facts.slug ? { slug: facts.slug } : {}),
+    ...(facts.key ? { key: facts.key } : {}),
+    ...(facts.locale ? { locale: facts.locale } : {}),
+    ...(facts.keywords ? { keywords: facts.keywords } : {}),
     words: stats.length.words,
     readingMinutes: stats.length.readingMinutes,
     blocks: stats.blocks.total,
@@ -270,6 +227,17 @@ function fileSummary(
     links: stats.links.total,
     externalLinks: stats.links.external,
     missingAlt: stats.images.missingAlt,
+    ...(seoPage
+      ? {
+          seo: {
+            id: seoPage.id,
+            source: seoPage.source,
+            ...(seoPage.type ? { type: seoPage.type } : {}),
+            ...(seoPage.intent ? { intent: seoPage.intent } : {}),
+            findings: findings.filter((finding) => finding.source === 'seo').length,
+          },
+        }
+      : {}),
     findings: counts,
     status: statusFor(counts),
   }
@@ -283,24 +251,8 @@ function titleFor(
   return stringValue(frontmatter.title) ?? stats.outline[0]?.text ?? basename(file)
 }
 
-function keywordData(value: unknown): StudioKeywordData | undefined {
-  if (!value || typeof value !== 'object') return undefined
-  const record = value as Record<string, unknown>
-  const primary = stringValue(record.primary)
-  const secondary = Array.isArray(record.secondary)
-    ? record.secondary.filter((item): item is string => typeof item === 'string')
-    : undefined
-  return primary || (secondary?.length ?? 0) > 0
-    ? { ...(primary ? { primary } : {}), ...(secondary ? { secondary } : {}) }
-    : undefined
-}
-
 function summarize(findings: StudioFinding[]): StudioFileSummary['findings'] {
-  return {
-    errors: findings.filter((finding) => finding.severity === 'error').length,
-    warnings: findings.filter((finding) => finding.severity === 'warning').length,
-    suggestions: findings.filter((finding) => finding.severity === 'info').length,
-  }
+  return summarizeContentProjectFindings(findings)
 }
 
 function statusFor(findings: StudioFileSummary['findings']): StudioStatus {
@@ -320,30 +272,12 @@ function findAllowedFile(context: ScanContext, cwd: string, requestedPath: strin
 
 function compareFindings(a: StudioFinding, b: StudioFinding): number {
   return (
-    rank(a) - rank(b) ||
+    compareContentProjectFindings(a, b) ||
     a.relativePath.localeCompare(b.relativePath) ||
     (a.line ?? 0) - (b.line ?? 0) ||
     (a.column ?? 0) - (b.column ?? 0) ||
     a.code.localeCompare(b.code)
   )
-}
-
-function rank(finding: StudioFinding): number {
-  if (finding.severity === 'error' && finding.source === 'validation') return 0
-  if (finding.severity === 'error' && finding.source === 'links') return 1
-  if (finding.severity === 'warning') return 2
-  if (finding.code === 'CB_THIN_SECTION') return 3
-  if (finding.code === 'CB_BLOCKLESS_DOCUMENT') return 4
-  if (finding.code === 'CB_IMAGE_ALT_MISSING') return 5
-  return 6
-}
-
-function pageIdentity(page: { locale?: string; key?: string; slug: string }): string {
-  return `${page.locale ?? ''}\0${page.key ?? page.slug}`
-}
-
-function targetFromMessage(message: string): string | undefined {
-  return message.match(/linksTo "([^"]+)"/)?.[1]
 }
 
 function stringValue(value: unknown): string | undefined {

@@ -3,10 +3,10 @@ title: LLM-agent integration
 description: Give Codex, Claude Code, Cursor, Copilot, and other LLM agents a fast validated writing loop.
 ---
 
-contentbit turns your LLM agent into a safer content author. The model does
-not need to memorize block syntax or guess props; it asks the CLI for the live
-guide, writes Markdown, validates the result, and fixes diagnostics until the
-document is clean.
+Use this guide to install or refresh the agent files that make contentbit part
+of your normal LLM writing loop. After setup, the agent reads live block
+instructions from the CLI, writes Markdown, validates the result, and fixes
+diagnostics until the document is clean.
 
 If you already ran `contentbit init`, try this now:
 
@@ -14,21 +14,14 @@ If you already ran `contentbit init`, try this now:
 
 > audit my content
 
-If this is an existing project, install or refresh the integration first:
+For an existing project, install or refresh the integration first:
 
 ```bash
 contentbit agents
 ```
 
-The integration is deliberately thin: skill files contain no block schemas. They
-teach the LLM agent to fetch live data from the CLI — the authoring guide from
-`instructions`, ranked repair plans from `doctor`, raw health data from `stats`,
-link graph data from `links`, diagnostics from `validate` — so when you add a custom block or rename a page
-slug, every LLM agent picks it up on the next run. Nothing to regenerate, nothing to
-drift.
-
-A session looks like this. The failed validation in the middle is expected: it
-is the feedback loop doing its job.
+The failed validation in the middle of this session is expected. It is the
+feedback loop doing its job.
 
 <AgentSession
   steps={[
@@ -39,21 +32,21 @@ is the feedback loop doing its job.
       command: 'contentbit instructions --audience llm --registry ./blocks/registry.ts',
       exitCode: 0,
     },
-    { kind: 'assistant', text: 'The guide lists 9 blocks, including the custom quote block. Drafting content/dark-mode.md with a callout, a comparison, and a closing quote…' },
+    { kind: 'assistant', text: 'The guide lists 9 blocks, including the custom quote block. Drafting content/dark-mode.md with a callout, a comparison, and a closing quote.' },
     {
       kind: 'command',
       command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
       exitCode: 1,
       output: 'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
     },
-    { kind: 'assistant', text: 'Line 18 is missing the second column value — fixing the row and revalidating.' },
+    { kind: 'assistant', text: 'Line 18 is missing the second column value. Fixing the row and revalidating.' },
     {
       kind: 'command',
       command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
       exitCode: 0,
       output: '1 file(s): 0 errors, 0 warnings',
     },
-    { kind: 'assistant', text: 'Done — content/dark-mode.md validates clean.' },
+    { kind: 'assistant', text: 'Done. content/dark-mode.md validates clean.' },
   ]}
 />
 
@@ -66,17 +59,17 @@ is the feedback loop doing its job.
 contentbit agents
 ```
 
-This manages two things:
+This manages:
 
-- **`AGENTS.md`** — a fenced block between `<!-- contentbit:start -->` and
+- **`AGENTS.md`**: a fenced block between `<!-- contentbit:start -->` and
   `<!-- contentbit:end -->` markers with compact instructions any LLM agent reads
   (Cursor, Codex, Copilot, ...). Your content outside the markers is never
   touched; re-running refreshes only the block.
-- **Claude Code skills** — when a `.claude/` directory exists (or forced with
+- **Claude Code skills**: when a `.claude/` directory exists (or forced with
   `--claude` when it doesn't), two skills land in `.claude/skills/`:
-  - `contentbit-author` — the writing loop: fetch the authoring guide, write,
+  - `contentbit-author`: the writing loop: fetch the authoring guide, write,
     validate, fix diagnostics until exit 0.
-  - `contentbit-audit` — the health check: run `doctor` across content, flag
+  - `contentbit-audit`: the health check: run `doctor` across content, flag
     validation issues, internal-link problems, thin sections, block-less long
     documents, and missing image alt text, in that order.
 
@@ -86,7 +79,7 @@ The project scripts matter too. The generated instructions tell the LLM agent to
 read `content:check` from `package.json` because that script contains the
 canonical content glob and `--registry` flag for your project.
 
-## Writing loop
+## Use the writing loop
 
 The author skill follows the same loop you would run by hand:
 
@@ -105,13 +98,11 @@ Both skills read the `content:check` script in your package.json to discover the
 project's content glob and `--registry` flag, so they adapt to your layout
 without configuration.
 
-The "never guess props" rule in the guide is satisfiable: generated
-authoring instructions document every prop from the block's schema — name, type
-with enum values spelled out, required or optional, default, and description —
-so optional props an example doesn't use are still discoverable. See
-[LLM authoring](/docs/concepts/llm-authoring).
+Generated instructions document every block prop, enum value, default, and
+description. That is why the agent can follow a "never guess props" rule. For
+the model behind this, see [LLM authoring](/docs/concepts/llm-authoring).
 
-## Audit loop
+## Use the audit loop
 
 The audit skill starts with `doctor`, which prints a ranked repair plan and can
 also emit JSON:
@@ -157,15 +148,15 @@ context when sibling documents declare `slug`, `linksTo`, `aliases`, or
 workflow:
 [Internal linking](/docs/guides/internal-linking).
 
-## Plug contentbit into your own skills
+## Add contentbit to your own skills
 
-You likely already have skills for your content workflows — a blog-post skill, a
+You may already have skills for your content workflows, such as a blog-post or
 changelog skill. Add contentbit as a context source and a quality gate with
-three lines:
+this instruction:
 
 ```markdown
 Before writing, run `contentbit instructions --audience llm --registry <path>`
-and follow it exactly — never guess block syntax. If sibling documents use
+and follow it exactly. Never guess block syntax. If sibling documents use
 internal-link frontmatter, run `contentbit links <content glob>` and choose
 `linksTo` values from the generated index. After writing, run
 `contentbit validate <content glob> --registry <path>` and fix every diagnostic
@@ -179,3 +170,5 @@ works.
 
 This works in any LLM agent that can run shell commands. The CLI is the interface;
 skills, rules files, and prompts are thin adapters over it.
+
+For flags and command syntax, see the [CLI reference](/docs/reference/cli).

@@ -111,6 +111,17 @@ test('parses a one-level nested mapping into an object', () => {
   })
 })
 
+test('parses nested mapping dash-list values', () => {
+  const fm = extractFrontmatter(
+    '---\nseoKeywords:\n  primary: cooking oil smoke points\n  secondary:\n    - oil smoke point chart\n    - high smoke point oils\n  lsi:\n    - avocado oil smoke point\n---\nBody\n',
+  )
+  expect(fm?.data.seoKeywords).toEqual({
+    primary: 'cooking oil smoke points',
+    secondary: ['oil smoke point chart', 'high smoke point oils'],
+    lsi: ['avocado oil smoke point'],
+  })
+})
+
 test('nested mapping coexists with flat keys and dash lists', () => {
   const fm = extractFrontmatter(
     '---\nslug: a\nlinksTo:\n  - b\n  - c\nkeywords:\n  primary: x\n---\nBody\n',

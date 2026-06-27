@@ -15,6 +15,23 @@ async function fixture(files: Record<string, string>): Promise<string> {
   return dir
 }
 
+function seoConfig(): string {
+  return `
+export default {
+  pageTypes: {
+    alternative: {
+      requiredFrontmatter: ["type", "intent", "keywords.primary"],
+      requiredSections: [
+        { id: "overview", headings: ["Overview"] },
+        { id: "alternatives", headings: ["Best alternatives"] }
+      ],
+      minOutgoingLinks: 1
+    }
+  }
+};
+`
+}
+
 test('clean content exits 0 with a healthy text report', async () => {
   const dir = await fixture({ 'post.md': 'Plain prose with enough shape to be valid.\n' })
   const io = fakeIo()
@@ -93,6 +110,81 @@ test('--strict-warnings turns warnings into failures', async () => {
   expect(await run(['doctor', join(dir, '*.md'), '--strict-warnings'], fakeIo())).toBe(1)
 })
 
+test('SEO config adds SEO warnings to doctor without failing by default', async () => {
+  const dir = await fixture({
+    'seo.mjs': seoConfig(),
+    'page.md': `---
+key: ahrefs-alternatives
+slug: ahrefs-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: ahrefs alternatives
+---
+
+# Ahrefs Alternatives
+
+## Overview
+
+Good overview.
+`,
+  })
+  const io = fakeIo()
+
+  expect(await run(['doctor', join(dir, '*.md'), '--seo-config', join(dir, 'seo.mjs')], io)).toBe(0)
+  const out = io.out.join('\n')
+  expect(out).toContain('SEO')
+  expect(out).toContain('warning seo CB_SEO_SECTION_MISSING')
+  expect(out).toContain('warning seo CB_SEO_OUTGOING_LINKS_MIN')
+})
+
+test('--strict-seo turns SEO warnings into failures', async () => {
+  const dir = await fixture({
+    'seo.mjs': seoConfig(),
+    'page.md': `---
+key: ahrefs-alternatives
+slug: ahrefs-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: ahrefs alternatives
+---
+
+# Ahrefs Alternatives
+`,
+  })
+
+  expect(
+    await run(
+      ['doctor', join(dir, '*.md'), '--seo-config', join(dir, 'seo.mjs'), '--strict-seo'],
+      fakeIo(),
+    ),
+  ).toBe(1)
+})
+
+test('--no-seo disables SEO config checks', async () => {
+  const dir = await fixture({
+    'seo.mjs': seoConfig(),
+    'page.md': `---
+key: ahrefs-alternatives
+slug: ahrefs-alternatives
+type: alternative
+intent: commercial
+keywords:
+  primary: ahrefs alternatives
+---
+
+# Ahrefs Alternatives
+`,
+  })
+  const io = fakeIo()
+
+  expect(
+    await run(['doctor', join(dir, '*.md'), '--seo-config', join(dir, 'seo.mjs'), '--no-seo'], io),
+  ).toBe(0)
+  expect(io.out.join('\n')).not.toContain('seo CB_SEO')
+})
+
 test('a custom --registry module adds blocks', async () => {
   const coreUrl = pathToFileURL(
     join(new URL('../../..', import.meta.url).pathname, 'core/dist/index.js'),
@@ -153,6 +245,59 @@ export default [
   const out = io.out.join('\n')
   expect(out).toMatch(/Errors\s+0/)
   expect(out).toContain('--no-generic-blocks')
+})
+
+test('next commands preserve link resolver flags', async () => {
+  const dir = await fixture({
+    'a.md': `---
+lang: fr
+pathSlug: a
+canonicalKey: blog/a
+linksTo:
+  - blog/b
+---
+
+Prose.
+`,
+    'b.md': `---
+lang: fr
+pathSlug: b
+canonicalKey: blog/b
+linksTo:
+  - blog/a
+---
+
+Prose.
+`,
+  })
+
+  const io = fakeIo()
+  const glob = join(dir, '*.md')
+  expect(
+    await run(
+      [
+        'doctor',
+        glob,
+        '--link-resolve',
+        'same-locale-key',
+        '--locale-field',
+        'lang',
+        '--slug-field',
+        'pathSlug',
+        '--key-field',
+        'canonicalKey',
+        '--default-locale',
+        'en',
+      ],
+      io,
+    ),
+  ).toBe(0)
+  const out = io.out.join('\n')
+  const flags =
+    '--link-resolve same-locale-key --locale-field lang --slug-field pathSlug --key-field canonicalKey --default-locale en'
+  expect(out).toContain(`contentbit validate ${glob} ${flags}`)
+  expect(out).toContain(`contentbit links ${glob} ${flags}`)
+  expect(out).toContain(`contentbit doctor ${glob} ${flags} --json`)
 })
 
 test('requires at least one file', async () => {

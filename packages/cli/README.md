@@ -20,6 +20,9 @@ pnpm run studio
 # inspect validation, links, and content-quality suggestions together
 pnpm run content:doctor
 
+# optionally scaffold SEO contracts for brief + doctor checks
+contentbit init --seo
+
 # refresh AGENTS.md and Claude Code skills for LLM agents
 contentbit agents
 ```
@@ -35,6 +38,12 @@ contentbit validate "content/**/*.md" --registry ./blocks/registry.ts --no-gener
 # and missing image alt text; add --json for agents/CI
 contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
 contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --no-generic-blocks
+contentbit doctor "content/**/*.md" --seo-config ./contentbit.seo.config.ts --strict-seo
+contentbit doctor "content/**/*.md" --no-seo
+
+# agent-ready SEO structure brief for an existing or planned page
+contentbit brief ahrefs-alternatives "content/**/*.md"
+contentbit brief ahrefs-alternatives --json
 
 # local read-only web app for previews, stats, diagnostics, links, and keywords
 contentbit studio "content/**/*.md" --registry ./blocks/registry.ts
@@ -59,6 +68,10 @@ contentbit render article.md
 Point `--registry ./blocks/registry.ts` at a module to add custom blocks.
 Pass `--no-generic-blocks` when that registry owns the full block set, including
 names that overlap the generic pack.
+Add `contentbit.seo.config.ts` with `defineSeoConfig(...)` to let `doctor`
+include SEO contract findings and `contentbit brief <key-or-slug>` print an
+agent-ready page brief. Use `--no-seo` to keep `doctor` to validation, links,
+and stats only.
 LLM agents should read the same registry with `contentbit instructions`, write
 plain Markdown with registered blocks, then run `contentbit validate` until it
 exits 0.

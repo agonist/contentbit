@@ -1,28 +1,27 @@
-import { parseArgs } from 'node:util'
-
 import type { Io } from '../run.js'
 
 import { loadRegistry } from '../load-registry.js'
 
-export async function instructionsCommand(args: string[], io: Io): Promise<number> {
-  const { values } = parseArgs({
-    args,
-    options: {
-      audience: { type: 'string', default: 'llm' },
-      'no-examples': { type: 'boolean', default: false },
-      registry: { type: 'string' },
-      'no-generic-blocks': { type: 'boolean', default: false },
-      out: { type: 'string' },
-    },
-  })
-  const registry = await loadRegistry(values.registry, {
-    includeGenericBlocks: !values['no-generic-blocks'],
+export interface InstructionsCommandInput {
+  audience?: string
+  noExamples?: boolean
+  registry?: string
+  noGenericBlocks?: boolean
+  out?: string
+}
+
+export async function instructionsCommand(
+  input: InstructionsCommandInput,
+  io: Io,
+): Promise<number> {
+  const registry = await loadRegistry(input.registry, {
+    includeGenericBlocks: !input.noGenericBlocks,
   })
   const guide = registry.toAuthoringGuide({
-    audience: values.audience === 'human' ? 'human' : 'llm',
-    includeExamples: !values['no-examples'],
+    audience: input.audience === 'human' ? 'human' : 'llm',
+    includeExamples: !input.noExamples,
   })
-  if (values.out) await io.writeFile(values.out, guide)
+  if (input.out) await io.writeFile(input.out, guide)
   else io.stdout(guide)
   return 0
 }

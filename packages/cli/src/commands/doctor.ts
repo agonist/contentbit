@@ -2,8 +2,8 @@ import {
   DEFAULT_MIN_SECTION_WORDS,
   type ContentProjectFinding,
   type LinkInput,
+  type LinkResolverOptions,
 } from '@contentbit/core'
-import { parseArgs } from 'node:util'
 
 import type { Io } from '../run.js'
 
@@ -16,7 +16,8 @@ import {
   severityLabel,
 } from '../cli-format.js'
 import { loadContentProject } from '../content-project.js'
-import { linkResolverOptions } from '../link-options.js'
+import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
+import { loadSeoConfig } from '../seo-config.js'
 
 type DoctorFinding = ContentProjectFinding
 
@@ -24,62 +25,78 @@ interface DoctorReport {
   files: number
   summary: { errors: number; warnings: number; suggestions: number }
   linkGraph?: { pages: number; links: number; orphans: number }
+  seo?: {
+    schemaVersion: string
+    pages: number
+    findings: DoctorFinding[]
+  }
   findings: DoctorFinding[]
 }
 
-export async function doctorCommand(args: string[], io: Io): Promise<number> {
-  const { values, positionals } = parseArgs({
-    args,
-    allowPositionals: true,
-    options: {
-      registry: { type: 'string' },
-      'no-generic-blocks': { type: 'boolean', default: false },
-      'strict-warnings': { type: 'boolean', default: false },
-      json: { type: 'boolean', default: false },
-      'min-section-words': { type: 'string' },
-      'link-resolve': { type: 'string' },
-      'locale-field': { type: 'string' },
-      'slug-field': { type: 'string' },
-      'key-field': { type: 'string' },
-      'default-locale': { type: 'string' },
-    },
-  })
-  const minSectionWords = parseMinSectionWords(values['min-section-words'])
+export interface DoctorCommandInput extends LinkOptionValues {
+  globs: string[]
+  registry?: string
+  noGenericBlocks?: boolean
+  strictWarnings?: boolean
+  strictSeo?: boolean
+  json?: boolean
+  minSectionWords?: string
+  seoConfig?: string
+  noSeo?: boolean
+}
+
+export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<number> {
+  const minSectionWords = parseMinSectionWords(input.minSectionWords)
   if (minSectionWords === null) {
     io.stderr('doctor: --min-section-words must be a non-negative integer.')
     return 2
   }
 
-  const includeGenericBlocks = !values['no-generic-blocks']
+  const includeGenericBlocks = !input.noGenericBlocks
+  const linkOptions = linkResolverOptions(input)
+  const seoConfig = await loadSeoConfig({ seoConfig: input.seoConfig, noSeo: input.noSeo })
   const { files, scan } = await loadContentProject({
     cmd: 'doctor',
-    positionals,
-    registry: values.registry,
+    positionals: input.globs,
+    registry: input.registry,
     includeGenericBlocks,
-    linkOptions: linkResolverOptions(values),
-    scan: { minSectionWords },
+    linkOptions,
+    scan: { minSectionWords, seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
   })
   const report: DoctorReport = {
     files: files.length,
     summary: scan.summary,
     ...(scan.linkGraph ? { linkGraph: scan.linkGraph } : {}),
+    ...(scan.seo
+      ? {
+          seo: {
+            schemaVersion: scan.seo.schemaVersion,
+            pages: scan.seo.pages.length,
+            findings: scan.seo.findings,
+          },
+        }
+      : {}),
     findings: scan.findings,
   }
 
-  if (values.json) io.stdout(JSON.stringify(report, null, 2))
+  if (input.json) io.stdout(JSON.stringify(report, null, 2))
   else
     io.stdout(
       formatReport(
         report,
-        positionals,
-        values.registry,
+        input.globs,
+        input.registry,
         includeGenericBlocks,
+        linkOptions,
         hasAliases(scan.linkInputs),
       ),
     )
 
   if (report.summary.errors > 0) return 1
-  if (report.summary.warnings > 0 && values['strict-warnings']) return 1
+  if (report.summary.warnings > 0 && input.strictWarnings) return 1
+  if (input.strictSeo && report.seo?.findings.some((finding) => finding.severity === 'warning')) {
+    return 1
+  }
   return 0
 }
 
@@ -98,6 +115,7 @@ function formatReport(
   globs: string[],
   registryPath: string | undefined,
   includeGenericBlocks: boolean,
+  linkOptions: LinkResolverOptions,
   aliasFixMayApply: boolean,
 ): string {
   const lines: string[] = []
@@ -139,6 +157,20 @@ function formatReport(
       ]),
     )
   }
+  if (report.seo) {
+    lines.push('')
+    lines.push(section('SEO'))
+    lines.push(
+      ...formatRows([
+        { label: 'Pages', value: report.seo.pages },
+        {
+          label: 'Findings',
+          value: report.seo.findings.length,
+          tone: report.seo.findings.length > 0 ? 'warning' : 'success',
+        },
+      ]),
+    )
+  }
   lines.push('')
 
   if (report.findings.length === 0) {
@@ -152,17 +184,15 @@ function formatReport(
 
   lines.push('')
   lines.push(section('Next Commands'))
-  const commands = [
-    `contentbit validate ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)}`,
-  ]
+  const registryArgs = formatRegistryArgs(registryPath, includeGenericBlocks)
+  const linkArgs = formatLinkArgs(linkOptions)
+  const commands = [`contentbit validate ${formatGlobs(globs)}${registryArgs}${linkArgs}`]
   if (report.linkGraph) {
-    commands.push(`contentbit links ${formatGlobs(globs)}`)
+    commands.push(`contentbit links ${formatGlobs(globs)}${linkArgs}`)
     if (aliasFixMayApply && report.summary.errors === 0)
-      commands.push(`contentbit links ${formatGlobs(globs)} --fix`)
+      commands.push(`contentbit links ${formatGlobs(globs)}${linkArgs} --fix`)
   }
-  commands.push(
-    `contentbit doctor ${formatGlobs(globs)}${formatRegistryArgs(registryPath, includeGenericBlocks)} --json`,
-  )
+  commands.push(`contentbit doctor ${formatGlobs(globs)}${registryArgs}${linkArgs} --json`)
   lines.push(...formatCommandList(commands))
   return lines.join('\n')
 }
@@ -196,5 +226,15 @@ function formatRegistryArgs(
   const args: string[] = []
   if (registryPath) args.push('--registry', formatArg(registryPath))
   if (!includeGenericBlocks) args.push('--no-generic-blocks')
+  return args.length > 0 ? ` ${args.join(' ')}` : ''
+}
+
+function formatLinkArgs(options: LinkResolverOptions): string {
+  const args: string[] = []
+  if (options.resolve) args.push('--link-resolve', options.resolve)
+  if (options.localeField) args.push('--locale-field', formatArg(options.localeField))
+  if (options.slugField) args.push('--slug-field', formatArg(options.slugField))
+  if (options.keyField) args.push('--key-field', formatArg(options.keyField))
+  if (options.defaultLocale) args.push('--default-locale', formatArg(options.defaultLocale))
   return args.length > 0 ? ` ${args.join(' ')}` : ''
 }

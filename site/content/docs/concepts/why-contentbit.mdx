@@ -1,0 +1,90 @@
+---
+title: Why contentbit?
+description: The content model behind typed Markdown blocks, validation, renderers, and LLM-agent workflows.
+---
+
+Contentbit exists for teams that like Markdown, but need generated Markdown to
+be safer than plain text. It keeps normal prose in Markdown and adds a small
+typed block layer for structured sections such as comparisons, callouts, steps,
+metrics, tabs, and FAQs.
+
+That gives you a contract:
+
+1. Authors write readable Markdown.
+2. Blocks carry typed props and structured bodies.
+3. Validation runs before render.
+4. Renderers receive a validated document instead of raw guesses.
+5. LLM agents read the same registry that validation uses.
+
+## Markdown stays the authoring format
+
+Contentbit does not replace Markdown. Paragraphs, headings, lists, code fences,
+and links remain ordinary Markdown. Blocks are for moments where prose needs a
+shape a renderer or agent can rely on:
+
+```md
+:::comparison{left="Manual review" right="contentbit"}
+- Broken props | Found after publish | Found before render
+- Agent prompts | Drift over time | Generated from the registry
+:::
+```
+
+The source stays readable in Git. The rendered result can become React
+components, Astro components, or plain Markdown fallback output.
+
+## The registry is the source of truth
+
+Every block definition lives in a registry. A definition names the block,
+describes its props, defines its content model, and includes authoring guidance.
+That same definition drives:
+
+- validation diagnostics
+- runtime renderer dispatch
+- generated human docs
+- generated LLM instructions
+- Studio previews and content health views
+
+This is the key design choice. You do not maintain separate schemas, docs, and
+prompts. When the registry changes, the rest of the system can ask it for the
+current truth.
+
+## Validation is the feedback loop
+
+Invalid block syntax or invalid props never need to reach a reader. Contentbit
+reports diagnostics in a stable shape:
+
+```text
+content/pricing.md:12:1 error CB_PROPS_INVALID
+:::callout props invalid: type must be one of note|tip|warning|important|tldr.
+hint: Did you mean type="warning"?
+```
+
+That format works for people, CI, and LLM agents. The model does not need to
+guess what went wrong. It can read the line, code, message, and hint, fix the
+source, and validate again.
+
+## Renderers stay host-owned
+
+Contentbit parses and validates the block layer. It does not try to own your
+whole site renderer. Your app still chooses how normal Markdown prose renders,
+how components are styled, and how URLs are built.
+
+That separation keeps content portable. The same validated document can render
+through React, Astro, or `renderToMarkdown()` without changing the source file.
+For the details, see [Rendering model](/docs/concepts/rendering-model).
+
+## LLM agents get live instructions
+
+LLM-authored Markdown breaks when prompts drift away from the schema. Contentbit
+avoids that by generating agent instructions from the registry. An agent can run:
+
+```bash
+contentbit instructions --audience llm --registry ./blocks/registry.ts
+```
+
+The result lists the actual blocks, props, examples, use cases, and avoid rules
+for this project. After writing, the agent runs `contentbit validate` and fixes
+diagnostics until the content is clean.
+
+That loop is deliberately simple: read the live guide, write Markdown, validate,
+repair, repeat.

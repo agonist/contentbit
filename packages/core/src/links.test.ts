@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 
+import { createLinkGraphView } from './link-graph.js'
 import { buildLinkIndex, parseLinkFrontmatter, serializeLinkIndex, validateLinks } from './links.js'
 
 test('parses a full authored link frontmatter', () => {
@@ -163,6 +164,127 @@ test('same-locale-key resolves stable keys to localized slugs', () => {
   ])
 })
 
+test('same-locale-key resolves prefixed stable keys in the same locale', () => {
+  const inputs = [
+    {
+      path: 'content/blog/how-to-season-cast-iron/fr.md',
+      data: {
+        locale: 'fr',
+        slug: 'how-to-season-cast-iron',
+        key: 'blog/how-to-season-cast-iron',
+        linksTo: ['blog/cooking-oil-smoke-points', 'glossary/cast-iron-skillet'],
+      },
+    },
+    {
+      path: 'content/blog/cooking-oil-smoke-points/fr.md',
+      data: {
+        locale: 'fr',
+        slug: 'cooking-oil-smoke-points',
+        key: 'blog/cooking-oil-smoke-points',
+        linksTo: ['blog/how-to-season-cast-iron'],
+      },
+    },
+    {
+      path: 'content/glossary/cast-iron-skillet/fr.md',
+      data: {
+        locale: 'fr',
+        slug: 'cast-iron-skillet',
+        key: 'glossary/cast-iron-skillet',
+        linksTo: ['blog/how-to-season-cast-iron'],
+      },
+    },
+    {
+      path: 'content/blog/cooking-oil-smoke-points/en.md',
+      data: {
+        locale: 'en',
+        slug: 'cooking-oil-smoke-points',
+        key: 'blog/cooking-oil-smoke-points',
+      },
+    },
+  ]
+
+  const rows = validateLinks(inputs, { resolve: 'same-locale-key' })
+  expect(rows.filter((r) => r.diagnostic.severity === 'error')).toEqual([])
+
+  const json = serializeLinkIndex(buildLinkIndex(inputs, { resolve: 'same-locale-key' }))
+  const fr = json.pages.find((p) => p.locale === 'fr' && p.slug === 'how-to-season-cast-iron')
+  expect(fr?.linksTo).toEqual([
+    {
+      target: 'blog/cooking-oil-smoke-points',
+      locale: 'fr',
+      slug: 'cooking-oil-smoke-points',
+      key: 'blog/cooking-oil-smoke-points',
+    },
+    {
+      target: 'glossary/cast-iron-skillet',
+      locale: 'fr',
+      slug: 'cast-iron-skillet',
+      key: 'glossary/cast-iron-skillet',
+    },
+  ])
+})
+
+test('normalizes seoKeywords into link index keyword data', () => {
+  const json = serializeLinkIndex(
+    buildLinkIndex([
+      {
+        path: 'oil.md',
+        data: {
+          slug: 'cooking-oil-smoke-points',
+          seoKeywords: {
+            primary: 'cooking oil smoke points',
+            secondary: ['oil smoke point chart'],
+            lsi: ['avocado oil smoke point'],
+          },
+        },
+      },
+    ]),
+  )
+
+  expect(json.pages[0].keywords).toEqual({
+    primary: 'cooking oil smoke points',
+    secondary: ['oil smoke point chart'],
+    lsi: ['avocado oil smoke point'],
+  })
+})
+
+test('duplicate global identities do not cascade unresolved diagnostics', () => {
+  const rows = validateLinks([
+    {
+      path: 'content/blog/how-to-season-cast-iron/en.md',
+      data: {
+        locale: 'en',
+        slug: 'how-to-season-cast-iron',
+        key: 'blog/how-to-season-cast-iron',
+        linksTo: ['blog/cooking-oil-smoke-points'],
+      },
+    },
+    {
+      path: 'content/blog/how-to-season-cast-iron/fr.md',
+      data: {
+        locale: 'fr',
+        slug: 'how-to-season-cast-iron',
+        key: 'blog/how-to-season-cast-iron',
+        linksTo: ['blog/cooking-oil-smoke-points'],
+      },
+    },
+    {
+      path: 'content/blog/how-to-season-cast-iron/es.md',
+      data: {
+        locale: 'es',
+        slug: 'how-to-season-cast-iron',
+        key: 'blog/how-to-season-cast-iron',
+        linksTo: ['blog/cooking-oil-smoke-points'],
+      },
+    },
+  ])
+
+  expect(codes(rows)).toContain('CB_SLUG_DUPLICATE')
+  expect(codes(rows)).toContain('CB_KEY_DUPLICATE')
+  expect(rows.filter((r) => r.diagnostic.code === 'CB_LINK_UNRESOLVED')).toEqual([])
+  expect(rows.filter((r) => r.diagnostic.code === 'CB_LINK_ORPHAN')).toEqual([])
+})
+
 test('explicit object targets can resolve cross-locale links', () => {
   const rows = validateLinks(
     [
@@ -179,4 +301,26 @@ test('explicit object targets can resolve cross-locale links', () => {
     { resolve: 'same-locale-slug' },
   )
   expect(codes(rows)).toContain('CB_LINK_CROSS_LOCALE')
+})
+
+test('link graph view exposes summary and unresolved edges from structured diagnostics', () => {
+  const inputs = [
+    { path: 'a.md', data: { slug: 'alpha', linksTo: ['beta', 'missing'] } },
+    { path: 'b.md', data: { slug: 'beta', linksTo: ['alpha'] } },
+  ]
+  const diagnostics = validateLinks(inputs)
+  const view = createLinkGraphView(buildLinkIndex(inputs), diagnostics)
+
+  expect(view.summary).toEqual({ pages: 2, links: 3, orphans: 0 })
+  expect(view.edges).toContainEqual({
+    from: '\0alpha',
+    to: '\0beta',
+    target: 'beta',
+    status: 'resolved',
+  })
+  expect(view.edges).toContainEqual({
+    from: '\0alpha',
+    target: 'missing',
+    status: 'unresolved',
+  })
 })

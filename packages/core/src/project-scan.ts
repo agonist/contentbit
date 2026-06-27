@@ -1,16 +1,18 @@
 import type { Diagnostic } from './diagnostics.js'
-import type { LinkIndex, LinkInput, LinkResolverOptions } from './links.js'
+import type { LinkDiagnostic, LinkIndex, LinkInput, LinkResolverOptions } from './links.js'
 import type { BlockRegistry } from './registry.js'
 import type { DocumentStats } from './analyze.js'
 import type { ValidationResult } from './validate.js'
 
 import { analyzeDocument } from './analyze.js'
 import { extractFrontmatter, stripFrontmatter } from './frontmatter.js'
+import { createLinkGraphView, type LinkGraphSummary } from './link-graph.js'
 import { buildLinkIndex, validateLinks } from './links.js'
 import { parseDocument } from './parser.js'
+import { evaluateSeoProject, type SeoProjectEvaluation } from './seo.js'
 import { validateDocument } from './validate.js'
 
-export type ContentProjectFindingSource = 'validation' | 'links' | 'stats'
+export type ContentProjectFindingSource = 'validation' | 'links' | 'stats' | 'seo'
 
 export interface ContentProjectSourceFile {
   path: string
@@ -43,25 +45,25 @@ export interface ContentProjectFileScan {
   findings: ContentProjectFinding[]
 }
 
-export interface ContentProjectLinkGraph {
-  pages: number
-  links: number
-  orphans: number
-}
+export type ContentProjectLinkGraph = LinkGraphSummary
 
 export interface ContentProjectScan {
   files: ContentProjectFileScan[]
   findings: ContentProjectFinding[]
   summary: ContentProjectFindingSummary
   linkInputs: LinkInput[]
+  linkDiagnostics?: LinkDiagnostic[]
   linkIndex?: LinkIndex
   linkGraph?: ContentProjectLinkGraph
+  seo?: SeoProjectEvaluation
 }
 
 export interface ScanContentProjectOptions {
   linkOptions?: LinkResolverOptions
   minSectionWords?: number
   includeStatsFindings?: boolean
+  seoConfig?: unknown
+  seoConfigPath?: string
 }
 
 export const DEFAULT_MIN_SECTION_WORDS = 25
@@ -105,15 +107,38 @@ export function scanContentProject(
 
   let linkIndex: LinkIndex | undefined
   let linkGraph: ContentProjectLinkGraph | undefined
+  let linkDiagnostics: LinkDiagnostic[] | undefined
   if (hasLinkFrontmatter(linkInputs, options.linkOptions?.slugField)) {
-    for (const { file, diagnostic } of validateLinks(linkInputs, options.linkOptions)) {
+    linkDiagnostics = validateLinks(linkInputs, options.linkOptions)
+    for (const { file, diagnostic } of linkDiagnostics) {
       const finding = findingFromDiagnostic('links', file, diagnostic)
       findings.push(finding)
       const scanned = scannedFiles.find((item) => item.path === file)
       if (scanned) scanned.findings.push(finding)
     }
     linkIndex = buildLinkIndex(linkInputs, options.linkOptions)
-    linkGraph = linkGraphSummary(linkIndex)
+    linkGraph = createLinkGraphView(linkIndex, linkDiagnostics).summary
+  }
+
+  const seo = options.seoConfig
+    ? evaluateSeoProject({
+        config: options.seoConfig,
+        configPath: options.seoConfigPath,
+        files: scannedFiles.map((file) => ({
+          path: file.path,
+          frontmatter: file.frontmatter,
+          stats: file.stats,
+        })),
+        linkIndex,
+        linkOptions: options.linkOptions,
+      })
+    : undefined
+  if (seo) {
+    findings.push(...seo.findings)
+    for (const finding of seo.findings) {
+      const scanned = scannedFiles.find((item) => item.path === finding.file)
+      if (scanned) scanned.findings.push(finding)
+    }
   }
 
   findings.sort(compareContentProjectFindings)
@@ -124,8 +149,10 @@ export function scanContentProject(
     findings,
     summary: summarizeContentProjectFindings(findings),
     linkInputs,
+    ...(linkDiagnostics ? { linkDiagnostics } : {}),
     ...(linkIndex ? { linkIndex } : {}),
     ...(linkGraph ? { linkGraph } : {}),
+    ...(seo ? { seo } : {}),
   }
 }
 
@@ -217,22 +244,13 @@ function hasLinkFrontmatter(inputs: LinkInput[], configuredSlugField: string | u
   return inputs.some((input) => Object.prototype.hasOwnProperty.call(input.data, slugField))
 }
 
-function linkGraphSummary(index: LinkIndex): ContentProjectLinkGraph {
-  let links = 0
-  for (const page of index.pages.values()) links += page.linksTo.length
-  return {
-    pages: index.pages.size,
-    links,
-    orphans: [...index.pages.values()].filter((page) => page.linkedFrom.length === 0).length,
-  }
-}
-
 function findingRank(finding: ContentProjectFinding): number {
   if (finding.severity === 'error' && finding.source === 'validation') return 0
   if (finding.severity === 'error' && finding.source === 'links') return 1
-  if (finding.severity === 'warning') return 2
-  if (finding.code === 'CB_THIN_SECTION') return 3
-  if (finding.code === 'CB_BLOCKLESS_DOCUMENT') return 4
-  if (finding.code === 'CB_IMAGE_ALT_MISSING') return 5
-  return 6
+  if (finding.severity === 'error' && finding.source === 'seo') return 2
+  if (finding.severity === 'warning') return 3
+  if (finding.code === 'CB_THIN_SECTION') return 4
+  if (finding.code === 'CB_BLOCKLESS_DOCUMENT') return 5
+  if (finding.code === 'CB_IMAGE_ALT_MISSING') return 6
+  return 7
 }

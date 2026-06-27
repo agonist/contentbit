@@ -5,7 +5,7 @@ description: |
   Use when asked to create or modify content documents in a project that uses
   contentbit — blog posts, docs pages, changelogs, any Markdown covered by
   `contentbit validate`.
-version: 4
+version: 5
 ---
 
 # Writing contentbit content
@@ -22,6 +22,8 @@ validate invocation for this project: the content glob and, if present, the
 below. No script? Default to `content/**/*.md` with no `--registry` flag.
 If the project has a `content:links` script, use it for the internal-link
 index; otherwise run `contentbit links <content glob>` directly.
+If `contentbit.seo.config.ts` exists and the request names a page `key` or
+`slug`, run `contentbit brief <key-or-slug> [content glob]` before writing.
 
 ## The loop
 
@@ -34,7 +36,17 @@ index; otherwise run `contentbit links <content glob>` directly.
    Read it before writing. It documents every available block: props, body
    shape, and when to use or avoid it.
 
-2. **Write the document.** Plain Markdown everywhere; blocks only where the
+2. **Fetch the SEO brief when present.** If the project has SEO config and the
+   target page has a known `key` or `slug`, run:
+
+   ```sh
+   contentbit brief <key-or-slug> [content glob] [--registry <path>] [--no-generic-blocks]
+   ```
+
+   Treat the brief as the structure contract: page type, required sections,
+   required/recommended blocks, internal links, and acceptance checks.
+
+3. **Write the document.** Plain Markdown everywhere; blocks only where the
    guide's use-when guidance fits. Keep frontmatter consistent with sibling
    documents in the same folder. If sibling documents use `slug`, `linksTo`,
    `aliases`, or `keywords`, run the link index first:
@@ -50,7 +62,7 @@ index; otherwise run `contentbit links <content glob>` directly.
    `keywords.secondary` with search-intent phrases that would help future
    agents choose this page as a `linksTo` target.
 
-3. **Validate and fix until clean:**
+4. **Validate and fix until clean:**
 
    ```sh
    contentbit validate <file> [--registry <path>] [--no-generic-blocks]
@@ -62,7 +74,7 @@ index; otherwise run `contentbit links <content glob>` directly.
    content glob so cross-file links are checked against the whole graph. Fix
    every diagnostic and re-run. Never finish with a failing validate.
 
-4. **Refresh internal links when present:**
+5. **Refresh internal links when present:**
 
    ```sh
    contentbit links <content glob> --fix

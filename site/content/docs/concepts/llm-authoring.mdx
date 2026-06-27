@@ -1,26 +1,29 @@
 ---
 title: LLM & agent authoring
-description: Generate authoring instructions from the registry, so prompts never drift.
+description: How generated authoring instructions keep schemas, docs, prompts, and validation aligned.
 ---
 
-The block definitions that validate content also generate instructions for whatever
-writes it. This is the core loop: schema, docs, and prompts come from one source of
-truth, so they cannot drift apart.
+The block definitions that validate content also generate instructions for
+whatever writes it. That is the core idea: schemas, docs, and prompts come from
+one registry, so they do not drift apart.
 
-## Generate a guide
+This page explains the model. To install the agent files, see
+[LLM-agent integration](/docs/guides/agents).
+
+## One registry, two audiences
 
 ```ts
 const guide = registry.toAuthoringGuide({
   audience: 'llm', // or 'human'
   includeExamples: true,
-  includeAvoidRules: true,
 })
 ```
 
-The `llm` audience prepends the ground rules:
+The human audience is readable block documentation. The LLM audience adds
+operational ground rules before the block list:
 
 - write regular Markdown by default; use blocks only when they improve scanning or structure
-- never invent block names — only documented blocks exist
+- never invent block names; only documented blocks exist
 - follow each block's syntax exactly
 - close every `:::block` with a line containing only `:::`
 - validate generated content and fix diagnostics rather than bypassing them
@@ -28,56 +31,66 @@ The `llm` audience prepends the ground rules:
 Each block contributes its description, content shape, use/avoid rules, a
 verified example, and a per-prop reference: every prop's name, type (enum
 values spelled out), required or optional, default, and `.describe()` text.
-That last part matters for the "never guess props" rule — optional props an
-example doesn't use are still discoverable. Custom blocks you registered are
-included automatically.
+That last part makes "never guess props" realistic. Optional props that an
+example does not use are still discoverable.
 
-## From the CLI
+Custom blocks registered by your project are included automatically.
+
+## Generated output is disposable
+
+Generated guides are not the source of truth. The registry is. Regenerate the
+guide whenever an agent, docs page, or prompt needs current instructions:
 
 ```bash
-# compact LLM context, written to a file your prompts can include
 contentbit instructions --audience llm --out content-blocks-guide.md
-
-# human-readable reference (this site's Block reference page is generated this way)
 contentbit docs --out docs/blocks.md
 ```
 
-## The validation loop
+The installed `AGENTS.md` block and Claude Code skills follow the same pattern:
+they ask the CLI for current instructions at runtime instead of carrying copied
+schemas.
 
-Generation is half the story; the other half is checking the output:
+## Validation closes the loop
+
+Generation is only useful when output is checked:
 
 ```bash
 contentbit validate "content/**/*.md"
 ```
 
-Exit code 1 on errors, with `file:line:col` diagnostics an LLM can act on:
+Diagnostics use source positions, stable codes, and fix hints an LLM can act on:
 
 ```text
 recipes/dough.md:31:1 error CB_CHILD_COUNT
 :::tabs needs at least 2 children, found 1.
 ```
 
-A typical LLM-agent skill wires both ends: include the generated guide in the
-prompt, then run `validate` on the result and feed diagnostics back until clean.
+That means an agent does not need a private mental model of the schema. It can
+read the live guide, write content, run validation, and feed diagnostics back
+into the next edit until the document is clean.
 
-There's a third leg for existing content: [`contentbit doctor`](/docs/guides/doctor)
-prints a ranked repair plan across validation, links, and content health, so an
-LLM agent can choose what to fix first. [`contentbit stats`](/docs/guides/stats)
-still provides raw outlines, block usage, and validation summaries as JSON.
+For existing content, [`contentbit doctor`](/docs/guides/doctor) adds a repair
+order across validation, links, and content health. [`contentbit stats`](/docs/guides/stats)
+adds raw measurements an agent can use as context.
 
-## Custom registries on the CLI
+## Custom registries
 
-Point the CLI at a module that default-exports your extra definitions:
+Point CLI commands at a registry module when your project adds blocks:
 
 ```bash
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
+contentbit instructions --audience llm --registry ./blocks/registry.ts
 ```
 
-The generic pack is always loaded first; your module adds to it.
+The generic pack loads first by default, then your registry adds project blocks.
+Pass `--no-generic-blocks` only when your registry intentionally owns the full
+block set.
 
-## Let your LLM agent run the loop
+## Boundaries
 
-You don't have to wire any of this yourself. `contentbit agents` (run
-automatically by `init`) installs skills and `AGENTS.md` instructions that do
-exactly what this page describes — fetch the guide, write, validate until
-clean, audit with doctor. See [LLM-agent integration](/docs/guides/agents).
+Generated instructions help agents write valid structured Markdown. They do not
+decide your editorial strategy, verify facts, or replace human review. Pair the
+contentbit loop with whatever content, product, and compliance checks your team
+already needs.
+
+For command details, see the [CLI reference](/docs/reference/cli).

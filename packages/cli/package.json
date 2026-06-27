@@ -44,7 +44,9 @@
     "@clack/prompts": "^1.5.1",
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
+    "@contentbit/project": "workspace:*",
     "@contentbit/studio": "workspace:*",
+    "commander": "^15.0.0",
     "tinyglobby": "^0.2.10"
   },
   "devDependencies": {

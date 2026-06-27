@@ -1,4 +1,4 @@
 {
   "title": "Concepts",
-  "pages": ["syntax", "why-not-mdx", "llm-authoring"]
+  "pages": ["why-contentbit", "rendering-model", "llm-authoring", "why-not-mdx"]
 }

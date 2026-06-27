@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { parseArgs } from 'node:util'
 
 import type { Io } from '../run.js'
 
@@ -75,20 +74,18 @@ export async function installAgentIntegration(
   }
 }
 
-export async function agentsCommand(args: string[], io: Io): Promise<number> {
-  const { values } = parseArgs({
-    args,
-    options: {
-      claude: { type: 'boolean', default: false },
-      'no-agents-md': { type: 'boolean', default: false },
-      cwd: { type: 'string', default: process.cwd() },
-    },
-  })
+export interface AgentsCommandInput {
+  claude?: boolean
+  noAgentsMd?: boolean
+  cwd?: string
+}
+
+export async function agentsCommand(input: AgentsCommandInput, io: Io): Promise<number> {
   await installAgentIntegration(
-    values.cwd,
+    input.cwd ?? process.cwd(),
     {
-      claude: values.claude || undefined, // false means "detect", not "skip"
-      agentsMd: !values['no-agents-md'],
+      claude: input.claude || undefined, // false means "detect", not "skip"
+      agentsMd: !input.noAgentsMd,
     },
     io,
   )
