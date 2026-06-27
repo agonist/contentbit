@@ -1,5 +1,12 @@
 # @contentbit/astro
 
+## 0.6.0
+
+### Patch Changes
+
+- Updated dependencies [bbf5f77]
+  - @contentbit/core@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
