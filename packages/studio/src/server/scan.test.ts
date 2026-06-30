@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { afterEach, expect, test } from 'vitest'
 
 import { scanDocument, scanGraph, scanProject } from './scan'
@@ -307,6 +307,58 @@ Useful overview body.
   )
 })
 
+test('scanProject and scanDocument cover a Cookwise-style multilingual SEO fixture', async () => {
+  const dir = join(root, 'fixtures/real-projects/cookwise-lite')
+  const seoConfig = await loadFixtureSeoConfig('cookwise-lite')
+  const options = {
+    globs: ['content/**/*.md'],
+    cwd: dir,
+    minSectionWords: 0,
+    linkOptions: { resolve: 'same-locale-key' as const },
+    seoConfig,
+  }
+
+  const project = await scanProject(options)
+  expect(project.summary.files).toBe(6)
+  expect(project.keywordCoverage).toEqual({ total: 6, withPrimary: 6, withSecondary: 6 })
+  expect(project.seo).toMatchObject({
+    schemaVersion: 'contentbit.seo.v1',
+    pages: 7,
+    existing: 6,
+    planned: 1,
+    findings: 0,
+  })
+  expect(
+    project.files.find(
+      (file) => file.relativePath === 'content/blog/cooking-oil-smoke-points/fr.md',
+    )?.keywords,
+  ).toMatchObject({
+    primary: 'point de fumee huile cuisson',
+  })
+
+  const document = await scanDocument(options, 'content/blog/cooking-oil-smoke-points/fr.md')
+  expect(document?.seoBrief).toMatchObject({
+    schemaVersion: 'contentbit.seo.brief.v1',
+    target: {
+      id: 'blog/cooking-oil-smoke-points:fr',
+      key: 'blog/cooking-oil-smoke-points',
+      locale: 'fr',
+      keywords: { primary: 'point de fumee huile cuisson' },
+    },
+  })
+  expect(document?.linksTo).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        target: 'blog/butter-vs-oil',
+        locale: 'fr',
+        slug: 'beurre-ou-huile',
+        key: 'blog/butter-vs-oil',
+      }),
+    ]),
+  )
+  expect(document?.seoBrief?.acceptanceChecks).toContain('Document includes section: Overview.')
+})
+
 test('startStudio serves read-only local API responses on port 0', async () => {
   const dir = await fixture({
     'content/a.md': '---\nslug: alpha\n---\n\n# Alpha\n\nReadable body.',
@@ -408,6 +460,14 @@ async function linkContentbitCore(dir: string): Promise<void> {
   await symlink(join(root, 'packages/react'), join(dir, 'node_modules/@contentbit/react'))
   await symlink(join(root, 'packages/core/node_modules/zod'), join(dir, 'node_modules/zod'))
   await symlink(join(root, 'packages/studio/node_modules/react'), join(dir, 'node_modules/react'))
+}
+
+async function loadFixtureSeoConfig(name: string): Promise<unknown> {
+  const moduleUrl = pathToFileURL(
+    join(root, 'fixtures/real-projects', name, 'contentbit.seo.config.ts'),
+  ).href
+  const mod = (await import(moduleUrl)) as { default: unknown }
+  return mod.default
 }
 
 async function fetchJson(url: URL): Promise<unknown> {

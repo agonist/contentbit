@@ -323,12 +323,15 @@ function normalizeSeoPages(
   for (const file of files) {
     const facts = readContentPageFacts(file.frontmatter, linkOptions)
     const fm = facts.frontmatter
-    const id = contentPageIdentity(facts, file.path)
+    const identity = contentPageIdentity(facts, file.path)
+    const id = seoPageId(facts, identity)
     const defaults = pageDefaultsForPath(config.pageDefaults, file.path)
     const planned =
       byId.get(id) ??
+      (facts.key ? byId.get(facts.key) : undefined) ??
       (facts.slug ? byId.get(facts.slug) : undefined) ??
       findPlannedByPath(byConfigId, file.path)
+    const pageId = planned && !facts.locale ? planned.id : id
     const linkPage = linkPageByPath.get(file.path)
     const page: SeoPage = {
       ...(planned ?? {
@@ -338,7 +341,7 @@ function normalizeSeoPages(
         linkedFrom: [],
         frontmatter: {},
       }),
-      id: planned?.id ?? id,
+      id: pageId,
       source: 'existing',
       path: file.path,
       key: facts.key ?? planned?.key,
@@ -588,6 +591,10 @@ function pathMatches(configId: string, filePath: string): boolean {
 
 function normalizePath(path: string): string {
   return path.replaceAll('\\', '/').replace(/^\.\/+/, '')
+}
+
+function seoPageId(facts: { locale?: string }, identity: string): string {
+  return facts.locale ? `${identity}:${facts.locale}` : identity
 }
 
 function plannedLinks(page: SeoPage): string[] {

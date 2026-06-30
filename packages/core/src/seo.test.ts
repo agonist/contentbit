@@ -306,6 +306,76 @@ Useful overview text.
   expect(scan.seo?.findings).toEqual([])
 })
 
+test('SEO pages keep localized copies with the same stable key', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: 'content/blog/oil/en.md',
+        source: `---
+locale: en
+slug: cooking-oil-smoke-points
+key: blog/cooking-oil-smoke-points
+type: guide
+seoKeywords:
+  primary: cooking oil smoke points
+linksTo:
+  - blog/butter-vs-oil
+---
+
+# Cooking Oil Smoke Points
+
+## Overview
+
+Useful overview text.
+`,
+      },
+      {
+        path: 'content/blog/oil/fr.md',
+        source: `---
+locale: fr
+slug: points-de-fumee-huiles
+key: blog/cooking-oil-smoke-points
+type: guide
+seoKeywords:
+  primary: points de fumee huiles
+linksTo:
+  - blog/butter-vs-oil
+---
+
+# Points de fumee des huiles
+
+## Overview
+
+Useful overview text.
+`,
+      },
+    ],
+    registry(),
+    {
+      minSectionWords: 0,
+      seoConfig: defineSeoConfig({
+        pageTypes: {
+          guide: {
+            requiredFrontmatter: ['seoKeywords.primary'],
+            requiredSections: ['Overview'],
+            minOutgoingLinks: 1,
+          },
+        },
+      }),
+    },
+  )
+
+  expect(scan.seo?.pages).toHaveLength(2)
+  expect(scan.seo?.pages.map((page) => page.id).sort()).toEqual([
+    'blog/cooking-oil-smoke-points:en',
+    'blog/cooking-oil-smoke-points:fr',
+  ])
+  expect(scan.seo?.pages.map((page) => page.key)).toEqual([
+    'blog/cooking-oil-smoke-points',
+    'blog/cooking-oil-smoke-points',
+  ])
+})
+
 test('relative path config entries merge with absolute scanned file paths', () => {
   const scan = scanContentProject(
     [
