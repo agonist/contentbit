@@ -1,0 +1,214 @@
+---
+title: Programmatic SEO workflows
+description: Use contentbit to plan, write, inspect, and enforce search-targeted pages with agents.
+---
+
+Use this workflow when content is part of a search program, not just a one-off
+Markdown edit. The goal is to give humans and agents the same contract before
+writing, the same preview while reviewing, and the same checks in CI.
+
+The loop is:
+
+1. Model the page family in `contentbit.seo.config.ts`.
+2. Run `doctor` to see current gaps.
+3. Open Studio to inspect the page and brief.
+4. Give an agent the brief before it writes.
+5. Run `doctor --strict-seo` before publishing.
+
+## 1. Model the page family
+
+Start with reusable page types. A page type describes what every page in that
+family must contain:
+
+```ts
+import { defineSeoConfig } from '@contentbit/core'
+
+export default defineSeoConfig({
+  pageTypes: {
+    glossary: {
+      requiredFrontmatter: ['name', 'summary', 'seoKeywords.primary'],
+      requiredSections: [
+        { id: 'definition', headings: ['What it means', 'Definition'] },
+        { id: 'why-it-matters', headings: ['Why it matters'] },
+      ],
+      recommendedBlocks: ['quick-ref', 'faq'],
+      minOutgoingLinks: 2,
+    },
+  },
+  pageDefaults: [
+    {
+      pathPrefix: 'content/glossary/',
+      type: 'glossary',
+      intent: 'definition',
+    },
+  ],
+})
+```
+
+Use `pageDefaults` for folders that already imply a page type. Use explicit
+`pages` entries for planned pages that do not exist yet, or for pages that need
+extra planning data such as primary keywords and required links.
+
+## 2. Add planned pages
+
+Planned pages are briefs before files exist:
+
+```ts
+pages: {
+  'content/glossary/recipe-import/en.md': {
+    type: 'glossary',
+    key: 'glossary/recipe-import',
+    slug: 'recipe-import',
+    title: 'Recipe import',
+    intent: 'definition',
+    keywords: {
+      primary: 'recipe import',
+      secondary: ['recipe importer', 'save recipes from websites'],
+    },
+    linksTo: ['glossary/recipe-manager', 'guides/save-recipes-from-websites'],
+  },
+}
+```
+
+The `pages` key can be a planned file path, a stable key, or a slug. If a
+matching Markdown file exists later, its frontmatter wins for live page facts.
+The config stays useful as the planning layer.
+
+## 3. Check the project
+
+Run Doctor over the same content set you publish:
+
+```bash
+contentbit doctor "content/**/*.md" \
+  --registry ./blocks/registry.ts \
+  --seo-config ./contentbit.seo.config.ts
+```
+
+Doctor adds SEO findings to the normal repair plan:
+
+- missing required frontmatter
+- missing required sections
+- missing required or recommended blocks
+- missing required outgoing links
+- not enough outgoing or incoming SEO links
+
+Use JSON when an agent or CI job needs stable data:
+
+```bash
+contentbit doctor "content/**/*.md" \
+  --registry ./blocks/registry.ts \
+  --seo-config ./contentbit.seo.config.ts \
+  --json
+```
+
+Use strict mode when contract warnings should fail the build:
+
+```bash
+contentbit doctor "content/**/*.md" \
+  --registry ./blocks/registry.ts \
+  --seo-config ./contentbit.seo.config.ts \
+  --strict-seo
+```
+
+## 4. Inspect the page in Studio
+
+Open the read-only Studio on the same glob and config:
+
+```bash
+contentbit studio "content/**/*.md" \
+  --registry ./blocks/registry.ts \
+  --seo-config ./contentbit.seo.config.ts
+```
+
+Studio shows project-level SEO counts, keyword coverage, link health, document
+preview, source, stats, findings, and the page's Brief view. The Brief view is
+for humans reviewing the plan: it includes target facts, required sections,
+required links, related pages, acceptance checks, and copy/download actions for
+Markdown or JSON.
+
+## 5. Give the brief to the writer
+
+Print the brief for an existing or planned page:
+
+```bash
+contentbit brief glossary/recipe-import "content/**/*.md" \
+  --seo-config ./contentbit.seo.config.ts
+```
+
+For an agent, JSON is usually better:
+
+```bash
+contentbit brief glossary/recipe-import "content/**/*.md" \
+  --seo-config ./contentbit.seo.config.ts \
+  --json
+```
+
+Ask the agent to satisfy the brief, not to invent a structure:
+
+```text
+Use this contentbit brief as the writing contract. Preserve target facts,
+include every required section, satisfy the required links, and finish by
+running contentbit doctor with --strict-seo.
+```
+
+For block syntax, still give the agent the live registry instructions:
+
+```bash
+contentbit instructions --audience llm --registry ./blocks/registry.ts
+```
+
+## 6. Enforce before publishing
+
+Make the workflow boring in `package.json`:
+
+```json
+{
+  "scripts": {
+    "content:doctor": "contentbit doctor \"content/**/*.md\" --registry ./blocks/registry.ts --strict-seo",
+    "studio": "contentbit studio \"content/**/*.md\" --registry ./blocks/registry.ts"
+  }
+}
+```
+
+CI should run `content:doctor`. Writers and agents can call `brief` directly
+with the page target while they work:
+
+```bash
+contentbit brief glossary/recipe-import "content/**/*.md"
+```
+
+## Multilingual projects
+
+For translated slugs with stable page keys, use the same resolver everywhere:
+
+```bash
+contentbit doctor "content/**/*.md" --link-resolve same-locale-key
+contentbit brief glossary/recipe-import "content/**/*.md" --link-resolve same-locale-key
+contentbit studio "content/**/*.md" --link-resolve same-locale-key
+```
+
+Author translated pages with shared keys and locale-specific slugs:
+
+```yaml
+---
+key: glossary/recipe-import
+locale: fr
+slug: import-recettes
+linksTo:
+  - glossary/recipe-manager
+seoKeywords:
+  primary: import de recettes
+---
+```
+
+`seoKeywords` is treated as keyword data when `keywords` is absent. That lets
+projects keep their existing frontmatter vocabulary while contentbit still
+builds briefs, keyword coverage, link indexes, and SEO findings.
+
+## What to read next
+
+- [SEO briefs and contracts](/docs/guides/seo-briefs) for config fields and brief output.
+- [Content Studio](/docs/guides/studio) for the local review UI.
+- [Content doctor](/docs/guides/doctor) for the audit command and exit behavior.
+- [Internal linking](/docs/guides/internal-linking) for resolver modes and backlinks.
+- [LLM-agent integration](/docs/guides/agents) for wiring this loop into agent instructions.

@@ -1,15 +1,21 @@
 ---
 title: SEO briefs and contracts
-description: Use contentbit SEO contracts to give agents structure before they write.
+description: Define page contracts and print agent-ready briefs for existing or planned pages.
 ---
 
-`contentbit brief` turns a small SEO config into an agent-ready writing brief.
-Use it when a page needs more than prose polish: required sections, required
-blocks, internal links, page intent, and acceptance checks.
+SEO contracts describe what a page must satisfy. Briefs turn those contracts
+plus the current content inventory into a writer-ready plan.
 
-## Add a config
+If you want the full end-to-end loop, start with
+[Programmatic SEO workflows](/docs/guides/programmatic-seo). This page focuses
+on the config and brief mechanics.
 
-Create `contentbit.seo.config.ts` at the project root:
+## Config file
+
+Create `contentbit.seo.config.ts` at the project root, or pass a custom path
+with `--seo-config`. Keep the file small at first: define one page type, add
+folder defaults, then add explicit planned pages only where writers need a
+brief before the Markdown file exists.
 
 ```ts
 import { defineSeoConfig } from '@contentbit/core'
@@ -21,12 +27,22 @@ export default defineSeoConfig({
       requiredSections: [
         { id: 'overview', headings: ['Overview', 'Summary'] },
         { id: 'alternatives', headings: ['Best alternatives', 'Top alternatives'] },
+        { id: 'comparison', headings: ['Comparison', 'Feature comparison'] },
       ],
       requiredBlocks: ['comparison'],
-      recommendedBlocks: ['faq'],
+      recommendedBlocks: ['faq', 'key-metrics'],
+      requiredLinksTo: ['seo-tools-comparison'],
       minOutgoingLinks: 2,
+      minIncomingLinks: 1,
     },
   },
+  pageDefaults: [
+    {
+      pathPrefix: 'content/alternatives/',
+      type: 'alternative',
+      intent: 'commercial',
+    },
+  ],
   pages: {
     'ahrefs-alternatives': {
       type: 'alternative',
@@ -35,35 +51,126 @@ export default defineSeoConfig({
       title: 'Ahrefs Alternatives',
       intent: 'commercial',
       keywords: { primary: 'ahrefs alternatives' },
+      linksTo: ['seo-tools-comparison'],
     },
   },
 })
 ```
 
-`pageTypes` are reusable contracts. `pages` can describe planned pages before a
-Markdown file exists. Existing frontmatter still wins for page facts; config is
-the planning layer.
+## Page types
+
+`pageTypes` are reusable contracts. Use them for page families such as docs
+pages, glossary entries, alternatives pages, comparison pages, product pages, or
+blog posts.
+
+| Field | Meaning |
+| --- | --- |
+| `requiredFrontmatter` | Dot paths that must exist after frontmatter normalization. |
+| `requiredSections` | Headings that must appear in the document outline. Each section can provide allowed heading variants. |
+| `requiredBlocks` | Block names that must appear at least once. |
+| `recommendedBlocks` | Block names that produce informational suggestions when absent. |
+| `requiredLinksTo` | Link targets that must appear in `linksTo`. |
+| `minOutgoingLinks` | Minimum number of outgoing SEO links. |
+| `minIncomingLinks` | Minimum number of backlinks from other scanned pages. |
+
+Frontmatter is normalized before SEO checks run. If a project uses
+`seoKeywords`, contentbit also exposes that data as `keywords` for page facts.
+That means a contract can require the source field (`seoKeywords.primary`) or
+the normalized field (`keywords.primary`), depending on the convention you want
+writers to see in the file.
+
+## Page defaults
+
+`pageDefaults` classify existing files by path. Use them when a folder already
+means something:
+
+```ts
+pageDefaults: [
+  { pathPrefix: 'content/docs/', type: 'docs-page', intent: 'documentation' },
+  { pathPrefix: 'content/blog/', type: 'blog-post', intent: 'publication' },
+]
+```
+
+Defaults fill in missing facts. Existing frontmatter and explicit planned page
+entries still win.
+
+## Planned pages
+
+`pages` can describe pages before Markdown exists. That is the part that makes
+briefs useful for agents:
+
+```ts
+pages: {
+  'content/alternatives/semrush.md': {
+    type: 'alternative',
+    key: 'semrush-alternatives',
+    slug: 'semrush-alternatives',
+    title: 'Semrush Alternatives',
+    keywords: { primary: 'semrush alternatives' },
+    linksTo: ['seo-tools-comparison'],
+  },
+}
+```
+
+When the file is later created, contentbit merges the plan with the live
+frontmatter and stats. Existing frontmatter wins for page facts such as `title`,
+`slug`, `key`, `intent`, `keywords`, and `linksTo`.
 
 ## Print a brief
 
 ```bash
-contentbit brief ahrefs-alternatives
-contentbit brief ahrefs-alternatives "content/**/*.md" --json
+contentbit brief semrush-alternatives
+contentbit brief semrush-alternatives "content/**/*.md"
+contentbit brief semrush-alternatives "content/**/*.md" --json
 ```
 
-Targets resolve by `key` first, then `slug`. With no glob, `brief` scans the
-default `content/**/*.{md,mdx}` set when it exists, so existing pages and planned
-pages share one inventory.
+Targets resolve by `key` first, then by `slug`, then by internal page id. With
+no glob, `brief` scans `content/**/*.{md,mdx}` when that default content set
+exists. If the page is only planned, the brief still prints.
 
-## Run doctor
+The Markdown brief is meant to paste into an agent or editorial task. The JSON
+brief is better for tools.
 
-When `contentbit.seo.config.ts` exists, `doctor` includes SEO findings in the
-normal repair plan:
+## Brief contents
+
+A brief includes:
+
+- target page facts: id, source, key, slug, title, type, intent, and keywords
+- the matching page-type contract
+- required sections, blocks, and links
+- SEO findings for the target page
+- related pages from the same type or link neighborhood
+- acceptance checks the writer should satisfy before handoff
+
+Studio shows the same data in the document Brief view, with copy and download
+actions for Markdown and JSON.
+
+## Doctor integration
+
+When an SEO config exists, `doctor` includes SEO findings in the normal repair
+plan:
 
 ```bash
 contentbit doctor "content/**/*.md" --strict-seo
 contentbit doctor "content/**/*.md" --no-seo
 ```
 
-Use `--strict-seo` in CI when missing required SEO contract items should fail
-the build. Use `--no-seo` when you only want validation, link, and stats checks.
+Use `--strict-seo` in CI when missing contract requirements should fail the
+build. Use `--no-seo` when you only want validation, link, and stats checks.
+
+## Multilingual pages
+
+Use the same link resolver options for `brief`, `doctor`, `studio`, and
+`links`.
+
+```bash
+contentbit brief glossary/recipe-import "content/**/*.md" \
+  --link-resolve same-locale-key \
+  --locale-field locale \
+  --key-field key \
+  --slug-field slug
+```
+
+For translated slugs, share a stable `key` across locales and localize `slug`.
+Contentbit keeps localized SEO pages separate while still resolving links by
+same-locale key.
