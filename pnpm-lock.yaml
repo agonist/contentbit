@@ -11,6 +11,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.31.0
         version: 2.31.0(@types/node@25.9.2)
+      '@contentbit/project':
+        specifier: workspace:*
+        version: link:packages/project
       oxfmt:
         specifier: ^0.54.0
         version: 0.54.0
@@ -67,9 +70,6 @@ importers:
       '@contentbit/core':
         specifier: workspace:*
         version: link:../core
-      '@contentbit/project':
-        specifier: workspace:*
-        version: link:../project
       '@contentbit/studio':
         specifier: workspace:*
         version: link:../studio
@@ -167,9 +167,6 @@ importers:
       '@contentbit/core':
         specifier: workspace:*
         version: link:../core
-      '@contentbit/project':
-        specifier: workspace:*
-        version: link:../project
       '@contentbit/react':
         specifier: workspace:*
         version: link:../react
@@ -249,6 +246,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.17)
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.0
       jsdom:
         specifier: ^28
         version: 28.1.0

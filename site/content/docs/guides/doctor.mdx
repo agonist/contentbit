@@ -1,6 +1,6 @@
 ---
 title: Content doctor
-description: Run validation, link checks, and content-quality heuristics as one ranked repair plan.
+description: Run validation, link checks, content-quality heuristics, and optional SEO contract checks as one ranked repair plan.
 ---
 
 `contentbit doctor` is the audit command to run before opening files by hand. It
@@ -36,6 +36,8 @@ Repair plan:
 - **Block-less long documents** with at least 250 prose words and no structured
   blocks.
 - **Missing image alt text** from Markdown image syntax.
+- **SEO contract findings** when `contentbit.seo.config.ts` exists or
+  `--seo-config` is passed.
 
 `doctor` is read-only. It does not write `.contentbit/link-index.json`, and it
 does not run `links --fix`. If aliases are present and the link graph has no
@@ -75,6 +77,7 @@ Exit codes match its job as a health gate:
 - `0` when there are no error findings.
 - `1` when there are error findings, or when `--strict-warnings` is passed and
   warnings are present.
+- `1` when `--strict-seo` is passed and SEO warnings are present.
 - `2` when no files or globs were provided, or no files matched.
 
 ## How it fits
@@ -82,4 +85,6 @@ Exit codes match its job as a health gate:
 Use `doctor` to decide what to fix first. Use `validate` when you only need the
 blocking syntax/schema gate. Use `links` when you need to write the link index
 or heal alias references. Use `stats` when you need raw per-document metrics.
+Use [Programmatic SEO workflows](/docs/guides/programmatic-seo) when you want
+to plan pages with briefs and enforce SEO contracts in CI.
 For the full option list, see the [CLI reference](/docs/reference/cli).

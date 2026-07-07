@@ -3,7 +3,10 @@
 // Most workspace deps (@contentbit/*) are bundled in since they use moduleResolution:bundler
 // and lack .js extensions in their compiled output, making them non-runnable by plain node.
 // Studio is a full web app, so the CLI loads it as a runtime dependency instead.
+import { rm } from 'node:fs/promises'
 import { build } from 'esbuild'
+
+await rm('dist', { recursive: true, force: true })
 
 await build({
   entryPoints: ['src/bin.ts', 'src/run.ts'],

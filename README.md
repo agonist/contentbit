@@ -169,8 +169,10 @@ Read the [internal linking guide](https://contentbit.dev/docs/guides/internal-li
 Create `contentbit.seo.config.ts` with reusable page-type contracts and planned
 pages, or let `contentbit init --seo` scaffold a starter. When that file exists,
 `contentbit doctor` folds SEO contract findings into the normal repair plan,
-and `contentbit brief <key-or-slug>` prints the structure, links, required
-blocks, and acceptance checks an agent should satisfy before publishing.
+Studio shows a read-only Brief view for each planned or existing page, and
+`contentbit brief <key-or-slug>` prints the structure, links, required blocks,
+and acceptance checks an agent should satisfy before publishing. See the
+[programmatic SEO workflow](https://contentbit.dev/docs/guides/programmatic-seo).
 
 Without an LLM agent, the same loop is just CLI commands: generate instructions,
 write Markdown with registered blocks, run `contentbit validate`, then render to

@@ -98,7 +98,10 @@ Options:
 | `--json` | Print machine-readable JSON. |
 | Link resolver options | See [Shared link options](#shared-link-options). |
 
-Targets resolve by page `key` first, then by `slug`.
+Targets resolve by page `key` first, then by `slug`, then by internal page id.
+Use [SEO briefs and contracts](/docs/guides/seo-briefs) for config details and
+[Programmatic SEO workflows](/docs/guides/programmatic-seo) for the full
+writing loop.
 
 ## doctor
 
@@ -148,7 +151,9 @@ Options:
 | `--no-seo` | Ignore SEO config even when one exists. |
 | Link resolver options | See [Shared link options](#shared-link-options). |
 
-Use [Content Studio](/docs/guides/studio) for workflow guidance.
+Use [Content Studio](/docs/guides/studio) for workflow guidance. When an SEO
+config is loaded, document pages also include a read-only Brief view with
+copy/download actions for Markdown and JSON.
 
 ## stats
 

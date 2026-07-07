@@ -98,6 +98,17 @@ Both skills read the `content:check` script in your package.json to discover the
 project's content glob and `--registry` flag, so they adapt to your layout
 without configuration.
 
+If the project has `contentbit.seo.config.ts` and the task is a search-targeted
+page, give the agent the page brief before it writes:
+
+```bash
+contentbit brief <key-or-slug> "content/**/*.md" --json
+```
+
+The brief is the structure contract: target facts, intent, keywords, required
+sections, required blocks, required links, related pages, and acceptance checks.
+After the edit, run `doctor --strict-seo` over the same glob.
+
 Generated instructions document every block prop, enum value, default, and
 description. That is why the agent can follow a "never guess props" rule. For
 the model behind this, see [LLM authoring](/docs/concepts/llm-authoring).
@@ -167,6 +178,9 @@ For data-informed writing, feed `contentbit doctor --json` or `contentbit stats`
 output in as well — for example, have the skill check sibling documents'
 outlines and block usage so new content matches the structure of what already
 works.
+
+For the full SEO agent loop, see
+[Programmatic SEO workflows](/docs/guides/programmatic-seo).
 
 This works in any LLM agent that can run shell commands. The CLI is the interface;
 skills, rules files, and prompts are thin adapters over it.

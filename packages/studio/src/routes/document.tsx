@@ -1,17 +1,24 @@
+import { formatSeoBriefMarkdown, type SeoBrief, type SeoPage } from '@contentbit/core'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   AlertTriangle,
   ArrowLeft,
   BarChart3,
   Braces,
+  Check,
+  Clipboard,
+  Download,
   FileCode2,
+  FileJson,
+  FileText,
+  ListChecks,
   Link2,
   RefreshCw,
   Search,
   Target,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { fetchDocument } from '@/lib/api'
@@ -116,6 +123,12 @@ function DocumentDetail() {
                 />
               </Panel>
 
+              {document.seoBrief && (
+                <Panel title="Brief" icon={<Target className="size-4" />}>
+                  <SeoBriefView brief={document.seoBrief} />
+                </Panel>
+              )}
+
               <Panel title="Source" icon={<FileCode2 className="size-4" />}>
                 <pre className="max-h-[34rem] overflow-auto whitespace-pre-wrap break-words bg-muted p-4 font-mono text-xs leading-5">
                   {document.source}
@@ -180,34 +193,6 @@ function DocumentDetail() {
               )}
             </Panel>
 
-            {document.seoBrief && (
-              <Panel title="SEO Brief" icon={<Target className="size-4" />}>
-                <div className="space-y-3 text-sm">
-                  <div className="flex flex-wrap gap-1">
-                    {document.seoBrief.target.type && (
-                      <Badge>{document.seoBrief.target.type}</Badge>
-                    )}
-                    {document.seoBrief.target.intent && (
-                      <Badge>{document.seoBrief.target.intent}</Badge>
-                    )}
-                    <Badge>{document.seoBrief.target.source}</Badge>
-                  </div>
-                  {document.seoBrief.acceptanceChecks.length > 0 && (
-                    <div>
-                      <p className="text-xs uppercase text-muted-foreground">Acceptance</p>
-                      <ul className="mt-2 space-y-1">
-                        {document.seoBrief.acceptanceChecks.map((check) => (
-                          <li key={check} className="border bg-muted/40 px-2 py-1">
-                            {check}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </Panel>
-            )}
-
             <Panel title="Findings" icon={<AlertTriangle className="size-4" />}>
               {document.findings.length > 0 ? (
                 <ul className="space-y-3">
@@ -258,6 +243,224 @@ function MetricGrid({ items }: { items: Array<[string, number | string]> }) {
   )
 }
 
+type BriefFormat = 'markdown' | 'json'
+
+function SeoBriefView({ brief }: { brief: SeoBrief }) {
+  const [rawFormat, setRawFormat] = useState<BriefFormat>('markdown')
+  const [copiedFormat, setCopiedFormat] = useState<BriefFormat | null>(null)
+  const markdown = useMemo(() => formatSeoBriefMarkdown(brief), [brief])
+  const json = useMemo(() => JSON.stringify(brief, null, 2), [brief])
+  const raw = rawFormat === 'markdown' ? markdown : json
+
+  async function copy(format: BriefFormat) {
+    const value = format === 'markdown' ? markdown : json
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedFormat(format)
+      window.setTimeout(() => setCopiedFormat(null), 1400)
+    } catch {
+      setCopiedFormat(null)
+    }
+  }
+
+  function download(format: BriefFormat) {
+    const value = format === 'markdown' ? markdown : json
+    const extension = format === 'markdown' ? 'md' : 'json'
+    downloadText(`${briefFilename(brief)}.${extension}`, value)
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap gap-1">
+            <Badge>{brief.target.source}</Badge>
+            {brief.target.type && <Badge>{brief.target.type}</Badge>}
+            {brief.target.intent && <Badge>{brief.target.intent}</Badge>}
+          </div>
+          <h3 className="mt-2 break-words text-xl font-semibold">
+            {brief.target.title ?? brief.target.key ?? brief.target.slug ?? brief.target.id}
+          </h3>
+          <div className="mt-2 grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
+            <BriefMeta label="id" value={brief.target.id} />
+            <BriefMeta label="key" value={brief.target.key} />
+            <BriefMeta label="slug" value={brief.target.slug} />
+            <BriefMeta label="primary" value={brief.target.keywords?.primary} />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 gap-2 px-2.5 text-xs"
+            onClick={() => void copy('markdown')}
+          >
+            {copiedFormat === 'markdown' ? (
+              <Check className="size-3.5" />
+            ) : (
+              <Clipboard className="size-3.5" />
+            )}
+            {copiedFormat === 'markdown' ? 'Copied' : 'Copy Markdown'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 gap-2 px-2.5 text-xs"
+            onClick={() => void copy('json')}
+          >
+            {copiedFormat === 'json' ? (
+              <Check className="size-3.5" />
+            ) : (
+              <Clipboard className="size-3.5" />
+            )}
+            {copiedFormat === 'json' ? 'Copied' : 'Copy JSON'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 gap-2 px-2.5 text-xs"
+            onClick={() => download('markdown')}
+          >
+            <Download className="size-3.5" />
+            Markdown
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 gap-2 px-2.5 text-xs"
+            onClick={() => download('json')}
+          >
+            <Download className="size-3.5" />
+            JSON
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="space-y-4">
+          <KeywordList title="Secondary Keywords" items={brief.target.keywords?.secondary} />
+          <KeywordList title="LSI Keywords" items={brief.target.keywords?.lsi} />
+          <BriefList
+            title="Required Sections"
+            items={brief.requiredSections.map((section) => section.headings.join(' / '))}
+          />
+          <BriefList title="Required Blocks" items={brief.requiredBlocks} />
+          <BriefList title="Recommended Blocks" items={brief.recommendedBlocks} />
+        </div>
+        <div className="space-y-4">
+          <BriefList title="Required Links" items={brief.requiredLinksTo} />
+          <BriefList
+            title="Current Findings"
+            items={brief.findings.map((finding) => `${finding.code}: ${finding.message}`)}
+          />
+          <RelatedPages pages={brief.relatedPages} />
+          <BriefList
+            title="Acceptance"
+            items={brief.acceptanceChecks}
+            icon={<ListChecks className="size-4" />}
+          />
+        </div>
+      </div>
+
+      <div className="border">
+        <div className="flex flex-col gap-3 border-b bg-muted/40 px-3 py-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            {rawFormat === 'markdown' ? (
+              <FileText className="size-4" />
+            ) : (
+              <FileJson className="size-4" />
+            )}
+            {rawFormat === 'markdown' ? 'Markdown' : 'JSON'}
+          </div>
+          <div className="flex w-fit gap-1 border bg-background p-1">
+            {(['markdown', 'json'] as const).map((format) => (
+              <button
+                key={format}
+                type="button"
+                onClick={() => setRawFormat(format)}
+                className={
+                  rawFormat === format
+                    ? 'bg-foreground px-2.5 py-1.5 text-xs font-medium text-background'
+                    : 'px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground'
+                }
+              >
+                {format}
+              </button>
+            ))}
+          </div>
+        </div>
+        <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words bg-background p-4 font-mono text-xs leading-5">
+          {raw}
+        </pre>
+      </div>
+    </div>
+  )
+}
+
+function BriefMeta({ label, value }: { label: string; value?: string }) {
+  if (!value) return null
+  return (
+    <div className="min-w-0">
+      <span className="mr-2 font-mono uppercase">{label}</span>
+      <span className="break-words text-foreground">{value}</span>
+    </div>
+  )
+}
+
+function KeywordList({ title, items }: { title: string; items?: string[] }) {
+  if (!items?.length) return null
+  return (
+    <div>
+      <p className="mb-2 text-xs uppercase text-muted-foreground">{title}</p>
+      <div className="flex flex-wrap gap-1">
+        {items.map((item) => (
+          <Badge key={item}>{item}</Badge>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BriefList({ title, items, icon }: { title: string; items: string[]; icon?: ReactNode }) {
+  if (items.length === 0) return null
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
+        {icon}
+        <p>{title}</p>
+      </div>
+      <ul className="space-y-1 text-sm">
+        {items.map((item) => (
+          <li key={item} className="break-words border bg-muted/40 px-2 py-1.5">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function RelatedPages({ pages }: { pages: SeoPage[] }) {
+  if (pages.length === 0) return null
+  return (
+    <div>
+      <p className="mb-2 text-xs uppercase text-muted-foreground">Related Pages</p>
+      <ul className="space-y-1 text-sm">
+        {pages.map((page) => (
+          <li key={page.id} className="min-w-0 border bg-muted/40 px-2 py-1.5">
+            <p className="break-words font-medium">{pageLabel(page)}</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {page.source && <Badge>{page.source}</Badge>}
+              {page.type && <Badge>{page.type}</Badge>}
+              {page.slug && <Badge>{page.slug}</Badge>}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function LinkList({ title, items }: { title: string; items: StudioDocument['linksTo'] }) {
   return (
     <div className="mb-4 last:mb-0">
@@ -304,4 +507,33 @@ function FindingItem({ finding }: { finding: StudioFinding }) {
 function linkLabel(item: StudioDocument['linksTo'][number]): string {
   if (typeof item === 'string') return item
   return item.target ?? item.key ?? item.slug
+}
+
+function pageLabel(page: SeoPage): string {
+  return page.title ?? page.key ?? page.slug ?? page.id
+}
+
+function briefFilename(brief: SeoBrief): string {
+  return safeFilename(
+    `contentbit-brief-${brief.target.key ?? brief.target.slug ?? brief.target.id}`,
+  )
+}
+
+function safeFilename(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function downloadText(filename: string, content: string): void {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.append(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }

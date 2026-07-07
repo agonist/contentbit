@@ -1,12 +1,13 @@
 ---
 title: Content Studio
-description: Browse content health, previews, stats, links, backlinks, and keywords in a read-only local web app.
+description: Browse content health, previews, stats, links, backlinks, keywords, and SEO briefs in a read-only local web app.
 ---
 
 `contentbit studio` opens a local dashboard over your Markdown content. It is
 the human-friendly view next to [`contentbit doctor`](/docs/guides/doctor):
 doctor prints the ranked repair plan; Studio lets you browse the same project
-health, preview documents, and inspect links without jumping between files.
+health, preview documents, inspect links, and review SEO briefs without jumping
+between files.
 
 New projects created with `contentbit init` include:
 
@@ -44,7 +45,14 @@ Open a document to inspect:
 - word, section, image, link, and reading-time stats
 - outgoing links and backlinks
 - keywords
+- SEO brief details when `contentbit.seo.config.ts` is loaded
 - validation, link, and content-health findings
+
+The document Brief view shows the same contract that `contentbit brief` prints:
+target facts, required sections, required links, related pages, findings,
+acceptance checks, and raw Markdown/JSON with copy and download actions. Use it
+when a human editor wants to inspect the page plan before handing work to an
+agent or writer.
 
 By default, generic blocks render through `@contentbit/react`. Custom blocks are
 still validated from your registry, and Studio automatically looks for project
@@ -63,6 +71,7 @@ Link resolver options match `contentbit links` and `contentbit doctor`:
 ```bash
 contentbit studio "content/**/*.md" \
   --registry ./blocks/registry.ts \
+  --seo-config ./contentbit.seo.config.ts \
   --link-resolve prefer-same-locale-key-fallback-slug \
   --locale-field locale \
   --key-field key \
@@ -81,6 +90,9 @@ Defaults:
 Use `--no-generic-blocks` when your registry intentionally owns the whole block
 set, including names such as `quick-ref` that exist in the generic pack.
 For the full option list, see the [CLI reference](/docs/reference/cli).
+
+For a complete SEO planning loop, see
+[Programmatic SEO workflows](/docs/guides/programmatic-seo).
 
 ## Read-only scope
 

@@ -1,14 +1,13 @@
-import { defineSeoConfig } from '@contentbit/core'
-
-export default defineSeoConfig({
+export default {
   pageTypes: {
     'docs-page': {
       requiredFrontmatter: ['title', 'description'],
+      requiredSections: [{ id: 'overview', headings: ['Overview'] }],
+      minOutgoingLinks: 1,
     },
     'blog-post': {
       requiredFrontmatter: ['title', 'description', 'date', 'slug', 'keywords.primary'],
-      requiredBlocks: ['callout'],
-      recommendedBlocks: ['faq'],
+      requiredSections: [{ id: 'overview', headings: ['Overview'] }],
       minOutgoingLinks: 1,
     },
   },
@@ -36,26 +35,20 @@ export default defineSeoConfig({
         primary: 'programmatic SEO briefs',
         secondary: ['SEO content contracts', 'agent SEO brief'],
       },
-      linksTo: [
-        'docs/guides/programmatic-seo',
-        'docs/guides/doctor',
-        'docs/guides/agents',
-        'docs/guides/internal-linking',
-      ],
+      linksTo: ['docs/guides/doctor', 'docs/guides/agents'],
     },
     'content/docs/guides/programmatic-seo.mdx': {
       type: 'docs-page',
       key: 'programmatic-seo',
       slug: 'docs/guides/programmatic-seo',
       title: 'Programmatic SEO workflows',
-      description:
-        'Use contentbit to plan, write, inspect, and enforce search-targeted pages with agents.',
-      intent: 'programmatic SEO workflow',
+      description: 'Run contentbit from SEO config to strict doctor checks in CI.',
+      intent: 'workflow guide',
       keywords: {
         primary: 'programmatic SEO workflow',
-        secondary: ['contentbit SEO workflow', 'agent SEO brief workflow'],
+        secondary: ['contentbit doctor CI', 'agent SEO brief workflow'],
       },
-      linksTo: ['docs/guides/seo-briefs', 'docs/guides/studio', 'docs/guides/doctor'],
+      linksTo: ['docs/guides/seo-briefs', 'docs/guides/doctor'],
     },
   },
-})
+}
