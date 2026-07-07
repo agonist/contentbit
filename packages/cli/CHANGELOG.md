@@ -1,5 +1,15 @@
 # contentbit
 
+## 0.6.1
+
+### Patch Changes
+
+- Bundle internal project-loading utilities so published CLI and Studio packages do not depend on the private `@contentbit/project` workspace package.
+- Updated dependencies
+  - @contentbit/studio@0.6.1
+  - @contentbit/core@0.6.1
+  - @contentbit/blocks@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes

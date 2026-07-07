@@ -1,5 +1,11 @@
 # @contentbit/react
 
+## 0.6.1
+
+### Patch Changes
+
+- @contentbit/core@0.6.1
+
 ## 0.6.0
 
 ### Patch Changes
