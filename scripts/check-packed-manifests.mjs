@@ -8,13 +8,15 @@ import { promisify } from 'node:util'
 const exec = promisify(execFile)
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 
-const packageDirs = ['astro', 'blocks', 'cli', 'core', 'project', 'react', 'studio']
+const packageDirs = ['astro', 'blocks', 'cli', 'core', 'react', 'studio']
 const dependencyFields = [
   'dependencies',
   'devDependencies',
   'optionalDependencies',
   'peerDependencies',
 ]
+const runtimeDependencyFields = ['dependencies', 'optionalDependencies', 'peerDependencies']
+const internalPackages = new Set(['@contentbit/project'])
 
 const packDir = await mkdtemp(join(tmpdir(), 'contentbit-pack-check-'))
 let failed = false
@@ -24,13 +26,20 @@ try {
     const cwd = join(root, 'packages', packageDir)
     const manifest = await packedManifest(cwd)
     const leaks = workspaceRanges(manifest)
+    const internalDeps = internalRuntimeDependencies(manifest)
 
-    if (leaks.length > 0) {
+    if (leaks.length > 0 || internalDeps.length > 0) {
       failed = true
-      console.error(
-        `${manifest.name}@${manifest.version} has workspace ranges in its packed manifest:`,
-      )
-      for (const leak of leaks) console.error(`  - ${leak}`)
+      if (leaks.length > 0) {
+        console.error(
+          `${manifest.name}@${manifest.version} has workspace ranges in its packed manifest:`,
+        )
+        for (const leak of leaks) console.error(`  - ${leak}`)
+      }
+      if (internalDeps.length > 0) {
+        console.error(`${manifest.name}@${manifest.version} exposes internal runtime dependencies:`)
+        for (const dep of internalDeps) console.error(`  - ${dep}`)
+      }
     } else {
       console.log(`ok ${manifest.name}@${manifest.version}`)
     }
@@ -74,4 +83,18 @@ function workspaceRanges(manifest) {
   }
 
   return leaks
+}
+
+function internalRuntimeDependencies(manifest) {
+  const deps = []
+
+  for (const field of runtimeDependencyFields) {
+    const dependencies = manifest[field] ?? {}
+
+    for (const name of Object.keys(dependencies)) {
+      if (internalPackages.has(name)) deps.push(`${field}.${name}`)
+    }
+  }
+
+  return deps
 }

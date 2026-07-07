@@ -1,7 +1,8 @@
 {
   "name": "@contentbit/project",
   "version": "0.5.0",
-  "description": "Node project loading utilities for contentbit adapters.",
+  "private": true,
+  "description": "Internal Node project loading utilities for contentbit adapters.",
   "homepage": "https://contentbit.dev",
   "bugs": "https://github.com/agonist/contentbit/issues",
   "license": "MIT",
@@ -21,12 +22,8 @@
       "import": "./dist/index.js"
     }
   },
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "prepublishOnly": "node ../../scripts/require-pnpm-publish.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

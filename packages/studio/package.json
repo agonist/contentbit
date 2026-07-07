@@ -29,7 +29,7 @@
   },
   "scripts": {
     "dev": "vite dev --port 3000",
-    "build": "vite build && tsc -p tsconfig.server.json",
+    "build": "vite build && tsc -p tsconfig.server.json --emitDeclarationOnly && node build-server.mjs",
     "prepublishOnly": "node ../../scripts/require-pnpm-publish.mjs",
     "preview": "vite preview",
     "test": "vitest run",
@@ -41,7 +41,6 @@
   "dependencies": {
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
-    "@contentbit/project": "workspace:*",
     "@contentbit/react": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4",
@@ -70,6 +69,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.0",
     "jsdom": "^28",
     "typescript": "^6",
     "vitest": "^4"

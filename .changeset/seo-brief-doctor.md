@@ -1,7 +1,6 @@
 ---
 "contentbit": minor
 "@contentbit/core": minor
-"@contentbit/project": minor
 "@contentbit/studio": minor
 ---
 
