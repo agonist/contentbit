@@ -10,10 +10,28 @@ instructions.
 pnpm install
 pnpm run content:check
 pnpm run content:links
+pnpm run content:doctor
+pnpm run studio
+```
+
+Open `http://localhost:4377` to inspect Studio, then stop it and run the app:
+
+```bash
 pnpm run dev
 ```
 
 Open `http://localhost:4321/blog` to see the content graph demo.
+
+Before publishing starter changes, run the same gates as CI:
+
+```bash
+pnpm run content:check
+pnpm run content:links
+pnpm run content:doctor
+pnpm run typecheck
+pnpm run build
+pnpm run smoke
+```
 
 ## What to edit
 

@@ -6,26 +6,67 @@ description: What shipped in each release.
 {/* Append new releases at the top. Keep entries terse — under ~10 bullets —
     and link the announcement post for the narrative. */}
 
-Terse by design — each release links its announcement post.
+Terse by design - each release links its announcement post when there is one.
 
 ## Next
+
+- **First-run proof.** Standalone Astro and TanStack starters track the current
+  contentbit package version and exercise validate, links, doctor, build, and
+  smoke gates. Their first-run docs also include Studio as the human inspection
+  step.
+
+## 0.6.1
+
+- **Published package hardening.** The CLI and Studio bundles no longer expose
+  the private `@contentbit/project` workspace package as a runtime dependency.
+  Packed manifests are checked before release.
+
+## 0.6.0
+
+- **SEO contracts.** `contentbit.seo.config.ts` can define reusable page types,
+  planned pages, required sections, required blocks, link requirements, and
+  strict SEO checks. See
+  [Programmatic SEO workflows](/docs/guides/programmatic-seo).
+- **SEO briefs.** New `contentbit brief` command prints an agent-ready writing
+  contract for existing or planned pages, in Markdown or JSON. See
+  [SEO briefs and contracts](/docs/guides/seo-briefs).
+- **SEO-aware Doctor and Studio.** Doctor folds SEO findings into the repair
+  plan, and Studio shows SEO counts plus per-document Brief views.
+
+## 0.5.0
+
+- **One project scan.** `scanContentProject()` now runs frontmatter parsing,
+  directive parsing, validation, stats, link graph, and ranked findings through
+  a shared core pipeline.
+- **Headless renderers.** React and Astro renderers no longer ship built-in
+  styled components. Apps provide their own block components and Markdown prose
+  renderer, while shadcn packs provide editable styled UI.
+- **Custom registry control.** `--no-generic-blocks` lets a project registry own
+  the full block set, including names that overlap the generic pack.
+
+## 0.4.0
 
 - **Content Studio.** New `contentbit studio` command launches a read-only
   local TanStack dashboard for content health counters, search, sortable files,
   previews, stats, diagnostics, links, backlinks, keywords, and block usage.
-  `contentbit init` now adds a `studio` script for `pnpm studio`. See
+  `contentbit init` adds a `studio` script for `pnpm studio`. See
   [Content Studio](/docs/guides/studio).
 - **Content doctor.** New `contentbit doctor` command reads matched content once
   and prints a ranked repair plan across block validation, internal-link
   diagnostics, thin sections, block-less long documents, and missing image alt
   text. Use `--json` for agents and CI. See [Content doctor](/docs/guides/doctor).
+
+## 0.3.0
+
+[Read the announcement →](/blog/contentbit-0-3-0)
+
 - **Internal linking.** New `contentbit links` command builds
   `.contentbit/link-index.json` from frontmatter `slug`, `linksTo`, `aliases`,
   and `keywords`, derives backlinks, validates broken slug references, and
-  heals alias references with `--fix`. `contentbit validate` now runs link
-  checks automatically when matched files declare slugs. See
+  heals alias references with `--fix`. `contentbit validate` runs link checks
+  automatically when matched files declare slugs. See
   [Internal linking](/docs/guides/internal-linking).
-- **LLM link context.** `contentbit agents` now teaches generated skills and
+- **LLM link context.** `contentbit agents` teaches generated skills and
   `AGENTS.md` blocks to load the link index, choose existing slugs, and validate
   the full graph when authoring linked content.
 

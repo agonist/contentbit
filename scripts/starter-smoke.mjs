@@ -10,7 +10,17 @@ if (starter !== 'astro' && starter !== 'tanstack') {
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const dir = join(root, 'starter', starter)
+const currentContentbitVersion = `^${
+  JSON.parse(readFileSync(join(root, 'packages/core/package.json'), 'utf8')).version
+}`
 const expectedSlugs = ['dialing-in-espresso', 'grinder-setting-notes', 'espresso-recipe-log']
+const expectedScripts = {
+  'content:check': 'contentbit validate "content/**/*.md" --registry ./blocks/registry.ts',
+  'content:links': 'contentbit links "content/**/*.md"',
+  'content:doctor': 'contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts',
+  studio: 'contentbit studio "content/**/*.md" --registry ./blocks/registry.ts',
+  smoke: `node ../../scripts/starter-smoke.mjs ${starter}`,
+}
 
 function fail(message) {
   console.error(`[${starter}] ${message}`)
@@ -33,6 +43,21 @@ function parseFrontmatter(markdown) {
 
 function frontmatterValue(frontmatter, key) {
   return frontmatter.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'))?.[1]?.trim()
+}
+
+const pkg = JSON.parse(read('package.json'))
+for (const [name, command] of Object.entries(expectedScripts)) {
+  assert(pkg.scripts?.[name] === command, `package.json script "${name}" is missing or drifted`)
+}
+for (const field of ['dependencies', 'devDependencies']) {
+  for (const [name, range] of Object.entries(pkg[field] ?? {})) {
+    if (name === 'contentbit' || name.startsWith('@contentbit/')) {
+      assert(
+        range === currentContentbitVersion,
+        `${field}.${name} should be ${currentContentbitVersion}, found ${range}`,
+      )
+    }
+  }
 }
 
 const contentDir = join(dir, 'content')

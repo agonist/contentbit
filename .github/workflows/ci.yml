@@ -42,6 +42,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm content:check
       - run: pnpm content:links
+      - run: pnpm content:doctor
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm smoke

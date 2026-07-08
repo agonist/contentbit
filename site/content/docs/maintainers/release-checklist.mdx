@@ -28,6 +28,7 @@ cd starter/astro
 pnpm install --frozen-lockfile
 pnpm content:check
 pnpm content:links
+pnpm content:doctor
 pnpm typecheck
 pnpm build
 pnpm smoke
@@ -38,14 +39,19 @@ cd starter/tanstack
 pnpm install --frozen-lockfile
 pnpm content:check
 pnpm content:links
+pnpm content:doctor
 pnpm typecheck
 pnpm build
 pnpm smoke
 ```
 
 The smoke checks assert the `/blog` and `/blog/{slug}` demo, contentbit metadata,
-keyword usage, generated backlinks, and starter build output. They are not a
-replacement for visual review, but they catch broken demo wiring quickly.
+keyword usage, generated backlinks, first-run script names, contentbit dependency
+versions, and starter build output. They are not a replacement for visual
+review, but they catch broken demo wiring quickly.
+
+For visual review, run `pnpm studio` in the starter and open
+`http://localhost:4377`, then stop the server before continuing.
 
 ## Content and docs
 
