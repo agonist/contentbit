@@ -10,7 +10,7 @@ export default function Image() {
   return new ImageResponse(
     <Grid
       title="Build programmatic SEO pages that stay consistent."
-      description="Page contracts for planning. Agent briefs for writing. Content and link checks before publishing."
+      description="Page contracts. Agent briefs. Content and link checks before publishing."
       brand="contentbit"
       accent="#10b981"
     />,

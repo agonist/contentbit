@@ -109,7 +109,7 @@ export const Grid = ({ title, description, brand, accent }: GridProps) => {
           top: 88,
         }}
       >
-        markdown -&gt; validation -&gt; UI
+        plan -&gt; brief -&gt; validate
       </div>
 
       <div
@@ -174,19 +174,18 @@ export const Grid = ({ title, description, brand, accent }: GridProps) => {
             textTransform: 'uppercase',
           }}
         >
-          <span>content/post.md</span>
-          <span style={{ color }}>valid</span>
+          <span>page family / alternative</span>
+          <span style={{ color }}>loaded</span>
         </div>
         {[
-          ['---', 'rgba(246,255,249,0.42)'],
-          ['title: Launch notes', '#ffffff'],
-          ['linksTo:', '#ffffff'],
-          ['  - docs/renderers', color],
-          ['---', 'rgba(246,255,249,0.42)'],
-          [':::callout', color],
-          ['type: success', '#ffffff'],
-          ['body: Ships everywhere.', '#ffffff'],
-          [':::', color],
+          ['required:', 'rgba(246,255,249,0.42)'],
+          ['  + overview', color],
+          ['  + comparison', color],
+          ['  + faq', color],
+          ['', '#ffffff'],
+          ['internal links: 4', '#ffffff'],
+          ['brief: ready', '#ffffff'],
+          ['doctor: 0 findings', color],
         ].map(([line, lineColor], index) => (
           <div
             key={`${line}-${index}`}
@@ -214,7 +213,7 @@ export const Grid = ({ title, description, brand, accent }: GridProps) => {
           top: 540,
         }}
       >
-        {['plain markdown', 'typed blocks', '0 diagnostics'].map((label, index) => (
+        {['page contracts', 'agent briefs', 'strict checks'].map((label, index) => (
           <div
             key={label}
             style={{
