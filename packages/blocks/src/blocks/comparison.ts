@@ -1,14 +1,14 @@
 import {
   defineBlock,
+  defineMarkdownBlockRenderer,
   pipeRows,
-  type MarkdownBlockRenderer,
   type PipeRowsData,
 } from '@contentbit/core'
 import { z } from 'zod'
 
 export type ComparisonData = PipeRowsData
 
-export const comparisonBlock = defineBlock<ComparisonData>({
+export const comparisonBlock = defineBlock({
   name: 'comparison',
   description: 'Side-by-side comparison of exactly two options.',
   props: z.object({
@@ -27,13 +27,13 @@ export const comparisonBlock = defineBlock<ComparisonData>({
   },
 })
 
-export const comparisonMarkdown: MarkdownBlockRenderer = (node) => {
-  const data = node.data as ComparisonData
+export const comparisonMarkdown = defineMarkdownBlockRenderer(comparisonBlock, (node) => {
+  const data = node.data
   const esc = (s: string) => s.replace(/\|/g, '\\|')
-  const left = esc(String(node.props.left))
-  const right = esc(String(node.props.right))
+  const left = esc(node.props.left)
+  const right = esc(node.props.right)
   const lines = [`| | ${left} | ${right} |`, '|---|---|---|']
   for (const row of data.rows)
     lines.push(`| ${esc(row.label)} | ${esc(row.left)} | ${esc(row.right)} |`)
   return lines.join('\n')
-}
+})

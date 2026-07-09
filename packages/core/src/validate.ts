@@ -1,7 +1,7 @@
 import type { BlockNode, ContentNode, DocumentNode } from './ast.js'
 import type { Diagnostic, SourceRange } from './diagnostics.js'
 import type { ParseResult } from './parser.js'
-import type { BlockDefinition, BlockRegistry } from './registry.js'
+import type { BlockDefinition, BlockProps, BlockRegistry } from './registry.js'
 import type { ZodType } from 'zod'
 
 export interface ValidateOptions {
@@ -13,23 +13,47 @@ export interface ValidateOptions {
   allowedProtocols?: string[]
 }
 
-export interface ValidationResult {
-  ok: boolean
+export interface ValidationSuccess {
+  ok: true
   document: ValidatedDocumentNode
   diagnostics: Diagnostic[]
 }
 
-export type ValidatedDocumentNode = DocumentNode & {
+export interface ValidationFailure {
+  ok: false
+  document: ProcessedDocumentNode
+  diagnostics: Diagnostic[]
+}
+
+export type ValidationResult = ValidationSuccess | ValidationFailure
+
+/** A document whose blocks have been checked and enriched where valid. */
+export type ProcessedDocumentNode = DocumentNode & {
+  readonly __contentbitProcessedDocument: true
+}
+
+/** A processed document with no error diagnostics. */
+export type ValidatedDocumentNode = ProcessedDocumentNode & {
   readonly __contentbitValidatedDocument: true
 }
 
-export type ValidatedBlockNode<TData = unknown> = BlockNode & {
+export type ValidatedBlockNode<
+  TData = unknown,
+  TProps extends BlockProps = BlockProps,
+  TName extends string = string,
+> = Omit<BlockNode, 'name' | 'props'> & {
+  name: TName
+  props: TProps
   data: TData
-  definition: BlockDefinition<TData>
+  definition: BlockDefinition<TData, TProps, TName>
 }
 
 export function isValidatedDocument(document: DocumentNode): document is ValidatedDocumentNode {
   return (document as Partial<ValidatedDocumentNode>).__contentbitValidatedDocument === true
+}
+
+export function isProcessedDocument(document: DocumentNode): document is ProcessedDocumentNode {
+  return (document as Partial<ProcessedDocumentNode>).__contentbitProcessedDocument === true
 }
 
 export function isValidatedBlock(node: ContentNode): node is ValidatedBlockNode {
@@ -109,7 +133,7 @@ function reportUnknownProps(
       message: `${node.name}: unknown prop "${prop}".`,
       hint: unknownPropHint(prop, known),
       blockName: node.name,
-      position: node.openPosition,
+      position: node.propPositions?.[prop] ?? node.openPosition,
     })
   }
   return valid
@@ -207,12 +231,16 @@ export function validateDocument(
           valid = false
           for (const issue of result.error.issues) {
             if (issue.code === 'unrecognized_keys') continue
+            const prop =
+              typeof issue.path[0] === 'string' && issue.path[0].length > 0
+                ? issue.path[0]
+                : undefined
             report({
               code: 'CB_PROPS_INVALID',
               severity: 'error',
               message: `${node.name}: prop "${issue.path.join('.') || '(root)'}" ${issue.message}`,
               blockName: node.name,
-              position: node.openPosition,
+              position: (prop ? node.propPositions?.[prop] : undefined) ?? node.openPosition,
             })
           }
         }
@@ -239,10 +267,12 @@ export function validateDocument(
 
   walk(parsed.document.children, null, 1)
   const ok = !diagnostics.some((d) => d.severity === 'error')
-  return { ok, document: markValidatedDocument(parsed.document), diagnostics }
+  if (ok) return { ok: true, document: markValidatedDocument(parsed.document), diagnostics }
+  return { ok: false, document: markProcessedDocument(parsed.document), diagnostics }
 }
 
 function markValidatedDocument(document: DocumentNode): ValidatedDocumentNode {
+  markProcessedDocument(document)
   if (!isValidatedDocument(document)) {
     Object.defineProperty(document, '__contentbitValidatedDocument', {
       value: true,
@@ -250,4 +280,14 @@ function markValidatedDocument(document: DocumentNode): ValidatedDocumentNode {
     })
   }
   return document as ValidatedDocumentNode
+}
+
+function markProcessedDocument(document: DocumentNode): ProcessedDocumentNode {
+  if (!isProcessedDocument(document)) {
+    Object.defineProperty(document, '__contentbitProcessedDocument', {
+      value: true,
+      enumerable: false,
+    })
+  }
+  return document as ProcessedDocumentNode
 }

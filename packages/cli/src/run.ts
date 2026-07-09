@@ -1,4 +1,4 @@
-import { Command, CommanderError, type OptionValues } from 'commander'
+import { Command, CommanderError, Option, type OptionValues } from 'commander'
 
 import { color, section } from './cli-format.js'
 
@@ -43,18 +43,18 @@ Commands:
 
 Setup:
   init [-t react|markdown|astro] [--md ...] [-y] [--seo] [--no-install] [--no-page] [--no-agents]
-  agents [--claude] [--no-agents-md]
+  agents [--claude] [--check|--dry-run] [--no-agents-md]
 
 Common:
-  validate <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
+  validate [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
   brief <key-or-slug> [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--json]
-  doctor <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
-  studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
+  doctor [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
+  studio [globs...] [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
   stats <globs...> [--registry <module.ts>] [--no-generic-blocks] [--no-validate]
   render <file> [--target markdown] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   instructions [--audience llm|human] [--no-examples] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   docs [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
-  links <globs...> [--fix] [--out <file>] [--link-resolve <mode>]`
+  links [globs...] [--fix] [--out <file>] [--link-resolve <mode>]`
 
 export async function run(argv: string[], io: Io): Promise<number> {
   const name = argv[0]
@@ -82,7 +82,9 @@ export async function run(argv: string[], io: Io): Promise<number> {
           `  ${color('error', 'error')} ${stripCommanderError(err.message)}`,
         ].join('\n'),
       )
-      return err.code === 'commander.unknownCommand' ? 2 : 1
+      return err.code === 'commander.unknownCommand' || err.code === 'commander.invalidArgument'
+        ? 2
+        : 1
     }
     io.stderr(
       [
@@ -112,15 +114,26 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   program
     .command('init')
     .description('scaffold Content Blocks into a project')
-    .option('-t, --target <target>')
-    .option('--md <library>')
-    .option('-y, --yes')
-    .option('--cwd <path>')
-    .option('--no-install')
-    .option('--no-page')
-    .option('--no-styled')
-    .option('--no-agents')
-    .option('--seo')
+    .addOption(
+      new Option('-t, --target <target>', 'Render adapter to scaffold').choices([
+        'react',
+        'markdown',
+        'astro',
+      ]),
+    )
+    .addOption(
+      new Option('--md <library>', 'Markdown prose adapter to wire').choices([
+        'react-markdown',
+        'none',
+      ]),
+    )
+    .option('-y, --yes', 'Accept detected defaults without prompting')
+    .option('--cwd <path>', 'Project directory to initialize')
+    .option('--no-install', 'Scaffold files without installing packages')
+    .option('--no-page', 'Skip the example route or page')
+    .option('--no-styled', 'Skip installing the editable styled block pack')
+    .option('--no-agents', 'Skip AGENTS.md and Claude Code guidance')
+    .option('--seo', 'Scaffold SEO contracts and connect them in project config')
     .action(async (rawOptions: Command | OptionValues) => {
       const options = optionsFrom(rawOptions)
       const { initCommand } = await import('./commands/init.js')
@@ -145,10 +158,10 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   const validate = program
     .command('validate')
     .description('check Markdown blocks and internal links')
-    .argument('[globs...]')
-    .option('--registry <module>')
-    .option('--no-generic-blocks')
-    .option('--strict-warnings')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--strict-warnings', 'Exit 1 when validation warnings are present')
   addLinkOptions(validate)
   validate.action(async (globs: string[], rawOptions: Command | OptionValues) => {
     const options = optionsFrom(rawOptions)
@@ -170,15 +183,15 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   const doctor = program
     .command('doctor')
     .description('inspect content health and repair suggestions')
-    .argument('[globs...]')
-    .option('--registry <module>')
-    .option('--no-generic-blocks')
-    .option('--strict-warnings')
-    .option('--strict-seo')
-    .option('--json')
-    .option('--min-section-words <n>')
-    .option('--seo-config <module>')
-    .option('--no-seo')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--strict-warnings', 'Exit 1 when validation warnings are present')
+    .option('--strict-seo', 'Treat required SEO findings as errors')
+    .option('--json', 'Print stable machine-readable JSON')
+    .option('--min-section-words <n>', 'Set the thin-section suggestion threshold')
+    .option('--seo-config <module>', 'Load SEO contracts from this module')
+    .option('--no-seo', 'Disable SEO config discovery and findings')
   addLinkOptions(doctor)
   doctor.action(async (globs: string[], rawOptions: Command | OptionValues) => {
     const options = optionsFrom(rawOptions)
@@ -194,7 +207,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           json: Boolean(options.json),
           minSectionWords: options.minSectionWords,
           seoConfig: options.seoConfig,
-          noSeo: options.seo === false,
+          noSeo: options.seo === false ? true : undefined,
           ...linkOptionsFrom(options),
         },
         io,
@@ -205,12 +218,12 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   const brief = program
     .command('brief')
     .description('print an agent-ready SEO brief')
-    .argument('<key-or-slug>')
-    .argument('[globs...]')
-    .option('--registry <module>')
-    .option('--no-generic-blocks')
-    .option('--seo-config <module>')
-    .option('--json')
+    .argument('<key-or-slug>', 'Configured page key or existing content slug')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--seo-config <module>', 'Load SEO contracts from this module')
+    .option('--json', 'Print stable machine-readable JSON')
   addLinkOptions(brief)
   brief.action(async (target: string, globs: string[], rawOptions: Command | OptionValues) => {
     const options = optionsFrom(rawOptions)
@@ -234,15 +247,15 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   const studio = program
     .command('studio')
     .description('browse content locally')
-    .argument('[globs...]')
-    .option('--registry <module>')
-    .option('--port <n>')
-    .option('--host <host>')
-    .option('--no-open')
-    .option('--no-generic-blocks')
-    .option('--min-section-words <n>')
-    .option('--seo-config <module>')
-    .option('--no-seo')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--port <n>', 'First local port to try; defaults to 4377')
+    .option('--host <host>', 'Host interface to bind; defaults to 127.0.0.1')
+    .option('--no-open', 'Do not open Studio in the default browser')
+    .option('--no-generic-blocks', 'Do not include generic blocks or previews')
+    .option('--min-section-words <n>', 'Set the thin-section suggestion threshold')
+    .option('--seo-config <module>', 'Load SEO contracts from this module')
+    .option('--no-seo', 'Disable SEO config discovery and findings')
   addLinkOptions(studio)
   studio.action(async (globs: string[], rawOptions: Command | OptionValues) => {
     const options = optionsFrom(rawOptions)
@@ -258,7 +271,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           noGenericBlocks: options.genericBlocks === false,
           minSectionWords: options.minSectionWords,
           seoConfig: options.seoConfig,
-          noSeo: options.seo === false,
+          noSeo: options.seo === false ? true : undefined,
           ...linkOptionsFrom(options),
         },
         io,
@@ -269,10 +282,10 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   program
     .command('stats')
     .description('print document stats as JSON')
-    .argument('[globs...]')
-    .option('--registry <module>')
-    .option('--no-generic-blocks')
-    .option('--no-validate')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--no-validate', 'Analyze Markdown without loading or validating blocks')
     .action(async (globs: string[], rawOptions: Command | OptionValues) => {
       const options = optionsFrom(rawOptions)
       const { statsCommand } = await import('./commands/stats.js')
@@ -292,11 +305,13 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   program
     .command('render')
     .description('render one file to plain Markdown')
-    .argument('[file]')
-    .option('--target <target>', undefined, 'markdown')
-    .option('--registry <module>')
-    .option('--no-generic-blocks')
-    .option('--out <file>')
+    .argument('[file]', 'One source Markdown file')
+    .addOption(
+      new Option('--target <target>', 'Output adapter').choices(['markdown']).default('markdown'),
+    )
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--out <file>', 'Write output to a file instead of stdout')
     .action(async (file: string | undefined, rawOptions: Command | OptionValues) => {
       const options = optionsFrom(rawOptions)
       const { renderCommand } = await import('./commands/render.js')
@@ -317,11 +332,13 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   program
     .command('instructions')
     .description('print LLM authoring instructions')
-    .option('--audience <audience>', undefined, 'llm')
-    .option('--no-examples')
-    .option('--registry <module>')
-    .option('--no-generic-blocks')
-    .option('--out <file>')
+    .addOption(
+      new Option('--audience <audience>', 'Guide style').choices(['llm', 'human']).default('llm'),
+    )
+    .option('--no-examples', 'Omit block syntax examples')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--out <file>', 'Write the guide to a file instead of stdout')
     .action(async (rawOptions: Command | OptionValues) => {
       const options = optionsFrom(rawOptions)
       const { instructionsCommand } = await import('./commands/instructions.js')
@@ -342,9 +359,9 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   program
     .command('docs')
     .description('print human authoring docs')
-    .option('--registry <module>')
-    .option('--no-generic-blocks')
-    .option('--out <file>')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--out <file>', 'Write the guide to a file instead of stdout')
     .action(async (rawOptions: Command | OptionValues) => {
       const options = optionsFrom(rawOptions)
       const { docsCommand } = await import('./commands/docs.js')
@@ -364,6 +381,8 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
     .command('agents')
     .description('install coding-agent guidance')
     .option('--claude', 'create .claude/ if needed and install Claude Code skills')
+    .option('--check', 'show agent integration status without writing files')
+    .option('--dry-run', 'alias for --check')
     .option('--no-agents-md', 'skip writing the AGENTS.md contentbit block')
     .option('--cwd <path>', 'install guidance in another directory')
     .action(async (rawOptions: Command | OptionValues) => {
@@ -373,6 +392,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
         await agentsCommand(
           {
             claude: Boolean(options.claude),
+            check: Boolean(options.check || options.dryRun),
             noAgentsMd: options.agentsMd === false,
             cwd: options.cwd,
           },
@@ -384,9 +404,9 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   const links = program
     .command('links')
     .description('build or fix the internal link index')
-    .argument('[globs...]')
-    .option('--fix')
-    .option('--out <file>')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
+    .option('--fix', 'Rewrite references that still use known aliases')
+    .option('--out <file>', 'Write the link index to a custom path')
   addLinkOptions(links)
   links.action(async (globs: string[], rawOptions: Command | OptionValues) => {
     const options = optionsFrom(rawOptions)
@@ -415,11 +435,18 @@ function optionsFrom(raw: Command | OptionValues): OptionValues {
 
 function addLinkOptions(command: Command): void {
   command
-    .option('--link-resolve <mode>')
-    .option('--locale-field <name>')
-    .option('--slug-field <name>')
-    .option('--key-field <name>')
-    .option('--default-locale <locale>')
+    .addOption(
+      new Option('--link-resolve <mode>', 'Internal-link identity strategy').choices([
+        'global-slug',
+        'same-locale-slug',
+        'same-locale-key',
+        'prefer-same-locale-key-fallback-slug',
+      ]),
+    )
+    .option('--locale-field <name>', 'Frontmatter field containing the locale')
+    .option('--slug-field <name>', 'Frontmatter field containing the page slug')
+    .option('--key-field <name>', 'Frontmatter field containing the stable page key')
+    .option('--default-locale <locale>', 'Locale assumed when frontmatter omits one')
 }
 
 function linkOptionsFrom(options: OptionValues): {

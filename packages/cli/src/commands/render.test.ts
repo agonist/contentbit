@@ -61,5 +61,5 @@ test('--out writes to a file instead of stdout', async () => {
 test('render rejects the removed html target', async () => {
   const io = fakeIo()
   expect(await run(['render', await fixtureFile(), '--target', 'html'], io)).toBe(2)
-  expect(io.err.join('\n')).toContain('--target markdown')
+  expect(io.err.join('\n')).toContain('Allowed choices are markdown')
 })

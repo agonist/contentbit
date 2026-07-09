@@ -47,9 +47,9 @@ export default defineSeoConfig({
       type: 'docs-page',
       key: 'programmatic-seo',
       slug: 'docs/guides/programmatic-seo',
-      title: 'Programmatic SEO workflows',
+      title: 'Build a programmatic SEO workflow',
       description:
-        'Use contentbit to plan, write, inspect, and enforce search-targeted pages with agents.',
+        'Define a page family, brief a writer or agent, inspect the result, and enforce the contract in CI.',
       intent: 'programmatic SEO workflow',
       keywords: {
         primary: 'programmatic SEO workflow',

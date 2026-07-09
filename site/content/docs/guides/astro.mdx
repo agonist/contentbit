@@ -41,7 +41,7 @@ component frontmatter:
 ```astro
 ---
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
 import { getEntry } from 'astro:content'
 import { ContentBlocks } from '@contentbit/astro/components'
 
@@ -49,10 +49,10 @@ const entry = await getEntry('articles', 'example')
 if (!entry?.body) throw new Error('Entry not found.')
 
 const registry = createBlockRegistry().use(genericBlocks())
-const result = validateDocument(parseDocument(entry.body), registry)
+const document = assertValidDocument(compileDocument(entry.body, registry), entry.id)
 ---
 
-<ContentBlocks document={result.document} />
+<ContentBlocks document={document} />
 ```
 
 Static pages render at build time, so this is a real safety net: invalid blocks
@@ -83,7 +83,7 @@ const renderMarkdown = async (markdown: string) => {
 }
 ---
 
-<ContentBlocks document={result.document} renderMarkdown={renderMarkdown} />
+<ContentBlocks document={document} renderMarkdown={renderMarkdown} />
 ```
 
 The contentbit parser still finds and validates block directives, but normal
@@ -123,7 +123,7 @@ const html = await ctx.renderMarkdown(data.markdown)
 ```
 
 ```astro
-<ContentBlocks document={result.document} components={{ 'rich-note': RichNoteBlock }} />
+<ContentBlocks document={document} components={{ 'rich-note': RichNoteBlock }} />
 ```
 
 Because props were already validated against the block's schema, your component
@@ -149,8 +149,10 @@ can use them without defensive parsing. Use `<slot />` for nested content and
 `init` adds the gate for you:
 
 ```json
-{ "scripts": { "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts" } }
+{ "scripts": { "content:check": "contentbit validate" } }
 ```
+
+The content glob and registry live once in `contentbit.config.ts`.
 
 The CLI strips frontmatter before validating — the same thing Astro does when
 it hands you `entry.body` — so the CLI and your pages always judge identical

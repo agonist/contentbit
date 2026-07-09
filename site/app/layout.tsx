@@ -11,11 +11,11 @@ import './globals.css'
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'contentbit — structured Markdown components for LLM-written content',
+    default: 'contentbit: programmatic SEO content infrastructure',
     template: '%s · contentbit',
   },
   description:
-    'Give LLMs validated, structured Markdown blocks. Render LLM output anywhere: React, Astro, or plain Markdown.',
+    'Define reusable page contracts, give agents a brief for every page, and validate content structure and internal links before publishing.',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

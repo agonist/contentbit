@@ -8,14 +8,10 @@ result to the target that matches your app:
 
 ```ts
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
 
 const registry = createBlockRegistry().use(genericBlocks())
-const result = validateDocument(parseDocument(markdown), registry)
-
-if (!result.ok) {
-  throw new Error('Content did not validate.')
-}
+const document = assertValidDocument(compileDocument(markdown, registry), 'article.md')
 ```
 
 For the design behind this split, see [Rendering model](/docs/concepts/rendering-model).
@@ -26,7 +22,7 @@ For the design behind this split, see [Rendering model](/docs/concepts/rendering
 import { ContentBlocks } from '@contentbit/react'
 
 <ContentBlocks
-  document={result.document}
+  document={document}
   components={{ comparison: MyComparison }}
   renderMarkdown={(md) => <Markdown source={md} />}
   fallback={MyInvalidBlock}
@@ -53,7 +49,7 @@ import QuoteBlock from '../blocks/QuoteBlock.astro'
 ---
 
 <ContentBlocks
-  document={result.document}
+  document={document}
   components={{ quote: QuoteBlock }}
   renderMarkdown={renderMarkdown}
   onInvalid="annotated"
@@ -79,7 +75,7 @@ pnpm dlx shadcn@latest add @contentbit/astro-pack
 import { renderToMarkdown } from '@contentbit/core'
 import { genericMarkdownRenderers } from '@contentbit/blocks'
 
-const md = renderToMarkdown(result.document, { renderers: genericMarkdownRenderers })
+const md = renderToMarkdown(document, { renderers: genericMarkdownRenderers })
 ```
 
 Comparisons become Markdown tables, key metrics become bold-value bullets, tabs

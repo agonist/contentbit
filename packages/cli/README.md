@@ -30,6 +30,15 @@ contentbit agents
 Everyday commands:
 
 ```bash
+# contentbit.config.ts supplies the content glob, registry, links, and SEO config
+contentbit validate
+contentbit doctor
+contentbit studio
+contentbit stats
+contentbit links
+contentbit instructions --audience llm
+
+# explicit files and flags override config for one invocation
 # exits 1 with file:line:col diagnostics and fix hints
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts --no-generic-blocks
@@ -75,5 +84,10 @@ and stats only.
 LLM agents should read the same registry with `contentbit instructions`, write
 plain Markdown with registered blocks, then run `contentbit validate` until it
 exits 0.
+
+New projects keep shared defaults in `contentbit.config.ts`; existing projects
+whose package scripts contain full command arguments remain supported.
+Studio is installed separately as `@contentbit/studio` so the base CLI stays
+lightweight; `contentbit init` installs it automatically.
 
 Docs: [contentbit.dev/docs](https://contentbit.dev/docs)

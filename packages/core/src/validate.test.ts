@@ -80,6 +80,7 @@ test('invalid props produce CB_PROPS_INVALID with the zod path', () => {
   expect(result.ok).toBe(false)
   expect(result.diagnostics[0].code).toBe('CB_PROPS_INVALID')
   expect(result.diagnostics[0].message).toContain('type')
+  expect(result.diagnostics[0].position.start.column).toBe(12)
 })
 
 test('unknown props produce CB_UNKNOWN_PROP with a did-you-mean hint', () => {
@@ -89,6 +90,7 @@ test('unknown props produce CB_UNKNOWN_PROP with a did-you-mean hint', () => {
   expect(result.diagnostics[0].code).toBe('CB_UNKNOWN_PROP')
   expect(result.diagnostics[0].message).toContain('unknown prop "titel"')
   expect(result.diagnostics[0].hint).toContain('Did you mean "title"?')
+  expect(result.diagnostics[0].position.start.column).toBe(12)
 })
 
 test('childOnly block at top level is rejected; nested children are validated', () => {

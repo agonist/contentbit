@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@contentbit/studio": "^0.6.1",
     "contentbit": "^0.6.1",
     "oxfmt": "^0.54.0",
     "oxlint": "^1.69.0",

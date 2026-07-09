@@ -1,6 +1,7 @@
 import { genericBlocks } from "@contentbit/blocks"
 import {
   createBlockRegistry,
+  formatDiagnostic,
   parseDocument,
   parseLinkFrontmatter,
   validateDocument,
@@ -39,6 +40,13 @@ export async function getBlogArticles() {
 
       // Static pages render at build time, so invalid blocks fail the build here.
       const result = validateDocument(parseDocument(entry.body), registry)
+      if (!result.ok) {
+        throw new Error(
+          result.diagnostics
+            .map((diagnostic) => formatDiagnostic(diagnostic, entry.id))
+            .join("\n\n"),
+        )
+      }
       return { entry, meta: parsed.value, result }
     }),
   )

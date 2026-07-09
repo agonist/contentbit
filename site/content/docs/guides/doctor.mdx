@@ -8,11 +8,11 @@ reads matched content once, validates registered blocks, checks frontmatter
 links, analyzes document structure, and prints the issues in repair order.
 
 ```bash
-contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
+contentbit doctor
 ```
 
-If your registry owns the full block set and includes names from the generic
-pack, add `--no-generic-blocks`.
+The content glob, registry, link fields, and SEO config come from
+`contentbit.config.ts`. Explicit globs and flags override it for one run.
 
 The default report is meant for humans:
 
@@ -48,7 +48,7 @@ errors, the text report suggests the fix command explicitly.
 Use `--json` when an LLM agent or pipeline needs stable data:
 
 ```bash
-contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --json
+contentbit doctor --json
 ```
 
 The shape is:

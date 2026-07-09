@@ -1,5 +1,5 @@
 ---
-import type { ValidatedDocumentNode } from '@contentbit/core'
+import type { ProcessedDocumentNode } from '@contentbit/core'
 import type { ComponentProps } from 'astro/types'
 
 import { ContentBlocks } from '@contentbit/astro/components'
@@ -27,7 +27,7 @@ const styledComponents: Record<string, unknown> = {
 }
 
 interface Props {
-  document: ValidatedDocumentNode
+  document: ProcessedDocumentNode
   components?: Record<string, unknown>
   /**
    * Host prose pipeline for Markdown between block islands and nested block

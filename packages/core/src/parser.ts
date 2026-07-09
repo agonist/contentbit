@@ -78,15 +78,28 @@ export function parseDocument(source: string): ParseResult {
     mdStartLine = null
   }
 
-  function openBlock(i: number, fence: number, name: string, rawProps: string | null): void {
+  function openBlock(
+    i: number,
+    fence: number,
+    name: string,
+    rawProps: string | null,
+    rawPropsStartColumn: number | null,
+  ): void {
     const openPosition = lineRange(i)
-    const parsed = parseProps(rawProps, openPosition)
+    const parsed = parseProps(
+      rawProps,
+      openPosition,
+      rawPropsStartColumn === null
+        ? openPosition.start
+        : point(i + 1, rawPropsStartColumn, lineStart[i] + rawPropsStartColumn - 1),
+    )
     for (const d of parsed.diagnostics) diagnostics.push({ ...d, blockName: name })
     const node: BlockNode = {
       type: 'block',
       name,
       fence,
       props: parsed.props,
+      propPositions: parsed.propPositions,
       rawProps,
       children: [],
       body: '',
@@ -184,7 +197,10 @@ export function parseDocument(source: string): ParseResult {
     const open = trimmed.match(OPEN_RE)
     if (open) {
       flushMarkdown(i)
-      openBlock(i, open[1].length, open[2], open[3] ?? null)
+      const indent = lines[i].indexOf(trimmed)
+      const rawPropsStartColumn =
+        open[3] === undefined ? null : indent + open[1].length + open[2].length + 1
+      openBlock(i, open[1].length, open[2], open[3] ?? null, rawPropsStartColumn)
       continue
     }
 
@@ -203,7 +219,9 @@ export function parseDocument(source: string): ParseResult {
       }
       popChildIfOpen(i)
       flushMarkdown(i)
-      openBlock(i, 2, child[1], child[2] ?? null)
+      const indent = lines[i].indexOf(trimmed)
+      const rawPropsStartColumn = child[2] === undefined ? null : indent + 2 + child[1].length + 1
+      openBlock(i, 2, child[1], child[2] ?? null, rawPropsStartColumn)
       continue
     }
 

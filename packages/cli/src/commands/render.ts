@@ -1,17 +1,12 @@
 import { genericMarkdownRenderers } from '@contentbit/blocks'
-import {
-  type MarkdownBlockRenderer,
-  parseDocument,
-  renderToMarkdown,
-  stripFrontmatter,
-  validateDocument,
-} from '@contentbit/core'
+import { compileDocument, type MarkdownBlockRenderer, renderToMarkdown } from '@contentbit/core'
 import { readFile } from 'node:fs/promises'
 
 import type { Io } from '../run.js'
 
 import { formatDiagnosticForCli } from '../cli-format.js'
 import { loadRegistry } from '../load-registry.js'
+import { loadContentbitConfig } from '../project-config.js'
 
 export interface RenderCommandInput {
   file?: string
@@ -29,10 +24,16 @@ export async function renderCommand(input: RenderCommandInput, io: Io): Promise<
     )
     return 2
   }
-  const includeGenericBlocks = !input.noGenericBlocks
-  const registry = await loadRegistry(input.registry, { includeGenericBlocks })
+  const loadedConfig = await loadContentbitConfig()
+  const includeGenericBlocks = !(
+    input.noGenericBlocks || loadedConfig?.config.genericBlocks === false
+  )
+  const registry = await loadRegistry(input.registry ?? loadedConfig?.config.registry, {
+    cwd: loadedConfig?.cwd,
+    includeGenericBlocks,
+  })
   const source = await readFile(input.file, 'utf8')
-  const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
+  const result = compileDocument(source, registry)
   if (!result.ok) {
     for (const d of result.diagnostics) io.stderr(formatDiagnosticForCli(d, input.file))
     return 1

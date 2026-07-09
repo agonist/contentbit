@@ -1,5 +1,7 @@
 import {
+  assertValidDocument,
   createBlockRegistry,
+  defineMarkdownRenderers,
   parseDocument,
   renderToMarkdown,
   validateDocument,
@@ -10,14 +12,17 @@ import { comparisonBlock, comparisonMarkdown } from './comparison.js'
 import { prosConsBlock, prosConsMarkdown, splitProsCons } from './pros-cons.js'
 
 const registry = createBlockRegistry().use([comparisonBlock, prosConsBlock])
-const renderers = { comparison: comparisonMarkdown, 'pros-cons': prosConsMarkdown }
+const renderers = defineMarkdownRenderers([comparisonBlock, prosConsBlock], {
+  comparison: comparisonMarkdown,
+  'pros-cons': prosConsMarkdown,
+})
 
 test('comparison requires left/right props and 3-column rows; renders a table', () => {
   const src =
     ':::comparison{left="Basic" right="Pro"}\n- Price | Free | $12/mo\n- Support | Community | Priority\n:::\n'
   const result = validateDocument(parseDocument(src), registry)
   expect(result.ok).toBe(true)
-  expect(renderToMarkdown(result.document, { renderers })).toBe(
+  expect(renderToMarkdown(assertValidDocument(result), { renderers })).toBe(
     '| | Basic | Pro |\n|---|---|---|\n| Price | Free | $12/mo |\n| Support | Community | Priority |\n',
   )
   expect(
@@ -30,7 +35,7 @@ test('comparison re-escapes literal pipes in cells when rendering markdown', () 
     ':::comparison{left="A" right="B"}\n- Price | Free \\| $0 | $12/mo\n- Cost | $ | $$\n:::\n'
   const result = validateDocument(parseDocument(src), registry)
   expect(result.ok).toBe(true)
-  const md = renderToMarkdown(result.document, { renderers })
+  const md = renderToMarkdown(assertValidDocument(result), { renderers })
   expect(md).toContain('| Price | Free \\| $0 | $12/mo |')
 })
 
@@ -44,7 +49,7 @@ test('pros-cons splits signed items and renders two lists', () => {
     expect(pros).toEqual(['Cheap to run', 'Fast setup'])
     expect(cons).toEqual(['No offline mode'])
   }
-  expect(renderToMarkdown(result.document, { renderers })).toBe(
+  expect(renderToMarkdown(assertValidDocument(result), { renderers })).toBe(
     '**Pros**\n\n- Cheap to run\n- Fast setup\n\n**Cons**\n\n- No offline mode\n',
   )
 })

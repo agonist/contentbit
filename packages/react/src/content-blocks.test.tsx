@@ -1,9 +1,21 @@
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import {
+  createBlockRegistry,
+  defineBlock,
+  markdownBody,
+  parseDocument,
+  validateDocument,
+} from '@contentbit/core'
 import { render, screen } from '@testing-library/react'
 import { expect, test } from 'vitest'
+import { z } from 'zod'
 
-import { ContentBlocks, type BlockComponent } from './content-blocks.js'
+import {
+  ContentBlocks,
+  defineBlockComponent,
+  defineBlockComponents,
+  type BlockComponent,
+} from './content-blocks.js'
 
 const registry = createBlockRegistry().use(genericBlocks())
 const doc = (src: string) => validateDocument(parseDocument(src), registry).document
@@ -49,4 +61,31 @@ test('valid blocks without a component render the fallback', () => {
 test('invalid blocks render the fallback (escaped body)', () => {
   render(<ContentBlocks document={doc(':::mystery\nraw text\n:::\n')} />)
   expect(screen.getByText('raw text')).toBeDefined()
+})
+
+test('definition-aware helpers render blocks without prop or data casts', () => {
+  const quoteBlock = defineBlock({
+    name: 'quote',
+    description: 'A quote.',
+    props: z.object({ author: z.string() }),
+    content: markdownBody(),
+    authoring: { useWhen: ['testing'], avoidWhen: [], example: '' },
+  })
+  const quoteRegistry = createBlockRegistry().add(quoteBlock)
+  const Quote = defineBlockComponent(quoteBlock, ({ node }) => (
+    <figure>
+      <strong>{node.props.author.toUpperCase()}</strong>
+      <blockquote>{node.data.markdown}</blockquote>
+    </figure>
+  ))
+  const components = defineBlockComponents([quoteBlock] as const, { quote: Quote })
+  const result = validateDocument(
+    parseDocument(':::quote{author="Ada"}\nAnalytical Engine\n:::\n'),
+    quoteRegistry,
+  )
+
+  render(<ContentBlocks document={result.document} components={components} />)
+
+  expect(screen.getByText('ADA')).toBeDefined()
+  expect(screen.getByText('Analytical Engine')).toBeDefined()
 })

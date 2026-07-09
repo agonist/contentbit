@@ -33,8 +33,8 @@ Lint and formatting run from the root: `pnpm lint` (oxlint) and `pnpm fmt`
   tested; keep them that way.
 - Block definitions stay framework-free. Renderers are adapters; React code
   never leaks into `core` or `blocks`.
-- The styled pack's canonical source is `registry/src/blocks`. The copy in
-  `site/components/content-blocks` mirrors it; change both.
+- The styled pack's canonical source is `registry/src/blocks`; the site imports
+  it directly through the `@contentbit-registry/*` path alias.
 - Content files (`site/content/**`) are parser input. The formatter ignores
   them on purpose; whitespace is significant.
 - Docs pages double as tests: `<Live>` examples run through the real parser at

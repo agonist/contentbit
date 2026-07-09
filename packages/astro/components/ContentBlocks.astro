@@ -1,13 +1,13 @@
 ---
-import type { ValidatedDocumentNode } from '@contentbit/core'
+import type { ProcessedDocumentNode } from '@contentbit/core'
 import type { AstroBlockContext, AstroMarkdownRenderer } from '@contentbit/astro'
 
 import { defaultRenderMarkdown } from '@contentbit/astro'
 import RenderNodes from './RenderNodes.astro'
 
 interface Props {
-  /** A validated document: validateDocument(parseDocument(entry.body), registry).document. */
-  document: ValidatedDocumentNode
+  /** A processed document from compileDocument() or validateDocument(). */
+  document: ProcessedDocumentNode
   /**
    * Per-block Astro component overrides, keyed by block name. An override
    * receives the block's validated props spread as component props, plus

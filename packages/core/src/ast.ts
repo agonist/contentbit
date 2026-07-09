@@ -21,6 +21,8 @@ export interface BlockNode {
   /** Number of colons in the opening fence: >=3 container, 2 child. */
   fence: number
   props: Record<string, unknown>
+  /** Source ranges for prop keys on the open line. */
+  propPositions?: Record<string, SourceRange>
   rawProps: string | null
   children: ContentNode[]
   /** Raw inner source between open and close lines (includes nested block text). */

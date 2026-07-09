@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from 'react'
 
-import { styledComponents } from '@/components/content-blocks/content-renderer'
+import { styledComponents } from '@contentbit-registry/blocks/content-renderer'
 import { CopyButton } from '@/components/copy-button'
 import { cn } from '@/lib/utils'
 import { genericBlocks, genericMarkdownRenderers } from '@contentbit/blocks'

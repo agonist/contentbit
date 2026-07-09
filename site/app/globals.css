@@ -108,9 +108,11 @@
   mask-image: radial-gradient(ellipse 75% 70% at 50% 30%, black 30%, transparent 95%);
 }
 
-/* Docs sidebar matches the page background — the border alone separates it. */
-#nd-sidebar {
-  --color-fd-card: var(--color-fd-background);
+/* Keep docs navigation on the same uninterrupted surface as the article. */
+#nd-sidebar,
+#nd-sidebar-mobile {
+  --color-fd-card: var(--background);
+  background-color: var(--background) !important;
 }
 
 /* Scroll-driven section reveal — progressive enhancement only. */

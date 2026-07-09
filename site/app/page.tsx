@@ -1,310 +1,336 @@
+import type { Metadata } from 'next'
+
 import { AgentSession } from '@/components/agent-session'
 import { BlockShowcase } from '@/components/block-showcase'
-import { FeatureBento } from '@/components/feature-bento'
+import { ContentGraphDemo } from '@/components/content-graph-demo'
 import { Frame } from '@/components/frame'
 import { HeroGlyphs } from '@/components/hero-glyphs'
-import { HomeDemo } from '@/components/home-demo'
 import { InstallTabs } from '@/components/install-tabs'
+import { LandingFooter } from '@/components/landing-footer'
+import { PublishDemo } from '@/components/publish-demo'
+import { SectionHeading } from '@/components/section-heading'
+import { SeoDoctorDemo } from '@/components/seo-doctor-demo'
+import { SeoWorkflowDemo } from '@/components/seo-workflow-demo'
 import { SiteHeader } from '@/components/site-header'
-import { ValidationDemo } from '@/components/validation-demo'
-import { GITHUB_URL } from '@/lib/site'
-import { ArrowRight, BadgeCheck } from 'lucide-react'
+import { ArrowRight, Blocks, Check, FileStack, ShieldCheck, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
-function Eyebrow({ index, children }: { index: string; children: React.ReactNode }) {
-  return (
-    <p className="text-muted-foreground font-mono text-xs tracking-widest uppercase">
-      <span className="text-emerald-600 dark:text-emerald-400">{index}</span>
-      <span className="mx-2 select-none">·</span>
-      {children}
-    </p>
-  )
+export const metadata: Metadata = {
+  title: 'Programmatic SEO content infrastructure',
+  description:
+    'Define reusable page contracts, give agents a brief for every page, and validate content structure and internal links before publishing.',
 }
+
+const FAMILY_FEATURES = [
+  {
+    icon: FileStack,
+    title: 'Model page families',
+    body: 'Turn alternatives, glossaries, comparisons, and guides into reusable content contracts.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Brief every page',
+    body: 'Give writers and agents the exact intent, sections, blocks, keywords, and links to satisfy.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Enforce the contract',
+    body: 'Run the same structural, block, and link checks locally, in agent loops, and in CI.',
+  },
+]
 
 export default function Home() {
   return (
     <>
       <SiteHeader />
       <main>
-        {/* Hero */}
-        <section className="relative overflow-hidden">
+        <section className="relative overflow-hidden border-b">
           <HeroGlyphs />
-          <div className="mx-auto max-w-3xl px-6 pt-20 pb-14 text-center sm:pt-28">
+          <div className="relative mx-auto max-w-4xl px-6 pt-20 pb-16 text-center sm:pt-28 sm:pb-20">
             <div className="animate-rise" style={{ animationDelay: '0ms' }}>
               <Link
-                href={'/docs/guides/agents'}
-                className="bg-background/60 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 border px-3 py-1 font-mono text-xs backdrop-blur transition-colors"
+                href="/docs/guides/programmatic-seo"
+                className="bg-background/70 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 border px-3 py-1 font-mono text-xs backdrop-blur transition-colors"
               >
                 <span className="relative flex size-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
                   <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
                 </span>
-                New: LLM agents write validated content
+                Open-source toolkit for programmatic SEO
               </Link>
             </div>
             <h1
-              className="animate-rise mt-6 text-[2.75rem] leading-[1.05] font-semibold tracking-tighter text-balance sm:text-[4rem]"
+              className="animate-rise mt-7 text-[2.8rem] leading-[1.02] font-semibold tracking-tighter text-balance sm:text-[4.5rem]"
               style={{ animationDelay: '80ms' }}
             >
-              Structured Markdown components
-              <span className="text-muted-foreground"> for LLM-written content</span>
+              Build programmatic SEO pages
+              <span className="text-muted-foreground"> that stay consistent.</span>
             </h1>
             <p
-              className="text-muted-foreground animate-rise mx-auto mt-6 max-w-xl text-base text-pretty sm:text-lg"
+              className="text-muted-foreground animate-rise mx-auto mt-6 max-w-2xl text-base leading-relaxed text-pretty sm:text-lg"
               style={{ animationDelay: '160ms' }}
             >
-              Give LLMs validated, structured Markdown blocks. Render LLM output anywhere.
+              Define reusable page contracts, give agents a brief for every page, and validate
+              content structure and internal links before publishing.
             </p>
             <div
               className="animate-rise mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
               style={{ animationDelay: '240ms' }}
             >
               <Link
-                href={'/docs'}
-                className="bg-primary text-primary-foreground inline-flex h-10 items-center rounded-md px-5 text-sm font-medium shadow-sm transition-all hover:opacity-90 hover:shadow-md active:scale-95"
+                href="/programmatic-seo"
+                className="bg-primary text-primary-foreground inline-flex h-10 items-center gap-2 px-5 text-sm font-medium shadow-sm transition-all hover:opacity-90 hover:shadow-md active:scale-95"
               >
-                Get started
+                Explore the workflow
+                <ArrowRight className="size-3.5" />
               </Link>
               <Link
-                href="/playground"
-                className="bg-background/80 hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center rounded-md border px-5 text-sm font-medium shadow-sm backdrop-blur transition-all active:scale-95"
+                href="/docs"
+                className="bg-background/80 hover:bg-accent hover:text-accent-foreground inline-flex h-10 items-center border px-5 text-sm font-medium shadow-sm backdrop-blur transition-all active:scale-95"
               >
-                Open the playground
+                Read the docs
               </Link>
             </div>
-            <div className="animate-rise mx-auto mt-9 max-w-md" style={{ animationDelay: '320ms' }}>
-              <InstallTabs command="contentbit@latest init" />
+            <div className="animate-rise mx-auto mt-9 max-w-lg" style={{ animationDelay: '320ms' }}>
+              <InstallTabs command="contentbit@latest init --seo" />
             </div>
             <p
-              className="animate-rise text-muted-foreground mt-5 font-mono text-xs"
+              className="animate-rise text-muted-foreground mt-5 font-mono text-[11px] tracking-wide"
               style={{ animationDelay: '400ms' }}
             >
-              or read the{' '}
-              <Link
-                href="/blog/contentbit-0-2-0"
-                className="text-foreground underline underline-offset-4 transition-colors hover:text-emerald-600 dark:hover:text-emerald-400"
-              >
-                0.2.0 announcement
-              </Link>
-              , itself rendered by the library
+              TypeScript · React · Astro · plain Markdown · MIT licensed
             </p>
           </div>
         </section>
 
-        {/* Live demo */}
-        <section className="mx-auto max-w-6xl px-6 py-16">
-          <div className="mb-8">
-            <Eyebrow index="01">The idea</Eyebrow>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Markdown in, components out
-            </h2>
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-              LLMs write directive blocks inside ordinary Markdown. The parser builds a
-              source-mapped AST, the registry validates it, and your renderer of choice takes it
-              from there. Below: the actual styled pack rendering live.
-            </p>
-          </div>
-          <div className="reveal-on-scroll">
+        <section className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+          <SectionHeading
+            index="01"
+            eyebrow="The workflow"
+            title="One contract, every page in the family"
+            body="Model the repeatable shape once. Contentbit turns it into a page brief before writing and a quality gate after writing."
+          />
+          <div className="reveal-on-scroll mt-9">
             <Frame>
-              <HomeDemo />
+              <SeoWorkflowDemo />
             </Frame>
           </div>
-          <div className="mt-6 flex justify-center">
-            <Link
-              href="/blog/llm-markdown-that-cannot-break"
-              className="group text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
-            >
-              <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-              this is a fragment. read a complete post: 4 blocks, 3 render targets, 0 diagnostics
-              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+          <div className="mt-8 grid border md:grid-cols-3">
+            {FAMILY_FEATURES.map(({ icon: Icon, title, body }, index) => (
+              <div
+                key={title}
+                className={`p-5 sm:p-6 ${index > 0 ? 'border-t md:border-t-0 md:border-l' : ''}`}
+              >
+                <Icon className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="mt-4 text-sm font-semibold">{title}</h3>
+                <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{body}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* Validation */}
         <section className="border-y">
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="mb-8">
-              <Eyebrow index="02">The safety net</Eyebrow>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                Errors with line numbers, not broken pages
-              </h2>
-              <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                Validation runs before rendering: in your editor, your CI, or your LLM loop.
-                Diagnostics carry a code, a position, and a fix hint, so an LLM can repair its own
-                output.
-              </p>
+          <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+            <div className="grid items-end gap-6 lg:grid-cols-[1fr_auto]">
+              <SectionHeading
+                index="02"
+                eyebrow="Brief before prompt"
+                title="Agents write inside the plan"
+                body="The agent gets live block instructions and the target page brief before it drafts. It knows what to include, where to link, and what clean means."
+              />
+              <Link
+                href="/docs/guides/agents"
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
+              >
+                Agent integration guide
+                <ArrowRight className="size-3.5" />
+              </Link>
             </div>
-            <div className="reveal-on-scroll">
+            <div className="reveal-on-scroll mt-9">
               <Frame>
-                <ValidationDemo />
+                <AgentSession
+                  title="agent · content/alternatives"
+                  steps={[
+                    { kind: 'user', text: 'write the planned Semrush alternatives page' },
+                    { kind: 'skill', name: 'contentbit-author' },
+                    {
+                      kind: 'command',
+                      command: 'contentbit brief semrush-alternatives --json',
+                      exitCode: 0,
+                      output:
+                        'type: alternative · intent: commercial\nsections: overview, comparison, faq\nlinksTo: seo-tools-comparison',
+                    },
+                    {
+                      kind: 'assistant',
+                      text: 'Writing the page from the brief with comparison and FAQ blocks, then checking the project.',
+                    },
+                    {
+                      kind: 'command',
+                      command: 'contentbit doctor --strict-seo',
+                      exitCode: 1,
+                      output:
+                        'CB_SEO_LINK_REQUIRED content/alternatives/semrush.md\nmissing required link: seo-tools-comparison',
+                    },
+                    {
+                      kind: 'assistant',
+                      text: 'The draft is structurally complete but missing its hub link. Adding it and checking again.',
+                    },
+                    {
+                      kind: 'command',
+                      command: 'contentbit doctor --strict-seo',
+                      exitCode: 0,
+                      output: '32 pages · 0 errors · 0 required SEO findings',
+                    },
+                  ]}
+                />
               </Frame>
             </div>
           </div>
         </section>
 
-        {/* Agent integration */}
-        <section className="mx-auto max-w-6xl px-6 py-16">
-          <div className="mb-8">
-            <Eyebrow index="03">The operator</Eyebrow>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Your LLM agent runs the loop
-            </h2>
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-              <code className="font-mono">init</code>
-              {
-                ' installs skills and AGENTS.md instructions, so an LLM can fetch the live authoring guide, write a post, and validate until clean. The skills hold no schemas — they read everything from the CLI — so your custom blocks are picked up automatically.'
-              }
-            </p>
-          </div>
-          <div className="reveal-on-scroll">
-            <Frame>
-              <AgentSession
-                steps={[
-                  { kind: 'user', text: 'write a blog post about our new dark mode' },
-                  { kind: 'skill', name: 'contentbit-author' },
-                  {
-                    kind: 'command',
-                    command:
-                      'contentbit instructions --audience llm --registry ./blocks/registry.ts',
-                    exitCode: 0,
-                  },
-                  {
-                    kind: 'assistant',
-                    text: 'Drafting content/dark-mode.md with a callout and a before/after comparison…',
-                  },
-                  {
-                    kind: 'command',
-                    command:
-                      'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
-                    exitCode: 1,
-                    output:
-                      'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
-                  },
-                  {
-                    kind: 'assistant',
-                    text: 'The comparison row is missing its second value — fixing and revalidating.',
-                  },
-                  {
-                    kind: 'command',
-                    command:
-                      'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
-                    exitCode: 0,
-                    output: '1 file(s): 0 errors, 0 warnings',
-                  },
-                ]}
+        <section className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+            <div>
+              <SectionHeading
+                index="03"
+                eyebrow="The quality gate"
+                title="Catch content drift before your users do"
+                body="A page can be valid Markdown and still fail the program. Doctor turns your page-family contract, block schemas, and link graph into one ranked repair plan."
               />
+              <ul className="mt-6 space-y-3 text-sm">
+                {[
+                  'Readable diagnostics with file and line context',
+                  'Stable JSON output for agents and automation',
+                  'Strict modes that can block a CI build',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
+                    <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="reveal-on-scroll">
+              <Frame>
+                <SeoDoctorDemo />
+              </Frame>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y">
+          <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 sm:py-20 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+            <div className="reveal-on-scroll lg:order-1">
+              <Frame>
+                <ContentGraphDemo />
+              </Frame>
+            </div>
+            <div className="lg:order-2">
+              <SectionHeading
+                index="04"
+                eyebrow="The content graph"
+                title="Internal links become part of the model"
+                body="Declare relationships in frontmatter and let Contentbit resolve links, backlinks, aliases, and localized page keys across the whole project."
+              />
+              <div className="mt-6 space-y-4 border-l pl-5">
+                <div>
+                  <h3 className="text-sm font-semibold">Plan links before files exist</h3>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    A planned page can already belong to a hub and carry required destinations.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold">Keep multilingual clusters coherent</h3>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    Resolve localized slugs through stable keys without mixing locales.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+          <SectionHeading
+            index="05"
+            eyebrow="The library"
+            title="Keep one portable content model"
+            body="Contentbit processes and validates the document before render. React, Astro, and Markdown adapters decide presentation without changing what writers or agents author."
+          />
+          <div className="reveal-on-scroll mt-9">
+            <Frame>
+              <PublishDemo />
             </Frame>
           </div>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex items-center gap-2 font-mono text-xs">
+            <Blocks className="size-3.5 text-emerald-600 dark:text-emerald-400" />
             <Link
-              href="/docs/guides/agents"
-              className="group text-muted-foreground hover:text-foreground inline-flex items-center gap-2 font-mono text-xs transition-colors"
+              href="/docs/guides/renderers"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-              works with Claude Code, Cursor, Codex, Copilot — see the LLM agents guide
-              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+              See the rendering guides <span aria-hidden>→</span>
             </Link>
           </div>
         </section>
 
-        {/* Features */}
         <section className="border-y">
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="mb-8">
-              <Eyebrow index="04">The system</Eyebrow>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                One definition, every surface
-              </h2>
-            </div>
-            <div className="reveal-on-scroll">
-              <FeatureBento />
-            </div>
-          </div>
-        </section>
-
-        {/* Block showcase */}
-        <section>
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="mb-8 flex items-end justify-between gap-4">
-              <div>
-                <Eyebrow index="05">The generic pack</Eyebrow>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                  Eight blocks that work in any niche
-                </h2>
-                <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-                  Pick a block. The example is its real authoring guidance from the registry, the
-                  same text LLMs get, rendered live by the styled pack.
-                </p>
-              </div>
+          <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+            <div className="flex items-end justify-between gap-4">
+              <SectionHeading
+                index="06"
+                eyebrow="Structured building blocks"
+                title="Give agents useful structure without arbitrary components"
+                body="Comparisons, FAQs, steps, metrics, and other registered blocks stay typed, validated, portable, and editable in your own design system."
+              />
               <Link
                 href="/blocks"
-                className="text-muted-foreground hover:text-foreground hidden text-sm whitespace-nowrap transition-colors sm:block"
+                className="text-muted-foreground hover:text-foreground hidden shrink-0 text-sm transition-colors sm:block"
               >
-                All blocks →
+                Explore all blocks →
               </Link>
             </div>
-            <div className="reveal-on-scroll">
+            <div className="reveal-on-scroll mt-9">
               <BlockShowcase />
             </div>
           </div>
         </section>
 
-        {/* shadcn install */}
-        <section className="border-t">
-          <div className="mx-auto max-w-3xl px-6 py-20 text-center">
-            <Eyebrow index="06">Styled pack</Eyebrow>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Install the components, own the code
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] bg-[size:32px_32px] opacity-35 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
+          <div className="relative mx-auto max-w-3xl px-6 py-20 text-center sm:py-28">
+            <p className="font-mono text-xs tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
+              Start with one page family
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              Make scale a property of the system, not the prompt.
             </h2>
-            <p className="text-muted-foreground mx-auto mt-3 max-w-xl text-sm">
-              The React pack ships through a shadcn registry. Components land in your app as
-              editable source files: Tailwind, your tokens, your rules.
+            <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-sm leading-relaxed sm:text-base">
+              Scaffold the library, project config, SEO contracts, Studio, and agent instructions in
+              one command.
             </p>
-            <div className="mt-6">
-              <InstallTabs command="shadcn@latest add @contentbit/generic-pack" />
+            <div className="mx-auto mt-8 max-w-lg">
+              <InstallTabs command="contentbit@latest init --seo" />
             </div>
-            <p className="text-muted-foreground mt-3 font-mono text-xs">
-              registry: https://contentbit.dev/r/{'{name}'}.json
-            </p>
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href="/docs/guides/programmatic-seo"
+                className="bg-primary text-primary-foreground inline-flex h-10 items-center gap-2 px-5 text-sm font-medium"
+              >
+                Follow the workflow
+                <ArrowRight className="size-3.5" />
+              </Link>
+              <Link
+                href="/playground"
+                className="hover:bg-accent inline-flex h-10 items-center px-5 text-sm font-medium transition-colors"
+              >
+                Try the block playground
+              </Link>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t">
-        <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm sm:flex-row">
-          <p>
-            MIT licensed. Built by{' '}
-            <Link
-              href="https://x.com/agonist42"
-              className="hover:text-foreground underline underline-offset-4"
-            >
-              @agonist42
-            </Link>
-            .
-          </p>
-          <nav className="flex items-center gap-5">
-            <Link href={'/docs'} className="hover:text-foreground transition-colors">
-              Docs
-            </Link>
-            <Link href="/blocks" className="hover:text-foreground transition-colors">
-              Blocks
-            </Link>
-            <Link href="/blog" className="hover:text-foreground transition-colors">
-              Blog
-            </Link>
-            <Link href="/docs/changelog" className="hover:text-foreground transition-colors">
-              Changelog
-            </Link>
-            <Link href="/playground" className="hover:text-foreground transition-colors">
-              Playground
-            </Link>
-            <Link href={GITHUB_URL} className="hover:text-foreground transition-colors">
-              GitHub
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <LandingFooter />
     </>
   )
 }

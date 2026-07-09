@@ -1,8 +1,8 @@
-import type { ComparisonData } from '@contentbit/blocks'
-import type { BlockComponentProps } from '@contentbit/react'
+import { comparisonBlock } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 
-export function ComparisonBlock({ node }: BlockComponentProps) {
-  const data = node.data as ComparisonData
+export const ComparisonBlock = defineBlockComponent(comparisonBlock, ({ node }) => {
+  const data = node.data
   return (
     <div data-cb-styled className="bg-card my-6 overflow-x-auto rounded-lg border">
       <table className="w-full text-sm">
@@ -10,10 +10,10 @@ export function ComparisonBlock({ node }: BlockComponentProps) {
           <tr className="bg-muted/50 border-b">
             <th scope="col" className="w-[28%] px-4 py-3 text-left font-medium" />
             <th scope="col" className="px-4 py-3 text-left">
-              <span className="font-semibold">{String(node.props.left)}</span>
+              <span className="font-semibold">{node.props.left}</span>
             </th>
             <th scope="col" className="px-4 py-3 text-left">
-              <span className="font-semibold">{String(node.props.right)}</span>
+              <span className="font-semibold">{node.props.right}</span>
             </th>
           </tr>
         </thead>
@@ -34,4 +34,4 @@ export function ComparisonBlock({ node }: BlockComponentProps) {
       </table>
     </div>
   )
-}
+})

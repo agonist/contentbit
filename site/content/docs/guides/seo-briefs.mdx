@@ -6,16 +6,35 @@ description: Define page contracts and print agent-ready briefs for existing or 
 SEO contracts describe what a page must satisfy. Briefs turn those contracts
 plus the current content inventory into a writer-ready plan.
 
-If you want the full end-to-end loop, start with
-[Programmatic SEO workflows](/docs/guides/programmatic-seo). This page focuses
-on the config and brief mechanics.
+Use this page as a reference while editing `contentbit.seo.config.ts`. To build
+the workflow from start to finish, follow
+[Build a programmatic SEO workflow](/docs/guides/programmatic-seo).
+
+## How the config files fit together
+
+The project config tells Contentbit where the SEO config lives:
+
+```ts
+// contentbit.config.ts
+import { defineContentConfig } from '@contentbit/core'
+
+export default defineContentConfig({
+  content: 'content/**/*.md',
+  registry: './blocks/registry.ts',
+  seo: './contentbit.seo.config.ts',
+})
+```
+
+The SEO config holds page-family contracts and individual page plans. Keeping
+the two concerns separate lets every CLI command share the same project paths
+without mixing them into the editorial model.
 
 ## Config file
 
-Create `contentbit.seo.config.ts` at the project root, or pass a custom path
-with `--seo-config`. Keep the file small at first: define one page type, add
-folder defaults, then add explicit planned pages only where writers need a
-brief before the Markdown file exists.
+Create `contentbit.seo.config.ts` at the project root, or point to another path
+from `contentbit.config.ts`. Keep the file small at first. Define one page type,
+add folder defaults, then add explicit plans where a writer needs a brief before
+the Markdown file exists.
 
 ```ts
 import { defineSeoConfig } from '@contentbit/core'
@@ -124,9 +143,9 @@ contentbit brief semrush-alternatives "content/**/*.md"
 contentbit brief semrush-alternatives "content/**/*.md" --json
 ```
 
-Targets resolve by `key` first, then by `slug`, then by internal page id. With
-no glob, `brief` scans `content/**/*.{md,mdx}` when that default content set
-exists. If the page is only planned, the brief still prints.
+Targets resolve by `key` first, then by `slug`, then by internal page id. With a
+project config, `brief` scans the configured content paths. If the page is only
+planned, the brief still prints.
 
 The Markdown brief is meant to paste into an agent or editorial task. The JSON
 brief is better for tools.

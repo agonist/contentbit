@@ -12,7 +12,7 @@ import { detectTarget, TARGET_ADAPTERS, TARGETS, type Md, type Target } from './
 const REGISTRY_TEMPLATE = `// Custom block definitions for this project. The CLI and your app share
 // this module — Node 22.18+ imports TypeScript directly:
 //
-//   contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
+//   contentbit validate
 //
 // Definitions stay framework-free (the CLI and every render target use
 // them); render components live next door in blocks/components.tsx or
@@ -39,6 +39,17 @@ export const quote = defineBlock({
 export default [quote] satisfies BlockDefinition<unknown>[]
 `
 
+function contentConfigTemplate(seo: boolean): string {
+  return `import { defineContentConfig } from '@contentbit/core'
+
+export default defineContentConfig({
+  content: 'content/**/*.md',
+  registry: './blocks/registry.ts',
+  genericBlocks: true,${seo ? "\n  seo: './contentbit.seo.config.ts'," : ''}
+})
+`
+}
+
 const EXAMPLE_CONTENT = `---
 slug: hello-content-blocks
 linksTo:
@@ -60,7 +71,7 @@ Run the validate script and you will get file:line:col diagnostics.
 
 :::steps
 1. Edit this file and add or break a block.
-2. Run \`contentbit validate "content/**/*.md"\`.
+2. Run \`contentbit validate\`.
 3. Render it with the target you picked at init.
 :::
 
@@ -89,7 +100,7 @@ graph is authored once with \`slug\` and \`linksTo\`, then contentbit derives
 \`linkedFrom\` in \`.contentbit/link-index.json\`.
 
 :::callout{type="note"}
-Run \`contentbit links "content/**/*.md" --fix\` after renaming a page. Alias
+Run \`contentbit links --fix\` after renaming a page. Alias
 references in \`linksTo\` are rewritten to the current slug, while \`aliases\`
 stays as the rename record.
 :::
@@ -311,10 +322,10 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
     md = choices[0]
   }
 
-  // Install runtime packages plus the CLI as a dev dependency.
+  // Install runtime packages plus the CLI and optional Studio as dev dependencies.
   const runtime = adapter.runtimeDependencies(md)
   if (input.noInstall) {
-    io.stdout(`skipped install: ${runtime.join(' ')} + contentbit (dev)`)
+    io.stdout(`skipped install: ${runtime.join(' ')} + contentbit @contentbit/studio (dev)`)
   } else {
     const pm = detectPackageManager(cwd)
     io.stdout(`installing with ${pm}: ${runtime.join(' ')}`)
@@ -322,7 +333,9 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
       io.stderr('install failed')
       return 1
     }
-    if ((await runInstall(pm, installArgs(pm, true, ['contentbit']), cwd)) !== 0) {
+    if (
+      (await runInstall(pm, installArgs(pm, true, ['contentbit', '@contentbit/studio']), cwd)) !== 0
+    ) {
       io.stderr('install failed')
       return 1
     }
@@ -340,6 +353,7 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
 
   // Scaffold project files; never overwrite.
   const files: Array<[string, string]> = [
+    ['contentbit.config.ts', contentConfigTemplate(Boolean(input.seo))],
     ['blocks/registry.ts', REGISTRY_TEMPLATE],
     ['content/example.md', EXAMPLE_CONTENT],
     ['content/related.md', RELATED_CONTENT],
@@ -357,21 +371,19 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
   }
   fresh.scripts ??= {}
   if (!fresh.scripts['content:check']) {
-    fresh.scripts['content:check'] =
-      'contentbit validate "content/**/*.md" --registry ./blocks/registry.ts'
+    fresh.scripts['content:check'] = 'contentbit validate'
     io.stdout('added script: content:check')
   }
   if (!fresh.scripts['content:links']) {
-    fresh.scripts['content:links'] = 'contentbit links "content/**/*.md"'
+    fresh.scripts['content:links'] = 'contentbit links'
     io.stdout('added script: content:links')
   }
   if (!fresh.scripts['content:doctor']) {
-    fresh.scripts['content:doctor'] =
-      'contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts'
+    fresh.scripts['content:doctor'] = 'contentbit doctor'
     io.stdout('added script: content:doctor')
   }
   if (!fresh.scripts.studio) {
-    fresh.scripts.studio = 'contentbit studio "content/**/*.md" --registry ./blocks/registry.ts'
+    fresh.scripts.studio = 'contentbit studio'
     io.stdout('added script: studio')
   }
   if (

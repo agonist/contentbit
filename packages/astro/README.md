@@ -21,7 +21,7 @@ export const collections = {
 ```astro
 ---
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
 import { ContentBlocks } from '@contentbit/astro/components'
 import { getEntry } from 'astro:content'
 import MyCallout from '../components/MyCallout.astro'
@@ -30,14 +30,14 @@ const entry = await getEntry('articles', 'example')
 if (!entry?.body) throw new Error('Entry "example" not found.')
 
 const registry = createBlockRegistry().use(genericBlocks())
-const { document } = validateDocument(parseDocument(entry.body), registry)
+const document = assertValidDocument(compileDocument(entry.body, registry), entry.id)
 ---
 
 <ContentBlocks document={document} components={{ callout: MyCallout }} />
 ```
 
-For static pages this runs at build time, so throwing on diagnostics fails the
-build. To validate every content file in CI with `file:line:col` diagnostics,
+For static pages `assertValidDocument` throws formatted diagnostics, so invalid
+content fails the build. To validate every content file in CI with `file:line:col` diagnostics,
 run the CLI: `contentbit validate "content/**/*.md"`.
 
 Render blocks with your own Astro components via

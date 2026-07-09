@@ -1,6 +1,6 @@
 'use client'
 
-import { styledComponents } from '@/components/content-blocks/content-renderer'
+import { styledComponents } from '@contentbit-registry/blocks/content-renderer'
 import { Markdown } from '@/components/markdown'
 import { genericBlocks } from '@contentbit/blocks'
 import {

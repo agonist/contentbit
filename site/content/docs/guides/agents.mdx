@@ -29,20 +29,20 @@ feedback loop doing its job.
     { kind: 'skill', name: 'contentbit-author' },
     {
       kind: 'command',
-      command: 'contentbit instructions --audience llm --registry ./blocks/registry.ts',
+      command: 'contentbit instructions --audience llm',
       exitCode: 0,
     },
     { kind: 'assistant', text: 'The guide lists 9 blocks, including the custom quote block. Drafting content/dark-mode.md with a callout, a comparison, and a closing quote.' },
     {
       kind: 'command',
-      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+      command: 'contentbit validate content/dark-mode.md',
       exitCode: 1,
       output: 'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
     },
     { kind: 'assistant', text: 'Line 18 is missing the second column value. Fixing the row and revalidating.' },
     {
       kind: 'command',
-      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
+      command: 'contentbit validate content/dark-mode.md',
       exitCode: 0,
       output: '1 file(s): 0 errors, 0 warnings',
     },
@@ -74,10 +74,12 @@ This manages:
     documents, and missing image alt text, in that order.
 
 Pass `--no-agents-md` to manage only the skills.
+Run `contentbit agents --check` to see what would be created, refreshed, or
+skipped before writing files.
 
-The project scripts matter too. The generated instructions tell the LLM agent to
-read `content:check` from `package.json` because that script contains the
-canonical content glob and `--registry` flag for your project.
+Project configuration matters too. Generated instructions tell the LLM agent
+to use the nearest `contentbit.config.ts`, which holds the canonical content
+glob, registry, link fields, and SEO config.
 
 ## Use the writing loop
 
@@ -85,24 +87,23 @@ The author skill follows the same loop you would run by hand:
 
 ```bash
 # 1. the live guide, including your custom blocks
-contentbit instructions --audience llm --registry ./blocks/registry.ts
+contentbit instructions --audience llm
 
 # 2. if the project uses link frontmatter, load the current graph
-contentbit links "content/**/*.md"
+contentbit links
 
 # 3. write the document, then validate until clean
-contentbit validate content/new-post.md --registry ./blocks/registry.ts
+contentbit validate content/new-post.md
 ```
 
-Both skills read the `content:check` script in your package.json to discover the
-project's content glob and `--registry` flag, so they adapt to your layout
-without configuration.
+Both skills use `contentbit.config.ts`, so they adapt to your layout without
+copying project arguments into every command.
 
 If the project has `contentbit.seo.config.ts` and the task is a search-targeted
 page, give the agent the page brief before it writes:
 
 ```bash
-contentbit brief <key-or-slug> "content/**/*.md" --json
+contentbit brief <key-or-slug> --json
 ```
 
 The brief is the structure contract: target facts, intent, keywords, required
@@ -119,14 +120,14 @@ The audit skill starts with `doctor`, which prints a ranked repair plan and can
 also emit JSON:
 
 ```bash
-contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
-contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --json
+contentbit doctor
+contentbit doctor --json
 ```
 
 Use `stats` when you need raw per-document metrics:
 
 ```bash
-contentbit stats "content/**/*.md" --registry ./blocks/registry.ts
+contentbit stats
 ```
 
 Each stats entry carries a heading outline with per-section word counts, block
@@ -146,8 +147,8 @@ Agents should keep using `doctor --json` and `stats` when they need stable data.
 For internal-link health, use the graph command next to stats:
 
 ```bash
-contentbit links "content/**/*.md"
-contentbit links "content/**/*.md" --fix
+contentbit links
+contentbit links --fix
 ```
 
 The first command writes `.contentbit/link-index.json` with resolved `linksTo`
@@ -166,11 +167,11 @@ changelog skill. Add contentbit as a context source and a quality gate with
 this instruction:
 
 ```markdown
-Before writing, run `contentbit instructions --audience llm --registry <path>`
+Before writing, run `contentbit instructions --audience llm`
 and follow it exactly. Never guess block syntax. If sibling documents use
-internal-link frontmatter, run `contentbit links <content glob>` and choose
+internal-link frontmatter, run `contentbit links` and choose
 `linksTo` values from the generated index. After writing, run
-`contentbit validate <content glob> --registry <path>` and fix every diagnostic
+`contentbit validate` and fix every diagnostic
 (`file:line:col severity CODE message`, with `hint:` lines) until it exits 0.
 ```
 

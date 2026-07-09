@@ -1,5 +1,5 @@
 ---
-title: contentbit 0.3.0 — internal links your content can't outgrow
+title: "contentbit 0.3.0: internal links your content can't outgrow"
 description: Author each page's place in the graph in frontmatter; contentbit derives backlinks, validates every reference, and heals renames with --fix. Internal linking that fails CI instead of your readers.
 date: 2026-06-24
 slug: contentbit-0-3-0

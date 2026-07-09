@@ -1,13 +1,13 @@
 import {
   defineBlock,
+  defineMarkdownBlockRenderer,
   pipeRows,
-  type MarkdownBlockRenderer,
   type PipeRowsData,
 } from '@contentbit/core'
 
 export type KeyMetricsData = PipeRowsData
 
-export const keyMetricsBlock = defineBlock<KeyMetricsData>({
+export const keyMetricsBlock = defineBlock({
   name: 'key-metrics',
   description: 'Scannable stat cards: a large value with a short label.',
   content: pipeRows({ columns: ['value', 'label'], minRows: 2, maxRows: 8 }),
@@ -18,7 +18,7 @@ export const keyMetricsBlock = defineBlock<KeyMetricsData>({
   },
 })
 
-export const keyMetricsMarkdown: MarkdownBlockRenderer = (node) => {
-  const data = node.data as KeyMetricsData
+export const keyMetricsMarkdown = defineMarkdownBlockRenderer(keyMetricsBlock, (node) => {
+  const data = node.data
   return data.rows.map((row) => `- **${row.value}** — ${row.label}`).join('\n')
-}
+})

@@ -1,6 +1,6 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
 
@@ -10,9 +10,20 @@ import { fakeIo } from '../run.test'
 async function fixture(files: Record<string, string>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'cb-'))
   for (const [name, content] of Object.entries(files)) {
+    await mkdir(dirname(join(dir, name)), { recursive: true })
     await writeFile(join(dir, name), content, 'utf8')
   }
   return dir
+}
+
+async function withCwd<T>(cwd: string, fn: () => Promise<T>): Promise<T> {
+  const previous = process.cwd()
+  process.chdir(cwd)
+  try {
+    return await fn()
+  } finally {
+    process.chdir(previous)
+  }
 }
 
 test('valid files exit 0 with a summary', async () => {
@@ -137,4 +148,36 @@ test('validate ignores link checks when no file declares a slug', async () => {
   const io = fakeIo()
   expect(await run(['validate', join(dir, '*.md')], io)).toBe(0)
   expect(io.err.join('\n')).not.toContain('CB_LINK')
+})
+
+test('validate with no globs reuses the nearest package content:check script', async () => {
+  const dir = await fixture({
+    'package.json': JSON.stringify({
+      scripts: { 'content:check': 'contentbit validate "content/**/*.md"' },
+    }),
+    'content/post.md': ':::callout{type="tip"}\nWeigh your flour.\n:::\n',
+  })
+  const nested = join(dir, 'apps/web')
+  await mkdir(nested, { recursive: true })
+
+  const io = fakeIo()
+  await withCwd(nested, async () => {
+    expect(await run(['validate'], io)).toBe(0)
+  })
+  expect(io.out.join('\n')).toContain('Files     1')
+})
+
+test('validate with no globs uses the nearest contentbit config', async () => {
+  const dir = await fixture({
+    'contentbit.config.mjs': `export default { content: ["articles/**/*.md"] }`,
+    'articles/post.md': ':::callout{type="tip"}\nWeigh your flour.\n:::\n',
+  })
+  const nested = join(dir, 'apps/web')
+  await mkdir(nested, { recursive: true })
+
+  const io = fakeIo()
+  await withCwd(nested, async () => {
+    expect(await run(['validate'], io)).toBe(0)
+  })
+  expect(io.out.join('\n')).toContain('Files     1')
 })

@@ -23,6 +23,7 @@ import {
 import { loadContentProject } from '../content-project.js'
 import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
 import { loadSeoConfig } from '../seo-config.js'
+import { discoverContentCommandDefaults } from '../script-defaults.js'
 import auditSkill from './agent-templates/contentbit-audit/SKILL.md?raw'
 import authorSkill from './agent-templates/contentbit-author/SKILL.md?raw'
 
@@ -57,19 +58,31 @@ export interface DoctorCommandInput extends LinkOptionValues {
 }
 
 export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<number> {
+  const defaults = await discoverContentCommandDefaults('doctor', input.globs)
   const minSectionWords = parseMinSectionWords(input.minSectionWords)
   if (minSectionWords === null) {
     io.stderr('doctor: --min-section-words must be a non-negative integer.')
     return 2
   }
 
-  const includeGenericBlocks = !input.noGenericBlocks
-  const linkOptions = linkResolverOptions(input)
-  const seoConfig = await loadSeoConfig({ seoConfig: input.seoConfig, noSeo: input.noSeo })
+  const includeGenericBlocks = !(input.noGenericBlocks || defaults.noGenericBlocks)
+  const linkOptions = linkResolverOptions({
+    linkResolve: input.linkResolve ?? defaults.linkResolve,
+    localeField: input.localeField ?? defaults.localeField,
+    slugField: input.slugField ?? defaults.slugField,
+    keyField: input.keyField ?? defaults.keyField,
+    defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
+  })
+  const seoConfig = await loadSeoConfig({
+    cwd: defaults.cwd,
+    seoConfig: input.seoConfig ?? defaults.seoConfig,
+    noSeo: input.noSeo ?? defaults.noSeo,
+  })
   const { files, scan } = await loadContentProject({
     cmd: 'doctor',
-    positionals: input.globs,
-    registry: input.registry,
+    positionals: defaults.globs,
+    cwd: defaults.cwd,
+    registry: input.registry ?? defaults.registry,
     includeGenericBlocks,
     linkOptions,
     scan: { minSectionWords, seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
@@ -97,8 +110,8 @@ export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<
     io.stdout(
       formatReport(
         report,
-        input.globs,
-        input.registry,
+        defaults.globs,
+        input.registry ?? defaults.registry,
         includeGenericBlocks,
         linkOptions,
         hasAliases(scan.linkInputs),

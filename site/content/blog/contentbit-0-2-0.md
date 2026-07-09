@@ -1,5 +1,5 @@
 ---
-title: contentbit 0.2.0 — LLM agents write validated content
+title: 'contentbit 0.2.0: LLM agents write validated content'
 description: One command installs LLM-agent skills that fetch the live authoring guide, write, and validate until clean. Plus document stats, an Astro renderer, and fully documented props.
 date: 2026-06-12
 slug: contentbit-0-2-0

@@ -1,8 +1,8 @@
-import type { QuickRefData } from '@contentbit/blocks'
-import type { BlockComponentProps } from '@contentbit/react'
+import { quickRefBlock } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 
-export function QuickRefBlock({ node }: BlockComponentProps) {
-  const data = node.data as QuickRefData
+export const QuickRefBlock = defineBlockComponent(quickRefBlock, ({ node }) => {
+  const data = node.data
   return (
     <dl data-cb-styled className="bg-card my-6 space-y-2.5 rounded-lg border px-4 py-3.5">
       {data.rows.map((row, i) => (
@@ -17,4 +17,4 @@ export function QuickRefBlock({ node }: BlockComponentProps) {
       ))}
     </dl>
   )
-}
+})

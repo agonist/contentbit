@@ -16,6 +16,10 @@ import authorSkill from './agent-templates/contentbit-author/SKILL.md?raw'
 const AUTHOR_SKILL = authorSkill
 const AUDIT_SKILL = auditSkill
 const AGENTS_MD_BLOCK = agentsMdTemplate.trimEnd()
+const SKILLS: Array<[string, string]> = [
+  ['contentbit-author', AUTHOR_SKILL],
+  ['contentbit-audit', AUDIT_SKILL],
+]
 
 const START = '<!-- contentbit:start -->'
 const END = '<!-- contentbit:end -->'
@@ -95,6 +99,82 @@ async function writeRootPointerIfNeeded(cwd: string, io: Io): Promise<void> {
   )
 }
 
+async function checkBlockStatus(path: string, block: string, label: string, io: Io): Promise<void> {
+  const existing = await readTextIfExists(path)
+  if (existing === '') {
+    io.stdout(`would create: ${label}`)
+    return
+  }
+  if (upsertBlock(existing, block) === existing) {
+    io.stdout(`up-to-date: ${label}`)
+    return
+  }
+  io.stdout(`stale: ${label}`)
+}
+
+async function checkRootPointerIfNeeded(cwd: string, io: Io): Promise<void> {
+  const root = findMonorepoRoot(cwd)
+  if (!root) return
+
+  const packagePath = displayRelative(root, cwd)
+  await checkBlockStatus(
+    join(root, 'AGENTS.md'),
+    rootPointerBlock(packagePath),
+    `${displayRelative(cwd, join(root, 'AGENTS.md'))} (contentbit root pointer)`,
+    io,
+  )
+}
+
+async function checkAgentIntegration(cwd: string, options: AgentOptions, io: Io): Promise<void> {
+  const claudeDir = join(cwd, '.claude')
+  const claudeDirExists = existsSync(claudeDir)
+  const claude = options.claude ?? claudeDirExists
+  const agentsMd = options.agentsMd ?? true
+
+  if (agentsMd) {
+    await checkBlockStatus(
+      join(cwd, 'AGENTS.md'),
+      AGENTS_MD_BLOCK,
+      'AGENTS.md (contentbit block)',
+      io,
+    )
+    await checkRootPointerIfNeeded(cwd, io)
+  }
+
+  if (claude) {
+    for (const [name, content] of SKILLS) {
+      const path = join(cwd, '.claude/skills', name, 'SKILL.md')
+      const installed = await readTextIfExists(path)
+      const shippedVersion = skillVersion(content) ?? 'unknown'
+      if (installed === '') {
+        io.stdout(`would install: .claude/skills/${name}/SKILL.md (version ${shippedVersion})`)
+        continue
+      }
+      const installedVersion = skillVersion(installed) ?? 'unknown'
+      if (installed === content) {
+        io.stdout(`up-to-date: .claude/skills/${name}/SKILL.md (version ${installedVersion})`)
+      } else {
+        io.stdout(
+          `stale: .claude/skills/${name}/SKILL.md (installed ${installedVersion}, package ${shippedVersion})`,
+        )
+      }
+    }
+    if (!claudeDirExists) {
+      io.stdout('would create: .claude/ (restart Claude Code after installing skills)')
+    }
+  } else {
+    io.stdout('skipped: .claude/skills (no .claude directory — pass --claude to create it)')
+  }
+}
+
+function skillVersion(content: string): string | undefined {
+  for (const line of content.split(/\r?\n/)) {
+    const match = line.match(/^version:\s*['"]?([^'"\s]+)['"]?\s*$/)
+    if (match) return match[1]
+  }
+  return undefined
+}
+
 export interface AgentOptions {
   /** Install Claude Code skills; defaults to detecting a .claude/ directory. */
   claude?: boolean
@@ -123,11 +203,7 @@ export async function installAgentIntegration(
   }
 
   if (claude) {
-    const skills: Array<[string, string]> = [
-      ['contentbit-author', AUTHOR_SKILL],
-      ['contentbit-audit', AUDIT_SKILL],
-    ]
-    for (const [name, content] of skills) {
+    for (const [name, content] of SKILLS) {
       const dir = join(cwd, '.claude/skills', name)
       await mkdir(dir, { recursive: true })
       await writeFile(join(dir, 'SKILL.md'), content, 'utf8')
@@ -143,19 +219,19 @@ export async function installAgentIntegration(
 
 export interface AgentsCommandInput {
   claude?: boolean
+  check?: boolean
   noAgentsMd?: boolean
   cwd?: string
 }
 
 export async function agentsCommand(input: AgentsCommandInput, io: Io): Promise<number> {
-  await installAgentIntegration(
-    resolve(input.cwd ?? process.cwd()),
-    {
-      claude: input.claude || undefined, // false means "detect", not "skip"
-      agentsMd: !input.noAgentsMd,
-    },
-    io,
-  )
+  const cwd = resolve(input.cwd ?? process.cwd())
+  const options = {
+    claude: input.claude || undefined, // false means "detect", not "skip"
+    agentsMd: !input.noAgentsMd,
+  }
+  if (input.check) await checkAgentIntegration(cwd, options, io)
+  else await installAgentIntegration(cwd, options, io)
   io.stdout(`Guide: ${AGENTS_GUIDE_URL}`)
   return 0
 }

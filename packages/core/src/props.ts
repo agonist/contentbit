@@ -1,4 +1,4 @@
-import type { Diagnostic, SourceRange } from './diagnostics.js'
+import type { Diagnostic, SourcePoint, SourceRange } from './diagnostics.js'
 
 const KEY_RE = /^[a-zA-Z][a-zA-Z0-9_-]*/
 const NUMBER_RE = /^-?\d+(\.\d+)?$/
@@ -6,6 +6,7 @@ const IDENT_RE = /^[a-zA-Z][a-zA-Z0-9_-]*$/
 
 export interface ParsedProps {
   props: Record<string, unknown>
+  propPositions: Record<string, SourceRange>
   diagnostics: Diagnostic[]
 }
 
@@ -14,10 +15,15 @@ export interface ParsedProps {
  * Grammar: key="quoted" | key=123 | key=true | key=bare-ident | key (flag = true).
  * No expressions, arrays, or objects — by design (spec: Content Syntax / Props).
  */
-export function parseProps(raw: string | null, position: SourceRange): ParsedProps {
+export function parseProps(
+  raw: string | null,
+  position: SourceRange,
+  rawStart: SourcePoint = position.start,
+): ParsedProps {
   const props: Record<string, unknown> = {}
+  const propPositions: Record<string, SourceRange> = {}
   const diagnostics: Diagnostic[] = []
-  if (raw === null) return { props, diagnostics }
+  if (raw === null) return { props, propPositions, diagnostics }
 
   const err = (message: string) =>
     diagnostics.push({
@@ -31,6 +37,7 @@ export function parseProps(raw: string | null, position: SourceRange): ParsedPro
   if (!raw.endsWith('}')) {
     return {
       props: {},
+      propPositions,
       diagnostics: [
         {
           code: 'CB_PROPS_SYNTAX',
@@ -44,6 +51,8 @@ export function parseProps(raw: string | null, position: SourceRange): ParsedPro
   }
 
   const inner = raw.slice(1, -1)
+  const innerOffset = rawStart.offset + 1
+  const innerColumn = rawStart.column + 1
   let i = 0
   while (i < inner.length) {
     while (i < inner.length && /\s/.test(inner[i])) i++
@@ -52,9 +61,22 @@ export function parseProps(raw: string | null, position: SourceRange): ParsedPro
     const keyMatch = inner.slice(i).match(KEY_RE)
     if (!keyMatch) {
       err(`Unexpected character "${inner[i]}" in props.`)
-      return { props, diagnostics }
+      return { props, propPositions, diagnostics }
     }
+    const keyStart = i
     const key = keyMatch[0]
+    propPositions[key] = {
+      start: {
+        line: rawStart.line,
+        column: innerColumn + keyStart,
+        offset: innerOffset + keyStart,
+      },
+      end: {
+        line: rawStart.line,
+        column: innerColumn + keyStart + key.length,
+        offset: innerOffset + keyStart + key.length,
+      },
+    }
     i += key.length
 
     if (inner[i] !== '=') {
@@ -83,7 +105,7 @@ export function parseProps(raw: string | null, position: SourceRange): ParsedPro
       }
       if (!closed) {
         err(`Unterminated string for prop "${key}".`)
-        return { props, diagnostics }
+        return { props, propPositions, diagnostics }
       }
       props[key] = value
       continue
@@ -92,7 +114,7 @@ export function parseProps(raw: string | null, position: SourceRange): ParsedPro
     const valMatch = inner.slice(i).match(/^[^\s]+/)
     if (!valMatch) {
       err(`Missing value for prop "${key}".`)
-      return { props, diagnostics }
+      return { props, propPositions, diagnostics }
     }
     const rawVal = valMatch[0]
     i += rawVal.length
@@ -102,5 +124,5 @@ export function parseProps(raw: string | null, position: SourceRange): ParsedPro
     else if (IDENT_RE.test(rawVal)) props[key] = rawVal
     else err(`Invalid value "${rawVal}" for prop "${key}".`)
   }
-  return { props, diagnostics }
+  return { props, propPositions, diagnostics }
 }

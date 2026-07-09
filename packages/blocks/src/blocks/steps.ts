@@ -1,13 +1,13 @@
 import {
   defineBlock,
+  defineMarkdownBlockRenderer,
   listItems,
   type ListItemsData,
-  type MarkdownBlockRenderer,
 } from '@contentbit/core'
 
 export type StepsData = ListItemsData
 
-export const stepsBlock = defineBlock<StepsData>({
+export const stepsBlock = defineBlock({
   name: 'steps',
   description: 'Ordered process steps with visual numbering.',
   content: listItems({ marker: 'ordered', minItems: 2, maxItems: 15 }),
@@ -18,7 +18,7 @@ export const stepsBlock = defineBlock<StepsData>({
   },
 })
 
-export const stepsMarkdown: MarkdownBlockRenderer = (node) => {
-  const data = node.data as StepsData
+export const stepsMarkdown = defineMarkdownBlockRenderer(stepsBlock, (node) => {
+  const data = node.data
   return data.items.map((item, i) => `${i + 1}. ${item.text}`).join('\n')
-}
+})

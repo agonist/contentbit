@@ -13,6 +13,12 @@ concept earns a name, add it here.
   dispatch point for validation and the source for authoring-guide generation.
 - **Diagnostic** — a `file:line:col` finding with a severity and an optional fix
   hint. The lingua franca for everything that can go wrong in a document.
+- **Processed document** (`ProcessedDocumentNode`) — a parsed document whose
+  blocks have been checked and enriched where valid. Preview adapters accept it
+  so they can render invalid-block fallbacks.
+- **Validated document** (`ValidatedDocumentNode`) — a processed document with
+  no error diagnostics. Strict render/export paths obtain one through
+  `assertValidDocument()`.
 - **Content project scan** (`ContentProjectScan`) — the result of running the
   full per-file pipeline (frontmatter → parse → validate → analyze) plus the
   cross-file link graph over a set of source files. Produced by
@@ -29,6 +35,11 @@ concept earns a name, add it here.
   formatted diagnostic messages.
 
 ## CLI
+
+- **Contentbit config** (`contentbit.config.ts`) — the project-wide source for
+  content globs, registry location, generic-block policy, link resolution, and
+  SEO config. CLI flags override it for one invocation; package-script parsing
+  remains a compatibility fallback.
 
 - **Loaded content project** — the Node-side bundle that turns *(positional
   globs, flags)* into a ready-to-use project: the resolved source files, the

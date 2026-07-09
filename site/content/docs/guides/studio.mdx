@@ -15,10 +15,11 @@ New projects created with `contentbit init` include:
 pnpm studio
 ```
 
-That script expands to:
+The generated `contentbit.config.ts` supplies the content glob and registry, so
+the script expands to:
 
 ```bash
-contentbit studio "content/**/*.md" --registry ./blocks/registry.ts
+contentbit studio
 ```
 
 Run the command directly when you want a custom glob or registry:
@@ -26,6 +27,10 @@ Run the command directly when you want a custom glob or registry:
 ```bash
 contentbit studio "content/**/*.md" --registry ./blocks/registry.ts --no-open
 ```
+
+Studio is a separate development package so the base CLI stays lightweight.
+`init` installs it automatically; for manual setups run
+`pnpm add -D @contentbit/studio`.
 
 ## What you get
 

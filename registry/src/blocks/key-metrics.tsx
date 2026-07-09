@@ -1,5 +1,5 @@
-import type { KeyMetricsData } from '@contentbit/blocks'
-import type { BlockComponentProps } from '@contentbit/react'
+import { keyMetricsBlock } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 
 import { cn } from '@/lib/utils'
 
@@ -11,8 +11,8 @@ const COLS: Record<number, string> = {
   4: 'sm:grid-cols-4',
 }
 
-export function KeyMetricsBlock({ node }: BlockComponentProps) {
-  const data = node.data as KeyMetricsData
+export const KeyMetricsBlock = defineBlockComponent(keyMetricsBlock, ({ node }) => {
+  const data = node.data
   const cols = COLS[Math.min(data.rows.length, 4)]
   return (
     <div data-cb-styled className={cn('my-6 grid grid-cols-2 gap-3', cols)}>
@@ -35,4 +35,4 @@ export function KeyMetricsBlock({ node }: BlockComponentProps) {
       ))}
     </div>
   )
-}
+})

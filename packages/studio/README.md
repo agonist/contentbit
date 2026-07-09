@@ -5,8 +5,12 @@ Read-only local Studio for contentbit projects.
 Studio is launched by the `contentbit` CLI:
 
 ```bash
-contentbit studio "content/**/*.md" --registry ./blocks/registry.ts
+pnpm add -D @contentbit/studio
+contentbit studio
 ```
+
+`contentbit.config.ts` supplies the content glob and registry. Explicit globs
+and flags still override it for one invocation.
 
 New projects created with `contentbit init` get a shorter script:
 

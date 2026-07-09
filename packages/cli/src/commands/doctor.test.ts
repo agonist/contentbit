@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
 
@@ -10,9 +10,20 @@ import { fakeIo } from '../run.test'
 async function fixture(files: Record<string, string>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'cb-doctor-'))
   for (const [name, content] of Object.entries(files)) {
+    await mkdir(dirname(join(dir, name)), { recursive: true })
     await writeFile(join(dir, name), content, 'utf8')
   }
   return dir
+}
+
+async function withCwd<T>(cwd: string, fn: () => Promise<T>): Promise<T> {
+  const previous = process.cwd()
+  process.chdir(cwd)
+  try {
+    return await fn()
+  } finally {
+    process.chdir(previous)
+  }
 }
 
 function seoConfig(): string {
@@ -320,6 +331,23 @@ test('doctor reports stale installed Claude Code skills', async () => {
   expect(out).toContain('warning agents CB_SKILL_DRIFT')
   expect(out).toContain('contentbit-author skill is stale')
   expect(out).toContain('Re-run contentbit agents')
+})
+
+test('doctor with no globs reuses the nearest package content:doctor script', async () => {
+  const dir = await fixture({
+    'package.json': JSON.stringify({
+      scripts: { 'content:doctor': 'contentbit doctor "content/**/*.md"' },
+    }),
+    'content/post.md': 'Plain prose with enough shape to be valid.\n',
+  })
+  const nested = join(dir, 'src')
+  await mkdir(nested, { recursive: true })
+
+  const io = fakeIo()
+  await withCwd(nested, async () => {
+    expect(await run(['doctor'], io)).toBe(0)
+  })
+  expect(io.out.join('\n')).toMatch(/Files\s+1/)
 })
 
 test('requires at least one file', async () => {

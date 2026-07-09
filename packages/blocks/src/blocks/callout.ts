@@ -1,14 +1,14 @@
 import {
   defineBlock,
+  defineMarkdownBlockRenderer,
   markdownBody,
-  type MarkdownBlockRenderer,
   type MarkdownBodyData,
 } from '@contentbit/core'
 import { z } from 'zod'
 
 export type CalloutData = MarkdownBodyData
 
-export const calloutBlock = defineBlock<CalloutData>({
+export const calloutBlock = defineBlock({
   name: 'callout',
   description: 'Highlighted note, tip, warning, important, or TLDR box.',
   props: z.object({
@@ -33,8 +33,8 @@ export const calloutBlock = defineBlock<CalloutData>({
   },
 })
 
-export const calloutMarkdown: MarkdownBlockRenderer = (node) => {
-  const data = node.data as CalloutData
-  const title = (node.props.title as string | undefined) ?? String(node.props.type ?? 'note')
+export const calloutMarkdown = defineMarkdownBlockRenderer(calloutBlock, (node) => {
+  const data = node.data
+  const title = node.props.title ?? node.props.type
   return `> **${title}:** ${data.markdown}`
-}
+})
