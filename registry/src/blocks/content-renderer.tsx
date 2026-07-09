@@ -1,7 +1,8 @@
-import type { ValidatedDocumentNode } from '@contentbit/core'
+import type { ProcessedDocumentNode } from '@contentbit/core'
 import type { ReactNode } from 'react'
 
-import { ContentBlocks, type BlockComponent } from '@contentbit/react'
+import { genericBlockDefinitions } from '@contentbit/blocks'
+import { ContentBlocks, defineBlockComponents, type BlockComponent } from '@contentbit/react'
 
 import { CalloutBlock } from './callout'
 import { ComparisonBlock } from './comparison'
@@ -12,7 +13,7 @@ import { QuickRefBlock } from './quick-ref'
 import { StepsBlock } from './steps'
 import { TabsBlock } from './tabs-block'
 
-export const styledComponents: Record<string, BlockComponent> = {
+export const styledComponents = defineBlockComponents(genericBlockDefinitions, {
   callout: CalloutBlock,
   steps: StepsBlock,
   'key-metrics': KeyMetricsBlock,
@@ -21,10 +22,10 @@ export const styledComponents: Record<string, BlockComponent> = {
   'pros-cons': ProsConsBlock,
   tabs: TabsBlock,
   faq: FaqBlock,
-}
+})
 
 export interface ContentRendererProps {
-  document: ValidatedDocumentNode
+  document: ProcessedDocumentNode
   /** Plug your app's Markdown pipeline here. Defaults to plain paragraphs. */
   renderMarkdown?: (md: string) => ReactNode
   components?: Record<string, BlockComponent>

@@ -1,6 +1,15 @@
 'use client'
 
-import type { ContentNode, ValidatedBlockNode, ValidatedDocumentNode } from '@contentbit/core'
+import type {
+  BlockData,
+  BlockDefinition,
+  BlockName,
+  BlockProps,
+  BlockPropsOf,
+  ContentNode,
+  ProcessedDocumentNode,
+  ValidatedBlockNode,
+} from '@contentbit/core'
 import type { ComponentType, ReactNode } from 'react'
 
 import { isValidatedBlock } from '@contentbit/core'
@@ -27,15 +36,44 @@ export interface BlockRenderContext {
   renderNodes(nodes: ContentNode[]): ReactNode
 }
 
-export interface BlockComponentProps<TData = unknown> {
-  node: ValidatedBlockNode<TData>
+export interface BlockComponentProps<
+  TData = unknown,
+  TProps extends BlockProps = BlockProps,
+  TName extends string = string,
+> {
+  node: ValidatedBlockNode<TData, TProps, TName>
   ctx: BlockRenderContext
 }
 
 export type BlockComponent = ComponentType<BlockComponentProps>
 
+export type BlockComponentFor<TDefinition extends BlockDefinition> = ComponentType<
+  BlockComponentProps<BlockData<TDefinition>, BlockPropsOf<TDefinition>, BlockName<TDefinition>>
+>
+
+export type BlockComponentsFor<TDefinitions extends ReadonlyArray<BlockDefinition>> = {
+  [TDefinition in TDefinitions[number] as BlockName<TDefinition>]?: BlockComponentFor<TDefinition>
+}
+
+/** Preserve a block definition's inferred name, props, and data in its React adapter. */
+export function defineBlockComponent<TDefinition extends BlockDefinition>(
+  _definition: TDefinition,
+  component: BlockComponentFor<TDefinition>,
+): BlockComponentFor<TDefinition> {
+  return component
+}
+
+/** Check component keys against a block pack and return a renderer-ready map. */
+export function defineBlockComponents<const TDefinitions extends ReadonlyArray<BlockDefinition>>(
+  _definitions: TDefinitions,
+  components: BlockComponentsFor<TDefinitions>,
+): Record<string, BlockComponent> {
+  return components as unknown as Record<string, BlockComponent>
+}
+
 export interface ContentBlocksProps {
-  document: ValidatedDocumentNode
+  /** A processed document; invalid blocks flow through `fallback`. */
+  document: ProcessedDocumentNode
   /** Per-block components, keyed by block name. */
   components?: Record<string, BlockComponent>
   /** Host markdown renderer for prose segments. Default: paragraphs of plain text. */

@@ -148,7 +148,7 @@ test('agents --check reports stale installed skills with versions', async () => 
   expect(await run(['agents', '--check', '--cwd', dir], io)).toBe(0)
   const out = io.out.join('\n')
   expect(out).toContain('stale: .claude/skills/contentbit-author/SKILL.md')
-  expect(out).toContain('installed 1, package 6')
+  expect(out).toContain('installed 1, package 7')
   expect(out).toContain('would install: .claude/skills/contentbit-audit/SKILL.md')
 })
 

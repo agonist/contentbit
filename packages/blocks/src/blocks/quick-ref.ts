@@ -1,13 +1,13 @@
 import {
   defineBlock,
+  defineMarkdownBlockRenderer,
   pipeRows,
-  type MarkdownBlockRenderer,
   type PipeRowsData,
 } from '@contentbit/core'
 
 export type QuickRefData = PipeRowsData
 
-export const quickRefBlock = defineBlock<QuickRefData>({
+export const quickRefBlock = defineBlock({
   name: 'quick-ref',
   description: 'Compact key/value reference card.',
   content: pipeRows({ columns: ['key', 'value'], minRows: 2, maxRows: 12 }),
@@ -21,7 +21,7 @@ export const quickRefBlock = defineBlock<QuickRefData>({
   },
 })
 
-export const quickRefMarkdown: MarkdownBlockRenderer = (node) => {
-  const data = node.data as QuickRefData
+export const quickRefMarkdown = defineMarkdownBlockRenderer(quickRefBlock, (node) => {
+  const data = node.data
   return data.rows.map((row) => `- **${row.key}:** ${row.value}`).join('\n')
-}
+})

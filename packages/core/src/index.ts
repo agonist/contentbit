@@ -1,4 +1,5 @@
 export { VERSION } from './version.js'
+export { defineContentConfig, type ContentbitConfig, type ContentbitConfigInput } from './config.js'
 export type { SourcePoint, SourceRange, Severity, Diagnostic } from './diagnostics.js'
 export { formatDiagnostic } from './diagnostics.js'
 export type { DocumentNode, ContentNode, MarkdownNode, BlockNode } from './ast.js'
@@ -74,6 +75,10 @@ export {
   defineBlock,
   BlockRegistry,
   type BlockDefinition,
+  type BlockData,
+  type BlockName,
+  type BlockProps,
+  type BlockPropsOf,
   type ContentModel,
   type AuthoringMeta,
   type Report,
@@ -93,16 +98,30 @@ export {
   validateDocument,
   isValidatedBlock,
   isValidatedDocument,
+  isProcessedDocument,
   type ValidateOptions,
+  type ValidationSuccess,
+  type ValidationFailure,
   type ValidationResult,
   type ValidatedBlockNode,
   type ValidatedDocumentNode,
+  type ProcessedDocumentNode,
 } from './validate.js'
+export {
+  assertValidDocument,
+  compileDocument,
+  ContentValidationError,
+  type CompileDocumentOptions,
+} from './compile.js'
 export { generateAuthoringGuide, type AuthoringGuideOptions } from './authoring.js'
 export {
+  defineMarkdownBlockRenderer,
+  defineMarkdownRenderers,
   renderToMarkdown,
   type MarkdownBlockRenderer,
+  type MarkdownBlockRendererFor,
   type MarkdownRenderContext,
+  type MarkdownRenderersFor,
   type RenderToMarkdownOptions,
 } from './render-markdown.js'
 export {

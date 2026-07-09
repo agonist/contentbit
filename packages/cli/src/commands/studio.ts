@@ -41,8 +41,18 @@ export async function studioCommand(input: StudioCommandInput, io: Io): Promise<
     noSeo: input.noSeo ?? defaults.noSeo,
   })
 
-  const { startStudio } =
-    (await import('@contentbit/studio')) as typeof import('@contentbit/studio')
+  let startStudio: (typeof import('@contentbit/studio'))['startStudio']
+  try {
+    ;({ startStudio } = (await import('@contentbit/studio')) as typeof import('@contentbit/studio'))
+  } catch (error) {
+    if (isMissingStudio(error)) {
+      throw new Error(
+        'Studio is installed separately to keep the base CLI lightweight. ' +
+          'Install it with your package manager, for example: pnpm add -D @contentbit/studio',
+      )
+    }
+    throw error
+  }
   const studioOptions = {
     globs: defaults.globs,
     cwd: defaults.cwd,
@@ -83,6 +93,15 @@ export async function studioCommand(input: StudioCommandInput, io: Io): Promise<
   process.off('SIGINT', close)
   process.off('SIGTERM', close)
   return 0
+}
+
+function isMissingStudio(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    error.code === 'ERR_MODULE_NOT_FOUND' &&
+    error.message.includes('@contentbit/studio')
+  )
 }
 
 function parsePort(value: string | undefined): number | null | undefined {

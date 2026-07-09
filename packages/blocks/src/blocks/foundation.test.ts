@@ -1,5 +1,7 @@
 import {
+  assertValidDocument,
   createBlockRegistry,
+  defineMarkdownRenderers,
   parseDocument,
   renderToMarkdown,
   validateDocument,
@@ -17,12 +19,15 @@ const registry = createBlockRegistry().use([
   keyMetricsBlock,
   quickRefBlock,
 ])
-const renderers = {
-  callout: calloutMarkdown,
-  steps: stepsMarkdown,
-  'key-metrics': keyMetricsMarkdown,
-  'quick-ref': quickRefMarkdown,
-}
+const renderers = defineMarkdownRenderers(
+  [calloutBlock, stepsBlock, keyMetricsBlock, quickRefBlock],
+  {
+    callout: calloutMarkdown,
+    steps: stepsMarkdown,
+    'key-metrics': keyMetricsMarkdown,
+    'quick-ref': quickRefMarkdown,
+  },
+)
 
 function validate(src: string) {
   return validateDocument(parseDocument(src), registry)
@@ -31,7 +36,9 @@ function validate(src: string) {
 test('callout validates type enum and renders blockquote fallback', () => {
   const ok = validate(':::callout{type="tip" title="Scale"}\nWeigh your flour.\n:::\n')
   expect(ok.ok).toBe(true)
-  expect(renderToMarkdown(ok.document, { renderers })).toBe('> **Scale:** Weigh your flour.\n')
+  expect(renderToMarkdown(assertValidDocument(ok), { renderers })).toBe(
+    '> **Scale:** Weigh your flour.\n',
+  )
 
   const bad = validate(':::callout{type="shout"}\nhi\n:::\n')
   expect(bad.ok).toBe(false)
@@ -40,7 +47,7 @@ test('callout validates type enum and renders blockquote fallback', () => {
 test('steps requires 2+ ordered items and renders a numbered list', () => {
   const ok = validate(':::steps\n1. Mix the dough\n2. Rest 20 minutes\n:::\n')
   expect(ok.ok).toBe(true)
-  expect(renderToMarkdown(ok.document, { renderers })).toBe(
+  expect(renderToMarkdown(assertValidDocument(ok), { renderers })).toBe(
     '1. Mix the dough\n2. Rest 20 minutes\n',
   )
 
@@ -50,7 +57,7 @@ test('steps requires 2+ ordered items and renders a numbered list', () => {
 test('key-metrics parses value|label rows and renders bold-value bullets', () => {
   const ok = validate(':::key-metrics\n- 42% | Conversion lift\n- 18ms | Median parse time\n:::\n')
   expect(ok.ok).toBe(true)
-  expect(renderToMarkdown(ok.document, { renderers })).toBe(
+  expect(renderToMarkdown(assertValidDocument(ok), { renderers })).toBe(
     '- **42%** — Conversion lift\n- **18ms** — Median parse time\n',
   )
 })
@@ -58,7 +65,7 @@ test('key-metrics parses value|label rows and renders bold-value bullets', () =>
 test('quick-ref parses key|value rows and renders definition bullets', () => {
   const ok = validate(':::quick-ref\n- Hydration | 65%\n- Proof time | 2h\n:::\n')
   expect(ok.ok).toBe(true)
-  expect(renderToMarkdown(ok.document, { renderers })).toBe(
+  expect(renderToMarkdown(assertValidDocument(ok), { renderers })).toBe(
     '- **Hydration:** 65%\n- **Proof time:** 2h\n',
   )
 })

@@ -1,5 +1,5 @@
 import type { BlockComponent } from '@contentbit/react'
-import type { ValidatedDocumentNode } from '@contentbit/core'
+import type { ProcessedDocumentNode } from '@contentbit/core'
 import type { ComponentType } from 'react'
 
 import { ContentBlocks } from '@contentbit/react'
@@ -14,7 +14,7 @@ interface FallbackProps {
 }
 
 export function renderStudioPreview(
-  document: ValidatedDocumentNode,
+  document: ProcessedDocumentNode,
   components: Record<string, BlockComponent> = {},
   _options: { includeGenericComponents?: boolean } = {},
 ): string {

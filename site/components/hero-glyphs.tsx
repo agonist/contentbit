@@ -11,21 +11,20 @@ import { useEffect, useRef } from 'react'
 
 const ENTROPY = ':|{}-=".a~e*r+t%n?o/s<i>'
 
-// The structure the noise resolves into — real block source, tiled.
+// The structure the noise resolves into — the contracts behind an SEO page family.
 const TARGET_LINES = [
-  ':::comparison{left="Basic" right="Pro"}',
-  '- Price | Free | $12/mo',
-  '- Support | Community | Priority',
-  ':::',
+  'pageTypes: { alternative: {',
+  "  requiredSections: ['overview', 'comparison', 'faq'],",
+  "  requiredBlocks: ['comparison', 'faq'],",
+  '  minOutgoingLinks: 3',
+  '} }',
   '',
-  ':::callout{type="tip" title="Worth knowing"}',
-  'Validated before it ever renders.',
-  ':::',
+  'contentbit brief semrush-alternatives',
+  'intent: commercial comparison',
+  'linksTo: [seo-tools-comparison]',
   '',
-  ':::key-metrics',
-  '- 42% | Conversion lift',
-  '- 18ms | Median parse time',
-  ':::',
+  'contentbit doctor --strict-seo',
+  '32 pages · 0 errors · ready to publish',
   '',
 ]
 

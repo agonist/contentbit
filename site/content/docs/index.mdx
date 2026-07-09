@@ -1,212 +1,254 @@
 ---
-title: Getting started
-description: Install contentbit, validate starter Markdown, open Studio, and run the LLM-agent loop.
+title: Get started with programmatic SEO
+description: Scaffold Contentbit, define one page family, create a brief, and validate the finished page.
 ---
 
-This tutorial takes a project from plain Markdown to a validated content loop:
-install contentbit, inspect the starter document, run the quality gates, and ask
-an LLM agent to write content that can be checked before it renders.
+This tutorial builds one search-focused page from a reusable contract. You will
+scaffold Contentbit, plan the page before its file exists, write the draft, and
+run the same quality gate an agent or CI job can use later.
 
-Contentbit adds typed directive blocks to Markdown. The blocks stay readable in
-source, but each one has a schema:
+You will finish with:
 
-<Live>
-{`:::comparison{left="Basic" right="Pro"}
-- Price | Free | $12/mo
-- Support | Community | Priority
-:::`}
-</Live>
+1. A project-wide Contentbit config.
+2. A reusable page-family contract.
+3. An agent-ready brief for one planned page.
+4. A Markdown page that passes strict SEO checks.
+5. A local Studio view for reviewing the result.
 
-First-time flow:
+> Only need structured Markdown and rendering? Run `contentbit init` without
+> `--seo`, then continue with [Render documents](/docs/guides/renderers).
 
-1. Run `init`.
-2. Validate the generated example.
-3. Open the local content dashboard.
-4. Ask your LLM agent to write or audit content.
+## 1. Scaffold the project
 
-## 1. One command
+Run `init` with SEO support from the root of an existing React, Astro, or
+Markdown project:
 
 <Tabs items={['pnpm', 'npm', 'bun', 'yarn']}>
 
 <Tab value="pnpm">
 ```bash
-pnpm dlx contentbit@latest init
+pnpm dlx contentbit@latest init --seo
 ```
 </Tab>
 
 <Tab value="npm">
 ```bash
-npx contentbit@latest init
+npx contentbit@latest init --seo
 ```
 </Tab>
 
 <Tab value="bun">
 ```bash
-bunx contentbit@latest init
+bunx contentbit@latest init --seo
 ```
 </Tab>
 
 <Tab value="yarn">
 ```bash
-yarn dlx contentbit@latest init
+yarn dlx contentbit@latest init --seo
 ```
 </Tab>
 
 </Tabs>
 
-`init` detects your framework and package manager, asks a couple of setup
-questions, and wires a small working content system. Use `-y` when you want the
-defaults.
+`init` detects the framework and package manager, asks a few setup questions,
+and wires a working content project. Add `-y` to accept the detected defaults.
 
 <TerminalDemo
   title="~/my-app"
   replayable
   lines={[
-    { text: 'npx contentbit@latest init -y', type: 'command' },
+    { text: 'npx contentbit@latest init -y --seo', type: 'command' },
     { text: 'installing with pnpm: @contentbit/core @contentbit/blocks @contentbit/react', delay: 400 },
+    { text: 'created: contentbit.config.ts' },
+    { text: 'created: contentbit.seo.config.ts' },
     { text: 'created: blocks/registry.ts' },
     { text: 'created: content/example.md' },
-    { text: 'created: blocks/components.tsx' },
-    { text: 'created: components/content-blocks.tsx' },
+    { text: 'created: content/related.md' },
     { text: 'created: app/example/page.tsx' },
     { text: 'added script: content:check' },
-    { text: 'added script: content:links' },
     { text: 'added script: content:doctor' },
     { text: 'added script: studio' },
-    { text: 'created: contentbit-guide.md (LLM authoring instructions)' },
-    { text: 'created: AGENTS.md (contentbit block)' },
-    { text: 'installed: .claude/skills/contentbit-author/SKILL.md' },
-    { text: 'installed: .claude/skills/contentbit-audit/SKILL.md', delay: 350 },
-    { text: 'Agent integration installed. Try asking your LLM agent:', type: 'success' },
-    { text: '  "write a blog post about X" or "audit my content"', type: 'success' },
+    { text: 'created: contentbit-guide.md' },
+    { text: 'created: AGENTS.md', delay: 350 },
+    { text: 'Done. Next steps:', type: 'success' },
   ]}
 />
 
-The generated files matter:
+The scaffold has two configuration layers:
 
-- **Content to edit:** `content/example.md` and `content/related.md`
-- **A schema source of truth:** `blocks/registry.ts`
-- **A visible render target:** `/example` when your framework supports it
-- **A local browser:** `studio` for read-only previews, health, links, and keywords
-- **Quality gates:** `content:doctor`, `content:check`, and `content:links` scripts
-- **Agent context:** `contentbit-guide.md`, `AGENTS.md`, and Claude Code skills
-  when a `.claude/` directory exists. See the
-  [LLM-agent integration guide](/docs/guides/agents) for refresh commands and
-  non-Claude agent setup.
+- `contentbit.config.ts` tells every command which content, block registry, and
+  SEO config to use.
+- `contentbit.seo.config.ts` describes page families and pages you plan to
+  publish.
 
-Skip the agent files with `--no-agents` if you only want the library and CLI.
+The block registry, renderer, example content, Studio script, and agent
+instructions are ready too. This tutorial focuses on the SEO path first.
 
-## 2. Validate the starter content
+The remaining examples use the `contentbit` binary directly. If your shell does
+not expose local package binaries, prefix commands with `pnpm exec`, `npx`,
+`bunx`, or `yarn exec`.
 
-Run the generated validation script before editing anything:
+## 2. Define one page family
 
-```bash
-pnpm run content:check
+For this tutorial, replace the generated `contentbit.seo.config.ts` with one
+small contract:
+
+```ts
+import { defineSeoConfig } from '@contentbit/core'
+
+export default defineSeoConfig({
+  pageTypes: {
+    quickstart: {
+      requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+      requiredSections: [
+        { id: 'overview', headings: ['Overview'] },
+        { id: 'workflow', headings: ['Workflow'] },
+        { id: 'outcomes', headings: ['Outcomes'] },
+      ],
+      recommendedBlocks: ['steps'],
+    },
+  },
+  pages: {
+    'content/getting-started/safer-content-workflows.md': {
+      type: 'quickstart',
+      key: 'safer-content-workflows',
+      slug: 'safer-content-workflows',
+      title: 'Safer content workflows',
+      intent: 'product education',
+      keywords: {
+        primary: 'content workflow',
+        secondary: ['content validation', 'AI content workflow'],
+      },
+    },
+  },
+})
 ```
 
-The script expands to a `contentbit validate` command with the right content
-glob and registry path for your project. Validation checks directive syntax,
-block props, block body shape, and frontmatter-authored internal links when
-your files declare slugs.
+The `quickstart` type is the reusable family contract. The entry under `pages`
+plans a specific page before its Markdown file exists.
 
-When validation fails, contentbit prints diagnostics with source positions and
-fix hints:
+Real projects usually keep several page types, such as alternatives,
+integrations, comparisons, and glossary entries. Starting with one makes it
+easy to see what the contract controls.
+
+## 3. Generate the page brief
+
+Ask Contentbit for the planned page:
+
+```bash
+contentbit brief safer-content-workflows
+```
+
+The brief combines the target page with its family contract. It includes the
+primary keyword, required sections, recommended blocks, and acceptance checks.
+
+Use JSON when a coding agent or script will consume the brief:
+
+```bash
+contentbit brief safer-content-workflows --json
+```
+
+At this point, the plan exists but the content file does not. That is useful:
+the writer gets the intended structure before drafting rather than trying to
+repair an arbitrary page afterward.
+
+## 4. Create the page
+
+Create `content/getting-started/safer-content-workflows.md`:
+
+```md
+---
+type: quickstart
+intent: product education
+keywords:
+  primary: content workflow
+  secondary: [content validation, AI content workflow]
+---
+
+# Safer content workflows
+
+Programmatic content can move quickly without becoming unpredictable. A shared
+plan gives each page a clear purpose, repeatable structure, and review process
+before anyone starts drafting.
+
+## Overview
+
+A reliable content workflow gives writers and agents the same structure before
+they draft and the same checks before they publish. The contract keeps those
+requirements visible throughout planning, writing, and review.
+
+## Workflow
+
+:::steps
+1. Plan the page with a reusable contract covering its intent, headings, and useful blocks.
+2. Generate the brief so the writer understands the target before drafting.
+3. Validate the finished content and repair structural problems before review.
+:::
+
+## Outcomes
+
+Every page follows the intended structure, uses registered content blocks, and
+can be checked locally or in CI. Writers spend less time reconstructing page
+requirements, while reviewers get consistent evidence that the draft is ready.
+```
+
+You can also give the brief to an agent instead of writing the file manually:
 
 ```text
-content/dark-mode.md:18:1 error CB_ROW_COLUMNS
-:::comparison rows require 3 columns (label | left | right). Found 2.
-hint: Format: - label | left | right
+Write the planned safer-content-workflows page from its Contentbit brief.
+Preserve the target facts, satisfy every acceptance check, and run Contentbit
+Doctor before you finish.
 ```
 
-The exact same gate can run locally, in CI, and inside an LLM-agent repair loop.
+The installed agent instructions teach supported tools to fetch the live block
+guide and repair diagnostics without copied schemas in the prompt.
 
-## 3. Open Studio
+## 5. Run the quality gate
 
-Start the read-only dashboard:
+Check the new page against its family contract:
 
 ```bash
-pnpm run studio
+contentbit doctor content/getting-started/safer-content-workflows.md --strict-seo
 ```
 
-Studio lets you browse rendered previews, source Markdown, validation findings,
-document stats, links, backlinks, keywords, and block usage. It is a human view
-over the same project scan that powers `contentbit doctor`.
+Doctor checks the page contract, frontmatter, headings, structured blocks, and
+general content health in one pass. `--strict-seo` returns a failing exit code
+when a required SEO finding remains.
 
-## 4. Ask your LLM agent
+Try changing `## Outcomes` to `## Results` and run the command again. The report
+will point to the missing required section. Restore the heading and rerun the
+gate until it exits cleanly.
 
-Your LLM agent now has project-local instructions. Start with one of these:
+## 6. Review the page in Studio
 
-> write a blog post about our new dark mode
-
-> audit my content
-
-The writing loop is deliberately boring:
-
-1. Read the `content:check` script to discover the content glob and registry.
-2. Fetch the live authoring guide from that registry.
-3. Write plain Markdown with registered blocks.
-4. Validate the file.
-5. Fix diagnostics until validation exits 0.
-
-The failed validation in this demo is the useful part: it gives the LLM a
-specific source line, stable error code, and fix hint.
-
-<AgentSession
-  steps={[
-    { kind: 'user', text: 'write a short post about our new dark mode' },
-    { kind: 'skill', name: 'contentbit-author' },
-    { kind: 'command', command: 'contentbit instructions --audience llm --registry ./blocks/registry.ts', exitCode: 0 },
-    { kind: 'assistant', text: 'Drafting content/dark-mode.md with a callout and a before/after comparison.' },
-    {
-      kind: 'command',
-      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
-      exitCode: 1,
-      output: 'content/dark-mode.md:18:1 error CB_ROW_COLUMNS\n:::comparison rows require 3 columns (label | left | right). Found 2.\nhint: Format: - label | left | right',
-    },
-    { kind: 'assistant', text: 'The comparison row is missing its second value. Fixing and revalidating.' },
-    {
-      kind: 'command',
-      command: 'contentbit validate content/dark-mode.md --registry ./blocks/registry.ts',
-      exitCode: 0,
-      output: '1 file(s): 0 errors, 0 warnings',
-    },
-  ]}
-/>
-
-The installed agent files contain no copied block schemas. They ask the CLI for
-the current authoring guide, diagnostics, doctor reports, stats, and link graph
-when they run. Add a custom block to `blocks/registry.ts`, and the next agent
-session sees it without prompt surgery.
-
-## 5. Install styled components
+Open Studio on the same page:
 
 ```bash
-pnpm dlx shadcn@latest add @contentbit/generic-pack
+contentbit studio content/getting-started/safer-content-workflows.md
 ```
 
-The pack copies editable Tailwind React components into your app. Astro projects
-can use:
+Studio gives you a human view over the same project scan. Open the page to see:
 
-```bash
-pnpm dlx shadcn@latest add @contentbit/astro-pack
-```
+- the rendered preview and source Markdown
+- the original SEO brief and acceptance checks
+- validation and content-health findings
+- keywords, document stats, and block usage
 
-Headless rendering still works without these packs. Styled packs are only UI
-source files you own after install.
+You now have the complete loop: plan, brief, write, inspect, and enforce.
 
-## Next steps
+## 7. Apply the workflow to your project
 
-- [Why contentbit?](/docs/concepts/why-contentbit)
-- [CLI reference](/docs/reference/cli)
-- [Block syntax](/docs/reference/syntax)
-- [LLM-agent integration](/docs/guides/agents) - what `init` installed, and how to wire other LLM tools
-- [Plug in your Markdown library](/docs/guides/markdown)
-- Define [custom blocks](/docs/guides/custom-blocks)
-- [Content Studio](/docs/guides/studio) - browse previews, diagnostics, links, backlinks, keywords, and briefs locally
-- [Content doctor](/docs/guides/doctor) - one ranked repair plan across validation, links, and content health
-- [Document stats & auditing](/docs/guides/stats) - raw outlines, block usage, links, and validation summaries
-- [Internal linking](/docs/guides/internal-linking) - generate backlinks and catch broken slug references
-- [Programmatic SEO workflows](/docs/guides/programmatic-seo) - config, doctor, Studio, brief, agent writing, and strict CI
-- [SEO briefs and contracts](/docs/guides/seo-briefs) - page-type contracts and brief output
-- Render with [Astro](/docs/guides/astro)
-- Browse the [block reference](/docs/reference/blocks) and the [changelog](/docs/changelog)
+The tutorial used one small page family and one targeted file. In a real
+content library, the next step is to classify existing folders with
+`pageDefaults`, add planned pages, and run Doctor over the full configured
+content set.
+
+Continue with:
+
+- [Build a programmatic SEO workflow](/docs/guides/programmatic-seo) for page defaults, agents, CI, and multilingual projects.
+- [SEO briefs and contracts](/docs/guides/seo-briefs) for every page-family field.
+- [Project configuration](/docs/guides/project-config) for shared content, link, registry, and SEO settings.
+- [LLM-agent integration](/docs/guides/agents) for the automated writing and repair loop.
+- [Render documents](/docs/guides/renderers) to publish validated content in React, Astro, or Markdown.
+- [Content Studio](/docs/guides/studio) and [Content doctor](/docs/guides/doctor) for deeper review and audit options.

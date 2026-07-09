@@ -166,3 +166,18 @@ test('validate with no globs reuses the nearest package content:check script', a
   })
   expect(io.out.join('\n')).toContain('Files     1')
 })
+
+test('validate with no globs uses the nearest contentbit config', async () => {
+  const dir = await fixture({
+    'contentbit.config.mjs': `export default { content: ["articles/**/*.md"] }`,
+    'articles/post.md': ':::callout{type="tip"}\nWeigh your flour.\n:::\n',
+  })
+  const nested = join(dir, 'apps/web')
+  await mkdir(nested, { recursive: true })
+
+  const io = fakeIo()
+  await withCwd(nested, async () => {
+    expect(await run(['validate'], io)).toBe(0)
+  })
+  expect(io.out.join('\n')).toContain('Files     1')
+})

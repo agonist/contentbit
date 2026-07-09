@@ -85,8 +85,23 @@ Renderers are adapter-side maps — block definitions never reference framework 
 
 ```tsx
 // React
-<ContentBlocks document={doc} components={{ 'pricing-table': PricingTable }} />
+import { defineBlockComponent, defineBlockComponents } from '@contentbit/react'
+
+const PricingTable = defineBlockComponent(pricingTableBlock, ({ node }) => {
+  // Inferred: node.props.currency and node.data.rows need no casts.
+  return <PricingTableView currency={node.props.currency} rows={node.data.rows} />
+})
+
+const components = defineBlockComponents([pricingTableBlock], {
+  'pricing-table': PricingTable,
+})
+
+<ContentBlocks document={doc} components={components} />
 ```
+
+`defineBlockComponent` carries the block name, Zod output props, and content
+model data across the renderer seam. `defineBlockComponents` also rejects
+misspelled block-name keys.
 
 ```astro
 // Astro — a plain .astro component; props arrive validated, body via <slot />

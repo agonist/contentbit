@@ -44,11 +44,11 @@
     "@clack/prompts": "^1.5.1",
     "@contentbit/blocks": "workspace:*",
     "@contentbit/core": "workspace:*",
-    "@contentbit/studio": "workspace:*",
     "commander": "^15.0.0",
     "tinyglobby": "^0.2.10"
   },
   "devDependencies": {
+    "@contentbit/studio": "workspace:*",
     "@types/node": "^25.0.9",
     "esbuild": "^0.28.0",
     "typescript": "^5.9.3",

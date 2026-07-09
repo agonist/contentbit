@@ -96,8 +96,7 @@ blocks, validation, docs, and prompts stay together.
 
 After `init`, your agent has a short, repeatable writing loop:
 
-1. Read the project's `content:check` script to find the content glob and
-   registry.
+1. Read `contentbit.config.ts` for the content glob, registry, links, and SEO setup.
 2. Run `contentbit instructions --audience llm` for the live block guide.
 3. Write plain Markdown, using blocks only when the guide says they fit.
 4. Run `contentbit validate ...` and fix every diagnostic until it exits 0.
@@ -118,6 +117,7 @@ custom blocks are picked up automatically. See the
 | --------------------- | ------------------------------------------------------------------ |
 | `content/example.md`  | Starter content with built-in blocks and one custom block          |
 | `blocks/registry.ts`  | Shared block schemas for validation, renderers, docs, and agents   |
+| `contentbit.config.ts` | Shared content glob, registry, links, and SEO command defaults    |
 | `contentbit.seo.config.ts` | Optional SEO contracts for briefs and doctor checks          |
 | `contentbit-guide.md` | Generated authoring rules for LLMs                                 |
 | `AGENTS.md`           | Compact instructions for Codex, Cursor, Copilot, and other agents  |

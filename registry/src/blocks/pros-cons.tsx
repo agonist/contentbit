@@ -1,6 +1,7 @@
-import type { BlockComponentProps, BlockRenderContext } from '@contentbit/react'
+import type { BlockRenderContext } from '@contentbit/react'
 
-import { splitProsCons, type ProsConsData } from '@contentbit/blocks'
+import { prosConsBlock, splitProsCons } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 import { Check, X } from 'lucide-react'
 
 function Column({
@@ -40,12 +41,12 @@ function Column({
   )
 }
 
-export function ProsConsBlock({ node, ctx }: BlockComponentProps) {
-  const { pros, cons } = splitProsCons(node.data as ProsConsData)
+export const ProsConsBlock = defineBlockComponent(prosConsBlock, ({ node, ctx }) => {
+  const { pros, cons } = splitProsCons(node.data)
   return (
     <div data-cb-styled className="my-6 grid gap-3 sm:grid-cols-2">
       <Column heading="Pros" items={pros} tone="pro" ctx={ctx} />
       <Column heading="Cons" items={cons} tone="con" ctx={ctx} />
     </div>
   )
-}
+})

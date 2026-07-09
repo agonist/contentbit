@@ -23,17 +23,24 @@ export function SiteHeader() {
           </span>
           contentbit
         </Link>
-        <nav className="text-muted-foreground flex items-center gap-5 text-sm">
-          <Link href={'/docs'} className="hover:text-foreground transition-colors">
+        <nav className="text-muted-foreground flex items-center gap-4 text-sm sm:gap-5">
+          <Link href="/programmatic-seo" className="hover:text-foreground transition-colors">
+            <span className="sm:hidden">SEO</span>
+            <span className="hidden sm:inline">Programmatic SEO</span>
+          </Link>
+          <Link href="/docs" className="hover:text-foreground transition-colors">
             Docs
           </Link>
-          <Link href="/blocks" className="hover:text-foreground hidden transition-colors sm:block">
+          <Link href="/blocks" className="hover:text-foreground hidden transition-colors lg:block">
             Blocks
           </Link>
-          <Link href="/blog" className="hover:text-foreground hidden transition-colors sm:block">
+          <Link href="/blog" className="hover:text-foreground hidden transition-colors lg:block">
             Blog
           </Link>
-          <Link href="/playground" className="hover:text-foreground transition-colors">
+          <Link
+            href="/playground"
+            className="hover:text-foreground hidden transition-colors md:block"
+          >
             Playground
           </Link>
         </nav>

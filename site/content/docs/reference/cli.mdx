@@ -7,16 +7,27 @@ Use `contentbit` for project setup, validation, content health reports,
 rendering, internal-link indexes, generated authoring docs, and LLM-agent
 integration.
 
-Quote globs so your shell does not expand them before contentbit receives them:
+Put shared project settings in `contentbit.config.ts`:
+
+```ts
+import { defineContentConfig } from '@contentbit/core'
+
+export default defineContentConfig({
+  content: 'content/**/*.md',
+  registry: './blocks/registry.ts',
+})
+```
+
+Commands discover the nearest config by walking upward. Explicit options and
+globs override it for one invocation. Quote explicit globs so your shell does
+not expand them before contentbit receives them:
 
 ```bash
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
-When `validate`, `doctor`, `studio`, or `links` are run without globs,
-contentbit walks up to the nearest package script for that command and reuses
-its content glob and shared flags. For example, `contentbit doctor` can reuse
-`content:doctor`, and `contentbit studio` can fall back to `content:check`.
+Without a config, `validate`, `doctor`, `studio`, and `links` retain backward
+compatibility by reading the nearest matching package script.
 
 ## Commands
 

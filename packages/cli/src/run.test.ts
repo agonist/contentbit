@@ -54,3 +54,19 @@ test('an unrecognized flag exits 1 with a clean error', async () => {
   expect(io.err.join('\n')).toContain('contentbit instructions')
   expect(io.err.join('\n')).toContain("error Unknown option '--bogus-flag'")
 })
+
+test('subcommand help explains options without requiring the website', async () => {
+  const io = fakeIo()
+  expect(await run(['doctor', '--help'], io)).toBe(0)
+  const help = io.out.join('\n')
+  expect(help).toContain('--registry <module>')
+  expect(help).toContain('Load custom block definitions')
+  expect(help).toContain('--strict-seo')
+  expect(help).toContain('Treat required SEO findings as errors')
+})
+
+test('enumerated options reject unknown values', async () => {
+  const io = fakeIo()
+  expect(await run(['instructions', '--audience', 'robot'], io)).toBe(2)
+  expect(io.err.join('\n')).toContain('Allowed choices are llm, human')
+})

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 import type { Io } from '../run.js'
 
 import { loadContentProject, resolveContentFiles } from '../content-project.js'
+import { discoverContentCommandDefaults } from '../script-defaults.js'
 
 /** Stats plus a validation summary; a read tool, not a gate — always exits 0. */
 type StatsOutput = DocumentStats & { validation?: { errors: number; warnings: number } }
@@ -16,9 +17,17 @@ export interface StatsCommandInput {
 }
 
 export async function statsCommand(input: StatsCommandInput, io: Io): Promise<number> {
+  const defaults = await discoverContentCommandDefaults('stats', input.globs)
   const all = input.noValidate
-    ? await statsOnly(input.globs)
-    : await statsWithValidation(input, input.globs)
+    ? await statsOnly(defaults.globs, defaults.cwd)
+    : await statsWithValidation(
+        {
+          registry: input.registry ?? defaults.registry,
+          noGenericBlocks: input.noGenericBlocks || defaults.noGenericBlocks,
+          cwd: defaults.cwd,
+        },
+        defaults.globs,
+      )
 
   // A single file keeps the flat object shape; multiple files emit an array.
   io.stdout(JSON.stringify(all.length === 1 ? all[0] : all, null, 2))
@@ -28,12 +37,13 @@ export async function statsCommand(input: StatsCommandInput, io: Io): Promise<nu
 /** Default path: cross the loaded-content-project seam so stats and the other
  *  read-commands share one validation path. */
 async function statsWithValidation(
-  input: Pick<StatsCommandInput, 'registry' | 'noGenericBlocks'>,
+  input: Pick<StatsCommandInput, 'registry' | 'noGenericBlocks'> & { cwd?: string },
   positionals: string[],
 ): Promise<StatsOutput[]> {
   const { scan } = await loadContentProject({
     cmd: 'stats',
     positionals,
+    cwd: input.cwd,
     registry: input.registry,
     includeGenericBlocks: !input.noGenericBlocks,
     linkOptions: {},
@@ -50,8 +60,8 @@ async function statsWithValidation(
 }
 
 /** `--no-validate`: stats only, no registry, no scan. */
-async function statsOnly(positionals: string[]): Promise<StatsOutput[]> {
-  const files = await resolveContentFiles(positionals, 'stats')
+async function statsOnly(positionals: string[], cwd?: string): Promise<StatsOutput[]> {
+  const files = await resolveContentFiles(positionals, 'stats', { cwd })
   return Promise.all(
     files.map(async (file) => analyzeDocument(await readFile(file, 'utf8'), { path: file })),
   )

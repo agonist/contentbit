@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getAllPosts()
   return [
     { url: `${SITE_URL}/`, priority: 1 },
+    { url: `${SITE_URL}/programmatic-seo/`, priority: 0.9 },
     { url: `${SITE_URL}/blocks/`, priority: 0.8 },
     { url: `${SITE_URL}/blog/`, priority: 0.8 },
     { url: `${SITE_URL}/playground/`, priority: 0.6 },

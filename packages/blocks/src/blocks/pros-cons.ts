@@ -1,8 +1,8 @@
 import {
   defineBlock,
+  defineMarkdownBlockRenderer,
   listItems,
   type ListItemsData,
-  type MarkdownBlockRenderer,
 } from '@contentbit/core'
 
 export type ProsConsData = ListItemsData
@@ -14,7 +14,7 @@ export function splitProsCons(data: ProsConsData): { pros: string[]; cons: strin
   }
 }
 
-export const prosConsBlock = defineBlock<ProsConsData>({
+export const prosConsBlock = defineBlock({
   name: 'pros-cons',
   description: 'Paired advantages (+) and disadvantages (-) of one option.',
   content: listItems({ marker: 'signed', minItems: 2, maxItems: 16 }),
@@ -25,8 +25,8 @@ export const prosConsBlock = defineBlock<ProsConsData>({
   },
 })
 
-export const prosConsMarkdown: MarkdownBlockRenderer = (node) => {
-  const { pros, cons } = splitProsCons(node.data as ProsConsData)
+export const prosConsMarkdown = defineMarkdownBlockRenderer(prosConsBlock, (node) => {
+  const { pros, cons } = splitProsCons(node.data)
   const parts: string[] = []
   if (pros.length > 0) parts.push('**Pros**', '', ...pros.map((p) => `- ${p}`))
   if (cons.length > 0) {
@@ -34,4 +34,4 @@ export const prosConsMarkdown: MarkdownBlockRenderer = (node) => {
     parts.push('**Cons**', '', ...cons.map((c) => `- ${c}`))
   }
   return parts.join('\n')
-}
+})

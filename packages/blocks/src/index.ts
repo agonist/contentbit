@@ -1,4 +1,4 @@
-import type { BlockDefinition, MarkdownBlockRenderer } from '@contentbit/core'
+import { defineMarkdownRenderers, type BlockDefinition } from '@contentbit/core'
 
 import { calloutBlock, calloutMarkdown } from './blocks/callout.js'
 import { comparisonBlock, comparisonMarkdown } from './blocks/comparison.js'
@@ -19,23 +19,25 @@ export * from './blocks/steps.js'
 export * from './blocks/tabs.js'
 
 /** The default generic block pack: 8 blocks + 2 child blocks. */
+export const genericBlockDefinitions = [
+  calloutBlock,
+  stepsBlock,
+  keyMetricsBlock,
+  quickRefBlock,
+  comparisonBlock,
+  prosConsBlock,
+  tabsBlock,
+  tabBlock,
+  faqBlock,
+  faqItemBlock,
+] as const
+
 export function genericBlocks(): BlockDefinition<unknown>[] {
-  return [
-    calloutBlock,
-    stepsBlock,
-    keyMetricsBlock,
-    quickRefBlock,
-    comparisonBlock,
-    prosConsBlock,
-    tabsBlock,
-    tabBlock,
-    faqBlock,
-    faqItemBlock,
-  ] as BlockDefinition<unknown>[]
+  return [...genericBlockDefinitions] as BlockDefinition<unknown>[]
 }
 
 /** Markdown fallback renderers for the generic pack. */
-export const genericMarkdownRenderers: Record<string, MarkdownBlockRenderer> = {
+export const genericMarkdownRenderers = defineMarkdownRenderers(genericBlockDefinitions, {
   callout: calloutMarkdown,
   steps: stepsMarkdown,
   'key-metrics': keyMetricsMarkdown,
@@ -44,4 +46,4 @@ export const genericMarkdownRenderers: Record<string, MarkdownBlockRenderer> = {
   'pros-cons': prosConsMarkdown,
   tabs: tabsMarkdown,
   faq: faqMarkdown,
-}
+})

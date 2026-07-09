@@ -54,19 +54,21 @@ function blockComponentsTemplate(styled: boolean): string {
       </figcaption>
     </figure>
   )`
-  return `import type { BlockComponent, BlockComponentProps } from '@contentbit/react'
+  return `import { defineBlockComponent, defineBlockComponents } from '@contentbit/react'
+
+import { quote } from './registry'
 
 // One React component per custom block, keyed by block name. Definitions
 // live in ./registry.ts — add a block there, add its component here, and
 // the rest of the app never changes.
-function QuoteBlock({ node, ctx }: BlockComponentProps) {
-  const data = node.data as { markdown: string }
+const QuoteBlock = defineBlockComponent(quote, ({ node, ctx }) => {
+  const data = node.data
 ${body}
-}
+})
 
-export const blockComponents: Record<string, BlockComponent> = {
+export const blockComponents = defineBlockComponents([quote], {
   quote: QuoteBlock,
-}
+})
 `
 }
 
@@ -87,7 +89,7 @@ import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
   return `'use client'
 
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, stripFrontmatter, validateDocument } from '@contentbit/core'
+import { compileDocument, createBlockRegistry } from '@contentbit/core'
 ${reactImport}${mdImport}${rendererImport}
 // Everything block-related lives in the blocks/ folder: definitions in
 // registry.ts (shared with the validate CLI), components in components.tsx.
@@ -97,7 +99,7 @@ import { blockComponents } from '${blocksImport}/components'
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
 
 export function Content({ source }: { source: string }) {
-  const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
+  const result = compileDocument(source, registry)
   return (
     <${renderer}
       document={result.document}
@@ -213,7 +215,7 @@ function astroPage(styled: boolean): string {
   const renderer = styled ? 'ContentRenderer' : 'ContentBlocks'
   return `---
 import { genericBlocks } from '@contentbit/blocks'
-import { createBlockRegistry, parseDocument, validateDocument } from '@contentbit/core'
+import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
 import { getEntry } from 'astro:content'
 
 ${importLine}
@@ -228,11 +230,11 @@ if (!entry?.body) throw new Error('Entry "example" not found in the articles col
 
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
 // Static pages render at build time, so invalid blocks fail the build here.
-const result = validateDocument(parseDocument(entry.body), registry)
+const document = assertValidDocument(compileDocument(entry.body, registry), entry.id)
 ---
 
 <main style="max-width: 42rem; margin: 0 auto; padding: 3rem 1.5rem;">
-  <${renderer} document={result.document} components={{ quote: QuoteBlock }} />
+  <${renderer} document={document} components={{ quote: QuoteBlock }} />
 </main>
 `
 }

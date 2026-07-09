@@ -5,7 +5,7 @@ description: |
   Use when asked to create or modify content documents in a project that uses
   contentbit — blog posts, docs pages, changelogs, any Markdown covered by
   `contentbit validate`.
-version: 6
+version: 7
 ---
 
 # Writing contentbit content
@@ -16,12 +16,10 @@ props, or body shapes — fetch the live guide from the project's registry first
 
 ## Find the project conventions
 
-Find the workspace package that declares contentbit or a `content:check` script
-(may be nested in a monorepo), and run commands from that directory. The
-`content:check` script holds the canonical validate invocation for this project:
-the content glob and, if present, the `--registry <path>` and
-`--no-generic-blocks` flags. Reuse those arguments below. No script? Default to
-`content/**/*.md` with no `--registry` flag.
+Find the nearest `contentbit.config.*` or workspace package that declares
+contentbit (it may be nested in a monorepo), and run commands from that
+directory. The config holds the content glob, registry, link fields, and SEO
+config; command-line flags only override it for one invocation.
 If the project has a `content:links` script, use it for the internal-link
 index; otherwise run `contentbit links <content glob>` directly.
 If `contentbit.seo.config.ts` exists and the request names a page `key` or
@@ -32,7 +30,7 @@ If `contentbit.seo.config.ts` exists and the request names a page `key` or
 1. **Fetch the authoring guide** (always — it covers this project's custom blocks):
 
    ```sh
-   contentbit instructions --audience llm [--registry <path from content:check>] [--no-generic-blocks]
+   contentbit instructions --audience llm
    ```
 
    Read it before writing. It documents every available block: props, body
@@ -42,7 +40,7 @@ If `contentbit.seo.config.ts` exists and the request names a page `key` or
    target page has a known `key` or `slug`, run:
 
    ```sh
-   contentbit brief <key-or-slug> [content glob] [--registry <path>] [--no-generic-blocks]
+   contentbit brief <key-or-slug>
    ```
 
    Treat the brief as the structure contract: page type, required sections,
@@ -54,7 +52,7 @@ If `contentbit.seo.config.ts` exists and the request names a page `key` or
    `aliases`, or `keywords`, run the link index first:
 
    ```sh
-   contentbit links <content glob>
+   contentbit links
    ```
 
    Read `.contentbit/link-index.json` to pick existing slugs and related
@@ -67,7 +65,7 @@ If `contentbit.seo.config.ts` exists and the request names a page `key` or
 4. **Validate and fix until clean:**
 
    ```sh
-   contentbit validate <file> [--registry <path>] [--no-generic-blocks]
+   contentbit validate <file>
    ```
 
    Diagnostics print to stderr as `file:line:col severity CODE message`, often
@@ -79,7 +77,7 @@ If `contentbit.seo.config.ts` exists and the request names a page `key` or
 5. **Refresh internal links when present:**
 
    ```sh
-   contentbit links <content glob> --fix
+   contentbit links --fix
    ```
 
    `--fix` only rewrites `linksTo` values that point at known aliases. It

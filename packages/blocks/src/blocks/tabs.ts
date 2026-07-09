@@ -1,10 +1,10 @@
 import {
   childBlocks,
   defineBlock,
+  defineMarkdownBlockRenderer,
   isValidatedBlock,
   markdownBody,
   type ChildBlocksData,
-  type MarkdownBlockRenderer,
   type MarkdownBodyData,
 } from '@contentbit/core'
 import { z } from 'zod'
@@ -12,7 +12,7 @@ import { z } from 'zod'
 export type TabsData = ChildBlocksData
 export type TabData = MarkdownBodyData
 
-export const tabBlock = defineBlock<TabData>({
+export const tabBlock = defineBlock({
   name: 'tab',
   description: 'One tab panel with a title.',
   props: z.object({ title: z.string().min(1) }),
@@ -25,7 +25,7 @@ export const tabBlock = defineBlock<TabData>({
   },
 })
 
-export const tabsBlock = defineBlock<TabsData>({
+export const tabsBlock = defineBlock({
   name: 'tabs',
   description: 'Tabbed switcher for alternative methods or variants — the reader picks one.',
   content: childBlocks({ allowed: ['tab'], minChildren: 2, maxChildren: 6 }),
@@ -41,12 +41,12 @@ export const tabsBlock = defineBlock<TabsData>({
   },
 })
 
-export const tabsMarkdown: MarkdownBlockRenderer = (node) => {
-  const data = node.data as TabsData
+export const tabsMarkdown = defineMarkdownBlockRenderer(tabsBlock, (node) => {
+  const data = node.data
   return data.blocks
     .map((tab) => {
       const body = isValidatedBlock(tab) ? (tab.data as TabData).markdown : tab.body.trim()
       return `### ${String(tab.props.title)}\n\n${body}`
     })
     .join('\n\n')
-}
+})

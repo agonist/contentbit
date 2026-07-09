@@ -42,18 +42,21 @@ test('init scaffolds a react project non-interactively', async () => {
   )
   const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
   expect(component).toContain('ContentBlocks')
-  expect(component).toContain('stripFrontmatter')
+  expect(component).toContain('compileDocument')
   expect(component).toContain('blockComponents')
-  await expect(readFile(join(dir, 'blocks/components.tsx'), 'utf8')).resolves.toContain(
-    'QuoteBlock',
+  const blockComponents = await readFile(join(dir, 'blocks/components.tsx'), 'utf8')
+  expect(blockComponents).toContain('defineBlockComponent(quote')
+  expect(blockComponents).not.toContain(' as ')
+  await expect(readFile(join(dir, 'contentbit.config.ts'), 'utf8')).resolves.toContain(
+    "content: 'content/**/*.md'",
   )
   await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::callout')
 
   const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
-  expect(pkg.scripts['content:check']).toContain('contentbit validate')
-  expect(pkg.scripts['content:links']).toContain('contentbit links')
-  expect(pkg.scripts['content:doctor']).toContain('contentbit doctor')
-  expect(pkg.scripts.studio).toContain('contentbit studio')
+  expect(pkg.scripts['content:check']).toBe('contentbit validate')
+  expect(pkg.scripts['content:links']).toBe('contentbit links')
+  expect(pkg.scripts['content:doctor']).toBe('contentbit doctor')
+  expect(pkg.scripts.studio).toBe('contentbit studio')
   expect(io.out.join('\n')).toContain('Next steps')
 })
 
@@ -65,6 +68,7 @@ test('react init wires react-markdown by default and installs it', async () => {
   expect(component).toContain('ReactMarkdown')
   expect(component).not.toContain('TODO')
   expect(io.out.join('\n')).toContain('react-markdown')
+  expect(io.out.join('\n')).toContain('@contentbit/studio (dev)')
 })
 
 test('init --seo scaffolds a starter SEO config', async () => {
@@ -75,6 +79,9 @@ test('init --seo scaffolds a starter SEO config', async () => {
   expect(config).toContain('defineSeoConfig')
   expect(config).toContain('alternative')
   expect(config).toContain('requiredSections')
+  await expect(readFile(join(dir, 'contentbit.config.ts'), 'utf8')).resolves.toContain(
+    "seo: './contentbit.seo.config.ts'",
+  )
 })
 
 test('--md none scaffolds the unwired component', async () => {
@@ -97,7 +104,7 @@ test('init rejects an unknown markdown library', async () => {
   const dir = await project({ name: 'x', dependencies: { react: '^19.0.0' } })
   const io = fakeIo()
   expect(await run(['init', '--md', 'remarkable', '--no-install', '--cwd', dir], io)).toBe(2)
-  expect(io.err.join('\n')).toContain('Unknown markdown library')
+  expect(io.err.join('\n')).toContain('Allowed choices are react-markdown, none')
 })
 
 test('tanstack projects get the component and an example route in src/', async () => {
@@ -231,7 +238,7 @@ test('init rejects an unknown target', async () => {
   const dir = await project({ name: 'x' })
   const io = fakeIo()
   expect(await run(['init', '-t', 'vue', '--no-install', '--cwd', dir], io)).toBe(2)
-  expect(io.err.join('\n')).toContain('Unknown target')
+  expect(io.err.join('\n')).toContain('Allowed choices are react, markdown, astro')
 })
 
 test('init fails cleanly without a package.json', async () => {
@@ -256,7 +263,7 @@ test('init scaffolds an astro project non-interactively', async () => {
   const page = await readFile(join(dir, 'src/pages/example.astro'), 'utf8')
   expect(page).toContain("from '@contentbit/astro/components'")
   expect(page).toContain("getEntry('articles', 'example')")
-  expect(page).toContain('validateDocument(parseDocument(entry.body), registry)')
+  expect(page).toContain('assertValidDocument(compileDocument(entry.body, registry), entry.id)')
   expect(page).toContain('QuoteBlock')
   await expect(readFile(join(dir, 'blocks/QuoteBlock.astro'), 'utf8')).resolves.toContain(
     'Astro.props',

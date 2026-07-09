@@ -3,14 +3,22 @@
 Headless React renderer for [Content Blocks](https://contentbit.dev) documents.
 
 ```tsx
-import { ContentBlocks } from '@contentbit/react'
+import { defineBlockComponent, defineBlockComponents, ContentBlocks } from '@contentbit/react'
+
+const CalloutBlock = defineBlockComponent(calloutBlock, ({ node, ctx }) => (
+  <aside>{ctx.renderMarkdown(node.data.markdown)}</aside>
+))
+const components = defineBlockComponents([calloutBlock], { callout: CalloutBlock })
 
 <ContentBlocks
   document={result.document}
-  components={{ callout: CalloutBlock }}
+  components={components}
   renderMarkdown={(md) => <Markdown source={md} />}
 />
 ```
+
+The helpers infer the block name, validated Zod props, and parsed content data,
+and reject misspelled component-map keys.
 
 `components` maps block names to React components. A styled Tailwind pack is
 available through the shadcn registry, where files are copied into your app:

@@ -48,7 +48,8 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "zod": "^4.0.0"
   },
   "peerDependencies": {
     "react": "^19.0.0"

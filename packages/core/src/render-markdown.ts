@@ -1,4 +1,5 @@
 import type { ContentNode } from './ast.js'
+import type { BlockData, BlockDefinition, BlockName, BlockPropsOf } from './registry.js'
 
 import {
   isValidatedBlock,
@@ -14,6 +15,33 @@ export type MarkdownBlockRenderer = (
   node: ValidatedBlockNode<unknown>,
   ctx: MarkdownRenderContext,
 ) => string
+
+export type MarkdownBlockRendererFor<TDefinition extends BlockDefinition> = (
+  node: ValidatedBlockNode<
+    BlockData<TDefinition>,
+    BlockPropsOf<TDefinition>,
+    BlockName<TDefinition>
+  >,
+  ctx: MarkdownRenderContext,
+) => string
+
+export type MarkdownRenderersFor<TDefinitions extends ReadonlyArray<BlockDefinition>> = {
+  [TDefinition in TDefinitions[number] as BlockName<TDefinition>]?: MarkdownBlockRendererFor<TDefinition>
+}
+
+export function defineMarkdownBlockRenderer<TDefinition extends BlockDefinition>(
+  _definition: TDefinition,
+  renderer: MarkdownBlockRendererFor<TDefinition>,
+): MarkdownBlockRendererFor<TDefinition> {
+  return renderer
+}
+
+export function defineMarkdownRenderers<const TDefinitions extends ReadonlyArray<BlockDefinition>>(
+  _definitions: TDefinitions,
+  renderers: MarkdownRenderersFor<TDefinitions>,
+): Record<string, MarkdownBlockRenderer> {
+  return renderers as unknown as Record<string, MarkdownBlockRenderer>
+}
 
 export interface RenderToMarkdownOptions {
   renderers?: Record<string, MarkdownBlockRenderer>

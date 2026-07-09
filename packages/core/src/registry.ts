@@ -22,11 +22,17 @@ export interface AuthoringMeta {
   example: string
 }
 
-export interface BlockDefinition<TData = unknown> {
-  name: string
+export type BlockProps = Record<string, unknown>
+
+export interface BlockDefinition<
+  TData = unknown,
+  TProps extends BlockProps = BlockProps,
+  TName extends string = string,
+> {
+  name: TName
   description: string
   /** zod schema for the open-line props. Omit for prop-less blocks. */
-  props?: ZodType
+  props?: ZodType<TProps>
   content: ContentModel<TData>
   /** Only valid nested inside a parent that allows it (e.g. `tab` inside `tabs`). */
   childOnly?: boolean
@@ -36,13 +42,39 @@ export interface BlockDefinition<TData = unknown> {
   authoring: AuthoringMeta
 }
 
+export type BlockData<TDefinition extends BlockDefinition> =
+  TDefinition extends BlockDefinition<infer TData, BlockProps, string> ? TData : never
+export type BlockPropsOf<TDefinition extends BlockDefinition> =
+  TDefinition extends BlockDefinition<unknown, infer TProps, string> ? TProps : never
+export type BlockName<TDefinition extends BlockDefinition> = TDefinition['name']
+
+type PropsFromSchema<TSchema extends ZodType | undefined> =
+  TSchema extends ZodType<infer TProps>
+    ? TProps extends BlockProps
+      ? TProps
+      : BlockProps
+    : Record<string, never>
+
+type BlockDefinitionInput<TData, TSchema extends ZodType | undefined, TName extends string> = Omit<
+  BlockDefinition<TData, PropsFromSchema<TSchema>, TName>,
+  'props'
+> & {
+  props?: TSchema
+}
+
 const KEBAB_RE = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
 
-export function defineBlock<TData>(def: BlockDefinition<TData>): BlockDefinition<TData> {
+export function defineBlock<
+  TData = unknown,
+  TSchema extends ZodType | undefined = undefined,
+  const TName extends string = string,
+>(
+  def: BlockDefinitionInput<TData, TSchema, TName>,
+): BlockDefinition<TData, PropsFromSchema<TSchema>, TName> {
   if (!KEBAB_RE.test(def.name)) {
     throw new Error(`Block name "${def.name}" must be lowercase kebab-case.`)
   }
-  return def
+  return def as BlockDefinition<TData, PropsFromSchema<TSchema>, TName>
 }
 
 export class BlockRegistry {

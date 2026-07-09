@@ -103,9 +103,9 @@ adds the `validation` summary by running the validate pipeline alongside it —
 do the same if you need both:
 
 ```ts
-import { parseDocument, stripFrontmatter, validateDocument } from '@contentbit/core'
+import { compileDocument } from '@contentbit/core'
 
-const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
+const result = compileDocument(source, registry)
 ```
 
 The live demo above is exactly this — `analyzeDocument` plus

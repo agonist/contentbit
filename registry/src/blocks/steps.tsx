@@ -1,8 +1,8 @@
-import type { StepsData } from '@contentbit/blocks'
-import type { BlockComponentProps } from '@contentbit/react'
+import { stepsBlock } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 
-export function StepsBlock({ node, ctx }: BlockComponentProps) {
-  const data = node.data as StepsData
+export const StepsBlock = defineBlockComponent(stepsBlock, ({ node, ctx }) => {
+  const data = node.data
   const last = data.items.length - 1
   return (
     <ol data-cb-styled className="my-6">
@@ -22,4 +22,4 @@ export function StepsBlock({ node, ctx }: BlockComponentProps) {
       ))}
     </ol>
   )
-}
+})

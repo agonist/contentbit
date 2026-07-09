@@ -1,5 +1,5 @@
-import type { CalloutData } from '@contentbit/blocks'
-import type { BlockComponentProps } from '@contentbit/react'
+import { calloutBlock } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 import type { LucideIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -45,10 +45,10 @@ const VARIANTS: Record<string, Variant> = {
   },
 }
 
-export function CalloutBlock({ node, ctx }: BlockComponentProps) {
-  const data = node.data as CalloutData
-  const type = String(node.props.type ?? 'note')
-  const title = node.props.title as string | undefined
+export const CalloutBlock = defineBlockComponent(calloutBlock, ({ node, ctx }) => {
+  const data = node.data
+  const type = node.props.type
+  const title = node.props.title
   const variant = VARIANTS[type] ?? VARIANTS.note
   const Icon = variant.icon
   return (
@@ -65,4 +65,4 @@ export function CalloutBlock({ node, ctx }: BlockComponentProps) {
       </div>
     </aside>
   )
-}
+})

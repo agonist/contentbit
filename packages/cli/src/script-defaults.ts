@@ -1,8 +1,10 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
 
 import type { LinkOptionValues } from './link-options.js'
+
+import { loadContentbitConfig } from './project-config.js'
 
 export interface ContentCommandDefaults extends LinkOptionValues {
   cwd?: string
@@ -14,13 +16,15 @@ export interface ContentCommandDefaults extends LinkOptionValues {
   source?: string
 }
 
-type ContentCommand = 'validate' | 'doctor' | 'studio' | 'links'
+type ContentCommand = 'validate' | 'doctor' | 'studio' | 'links' | 'stats' | 'brief'
 
 const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   validate: ['content:check', 'content:validate'],
   doctor: ['content:doctor', 'content:check'],
   studio: ['studio', 'content:studio', 'content:check'],
   links: ['content:links', 'content:check'],
+  stats: ['content:stats', 'content:check'],
+  brief: ['content:brief', 'content:check'],
 }
 
 export async function discoverContentCommandDefaults(
@@ -28,7 +32,28 @@ export async function discoverContentCommandDefaults(
   explicitGlobs: string[],
   startDir = process.cwd(),
 ): Promise<ContentCommandDefaults> {
-  if (explicitGlobs.length > 0) return { globs: explicitGlobs }
+  const loadedConfig = await loadContentbitConfig(startDir)
+  const configDefaults = loadedConfig
+    ? {
+        cwd: loadedConfig.cwd,
+        registry: resolveConfigPath(loadedConfig.cwd, loadedConfig.config.registry),
+        noGenericBlocks: loadedConfig.config.genericBlocks === false ? true : undefined,
+        seoConfig:
+          typeof loadedConfig.config.seo === 'string'
+            ? resolveConfigPath(loadedConfig.cwd, loadedConfig.config.seo)
+            : undefined,
+        noSeo: loadedConfig.config.seo === false ? true : undefined,
+        linkResolve: loadedConfig.config.links?.resolve,
+        localeField: loadedConfig.config.links?.localeField,
+        slugField: loadedConfig.config.links?.slugField,
+        keyField: loadedConfig.config.links?.keyField,
+        defaultLocale: loadedConfig.config.links?.defaultLocale,
+        source: loadedConfig.path,
+      }
+    : {}
+
+  if (explicitGlobs.length > 0) return { ...configDefaults, cwd: undefined, globs: explicitGlobs }
+  if (loadedConfig) return { ...configDefaults, globs: loadedConfig.config.content }
 
   const found = await findPackageScript(command, startDir)
   if (!found) return { globs: [] }
@@ -42,6 +67,11 @@ export async function discoverContentCommandDefaults(
     globs: positionalsFromArgs(parsed.args),
     source: `${found.packageJson}#scripts.${found.scriptName}`,
   }
+}
+
+function resolveConfigPath(cwd: string, path?: string): string | undefined {
+  if (!path) return undefined
+  return isAbsolute(path) ? path : resolve(cwd, path)
 }
 
 async function findPackageScript(

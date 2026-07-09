@@ -9,7 +9,7 @@ import {
 } from '@contentbit/core'
 import { useMemo } from 'react'
 
-import { styledComponents } from './content-blocks/content-renderer'
+import { styledComponents } from '@contentbit-registry/blocks/content-renderer'
 import { ContentBlocks } from '@contentbit/react'
 import { Markdown } from './markdown'
 

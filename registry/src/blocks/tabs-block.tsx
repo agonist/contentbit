@@ -1,11 +1,11 @@
-import type { TabData, TabsData } from '@contentbit/blocks'
-import type { BlockComponentProps } from '@contentbit/react'
+import { tabsBlock, type TabData } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { isValidatedBlock } from '@contentbit/core'
 
-export function TabsBlock({ node, ctx }: BlockComponentProps) {
-  const data = node.data as TabsData
+export const TabsBlock = defineBlockComponent(tabsBlock, ({ node, ctx }) => {
+  const data = node.data
   return (
     <Tabs data-cb-styled defaultValue="tab-0" className="my-6">
       <TabsList>
@@ -22,4 +22,4 @@ export function TabsBlock({ node, ctx }: BlockComponentProps) {
       ))}
     </Tabs>
   )
-}
+})

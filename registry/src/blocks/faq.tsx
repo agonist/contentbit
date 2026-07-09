@@ -1,5 +1,5 @@
-import type { FaqData, FaqItemData } from '@contentbit/blocks'
-import type { BlockComponentProps } from '@contentbit/react'
+import { faqBlock, type FaqItemData } from '@contentbit/blocks'
+import { defineBlockComponent } from '@contentbit/react'
 
 import {
   Accordion,
@@ -9,8 +9,8 @@ import {
 } from '@/components/ui/accordion'
 import { isValidatedBlock } from '@contentbit/core'
 
-export function FaqBlock({ node, ctx }: BlockComponentProps) {
-  const data = node.data as FaqData
+export const FaqBlock = defineBlockComponent(faqBlock, ({ node, ctx }) => {
+  const data = node.data
   return (
     <div data-cb-styled className="bg-card my-6 rounded-lg border px-4">
       <Accordion type="single" collapsible>
@@ -33,4 +33,4 @@ export function FaqBlock({ node, ctx }: BlockComponentProps) {
       </Accordion>
     </div>
   )
-}
+})

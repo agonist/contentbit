@@ -1,16 +1,17 @@
 {
   "title": "Guides",
   "pages": [
+    "project-config",
+    "programmatic-seo",
+    "seo-briefs",
     "agents",
+    "studio",
+    "doctor",
+    "internal-linking",
+    "stats",
     "markdown",
     "renderers",
     "astro",
-    "custom-blocks",
-    "studio",
-    "stats",
-    "doctor",
-    "internal-linking",
-    "programmatic-seo",
-    "seo-briefs"
+    "custom-blocks"
   ]
 }

@@ -5,12 +5,11 @@ import type { DocumentStats } from './analyze.js'
 import type { ValidationResult } from './validate.js'
 
 import { analyzeDocument } from './analyze.js'
-import { extractFrontmatter, stripFrontmatter } from './frontmatter.js'
+import { compileDocument } from './compile.js'
+import { extractFrontmatter } from './frontmatter.js'
 import { createLinkGraphView, type LinkGraphSummary } from './link-graph.js'
 import { buildLinkIndex, validateLinks } from './links.js'
-import { parseDocument } from './parser.js'
 import { evaluateSeoProject, type SeoProjectEvaluation } from './seo.js'
-import { validateDocument } from './validate.js'
 
 export type ContentProjectFindingSource = 'validation' | 'links' | 'stats' | 'seo'
 
@@ -84,7 +83,7 @@ export function scanContentProject(
     const frontmatter = extractFrontmatter(file.source)?.data ?? {}
     linkInputs.push({ path: file.path, data: frontmatter })
 
-    const validation = validateDocument(parseDocument(stripFrontmatter(file.source)), registry)
+    const validation = compileDocument(file.source, registry)
     const fileFindings = validation.diagnostics.map((diagnostic) =>
       findingFromDiagnostic('validation', file.path, diagnostic),
     )
