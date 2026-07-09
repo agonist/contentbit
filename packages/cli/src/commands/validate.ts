@@ -5,6 +5,7 @@ import type { Io } from '../run.js'
 import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
 import { loadContentProject } from '../content-project.js'
 import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
+import { discoverContentCommandDefaults } from '../script-defaults.js'
 
 export interface ValidateCommandInput extends LinkOptionValues {
   globs: string[]
@@ -14,12 +15,21 @@ export interface ValidateCommandInput extends LinkOptionValues {
 }
 
 export async function validateCommand(input: ValidateCommandInput, io: Io): Promise<number> {
+  const defaults = await discoverContentCommandDefaults('validate', input.globs)
+  const linkOptions = linkResolverOptions({
+    linkResolve: input.linkResolve ?? defaults.linkResolve,
+    localeField: input.localeField ?? defaults.localeField,
+    slugField: input.slugField ?? defaults.slugField,
+    keyField: input.keyField ?? defaults.keyField,
+    defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
+  })
   const { files, scan } = await loadContentProject({
     cmd: 'validate',
-    positionals: input.globs,
-    registry: input.registry,
-    includeGenericBlocks: !input.noGenericBlocks,
-    linkOptions: linkResolverOptions(input),
+    positionals: defaults.globs,
+    cwd: defaults.cwd,
+    registry: input.registry ?? defaults.registry,
+    includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
+    linkOptions,
     scan: { includeStatsFindings: false },
   })
 

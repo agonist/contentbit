@@ -10,9 +10,10 @@ const pos: SourceRange = {
 }
 
 test('parses quoted strings, numbers, booleans, bare identifiers', () => {
-  const { props, diagnostics } = parseProps(
+  const { props, propPositions, diagnostics } = parseProps(
     '{title="Quick \\"Ref\\"" count=3 ratio=-1.5 featured=true variant=compact}',
     pos,
+    { line: 1, column: 11, offset: 10 },
   )
   expect(diagnostics).toEqual([])
   expect(props).toEqual({
@@ -22,6 +23,8 @@ test('parses quoted strings, numbers, booleans, bare identifiers', () => {
     featured: true,
     variant: 'compact',
   })
+  expect(propPositions.title.start).toMatchObject({ line: 1, column: 12, offset: 11 })
+  expect(propPositions.count.start).toMatchObject({ line: 1, column: 34, offset: 33 })
 })
 
 test('bare key is boolean shorthand', () => {
@@ -30,7 +33,7 @@ test('bare key is boolean shorthand', () => {
 })
 
 test('null raw returns empty props', () => {
-  expect(parseProps(null, pos)).toEqual({ props: {}, diagnostics: [] })
+  expect(parseProps(null, pos)).toEqual({ props: {}, propPositions: {}, diagnostics: [] })
 })
 
 test('unterminated string reports CB_PROPS_SYNTAX', () => {

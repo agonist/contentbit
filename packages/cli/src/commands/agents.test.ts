@@ -116,8 +116,40 @@ test('agents --help describes agent-specific flags', async () => {
   expect(await run(['agents', '--help'], io)).toBe(0)
   const out = io.out.join('\n')
   expect(out).toContain('create .claude/ if needed and install Claude Code skills')
+  expect(out).toContain('show agent integration status without writing files')
+  expect(out).toContain('alias for --check')
   expect(out).toContain('skip writing the AGENTS.md contentbit block')
   expect(out).toContain('install guidance in another directory')
+})
+
+test('agents --check reports planned writes without changing files', async () => {
+  const dir = await project()
+  const io = fakeIo()
+  expect(await run(['agents', '--check', '--claude', '--cwd', dir], io)).toBe(0)
+  const out = io.out.join('\n')
+  expect(out).toContain('would create: AGENTS.md (contentbit block)')
+  expect(out).toContain('would install: .claude/skills/contentbit-author/SKILL.md')
+  expect(out).toContain('would create: .claude/')
+  await expect(readFile(join(dir, 'AGENTS.md'), 'utf8')).rejects.toThrow()
+  await expect(
+    readFile(join(dir, '.claude/skills/contentbit-author/SKILL.md'), 'utf8'),
+  ).rejects.toThrow()
+})
+
+test('agents --check reports stale installed skills with versions', async () => {
+  const dir = await project()
+  await mkdir(join(dir, '.claude/skills/contentbit-author'), { recursive: true })
+  await writeFile(
+    join(dir, '.claude/skills/contentbit-author/SKILL.md'),
+    '---\nname: contentbit-author\nversion: 1\n---\n',
+    'utf8',
+  )
+  const io = fakeIo()
+  expect(await run(['agents', '--check', '--cwd', dir], io)).toBe(0)
+  const out = io.out.join('\n')
+  expect(out).toContain('stale: .claude/skills/contentbit-author/SKILL.md')
+  expect(out).toContain('installed 1, package 6')
+  expect(out).toContain('would install: .claude/skills/contentbit-audit/SKILL.md')
 })
 
 test('writes a root pointer when run from a monorepo package', async () => {

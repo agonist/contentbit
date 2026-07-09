@@ -4,6 +4,7 @@ import { formatRows, section } from '../cli-format.js'
 import { resolveContentFiles } from '../content-project.js'
 import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
 import { loadSeoConfig } from '../seo-config.js'
+import { discoverContentCommandDefaults } from '../script-defaults.js'
 
 export interface StudioCommandInput extends LinkOptionValues {
   globs: string[]
@@ -18,6 +19,7 @@ export interface StudioCommandInput extends LinkOptionValues {
 }
 
 export async function studioCommand(input: StudioCommandInput, io: Io): Promise<number> {
+  const defaults = await discoverContentCommandDefaults('studio', input.globs)
   const port = parsePort(input.port)
   if (port === null) {
     io.stderr('studio: --port must be an integer between 0 and 65535.')
@@ -32,19 +34,30 @@ export async function studioCommand(input: StudioCommandInput, io: Io): Promise<
 
   // Guard empty/no-match the same way the read-commands do; startStudio does its
   // own globbing from `positionals`, so we only need the shared check here.
-  await resolveContentFiles(input.globs, 'studio')
-  const seoConfig = await loadSeoConfig({ seoConfig: input.seoConfig, noSeo: input.noSeo })
+  await resolveContentFiles(defaults.globs, 'studio', { cwd: defaults.cwd })
+  const seoConfig = await loadSeoConfig({
+    cwd: defaults.cwd,
+    seoConfig: input.seoConfig ?? defaults.seoConfig,
+    noSeo: input.noSeo ?? defaults.noSeo,
+  })
 
   const { startStudio } =
     (await import('@contentbit/studio')) as typeof import('@contentbit/studio')
   const studioOptions = {
-    globs: input.globs,
-    registryPath: input.registry,
-    includeGenericBlocks: !input.noGenericBlocks,
+    globs: defaults.globs,
+    cwd: defaults.cwd,
+    registryPath: input.registry ?? defaults.registry,
+    includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
     host: input.host,
     ...(port !== undefined ? { port } : {}),
     open: !input.noOpen,
-    linkOptions: linkResolverOptions(input),
+    linkOptions: linkResolverOptions({
+      linkResolve: input.linkResolve ?? defaults.linkResolve,
+      localeField: input.localeField ?? defaults.localeField,
+      slugField: input.slugField ?? defaults.slugField,
+      keyField: input.keyField ?? defaults.keyField,
+      defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
+    }),
     minSectionWords,
     seoConfig: seoConfig.config,
     seoConfigPath: seoConfig.path,

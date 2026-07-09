@@ -43,18 +43,18 @@ Commands:
 
 Setup:
   init [-t react|markdown|astro] [--md ...] [-y] [--seo] [--no-install] [--no-page] [--no-agents]
-  agents [--claude] [--no-agents-md]
+  agents [--claude] [--check|--dry-run] [--no-agents-md]
 
 Common:
-  validate <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
+  validate [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
   brief <key-or-slug> [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--json]
-  doctor <globs...> [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
-  studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
+  doctor [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
+  studio [globs...] [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
   stats <globs...> [--registry <module.ts>] [--no-generic-blocks] [--no-validate]
   render <file> [--target markdown] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   instructions [--audience llm|human] [--no-examples] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   docs [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
-  links <globs...> [--fix] [--out <file>] [--link-resolve <mode>]`
+  links [globs...] [--fix] [--out <file>] [--link-resolve <mode>]`
 
 export async function run(argv: string[], io: Io): Promise<number> {
   const name = argv[0]
@@ -194,7 +194,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           json: Boolean(options.json),
           minSectionWords: options.minSectionWords,
           seoConfig: options.seoConfig,
-          noSeo: options.seo === false,
+          noSeo: options.seo === false ? true : undefined,
           ...linkOptionsFrom(options),
         },
         io,
@@ -258,7 +258,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           noGenericBlocks: options.genericBlocks === false,
           minSectionWords: options.minSectionWords,
           seoConfig: options.seoConfig,
-          noSeo: options.seo === false,
+          noSeo: options.seo === false ? true : undefined,
           ...linkOptionsFrom(options),
         },
         io,
@@ -364,6 +364,8 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
     .command('agents')
     .description('install coding-agent guidance')
     .option('--claude', 'create .claude/ if needed and install Claude Code skills')
+    .option('--check', 'show agent integration status without writing files')
+    .option('--dry-run', 'alias for --check')
     .option('--no-agents-md', 'skip writing the AGENTS.md contentbit block')
     .option('--cwd <path>', 'install guidance in another directory')
     .action(async (rawOptions: Command | OptionValues) => {
@@ -373,6 +375,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
         await agentsCommand(
           {
             claude: Boolean(options.claude),
+            check: Boolean(options.check || options.dryRun),
             noAgentsMd: options.agentsMd === false,
             cwd: options.cwd,
           },

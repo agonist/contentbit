@@ -1,6 +1,6 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { expect, test } from 'vitest'
 
 import { run } from '../run'
@@ -9,9 +9,20 @@ import { fakeIo } from '../run.test'
 async function fixture(files: Record<string, string>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'cb-links-'))
   for (const [name, content] of Object.entries(files)) {
+    await mkdir(dirname(join(dir, name)), { recursive: true })
     await writeFile(join(dir, name), content, 'utf8')
   }
   return dir
+}
+
+async function withCwd<T>(cwd: string, fn: () => Promise<T>): Promise<T> {
+  const previous = process.cwd()
+  process.chdir(cwd)
+  try {
+    return await fn()
+  } finally {
+    process.chdir(previous)
+  }
 }
 
 test('builds an index and exits 0 for a valid graph', async () => {
@@ -58,6 +69,27 @@ test('creates a missing parent directory for the index file (real fs write)', as
   expect(await run(['links', join(dir, '*.md'), '--out', out], io)).toBe(0)
   const parsed = JSON.parse(await readFile(out, 'utf8'))
   expect(parsed.pages.map((p: { slug: string }) => p.slug).sort()).toEqual(['a', 'b'])
+})
+
+test('links with no globs reuses content:links and writes the package index', async () => {
+  const dir = await fixture({
+    'package.json': JSON.stringify({
+      scripts: { 'content:links': 'contentbit links "content/**/*.md"' },
+    }),
+    'content/a.md': '---\nslug: a\nlinksTo:\n  - b\n---\nA\n',
+    'content/b.md': '---\nslug: b\nlinksTo:\n  - a\n---\nB\n',
+  })
+  const nested = join(dir, 'src')
+  await mkdir(nested, { recursive: true })
+  const io = { ...fakeIo(), writeFile: (p: string, c: string) => writeFile(p, c, 'utf8') }
+
+  await withCwd(nested, async () => {
+    expect(await run(['links'], io)).toBe(0)
+  })
+
+  await expect(readFile(join(dir, '.contentbit/link-index.json'), 'utf8')).resolves.toContain(
+    '"slug": "a"',
+  )
 })
 
 test('--fix rewrites alias references to the current slug in source', async () => {

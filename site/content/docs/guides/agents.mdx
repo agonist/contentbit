@@ -74,6 +74,8 @@ This manages:
     documents, and missing image alt text, in that order.
 
 Pass `--no-agents-md` to manage only the skills.
+Run `contentbit agents --check` to see what would be created, refreshed, or
+skipped before writing files.
 
 The project scripts matter too. The generated instructions tell the LLM agent to
 read `content:check` from `package.json` because that script contains the

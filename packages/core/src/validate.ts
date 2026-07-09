@@ -109,7 +109,7 @@ function reportUnknownProps(
       message: `${node.name}: unknown prop "${prop}".`,
       hint: unknownPropHint(prop, known),
       blockName: node.name,
-      position: node.openPosition,
+      position: node.propPositions?.[prop] ?? node.openPosition,
     })
   }
   return valid
@@ -207,12 +207,16 @@ export function validateDocument(
           valid = false
           for (const issue of result.error.issues) {
             if (issue.code === 'unrecognized_keys') continue
+            const prop =
+              typeof issue.path[0] === 'string' && issue.path[0].length > 0
+                ? issue.path[0]
+                : undefined
             report({
               code: 'CB_PROPS_INVALID',
               severity: 'error',
               message: `${node.name}: prop "${issue.path.join('.') || '(root)'}" ${issue.message}`,
               blockName: node.name,
-              position: node.openPosition,
+              position: (prop ? node.propPositions?.[prop] : undefined) ?? node.openPosition,
             })
           }
         }

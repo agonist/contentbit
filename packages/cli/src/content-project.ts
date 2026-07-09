@@ -4,6 +4,7 @@ import {
   resolveContentFiles as resolveProjectContentFiles,
   type LoadedContentProject,
   type LoadContentProjectInput,
+  type ResolveContentFilesOptions,
 } from '@contentbit/project'
 
 import { CliError } from './run.js'
@@ -11,8 +12,12 @@ import { CliError } from './run.js'
 export type { LoadedContentProject, LoadContentProjectInput }
 
 /** Glob the positionals into sorted absolute paths. Throws CliError (exit 2). */
-export async function resolveContentFiles(positionals: string[], cmd: string): Promise<string[]> {
-  return withCliErrors(() => resolveProjectContentFiles(positionals, cmd))
+export async function resolveContentFiles(
+  positionals: string[],
+  cmd: string,
+  options: ResolveContentFilesOptions = {},
+): Promise<string[]> {
+  return withCliErrors(() => resolveProjectContentFiles(positionals, cmd, options))
 }
 
 /**

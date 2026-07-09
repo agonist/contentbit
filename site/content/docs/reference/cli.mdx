@@ -13,6 +13,11 @@ Quote globs so your shell does not expand them before contentbit receives them:
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
+When `validate`, `doctor`, `studio`, or `links` are run without globs,
+contentbit walks up to the nearest package script for that command and reuses
+its content glob and shared flags. For example, `contentbit doctor` can reuse
+`content:doctor`, and `contentbit studio` can fall back to `content:check`.
+
 ## Commands
 
 ```text
@@ -61,7 +66,7 @@ Options:
 Check content and print `file:line:col` diagnostics.
 
 ```bash
-contentbit validate <globs...> [--registry <module.ts>] [--strict-warnings]
+contentbit validate [globs...] [--registry <module.ts>] [--strict-warnings]
 ```
 
 Options:
@@ -109,7 +114,7 @@ Print a ranked repair plan across validation, internal links, document stats,
 image alt text, and optional SEO contracts.
 
 ```bash
-contentbit doctor <globs...> [--registry <module.ts>] [--json]
+contentbit doctor [globs...] [--registry <module.ts>] [--json]
 ```
 
 Options:
@@ -134,7 +139,7 @@ Open the local read-only dashboard for previews, diagnostics, links, backlinks,
 keywords, and stats.
 
 ```bash
-contentbit studio <globs...> [--registry <module.ts>] [--no-open]
+contentbit studio [globs...] [--registry <module.ts>] [--no-open]
 ```
 
 Options:
@@ -233,7 +238,7 @@ of registry data.
 Install or refresh agent guidance.
 
 ```bash
-contentbit agents [--claude] [--no-agents-md]
+contentbit agents [--claude] [--check|--dry-run] [--no-agents-md]
 ```
 
 Options:
@@ -241,6 +246,8 @@ Options:
 | Option | Meaning |
 | --- | --- |
 | `--claude` | Install Claude Code skills even when `.claude/` is absent. |
+| `--check` | Show what would be created, refreshed, or skipped without writing files. |
+| `--dry-run` | Alias for `--check`. |
 | `--no-agents-md` | Skip `AGENTS.md` updates. |
 | `--cwd <path>` | Run in another directory. |
 
@@ -253,7 +260,7 @@ Build `.contentbit/link-index.json` from frontmatter slugs, aliases, and
 `linksTo` values.
 
 ```bash
-contentbit links <globs...> [--fix] [--out <file>]
+contentbit links [globs...] [--fix] [--out <file>]
 ```
 
 Options:
