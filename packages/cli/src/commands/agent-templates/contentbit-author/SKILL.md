@@ -5,7 +5,7 @@ description: |
   Use when asked to create or modify content documents in a project that uses
   contentbit — blog posts, docs pages, changelogs, any Markdown covered by
   `contentbit validate`.
-version: 5
+version: 6
 ---
 
 # Writing contentbit content
@@ -16,10 +16,12 @@ props, or body shapes — fetch the live guide from the project's registry first
 
 ## Find the project conventions
 
-Check `package.json` for a `content:check` script. It holds the canonical
-validate invocation for this project: the content glob and, if present, the
-`--registry <path>` and `--no-generic-blocks` flags. Reuse those arguments
-below. No script? Default to `content/**/*.md` with no `--registry` flag.
+Find the workspace package that declares contentbit or a `content:check` script
+(may be nested in a monorepo), and run commands from that directory. The
+`content:check` script holds the canonical validate invocation for this project:
+the content glob and, if present, the `--registry <path>` and
+`--no-generic-blocks` flags. Reuse those arguments below. No script? Default to
+`content/**/*.md` with no `--registry` flag.
 If the project has a `content:links` script, use it for the internal-link
 index; otherwise run `contentbit links <content glob>` directly.
 If `contentbit.seo.config.ts` exists and the request names a page `key` or

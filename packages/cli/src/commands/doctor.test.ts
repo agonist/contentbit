@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -295,9 +295,31 @@ Prose.
   const out = io.out.join('\n')
   const flags =
     '--link-resolve same-locale-key --locale-field lang --slug-field pathSlug --key-field canonicalKey --default-locale en'
-  expect(out).toContain(`contentbit validate ${glob} ${flags}`)
-  expect(out).toContain(`contentbit links ${glob} ${flags}`)
-  expect(out).toContain(`contentbit doctor ${glob} ${flags} --json`)
+  const quotedGlob = JSON.stringify(glob)
+  expect(out).toContain(`contentbit validate ${quotedGlob} ${flags}`)
+  expect(out).toContain(`contentbit links ${quotedGlob} ${flags}`)
+  expect(out).toContain(`contentbit doctor ${quotedGlob} ${flags} --json`)
+})
+
+test('doctor reports stale installed Claude Code skills', async () => {
+  const dir = await fixture({
+    'package.json': '{"name":"docs"}\n',
+    'post.md': 'Plain prose with enough shape to be valid.\n',
+  })
+  await mkdir(join(dir, '.claude/skills/contentbit-author'), { recursive: true })
+  await writeFile(
+    join(dir, '.claude/skills/contentbit-author/SKILL.md'),
+    '---\nname: contentbit-author\nversion: 1\n---\n',
+    'utf8',
+  )
+
+  const io = fakeIo()
+  expect(await run(['doctor', join(dir, '*.md')], io)).toBe(0)
+  const out = io.out.join('\n')
+  expect(out).toContain('Warnings')
+  expect(out).toContain('warning agents CB_SKILL_DRIFT')
+  expect(out).toContain('contentbit-author skill is stale')
+  expect(out).toContain('Re-run contentbit agents')
 })
 
 test('requires at least one file', async () => {

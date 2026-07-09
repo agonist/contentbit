@@ -4,9 +4,10 @@
 
 This project validates Markdown content with contentbit. Documents are plain
 Markdown plus directive blocks (`:::name{props} ... :::`), each with a schema.
-The `content:check` script in package.json holds the canonical validate
-command — the content glob plus any `--registry` and `--no-generic-blocks`
-flags — reuse its arguments.
+Find the workspace package that declares contentbit or a `content:check` script
+(may be nested in a monorepo), and run commands from that directory. Its
+`content:check` script holds the canonical validate command — the content glob
+plus any `--registry` and `--no-generic-blocks` flags — reuse its arguments.
 If the project has a `content:links` script, use it to build the internal-link
 index; otherwise run `contentbit links <content glob>`.
 If `contentbit.seo.config.ts` exists and the user is creating or revising a

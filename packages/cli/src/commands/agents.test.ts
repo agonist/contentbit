@@ -25,6 +25,7 @@ test('creates AGENTS.md with a fenced contentbit block', async () => {
   expect(agentsMd).toContain('contentbit links')
   expect(agentsMd).toContain('keywords.primary')
   expect(io.out.join('\n')).toContain('AGENTS.md')
+  expect(io.out.join('\n')).toContain('https://contentbit.dev/docs/guides/agents')
 })
 
 test('preserves user content around the block and is idempotent', async () => {
@@ -74,18 +75,24 @@ test('installs Claude Code skills when .claude/ exists', async () => {
 
 test('skips Claude Code skills when .claude/ is absent', async () => {
   const dir = await project()
-  await run(['agents', '--cwd', dir], fakeIo())
+  const io = fakeIo()
+  await run(['agents', '--cwd', dir], io)
   await expect(
     readFile(join(dir, '.claude/skills/contentbit-author/SKILL.md'), 'utf8'),
   ).rejects.toThrow()
+  expect(io.out.join('\n')).toContain(
+    'skipped: .claude/skills (no .claude directory — pass --claude to create it)',
+  )
 })
 
 test('--claude forces skill install without a .claude/ directory', async () => {
   const dir = await project()
-  await run(['agents', '--claude', '--cwd', dir], fakeIo())
+  const io = fakeIo()
+  await run(['agents', '--claude', '--cwd', dir], io)
   await expect(
     readFile(join(dir, '.claude/skills/contentbit-author/SKILL.md'), 'utf8'),
   ).resolves.toContain('contentbit-author')
+  expect(io.out.join('\n')).toContain('restart your Claude Code session so skills are picked up.')
 })
 
 test('--no-agents-md leaves AGENTS.md alone', async () => {
@@ -102,4 +109,31 @@ test('re-running refreshes skill files in place', async () => {
   await writeFile(skillPath, 'stale\n', 'utf8')
   await run(['agents', '--cwd', dir], fakeIo())
   await expect(readFile(skillPath, 'utf8')).resolves.toContain('contentbit-author')
+})
+
+test('agents --help describes agent-specific flags', async () => {
+  const io = fakeIo()
+  expect(await run(['agents', '--help'], io)).toBe(0)
+  const out = io.out.join('\n')
+  expect(out).toContain('create .claude/ if needed and install Claude Code skills')
+  expect(out).toContain('skip writing the AGENTS.md contentbit block')
+  expect(out).toContain('install guidance in another directory')
+})
+
+test('writes a root pointer when run from a monorepo package', async () => {
+  const root = await project()
+  await writeFile(
+    join(root, 'package.json'),
+    `${JSON.stringify({ private: true, workspaces: ['apps/*'] }, null, 2)}\n`,
+    'utf8',
+  )
+  await writeFile(join(root, 'pnpm-workspace.yaml'), 'packages:\n  - apps/*\n', 'utf8')
+  const app = join(root, 'apps/web')
+  await mkdir(app, { recursive: true })
+  await writeFile(join(app, 'package.json'), '{"name":"web"}\n', 'utf8')
+
+  expect(await run(['agents', '--cwd', app], fakeIo())).toBe(0)
+  await expect(readFile(join(root, 'AGENTS.md'), 'utf8')).resolves.toContain(
+    'content lives in apps/web; run contentbit commands from there',
+  )
 })

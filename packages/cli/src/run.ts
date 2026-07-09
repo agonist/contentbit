@@ -363,9 +363,9 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   program
     .command('agents')
     .description('install coding-agent guidance')
-    .option('--claude')
-    .option('--no-agents-md')
-    .option('--cwd <path>')
+    .option('--claude', 'create .claude/ if needed and install Claude Code skills')
+    .option('--no-agents-md', 'skip writing the AGENTS.md contentbit block')
+    .option('--cwd <path>', 'install guidance in another directory')
     .action(async (rawOptions: Command | OptionValues) => {
       const options = optionsFrom(rawOptions)
       const { agentsCommand } = await import('./commands/agents.js')

@@ -67,12 +67,28 @@ test('unknown block is an error by default, warning when configured', () => {
   expect(lax.diagnostics[0].hint).toContain('callout')
 })
 
+test('unknown block hints at the closest registered block', () => {
+  const result = validateDocument(parseDocument(':::calluot\nhm\n:::\n'), registry())
+  expect(result.ok).toBe(false)
+  expect(result.diagnostics[0].code).toBe('CB_UNKNOWN_BLOCK')
+  expect(result.diagnostics[0].hint).toContain('Did you mean "callout"?')
+})
+
 test('invalid props produce CB_PROPS_INVALID with the zod path', () => {
   const parsed = parseDocument(':::callout{type="shout"}\nbody\n:::\n')
   const result = validateDocument(parsed, registry())
   expect(result.ok).toBe(false)
   expect(result.diagnostics[0].code).toBe('CB_PROPS_INVALID')
   expect(result.diagnostics[0].message).toContain('type')
+})
+
+test('unknown props produce CB_UNKNOWN_PROP with a did-you-mean hint', () => {
+  const parsed = parseDocument(':::callout{titel="Heads up"}\nbody\n:::\n')
+  const result = validateDocument(parsed, registry())
+  expect(result.ok).toBe(false)
+  expect(result.diagnostics[0].code).toBe('CB_UNKNOWN_PROP')
+  expect(result.diagnostics[0].message).toContain('unknown prop "titel"')
+  expect(result.diagnostics[0].hint).toContain('Did you mean "title"?')
 })
 
 test('childOnly block at top level is rejected; nested children are validated', () => {

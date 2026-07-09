@@ -4,7 +4,7 @@ description: |
   Audit contentbit Markdown content health using document stats. Use when asked
   to audit, review, or find improvements across content — thin pages, missing
   structure, validation issues — in a project that uses contentbit.
-version: 5
+version: 6
 ---
 
 # Auditing contentbit content
@@ -21,9 +21,11 @@ structure requirements for an agent or human writer.
 
 ## Gather
 
-Check `package.json` for `content:doctor` first. If it exists, run it. If it
-does not, use `content:check` to find this project's content glob and
-`--registry` / `--no-generic-blocks` flags, then run:
+Find the workspace package that declares contentbit or a `content:check` script
+(may be nested in a monorepo), and run commands from that directory. Check its
+`package.json` for `content:doctor` first. If it exists, run it. If it does not,
+use `content:check` to find this project's content glob and `--registry` /
+`--no-generic-blocks` flags, then run:
 
 ```sh
 contentbit doctor "content/**/*.md" [--registry <path>] [--no-generic-blocks]
