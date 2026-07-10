@@ -44,7 +44,7 @@ Commands:
 
 Setup:
   init [-t react|markdown|astro] [--md ...] [-y] [--seo] [--no-install] [--no-page] [--no-agents]
-  adopt [globs...] [--registry <module.ts>] [--no-generic-blocks] [--json]
+  adopt [globs...] [--dry-run] [--registry <module.ts>] [--no-generic-blocks] [--json]
   agents [--claude] [--check|--dry-run] [--no-agents-md]
 
 Common:
@@ -163,6 +163,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
     .argument('[globs...]', 'Content files or quoted globs; defaults to content/**/*.{md,mdx}')
     .option('--registry <module>', 'Load custom block definitions from this module')
     .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--dry-run', 'Explicitly confirm the read-only adoption report')
     .option('--json', 'Print stable machine-readable JSON')
     .action(async (globs: string[], rawOptions: Command | OptionValues) => {
       const options = optionsFrom(rawOptions)
@@ -173,6 +174,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
             globs,
             registry: options.registry,
             noGenericBlocks: options.genericBlocks === false,
+            dryRun: Boolean(options.dryRun),
             json: Boolean(options.json),
           },
           io,

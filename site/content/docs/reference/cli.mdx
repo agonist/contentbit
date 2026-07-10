@@ -104,7 +104,7 @@ proposals. This command is always read-only: it never creates, changes, or
 renames files.
 
 ```bash
-contentbit adopt [globs...] [--json]
+contentbit adopt [globs...] [--dry-run] [--json]
 ```
 
 Without a glob, it scans `content/**/*.{md,mdx}`. The report counts common
@@ -117,6 +117,7 @@ starter to adapt deliberately. See [Adopt an existing content library](/docs/gui
 | --- | --- |
 | `--registry <module>` | Load custom block definitions while scanning. |
 | `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--dry-run` | Explicitly confirm the report-only workflow; adoption is always read-only. |
 | `--json` | Print stable machine-readable JSON. |
 
 ## brief

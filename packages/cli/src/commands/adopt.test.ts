@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { expect, test } from 'vitest'
@@ -39,7 +39,7 @@ type: guide
 `,
     'content/guides/fr.md': `---
 key: guides/getting-started
-slug: bien-demarrer
+slug: getting-started
 locale: fr
 title: Bien démarrer
 type: guide
@@ -50,7 +50,9 @@ type: guide
   })
   const io = fakeIo()
 
-  expect(await withCwd(dir, () => run(['adopt', 'content/**/*.md', '--json'], io))).toBe(0)
+  expect(
+    await withCwd(dir, () => run(['adopt', 'content/**/*.md', '--dry-run', '--json'], io)),
+  ).toBe(0)
   const report = JSON.parse(io.out.join('\n'))
 
   expect(report).toMatchObject({
@@ -63,11 +65,17 @@ type: guide
     },
   })
   expect(report.localeCoverage).toEqual([{ key: 'guides/getting-started', locales: ['en', 'fr'] }])
+  expect(
+    report.findings.some((finding: { code: string }) => finding.code === 'CB_SLUG_DUPLICATE'),
+  ).toBe(false)
   expect(report.proposals.contentbitConfig).toContain("content: 'content/**/*.md'")
   expect(report.proposals.contentbitConfig).toContain(
     "resolve: 'prefer-same-locale-key-fallback-slug'",
   )
-  expect(report.proposals.seoConfig).toContain('Observed page types: guide')
+  expect(report.inferred.contracts).toEqual([
+    { type: 'guide', files: 2, requiredFrontmatter: ['type'], requiredSections: [] },
+  ])
+  expect(report.proposals.seoConfig).toContain('"guide": { requiredFrontmatter: ["type"] }')
 })
 
 test('adopt text output makes the no-write boundary explicit', async () => {
@@ -78,4 +86,21 @@ test('adopt text output makes the no-write boundary explicit', async () => {
   const out = io.out.join('\n')
   expect(out).toContain('Read-only adoption report — no files were changed.')
   expect(out).toContain('Suggested contentbit.config.ts')
+})
+
+test('adopt proposes missing frontmatter without rewriting the source file', async () => {
+  const source = '# Hello from an existing library\n'
+  const dir = await fixture({ 'content/hello-world.md': source })
+  const io = fakeIo()
+
+  expect(await withCwd(dir, () => run(['adopt', 'content/**/*.md', '--json'], io))).toBe(0)
+  const report = JSON.parse(io.out.join('\n'))
+
+  expect(report.proposals.frontmatter).toEqual([
+    {
+      path: expect.stringMatching(/content\/hello-world\.md$/),
+      add: { slug: 'hello-world', title: 'Hello from an existing library' },
+    },
+  ])
+  expect(await readFile(join(dir, 'content/hello-world.md'), 'utf8')).toBe(source)
 })

@@ -124,7 +124,7 @@ export function scanContentProject(
   }
 
   if (includeIntegrityFindings) {
-    for (const integrity of scanContentIntegrity(scannedFiles)) {
+    for (const integrity of scanContentIntegrity(scannedFiles, options.linkOptions)) {
       const finding: ContentProjectFinding = { source: 'integrity', ...integrity }
       findings.push(finding)
       const scanned = scannedFiles.find((item) => item.path === finding.file)

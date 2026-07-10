@@ -117,3 +117,63 @@ description: the alpha guide.
     severity: 'warning',
   })
 })
+
+test('scanContentProject checks route links, multiple H1s, and locale/key parity', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/en.md',
+        source: `---
+slug: shared-en
+key: shared
+locale: en
+---
+
+# English
+
+# Another title
+
+[Known page](/shared-en)
+[Unknown page](/not-a-page)
+`,
+      },
+      {
+        path: '/content/fr.md',
+        source: `---
+slug: shared-fr
+key: shared
+locale: fr
+---
+
+# Français
+`,
+      },
+      {
+        path: '/content/es.md',
+        source: `---
+slug: shared-es
+locale: es
+---
+
+# Español
+`,
+      },
+    ],
+    registry(),
+  )
+
+  expect(scan.findings.map((finding) => finding.code)).toEqual(
+    expect.arrayContaining([
+      'CB_H1_MULTIPLE',
+      'CB_INTERNAL_URL_UNRESOLVED',
+      'CB_LOCALE_KEY_MISSING',
+      'CB_LOCALE_KEY_INCOMPLETE',
+    ]),
+  )
+  expect(
+    scan.findings.some(
+      (finding) =>
+        finding.code === 'CB_INTERNAL_URL_UNRESOLVED' && finding.message.includes('/shared-en'),
+    ),
+  ).toBe(false)
+})

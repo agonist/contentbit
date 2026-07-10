@@ -1,7 +1,7 @@
-import { existsSync, watch as watchDirectory, type FSWatcher } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { existsSync, watch as watchDirectory, type Dirent, type FSWatcher } from 'node:fs'
+import { readFile, readdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, join, sep } from 'node:path'
 
 import {
   DEFAULT_MIN_SECTION_WORDS,
@@ -59,6 +59,10 @@ export interface DoctorCommandInput extends LinkOptionValues {
 }
 
 export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<number> {
+  if (input.watch && input.json) {
+    io.stderr('doctor: --watch cannot be combined with --json.')
+    return 2
+  }
   const first = await doctorOnce(input, io)
   if (!input.watch) return first.exitCode
   return watchDoctor(input, io, first.files)
@@ -148,6 +152,8 @@ async function watchDoctor(
 ): Promise<number> {
   const directories = [...new Set(initialFiles.map(dirname))]
   const watchers: FSWatcher[] = []
+  const watchedDirectories = new Set<string>()
+  const fallbackRoots: string[] = []
   let pending: ReturnType<typeof setTimeout> | undefined
   let stopped = false
 
@@ -162,7 +168,10 @@ async function watchDoctor(
     pending = setTimeout(() => {
       pending = undefined
       void doctorOnce(input, io)
-        .then(() => io.stdout('\nWatching for changes…'))
+        .then(async () => {
+          await Promise.all(fallbackRoots.map((root) => addFallbackWatchers(root)))
+          io.stdout('\nWatching for changes…')
+        })
         .catch((error) =>
           io.stderr(
             `doctor: watch scan failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -170,12 +179,19 @@ async function watchDoctor(
         )
     }, 100)
   }
-  for (const directory of directories) {
-    const watcher = watchDirectory(directory, { persistent: true }, rerun)
-    watcher.on('error', (error) =>
-      io.stderr(`doctor: watch failed for ${directory}: ${error.message}`),
-    )
-    watchers.push(watcher)
+  const watchRoots = recursiveWatchRoots(directories)
+  for (const root of watchRoots) {
+    try {
+      watchers.push(createWatcher(root, true, rerun, io))
+      watchedDirectories.add(root)
+    } catch {
+      // Recursive watching is unavailable on some filesystems. Watch every
+      // directory below the content root and extend that set after each scan,
+      // so nested additions still trigger the shared Doctor pass.
+      fallbackRoots.push(root)
+      await addFallbackWatchers(root)
+      break
+    }
   }
 
   io.stdout('\nWatching for changes… Press Ctrl+C to stop.')
@@ -189,6 +205,57 @@ async function watchDoctor(
     process.once('SIGINT', stop)
     process.once('SIGTERM', stop)
   })
+
+  async function addFallbackWatchers(root: string): Promise<void> {
+    for (const directory of await nestedDirectories(root)) {
+      if (watchedDirectories.has(directory)) continue
+      watchers.push(createWatcher(directory, false, rerun, io))
+      watchedDirectories.add(directory)
+    }
+  }
+}
+
+function createWatcher(
+  directory: string,
+  recursive: boolean,
+  rerun: () => void,
+  io: Io,
+): FSWatcher {
+  const watcher = watchDirectory(directory, { persistent: true, recursive }, rerun)
+  watcher.on('error', (error) =>
+    io.stderr(`doctor: watch failed for ${directory}: ${error.message}`),
+  )
+  return watcher
+}
+
+function recursiveWatchRoots(directories: string[]): string[] {
+  if (directories.length <= 1) return directories
+  const parts = directories.map((directory) => directory.split(sep))
+  const first = parts[0]
+  const shared: string[] = []
+  for (let index = 0; index < first.length; index++) {
+    if (parts.some((items) => items[index] !== first[index])) break
+    shared.push(first[index])
+  }
+  const root = shared.join(sep) || sep
+  return [root]
+}
+
+async function nestedDirectories(root: string): Promise<string[]> {
+  const directories = [root]
+  for (let index = 0; index < directories.length; index++) {
+    let entries: Dirent[]
+    try {
+      entries = await readdir(directories[index], { withFileTypes: true })
+    } catch {
+      continue
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.isSymbolicLink()) continue
+      directories.push(join(directories[index], entry.name))
+    }
+  }
+  return directories
 }
 
 function parseMinSectionWords(value: string | undefined): number | null {

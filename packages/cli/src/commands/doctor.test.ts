@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
 
+import { doctorCommand } from './doctor'
 import { run } from '../run'
 import { fakeIo } from '../run.test'
 
@@ -23,6 +24,15 @@ async function withCwd<T>(cwd: string, fn: () => Promise<T>): Promise<T> {
     return await fn()
   } finally {
     process.chdir(previous)
+  }
+}
+
+async function waitFor(check: () => boolean, timeoutMs = 2_000): Promise<void> {
+  const started = Date.now()
+  while (!check()) {
+    if (Date.now() - started > timeoutMs)
+      throw new Error('Timed out waiting for Doctor watch output.')
+    await new Promise((resolve) => setTimeout(resolve, 25))
   }
 }
 
@@ -54,6 +64,28 @@ test('clean content exits 0 with a healthy text report', async () => {
   expect(out).toMatch(/Warnings\s+0/)
   expect(out).toMatch(/Suggestions\s+0/)
   expect(out).toContain('No findings')
+})
+
+test('--watch rejects JSON output because watch output is interactive', async () => {
+  const io = fakeIo()
+  expect(await run(['doctor', '--watch', '--json'], io)).toBe(2)
+  expect(io.err.join('\n')).toContain('doctor: --watch cannot be combined with --json.')
+})
+
+test('watch re-scans a newly added nested content file and shuts down cleanly', async () => {
+  const dir = await fixture({ 'content/current.md': '# Current\n' })
+  const io = fakeIo()
+  const watching = doctorCommand({ globs: [join(dir, 'content/**/*.md')], watch: true }, io)
+
+  try {
+    await waitFor(() => io.out.some((line) => line.includes('Press Ctrl+C to stop.')))
+    await mkdir(join(dir, 'content/new-section'), { recursive: true })
+    await writeFile(join(dir, 'content/new-section/new.md'), '# New content\n', 'utf8')
+    await waitFor(() => io.out.filter((line) => line.includes('contentbit doctor')).length >= 2)
+  } finally {
+    process.emit('SIGINT')
+    await watching
+  }
 })
 
 test('invalid blocks are reported as validation errors', async () => {

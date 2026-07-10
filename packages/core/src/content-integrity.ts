@@ -1,4 +1,5 @@
 import type { DocumentStats } from './analyze.js'
+import type { LinkResolverOptions } from './links.js'
 
 export interface ContentIntegrityFile {
   path: string
@@ -14,8 +15,11 @@ export interface ContentIntegrityFinding {
     | 'CB_HEADING_LEVEL_SKIPPED'
     | 'CB_TITLE_DUPLICATE'
     | 'CB_DESCRIPTION_DUPLICATE'
+    | 'CB_LOCALE_KEY_MISSING'
+    | 'CB_LOCALE_KEY_INCOMPLETE'
     | 'CB_MARKDOWN_LINK_UNRESOLVED'
     | 'CB_MARKDOWN_ANCHOR_UNRESOLVED'
+    | 'CB_INTERNAL_URL_UNRESOLVED'
   file: string
   line: number
   column: number
@@ -29,9 +33,13 @@ export interface ContentIntegrityFinding {
  * while Markdown links are checked only when they name a local Markdown file
  * or an in-document anchor. Site-router URLs remain the host app's concern.
  */
-export function scanContentIntegrity(files: ContentIntegrityFile[]): ContentIntegrityFinding[] {
+export function scanContentIntegrity(
+  files: ContentIntegrityFile[],
+  options: LinkResolverOptions = {},
+): ContentIntegrityFinding[] {
   const findings: ContentIntegrityFinding[] = []
   const byPath = new Map(files.map((file) => [normalizePath(file.path), file]))
+  const byRoute = routeIndex(files, options)
 
   const titles = new Map<string, string>()
   const descriptions = new Map<string, string>()
@@ -40,21 +48,25 @@ export function scanContentIntegrity(files: ContentIntegrityFile[]): ContentInte
     addDuplicateFinding(findings, descriptions, file, 'description', 'CB_DESCRIPTION_DUPLICATE')
     findings.push(...documentStructureFindings(file))
   }
+  findings.push(...localeKeyFindings(files, options))
 
   for (const file of files) {
     for (const link of file.stats.links.items) {
-      const target = resolveLocalMarkdownLink(link.url, file.path)
+      const target = resolveContentLink(link.url, file.path, byRoute)
       if (!target) continue
       const destination = byPath.get(target.path)
       if (!destination) {
+        const code =
+          target.kind === 'route' ? 'CB_INTERNAL_URL_UNRESOLVED' : 'CB_MARKDOWN_LINK_UNRESOLVED'
+        const label = target.kind === 'route' ? 'Internal URL' : 'Markdown link'
         findings.push({
           severity: 'warning',
-          code: 'CB_MARKDOWN_LINK_UNRESOLVED',
+          code,
           file: file.path,
           line: link.line,
           column: 1,
-          message: `Markdown link "${link.url}" does not match a scanned content file`,
-          hint: 'Use a relative .md or .mdx path that exists in the content set, or configure the host router separately.',
+          message: `${label} "${link.url}" does not match a scanned content page`,
+          hint: 'Use a known page slug, a relative .md/.mdx path, or update the link target.',
         })
         continue
       }
@@ -72,6 +84,58 @@ export function scanContentIntegrity(files: ContentIntegrityFile[]): ContentInte
     }
   }
 
+  return findings
+}
+
+function localeKeyFindings(
+  files: ContentIntegrityFile[],
+  options: LinkResolverOptions,
+): ContentIntegrityFinding[] {
+  const localeField = options.localeField ?? 'locale'
+  const keyField = options.keyField ?? 'key'
+  const slugField = options.slugField ?? 'slug'
+  const locales = new Set(
+    files
+      .map((file) => normalizedFrontmatterString(file.frontmatter[localeField]))
+      .filter(isDefined),
+  )
+  if (locales.size < 2) return []
+
+  const findings: ContentIntegrityFinding[] = []
+  const coverage = new Map<string, { file: ContentIntegrityFile; locales: Set<string> }>()
+  for (const file of files) {
+    const locale = normalizedFrontmatterString(file.frontmatter[localeField])
+    if (!locale || !normalizedFrontmatterString(file.frontmatter[slugField])) continue
+    const key = normalizedFrontmatterString(file.frontmatter[keyField])
+    if (!key) {
+      findings.push({
+        severity: 'warning',
+        code: 'CB_LOCALE_KEY_MISSING',
+        file: file.path,
+        line: 1,
+        column: 1,
+        message: `localized page for "${locale}" is missing a stable ${keyField}`,
+        hint: `Add ${keyField} so translations can share a stable identity across locales.`,
+      })
+      continue
+    }
+    const entry = coverage.get(key) ?? { file, locales: new Set<string>() }
+    entry.locales.add(locale)
+    coverage.set(key, entry)
+  }
+  for (const [key, entry] of coverage) {
+    if (entry.locales.size === locales.size) continue
+    const missing = [...locales].filter((locale) => !entry.locales.has(locale)).sort()
+    findings.push({
+      severity: 'warning',
+      code: 'CB_LOCALE_KEY_INCOMPLETE',
+      file: entry.file.path,
+      line: 1,
+      column: 1,
+      message: `key "${key}" is missing locale variant(s): ${missing.join(', ')}`,
+      hint: 'Add the missing translations or give intentionally locale-specific pages a distinct key.',
+    })
+  }
   return findings
 }
 
@@ -145,16 +209,12 @@ function documentStructureFindings(file: ContentIntegrityFile): ContentIntegrity
   return findings
 }
 
-function resolveLocalMarkdownLink(
+function resolveContentLink(
   url: string,
   sourcePath: string,
-): { path: string; anchor?: string } | undefined {
-  if (
-    url === '' ||
-    /^[a-z][a-z\d+.-]*:/i.test(url) ||
-    url.startsWith('//') ||
-    url.startsWith('/')
-  ) {
+  byRoute: Map<string, ContentIntegrityFile>,
+): { path: string; anchor?: string; kind: 'markdown' | 'route' } | undefined {
+  if (url === '' || /^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//')) {
     return undefined
   }
   const hash = url.indexOf('#')
@@ -162,16 +222,63 @@ function resolveLocalMarkdownLink(
   const rawAnchor = hash === -1 ? undefined : url.slice(hash + 1).split('?', 1)[0]
   const anchor = rawAnchor ? decodeUriComponent(rawAnchor) : undefined
 
-  if (rawPath === '') return { path: normalizePath(sourcePath), ...(anchor ? { anchor } : {}) }
-  if (!isRelativeMarkdownPath(rawPath)) return undefined
+  if (rawPath === '') {
+    return { path: normalizePath(sourcePath), ...(anchor ? { anchor } : {}), kind: 'markdown' }
+  }
+  if (isRelativeMarkdownPath(rawPath)) {
+    return {
+      path: joinPath(dirname(sourcePath), rawPath),
+      ...(anchor ? { anchor } : {}),
+      kind: 'markdown',
+    }
+  }
+  if (hasFileExtension(rawPath)) return undefined
+
+  const destination = routeTarget(rawPath, byRoute)
   return {
-    path: joinPath(dirname(sourcePath), rawPath),
+    path: destination?.path ?? `\0${normalizeRoute(rawPath)}`,
     ...(anchor ? { anchor } : {}),
+    kind: 'route',
   }
 }
 
 function isRelativeMarkdownPath(value: string): boolean {
   return value.startsWith('./') || value.startsWith('../') || /\.mdx?$/i.test(value)
+}
+
+function hasFileExtension(value: string): boolean {
+  return /\/[^/]+\.[a-z\d]+$/i.test(`/${value}`)
+}
+
+function routeIndex(
+  files: ContentIntegrityFile[],
+  options: LinkResolverOptions,
+): Map<string, ContentIntegrityFile> {
+  const slugField = options.slugField ?? 'slug'
+  const keyField = options.keyField ?? 'key'
+  const out = new Map<string, ContentIntegrityFile>()
+  for (const file of files) {
+    for (const field of [slugField, keyField]) {
+      const value = normalizedFrontmatterString(file.frontmatter[field])
+      if (value) out.set(normalizeRoute(value), file)
+    }
+  }
+  return out
+}
+
+function routeTarget(
+  rawPath: string,
+  byRoute: Map<string, ContentIntegrityFile>,
+): ContentIntegrityFile | undefined {
+  const route = normalizeRoute(rawPath)
+  if (!route) return undefined
+  return byRoute.get(route) ?? byRoute.get(route.slice(route.lastIndexOf('/') + 1))
+}
+
+function normalizeRoute(value: string): string {
+  return decodeUriComponent(value)
+    .replace(/^\.\//, '')
+    .replace(/^\/+|\/+$/g, '')
 }
 
 function headingAnchors(stats: DocumentStats): Set<string> {
@@ -231,4 +338,8 @@ function decodeUriComponent(value: string): string {
   } catch {
     return value
   }
+}
+
+function isDefined<T>(value: T | undefined): value is T {
+  return value !== undefined
 }
