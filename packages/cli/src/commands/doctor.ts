@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, watch as watchDirectory, type FSWatcher } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -55,14 +55,26 @@ export interface DoctorCommandInput extends LinkOptionValues {
   minSectionWords?: string
   seoConfig?: string
   noSeo?: boolean
+  watch?: boolean
 }
 
 export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<number> {
+  const first = await doctorOnce(input, io)
+  if (!input.watch) return first.exitCode
+  return watchDoctor(input, io, first.files)
+}
+
+interface DoctorRun {
+  exitCode: number
+  files: string[]
+}
+
+async function doctorOnce(input: DoctorCommandInput, io: Io): Promise<DoctorRun> {
   const defaults = await discoverContentCommandDefaults('doctor', input.globs)
   const minSectionWords = parseMinSectionWords(input.minSectionWords)
   if (minSectionWords === null) {
     io.stderr('doctor: --min-section-words must be a non-negative integer.')
-    return 2
+    return { exitCode: 2, files: [] }
   }
 
   const includeGenericBlocks = !(input.noGenericBlocks || defaults.noGenericBlocks)
@@ -118,12 +130,65 @@ export async function doctorCommand(input: DoctorCommandInput, io: Io): Promise<
       ),
     )
 
-  if (report.summary.errors > 0) return 1
-  if (report.summary.warnings > 0 && input.strictWarnings) return 1
+  if (report.summary.errors > 0) return { exitCode: 1, files }
+  if (report.summary.warnings > 0 && input.strictWarnings) return { exitCode: 1, files }
   if (input.strictSeo && report.seo?.findings.some((finding) => finding.severity === 'warning')) {
-    return 1
+    return { exitCode: 1, files }
   }
-  return 0
+  return { exitCode: 0, files }
+}
+
+/** Keep a local Doctor session in sync with the directories that supplied its
+ * initial content files. The next scan resolves the glob again, so additions
+ * and deletions in an already-watched directory are picked up too. */
+async function watchDoctor(
+  input: DoctorCommandInput,
+  io: Io,
+  initialFiles: string[],
+): Promise<number> {
+  const directories = [...new Set(initialFiles.map(dirname))]
+  const watchers: FSWatcher[] = []
+  let pending: ReturnType<typeof setTimeout> | undefined
+  let stopped = false
+
+  const close = () => {
+    if (stopped) return
+    stopped = true
+    if (pending) clearTimeout(pending)
+    for (const watcher of watchers) watcher.close()
+  }
+  const rerun = () => {
+    if (pending || stopped) return
+    pending = setTimeout(() => {
+      pending = undefined
+      void doctorOnce(input, io)
+        .then(() => io.stdout('\nWatching for changes…'))
+        .catch((error) =>
+          io.stderr(
+            `doctor: watch scan failed: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        )
+    }, 100)
+  }
+  for (const directory of directories) {
+    const watcher = watchDirectory(directory, { persistent: true }, rerun)
+    watcher.on('error', (error) =>
+      io.stderr(`doctor: watch failed for ${directory}: ${error.message}`),
+    )
+    watchers.push(watcher)
+  }
+
+  io.stdout('\nWatching for changes… Press Ctrl+C to stop.')
+  return new Promise((resolve) => {
+    const stop = () => {
+      close()
+      process.off('SIGINT', stop)
+      process.off('SIGTERM', stop)
+      resolve(0)
+    }
+    process.once('SIGINT', stop)
+    process.once('SIGTERM', stop)
+  })
 }
 
 function parseMinSectionWords(value: string | undefined): number | null {

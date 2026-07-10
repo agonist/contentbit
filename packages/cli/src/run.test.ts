@@ -63,6 +63,8 @@ test('subcommand help explains options without requiring the website', async () 
   expect(help).toContain('Load custom block definitions')
   expect(help).toContain('--strict-seo')
   expect(help).toContain('Treat required SEO findings as errors')
+  expect(help).toContain('--watch')
+  expect(help).toContain('Re-run when a scanned content directory changes')
 })
 
 test('enumerated options reject unknown values', async () => {

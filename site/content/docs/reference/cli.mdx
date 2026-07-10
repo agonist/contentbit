@@ -38,6 +38,7 @@ contentbit <command> [options]
 | Command | Purpose |
 | --- | --- |
 | `init` | Scaffold contentbit into a project. |
+| `adopt` | Inspect an existing Markdown library and propose read-only setup. |
 | `validate` | Check block syntax, block schemas, and internal links. |
 | `brief` | Print an agent-ready SEO brief. |
 | `doctor` | Print a ranked content repair plan. |
@@ -96,6 +97,28 @@ Exit codes:
 - `1` when warnings are found and `--strict-warnings` is passed.
 - `2` for command input problems such as missing or unmatched globs.
 
+## adopt
+
+Inspect an established Markdown library and print reviewable configuration
+proposals. This command is always read-only: it never creates, changes, or
+renames files.
+
+```bash
+contentbit adopt [globs...] [--json]
+```
+
+Without a glob, it scans `content/**/*.{md,mdx}`. The report counts common
+frontmatter fields, infers a locale-aware link strategy when appropriate,
+shows stable-key locale coverage, and includes a proposed `contentbit.config.ts`.
+Projects with observed page `type` values also receive an empty SEO contract
+starter to adapt deliberately. See [Adopt an existing content library](/docs/guides/adoption).
+
+| Option | Meaning |
+| --- | --- |
+| `--registry <module>` | Load custom block definitions while scanning. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--json` | Print stable machine-readable JSON. |
+
 ## brief
 
 Print a page brief from `contentbit.seo.config.ts`, existing content, or both.
@@ -125,7 +148,7 @@ Print a ranked repair plan across validation, internal links, document stats,
 image alt text, and optional SEO contracts.
 
 ```bash
-contentbit doctor [globs...] [--registry <module.ts>] [--json]
+contentbit doctor [globs...] [--watch] [--registry <module.ts>] [--json]
 ```
 
 Options:
@@ -136,6 +159,7 @@ Options:
 | `--no-generic-blocks` | Do not load the generic block pack first. |
 | `--strict-warnings` | Exit 1 when warnings are present. |
 | `--strict-seo` | Treat required SEO contract findings as build failures. |
+| `--watch` | Rerun when a scanned content directory changes. |
 | `--json` | Print stable JSON for agents and CI. |
 | `--min-section-words <n>` | Change the thin-section threshold. |
 | `--seo-config <module>` | Use a non-default SEO config file. |

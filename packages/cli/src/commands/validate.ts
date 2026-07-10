@@ -30,7 +30,7 @@ export async function validateCommand(input: ValidateCommandInput, io: Io): Prom
     registry: input.registry ?? defaults.registry,
     includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
     linkOptions,
-    scan: { includeStatsFindings: false },
+    scan: { includeStatsFindings: false, includeIntegrityFindings: false },
   })
 
   let errors = 0

@@ -3,7 +3,7 @@ import type { BlockComponent } from '@contentbit/react'
 
 export type StudioSeverity = 'error' | 'warning' | 'info'
 export type StudioStatus = 'error' | 'warning' | 'suggestion' | 'healthy'
-export type StudioFindingSource = 'validation' | 'links' | 'stats' | 'seo'
+export type StudioFindingSource = 'validation' | 'links' | 'stats' | 'integrity' | 'seo'
 
 export interface StudioFinding {
   severity: StudioSeverity

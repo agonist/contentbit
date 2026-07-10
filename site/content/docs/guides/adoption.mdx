@@ -1,0 +1,49 @@
+---
+title: Adopt an existing content library
+description: Inspect an existing Markdown library, find integrity issues, and generate reviewable Contentbit setup proposals without modifying files.
+---
+
+Use `contentbit adopt` before adding Contentbit to an established project. It
+scans Markdown, reports the current health findings, infers a link-resolution
+strategy, shows locale coverage for stable page keys, and prints setup files to
+review. It never writes source files or configuration.
+
+```bash
+contentbit adopt "content/**/*.{md,mdx}"
+```
+
+With no glob, adoption looks for `content/**/*.{md,mdx}` from the current
+directory. Pass explicit globs when content lives elsewhere:
+
+```bash
+contentbit adopt "docs/**/*.md" "blog/**/*.mdx" --json
+```
+
+## What adoption infers
+
+- frontmatter coverage for `slug`, `key`, `locale`, titles, descriptions, and
+  declared `linksTo` relationships
+- a link strategy: global slugs, same-locale slugs, or locale-aware stable keys
+- locale coverage for every key that has localized pages
+- observed `type` values, as a starting point for future SEO page contracts
+
+The terminal report includes a suggested `contentbit.config.ts`. When pages use
+`type`, it also includes a deliberately empty `contentbit.seo.config.ts`
+starter. It does not invent section or block requirements: decide those
+contracts with the people who own the content.
+
+## Review the integrity report
+
+Adoption uses the same scan as Doctor and Studio. Before accepting the config
+proposal, review duplicate titles and descriptions, missing or multiple H1s,
+heading-level jumps, and relative Markdown links or heading anchors that do not
+resolve within the scanned content set.
+
+After you create and adapt the proposed config, run the normal daily loop:
+
+```bash
+contentbit doctor --watch
+```
+
+The watch session reruns Doctor after changes in the directories that supplied
+the initial scan. Use ordinary `contentbit doctor --strict-warnings` in CI.
