@@ -30,6 +30,7 @@ Usage:
 
 Commands:
   init          scaffold Content Blocks into a project
+  adopt         inspect an existing Markdown library without changing it
   validate      check Markdown blocks and internal links
   brief         print an agent-ready SEO brief
   doctor        inspect content health and repair suggestions
@@ -43,12 +44,13 @@ Commands:
 
 Setup:
   init [-t react|markdown|astro] [--md ...] [-y] [--seo] [--no-install] [--no-page] [--no-agents]
+  adopt [globs...] [--dry-run] [--registry <module.ts>] [--no-generic-blocks] [--json]
   agents [--claude] [--check|--dry-run] [--no-agents-md]
 
 Common:
   validate [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
   brief <key-or-slug> [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--json]
-  doctor [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
+  doctor [globs...] [--watch] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
   studio [globs...] [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
   stats <globs...> [--registry <module.ts>] [--no-generic-blocks] [--no-validate]
   render <file> [--target markdown] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
@@ -155,6 +157,31 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
       )
     })
 
+  program
+    .command('adopt')
+    .description('inspect an existing Markdown library without changing it')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to content/**/*.{md,mdx}')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--dry-run', 'Explicitly confirm the read-only adoption report')
+    .option('--json', 'Print stable machine-readable JSON')
+    .action(async (globs: string[], rawOptions: Command | OptionValues) => {
+      const options = optionsFrom(rawOptions)
+      const { adoptCommand } = await import('./commands/adopt.js')
+      setExitCode(
+        await adoptCommand(
+          {
+            globs,
+            registry: options.registry,
+            noGenericBlocks: options.genericBlocks === false,
+            dryRun: Boolean(options.dryRun),
+            json: Boolean(options.json),
+          },
+          io,
+        ),
+      )
+    })
+
   const validate = program
     .command('validate')
     .description('check Markdown blocks and internal links')
@@ -188,6 +215,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
     .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
     .option('--strict-warnings', 'Exit 1 when validation warnings are present')
     .option('--strict-seo', 'Treat required SEO findings as errors')
+    .option('--watch', 'Re-run when a scanned content directory changes')
     .option('--json', 'Print stable machine-readable JSON')
     .option('--min-section-words <n>', 'Set the thin-section suggestion threshold')
     .option('--seo-config <module>', 'Load SEO contracts from this module')
@@ -204,6 +232,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           noGenericBlocks: options.genericBlocks === false,
           strictWarnings: Boolean(options.strictWarnings),
           strictSeo: Boolean(options.strictSeo),
+          watch: Boolean(options.watch),
           json: Boolean(options.json),
           minSectionWords: options.minSectionWords,
           seoConfig: options.seoConfig,

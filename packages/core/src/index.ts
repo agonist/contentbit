@@ -28,6 +28,11 @@ export {
   type ScanContentProjectOptions,
 } from './project-scan.js'
 export {
+  scanContentIntegrity,
+  type ContentIntegrityFile,
+  type ContentIntegrityFinding,
+} from './content-integrity.js'
+export {
   contentPageIdentity,
   keywordsValue,
   normalizeContentPageFrontmatter,

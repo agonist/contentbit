@@ -63,3 +63,117 @@ test('scanContentProject can omit stats findings for validation-only adapters', 
   expect(scan.findings).toEqual([])
   expect(scan.files[0].stats.outline[0]).toMatchObject({ text: 'Tiny' })
 })
+
+test('scanContentProject finds page-integrity problems across documents', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/alpha.md',
+        source: `---
+slug: alpha
+title: Alpha guide
+description: The alpha guide.
+---
+
+# Alpha
+
+### Skipped level
+
+[Missing page](./missing.md)
+[Missing section](#does-not-exist)
+`,
+      },
+      {
+        path: '/content/beta.md',
+        source: `---
+slug: beta
+title: Alpha Guide
+description: the alpha guide.
+---
+
+## Beta
+
+[Missing target section](./alpha.md#also-missing)
+`,
+      },
+    ],
+    registry(),
+  )
+
+  expect(scan.summary).toEqual({ errors: 0, warnings: 9, suggestions: 3 })
+  expect(scan.findings.map((finding) => finding.code)).toEqual(
+    expect.arrayContaining([
+      'CB_HEADING_LEVEL_SKIPPED',
+      'CB_MARKDOWN_LINK_UNRESOLVED',
+      'CB_MARKDOWN_ANCHOR_UNRESOLVED',
+      'CB_TITLE_DUPLICATE',
+      'CB_DESCRIPTION_DUPLICATE',
+      'CB_H1_MISSING',
+    ]),
+  )
+  expect(scan.findings.find((finding) => finding.code === 'CB_TITLE_DUPLICATE')).toMatchObject({
+    file: '/content/beta.md',
+    line: 1,
+    severity: 'warning',
+  })
+})
+
+test('scanContentProject checks route links, multiple H1s, and locale/key parity', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/en.md',
+        source: `---
+slug: shared-en
+key: shared
+locale: en
+---
+
+# English
+
+# Another title
+
+[Known page](/shared-en)
+[Unknown page](/not-a-page)
+`,
+      },
+      {
+        path: '/content/fr.md',
+        source: `---
+slug: shared-fr
+key: shared
+locale: fr
+---
+
+# Français
+`,
+      },
+      {
+        path: '/content/es.md',
+        source: `---
+slug: shared-es
+locale: es
+---
+
+# Español
+`,
+      },
+    ],
+    registry(),
+  )
+
+  expect(scan.findings.map((finding) => finding.code)).toEqual(
+    expect.arrayContaining([
+      'CB_H1_MULTIPLE',
+      'CB_INTERNAL_URL_UNRESOLVED',
+      'CB_LOCALE_KEY_MISSING',
+      'CB_LOCALE_KEY_INCOMPLETE',
+    ]),
+  )
+  expect(
+    scan.findings.some(
+      (finding) =>
+        finding.code === 'CB_INTERNAL_URL_UNRESOLVED' && finding.message.includes('/shared-en'),
+    ),
+  ).toBe(false)
+})

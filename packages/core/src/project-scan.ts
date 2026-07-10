@@ -10,8 +10,9 @@ import { extractFrontmatter } from './frontmatter.js'
 import { createLinkGraphView, type LinkGraphSummary } from './link-graph.js'
 import { buildLinkIndex, validateLinks } from './links.js'
 import { evaluateSeoProject, type SeoProjectEvaluation } from './seo.js'
+import { scanContentIntegrity } from './content-integrity.js'
 
-export type ContentProjectFindingSource = 'validation' | 'links' | 'stats' | 'seo'
+export type ContentProjectFindingSource = 'validation' | 'links' | 'stats' | 'integrity' | 'seo'
 
 export interface ContentProjectSourceFile {
   path: string
@@ -61,6 +62,8 @@ export interface ScanContentProjectOptions {
   linkOptions?: LinkResolverOptions
   minSectionWords?: number
   includeStatsFindings?: boolean
+  /** Include cross-document page-quality findings. Defaults to true for Doctor and Studio. */
+  includeIntegrityFindings?: boolean
   seoConfig?: unknown
   seoConfigPath?: string
 }
@@ -74,6 +77,7 @@ export function scanContentProject(
   options: ScanContentProjectOptions = {},
 ): ContentProjectScan {
   const includeStatsFindings = options.includeStatsFindings ?? true
+  const includeIntegrityFindings = options.includeIntegrityFindings ?? true
   const minSectionWords = options.minSectionWords ?? DEFAULT_MIN_SECTION_WORDS
   const scannedFiles: ContentProjectFileScan[] = []
   const findings: ContentProjectFinding[] = []
@@ -117,6 +121,15 @@ export function scanContentProject(
     }
     linkIndex = buildLinkIndex(linkInputs, options.linkOptions)
     linkGraph = createLinkGraphView(linkIndex, linkDiagnostics).summary
+  }
+
+  if (includeIntegrityFindings) {
+    for (const integrity of scanContentIntegrity(scannedFiles, options.linkOptions)) {
+      const finding: ContentProjectFinding = { source: 'integrity', ...integrity }
+      findings.push(finding)
+      const scanned = scannedFiles.find((item) => item.path === finding.file)
+      if (scanned) scanned.findings.push(finding)
+    }
   }
 
   const seo = options.seoConfig

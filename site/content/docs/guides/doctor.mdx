@@ -36,12 +36,28 @@ Repair plan:
 - **Block-less long documents** with at least 250 prose words and no structured
   blocks.
 - **Missing image alt text** from Markdown image syntax.
+- **Content integrity**: duplicate frontmatter titles or descriptions, missing
+  or multiple H1s on slugged pages, heading-level jumps, and unresolved local
+  route/Markdown links or heading anchors. Multilingual libraries also flag
+  missing stable keys and incomplete locale variants for a key.
 - **SEO contract findings** when `contentbit.seo.config.ts` exists or
   `--seo-config` is passed.
 
 `doctor` is read-only. It does not write `.contentbit/link-index.json`, and it
 does not run `links --fix`. If aliases are present and the link graph has no
 errors, the text report suggests the fix command explicitly.
+
+## Watch while editing
+
+Run Doctor continuously during an edit session:
+
+```bash
+contentbit doctor --watch
+```
+
+It prints the first report immediately, then reruns after a change in a
+directory that supplied an initially matched content file. Watch mode is local
+feedback only; use the ordinary command with strict flags for CI.
 
 ## JSON for agents and CI
 
