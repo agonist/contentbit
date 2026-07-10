@@ -1,5 +1,23 @@
 # @contentbit/astro
 
+## 0.7.0
+
+### Minor Changes
+
+- 71b5fac: Deepen the project and rendering interfaces: add truthful processed/validated
+  document types with strict compile helpers, infer block props and data in React
+  renderers, discover shared settings from `contentbit.config.ts`, improve CLI
+  help and option validation, and install Studio separately from the lightweight
+  base CLI.
+
+### Patch Changes
+
+- Updated dependencies [71b5fac]
+- Updated dependencies [6fb2631]
+- Updated dependencies [62747b5]
+- Updated dependencies [6c7ba9f]
+  - @contentbit/core@0.7.0
+
 ## 0.6.1
 
 ### Patch Changes

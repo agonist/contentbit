@@ -1,5 +1,23 @@
 # @contentbit/core
 
+## 0.7.0
+
+### Minor Changes
+
+- 71b5fac: Deepen the project and rendering interfaces: add truthful processed/validated
+  document types with strict compile helpers, infer block props and data in React
+  renderers, discover shared settings from `contentbit.config.ts`, improve CLI
+  help and option validation, and install Studio separately from the lightweight
+  base CLI.
+- 6c7ba9f: Add cross-document content-integrity findings, a read-only `contentbit adopt`
+  workflow for existing Markdown libraries, and `contentbit doctor --watch` for
+  local editing feedback.
+
+### Patch Changes
+
+- 6fb2631: Improve CLI daily-use ergonomics: no-glob commands can reuse package scripts, prop diagnostics point at the prop key, and `contentbit agents --check` reports integration status without writing files.
+- 62747b5: Flag unknown block props with did-you-mean hints, improve agent install output, quote doctor footer globs, and report stale installed Claude Code skills.
+
 ## 0.6.1
 
 ## 0.6.0
