@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://contentbit.dev">
-    <img src="./site/public/readme-flow.svg" alt="contentbit turns LLM-written Markdown into validated, rendered content" width="760" />
+    <img src="./site/public/readme-flow.svg" alt="contentbit turns page contracts into agent briefs and validated programmatic SEO content" width="760" />
   </a>
 </p>
 
@@ -14,6 +14,8 @@
 </p>
 
 <p align="center">
+  <a href="https://contentbit.dev/programmatic-seo">Programmatic SEO</a>
+  ·
   <a href="https://contentbit.dev/docs">Docs</a>
   ·
   <a href="https://contentbit.dev/playground">Playground</a>
@@ -23,44 +25,45 @@
 
 # contentbit
 
-**Structured Markdown components for LLM-written content.**
+**Open-source programmatic SEO toolkit for coding agents.**
 
-Give an LLM normal Markdown plus a small set of typed directive blocks.
-contentbit validates those blocks before render, generates the authoring guide
-your agent reads, and renders the same document in React, Astro, or plain
-Markdown.
+Define reusable page families, brief writers and agents before they draft, and
+validate content structure and internal links before publishing. Content stays
+portable Markdown and renders in React, Astro, or plain Markdown.
 
-- **Validate before render** with `file:line:col` diagnostics and fix hints.
-- **Keep prompts in sync** by generating LLM instructions from the same block
-  registry that validates content.
-- **Plan SEO structure** with reusable page contracts, `doctor` findings, and
-  agent-ready briefs for existing or planned pages.
-- **Render anywhere** with framework adapters or a Markdown
-  fallback for search, email, and AI context.
+- **Model page families** with required frontmatter, sections, blocks, and links.
+- **Brief every page** before its Markdown file exists.
+- **Give agents live rules** from the same contracts and block registry the CLI checks.
+- **Enforce quality** with ranked Doctor findings and strict CI exit codes.
+- **Publish anywhere** through React, Astro, or plain Markdown adapters.
 
 ## Quick Start
 
 ```bash
-npx contentbit@latest init
+npx contentbit@latest init --seo
 ```
 
 `init` detects your framework and package manager, installs the right packages,
-creates starter content, wires a rendered `/example` page when possible, adds
-validation scripts, generates an LLM guide, and installs agent instructions.
+creates the project and SEO configs, wires starter content and a rendered
+`/example` page when possible, adds quality scripts, generates the live LLM
+guide, and installs agent instructions.
 
-Then use the generated scripts:
+Plan a page, give the brief to a writer or agent, and run the publishing gate:
 
 ```bash
-pnpm run studio          # browse previews, links, keywords, and diagnostics
-pnpm run content:doctor  # ranked repair plan
-pnpm run content:check   # validate content with the generated registry
+contentbit brief <key-or-slug>       # agent-ready writing contract
+contentbit doctor --strict-seo       # content, structure, and link gate
+pnpm run studio                      # preview briefs, pages, links, and findings
 ```
 
-Ask your LLM agent for content:
+Or ask the installed coding-agent integration to run the loop:
 
 ```text
-write a blog post about our new dark mode
+write the planned <page-key> page from its contentbit brief
 ```
+
+Only need structured Markdown and rendering? Run `contentbit init` without
+`--seo`.
 
 Prefer the pieces? Install the core packages and a renderer:
 
@@ -70,8 +73,42 @@ pnpm add @contentbit/core @contentbit/blocks @contentbit/react
 
 ## Why Contentbit
 
-Markdown is still the right authoring format for a lot of teams. Free-form LLM
-Markdown is just too easy to ship broken.
+Programmatic content drifts when the plan lives in a spreadsheet, the writing
+rules live in a prompt, and the quality checks happen during review. Contentbit
+puts those rules in the codebase so humans, agents, Studio, and CI use the same
+contract.
+
+```ts
+import { defineSeoConfig } from '@contentbit/core'
+
+export default defineSeoConfig({
+  pageTypes: {
+    alternative: {
+      requiredSections: ['Overview', 'Comparison', 'FAQ'],
+      requiredBlocks: ['comparison'],
+      recommendedBlocks: ['faq'],
+      minOutgoingLinks: 2,
+    },
+  },
+  pages: {
+    'semrush-alternatives': {
+      type: 'alternative',
+      slug: 'semrush-alternatives',
+      intent: 'commercial comparison',
+      keywords: { primary: 'semrush alternatives' },
+      linksTo: ['seo-tools-comparison'],
+    },
+  },
+})
+```
+
+The page can be briefed before it exists. Once written, Doctor checks the live
+file against the plan and reports exactly what needs repair.
+
+## Structured Markdown underneath
+
+Markdown remains the authoring format. Typed directive blocks add structure
+where ordinary prose is not enough:
 
 ```md
 :::comparison{left="Basic" right="Pro"}
@@ -89,17 +126,18 @@ article.md:12:1 error CB_PROPS_INVALID
 hint: Did you mean type="warning"?
 ```
 
-The same registry also writes the authoring rules your LLM sees, so custom
-blocks, validation, docs, and prompts stay together.
+The same registry writes the authoring rules the agent sees, so custom blocks,
+validation, docs, and prompts stay together.
 
-## LLM Loop
+## Agent Loop
 
-After `init`, your agent has a short, repeatable writing loop:
+After `init --seo`, your agent has a short, repeatable writing loop:
 
 1. Read `contentbit.config.ts` for the content glob, registry, links, and SEO setup.
-2. Run `contentbit instructions --audience llm` for the live block guide.
-3. Write plain Markdown, using blocks only when the guide says they fit.
-4. Run `contentbit validate ...` and fix every diagnostic until it exits 0.
+2. Run `contentbit brief <key-or-slug>` for the target page contract.
+3. Run `contentbit instructions --audience llm` for the live block guide.
+4. Write plain Markdown, using blocks only when the guide says they fit.
+5. Run `contentbit doctor --strict-seo` and repair findings until it exits 0.
 
 Refresh or add the integration at any time:
 
@@ -118,7 +156,7 @@ custom blocks are picked up automatically. See the
 | `content/example.md`  | Starter content with built-in blocks and one custom block          |
 | `blocks/registry.ts`  | Shared block schemas for validation, renderers, docs, and agents   |
 | `contentbit.config.ts` | Shared content glob, registry, links, and SEO command defaults    |
-| `contentbit.seo.config.ts` | Optional SEO contracts for briefs and doctor checks          |
+| `contentbit.seo.config.ts` | Page-family contracts and plans for existing or future pages |
 | `contentbit-guide.md` | Generated authoring rules for LLMs                                 |
 | `AGENTS.md`           | Compact instructions for Codex, Cursor, Copilot, and other agents  |
 | `.claude/skills/*`    | Claude Code author/audit skills when `.claude` is present          |
@@ -164,7 +202,7 @@ resolved links and backlinks. `contentbit validate` runs link checks when files
 declare slugs, and `contentbit links --fix` can rewrite stale alias references.
 Read the [internal linking guide](https://contentbit.dev/docs/guides/internal-linking).
 
-## SEO Briefs
+## Programmatic SEO Contracts
 
 Create `contentbit.seo.config.ts` with reusable page-type contracts and planned
 pages, or let `contentbit init --seo` scaffold a starter. When that file exists,
@@ -174,9 +212,8 @@ Studio shows a read-only Brief view for each planned or existing page, and
 and acceptance checks an agent should satisfy before publishing. See the
 [programmatic SEO workflow](https://contentbit.dev/docs/guides/programmatic-seo).
 
-Without an LLM agent, the same loop is just CLI commands: generate instructions,
-write Markdown with registered blocks, run `contentbit validate`, then render to
-React, Astro, or plain Markdown.
+Without an agent, the same loop is ordinary CLI-assisted writing: print the
+brief, write the Markdown, run Doctor, inspect the page in Studio, and publish.
 
 ## Packages
 
