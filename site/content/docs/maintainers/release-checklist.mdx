@@ -10,14 +10,22 @@ waits on Actions.
 ## Package gates
 
 ```bash
-pnpm version:check
-pnpm fmt:check
-pnpm -r build
-pnpm -r test
+pnpm check
 ```
 
-`version:check` verifies that all `@contentbit/*` packages share the same version
-and that `@contentbit/core` exports the same `VERSION` as its `package.json`.
+`check` is the authoritative package gate. It verifies synchronized package and
+standalone-starter manifest/lockfile versions, lint and formatting, builds,
+tests, packed package manifests, and both complete starter gates.
+
+After publishing a new package version, update the standalone consumers and
+their lockfiles before changing starter code:
+
+```bash
+pnpm starter:sync <published-version>
+```
+
+This is deliberately post-publication: release PRs cannot install the package
+version they are preparing to publish.
 
 ## Starter gates
 
@@ -26,23 +34,13 @@ Run each starter from its own directory because each is intentionally standalone
 ```bash
 cd starter/astro
 pnpm install --frozen-lockfile
-pnpm content:check
-pnpm content:links
-pnpm content:doctor
-pnpm typecheck
-pnpm build
-pnpm smoke
+pnpm check
 ```
 
 ```bash
 cd starter/tanstack
 pnpm install --frozen-lockfile
-pnpm content:check
-pnpm content:links
-pnpm content:doctor
-pnpm typecheck
-pnpm build
-pnpm smoke
+pnpm check
 ```
 
 The smoke checks assert the `/blog` and `/blog/{slug}` demo, contentbit metadata,

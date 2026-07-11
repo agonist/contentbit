@@ -2,6 +2,9 @@
   "name": "contentbit-monorepo",
   "private": true,
   "scripts": {
+    "check": "pnpm check:packages && pnpm check:starters",
+    "check:packages": "pnpm version:check && pnpm lint && pnpm fmt:check && pnpm build && pnpm test && pnpm test:versioning && pnpm pack:check",
+    "check:starters": "pnpm --dir starter/astro install --frozen-lockfile && pnpm --dir starter/astro check && pnpm --dir starter/tanstack install --frozen-lockfile && pnpm --dir starter/tanstack check",
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "lint": "oxlint",
@@ -9,10 +12,12 @@
     "fmt:check": "oxfmt --check .",
     "version:sync": "node scripts/sync-version.mjs",
     "version:packages": "changeset version && pnpm version:sync",
-    "version:check": "node scripts/check-versions.mjs",
+    "version:check": "node scripts/check-versions.mjs && node scripts/check-starter-versions.mjs",
+    "starter:sync": "node scripts/sync-starter-version.mjs",
+    "test:versioning": "node --test scripts/starter-version-state.test.mjs",
     "pack:check": "node scripts/check-packed-manifests.mjs",
     "changeset": "changeset",
-    "release": "pnpm version:check && pnpm build && pnpm pack:check && changeset publish"
+    "release": "pnpm check && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",

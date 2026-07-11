@@ -9,18 +9,14 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm version:check
-      - run: pnpm lint
-      - run: pnpm fmt:check
-      - run: pnpm -r build
-      - run: pnpm -r test
+      - run: pnpm check:packages
 
   starter:
     runs-on: ubuntu-latest
@@ -32,17 +28,12 @@ jobs:
       run:
         working-directory: ${{ matrix.starter }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: ${{ matrix.starter }}/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm content:check
-      - run: pnpm content:links
-      - run: pnpm content:doctor
-      - run: pnpm typecheck
-      - run: pnpm build
-      - run: pnpm smoke
+      - run: pnpm check

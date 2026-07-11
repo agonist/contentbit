@@ -1,12 +1,7 @@
 'use client'
 
 import { genericBlocks } from '@contentbit/blocks'
-import {
-  createBlockRegistry,
-  parseDocument,
-  stripFrontmatter,
-  validateDocument,
-} from '@contentbit/core'
+import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
 import ReactMarkdown from 'react-markdown'
 
 // The styled pack installed by shadcn. Yours to edit.
@@ -19,10 +14,10 @@ import { blockComponents } from '../../blocks/components'
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
 
 export function Content({ source }: { source: string }) {
-  const result = validateDocument(parseDocument(stripFrontmatter(source)), registry)
+  const document = assertValidDocument(compileDocument(source, registry))
   return (
     <ContentRenderer
-      document={result.document}
+      document={document}
       components={blockComponents}
       renderMarkdown={(md) => <ReactMarkdown>{md}</ReactMarkdown>}
     />

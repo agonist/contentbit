@@ -1,3 +1,11 @@
 {
-  "pages": ["index", "guides", "concepts", "reference", "maintainers", "changelog"]
+  "pages": [
+    "index",
+    "guides",
+    "concepts",
+    "reference",
+    "compatibility",
+    "maintainers",
+    "changelog"
+  ]
 }

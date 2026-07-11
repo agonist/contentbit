@@ -1,0 +1,63 @@
+---
+title: Stability and compatibility
+description: The interfaces Contentbit 1.x will keep stable and how changes are classified.
+---
+
+Contentbit is approaching 1.0. Releases before 1.0 may still refine an interface
+in a minor version, with the change documented in the package changelogs. The
+1.0 release starts the compatibility policy below.
+
+## Stable throughout 1.x
+
+The following are compatibility commitments once 1.0 ships:
+
+- accepted directive syntax and the meaning of an already-valid document
+- public package exports documented under `@contentbit/core`,
+  `@contentbit/blocks`, `@contentbit/react`, and `@contentbit/astro`
+- `contentbit.config.*` and `contentbit.seo.config.*` property names and defaults
+- diagnostic codes, CLI exit-code categories, and versioned JSON result shapes
+- renderer interfaces for validated documents and registered block components
+
+A 1.x minor release may add optional configuration, commands, result fields,
+blocks, exports, or diagnostics. Additions must not make an existing clean
+project fail its current command without an explicit stricter option.
+
+Removing or renaming a stable export, changing the interpretation of valid
+syntax, changing a configuration default incompatibly, or changing an existing
+diagnostic or exit-code contract requires a major release.
+
+## Versioned machine output
+
+Machine-readable output includes a `schemaVersion` where callers need a durable
+contract. Consumers should reject unknown major schema versions and ignore
+unknown additive fields. Human terminal formatting is not a machine interface;
+use `--json` for automation.
+
+## Project and runtime support
+
+- The supported Node.js floor is declared in each published package's
+  `engines` field.
+- React and Astro compatibility is declared through renderer peer dependencies.
+- Patch releases support the same runtime and peer ranges as their containing
+  minor unless a security or upstream platform constraint makes that impossible.
+- A dropped runtime or framework major is announced in advance and shipped in a
+  Contentbit major release once 1.0 is stable.
+
+## Deliberately flexible surfaces
+
+The Studio visual design and route layout, generated agent-guidance prose, and
+the editable shadcn registry styles may evolve during 1.x. Their documented
+commands, file ownership rules, and data contracts remain stable, but their
+presentation is not a compatibility promise.
+
+## Reference implementations
+
+The minimal Astro and TanStack starters in the Contentbit repository are
+standalone compatibility fixtures. They verify installation, rendering, content
+checks, and build output against every package change.
+
+[`astro-speedrun-seo`](https://github.com/agonist/astro-speedrun-seo) is the
+production-shaped Astro reference template. It demonstrates multilingual
+routes, programmatic page sets, metadata, structured data, feeds, sitemaps,
+social images, agent guidance, and strict Contentbit checks in a separate
+consumer repository.

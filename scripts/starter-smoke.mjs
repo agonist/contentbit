@@ -10,14 +10,14 @@ if (starter !== 'astro' && starter !== 'tanstack') {
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const dir = join(root, 'starter', starter)
-const currentContentbitVersion = `^${
-  JSON.parse(readFileSync(join(root, 'packages/core/package.json'), 'utf8')).version
-}`
 const expectedSlugs = ['dialing-in-espresso', 'grinder-setting-notes', 'espresso-recipe-log']
 const expectedScripts = {
+  check:
+    'pnpm lint && pnpm format:check && pnpm content:check && pnpm content:links && pnpm content:doctor && pnpm typecheck && pnpm build && pnpm smoke',
   'content:check': 'contentbit validate "content/**/*.md" --registry ./blocks/registry.ts',
   'content:links': 'contentbit links "content/**/*.md"',
-  'content:doctor': 'contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts',
+  'content:doctor':
+    'contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --strict-warnings',
   studio: 'contentbit studio "content/**/*.md" --registry ./blocks/registry.ts',
   smoke: `node ../../scripts/starter-smoke.mjs ${starter}`,
 }
@@ -46,6 +46,10 @@ function frontmatterValue(frontmatter, key) {
 }
 
 const pkg = JSON.parse(read('package.json'))
+const currentContentbitVersion = Object.entries(pkg.dependencies ?? {}).find(
+  ([name]) => name === 'contentbit' || name.startsWith('@contentbit/'),
+)?.[1]
+assert(currentContentbitVersion, 'package.json has no Contentbit dependency')
 for (const [name, command] of Object.entries(expectedScripts)) {
   assert(pkg.scripts?.[name] === command, `package.json script "${name}" is missing or drifted`)
 }

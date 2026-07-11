@@ -15,14 +15,14 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(yaml@2.9.0)
       '@contentbit/astro':
-        specifier: ^0.6.1
-        version: 0.6.1(astro@7.0.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(jiti@2.7.0)(yaml@2.9.0))
+        specifier: ^0.7.0
+        version: 0.7.0(astro@7.0.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(jiti@2.7.0)(yaml@2.9.0))
       '@contentbit/blocks':
-        specifier: ^0.6.1
-        version: 0.6.1
+        specifier: ^0.7.0
+        version: 0.7.0
       '@contentbit/core':
-        specifier: ^0.6.1
-        version: 0.6.1
+        specifier: ^0.7.0
+        version: 0.7.0
       '@fontsource-variable/inter':
         specifier: ^5.2.8
         version: 5.2.8
@@ -76,11 +76,11 @@ importers:
         specifier: ^0.9.9
         version: 0.9.9(prettier@3.8.3)(typescript@6.0.3)
       '@contentbit/studio':
-        specifier: ^0.6.1
-        version: 0.6.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.0.3)(typescript@6.0.3)(yaml@2.9.0)
+        specifier: ^0.7.0
+        version: 0.7.0(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.0.3)(typescript@6.0.3)(yaml@2.9.0)
       contentbit:
-        specifier: ^0.6.1
-        version: 0.6.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.0.3)(typescript@6.0.3)(yaml@2.9.0)
+        specifier: ^0.7.0
+        version: 0.7.0
       oxfmt:
         specifier: ^0.54.0
         version: 0.54.0
@@ -395,24 +395,24 @@ packages:
     resolution: {integrity: sha512-EYlRokl8szrP9Z25qT5aepMdBjzBvHF9ZEhzIiUBc9guz/T31EqRgvD0QSgZcpE93xiwrr+OkB4nz0BZyF6fSA==}
     engines: {node: '>= 20.12.0'}
 
-  '@contentbit/astro@0.6.1':
-    resolution: {integrity: sha512-3hCu+47aUOL6+1Jy7dPe6JMyTgndk0cCjDPpz6/u8pzQf/1CPTD+Pya/ni7G6j0jWtyV24eq2jyEJTvo83R19A==}
+  '@contentbit/astro@0.7.0':
+    resolution: {integrity: sha512-J1+g7r1mOAOlQxmkGFs616ixNh0q+QHjYuY1ynxgQkidx2LBAC2Uh8n3l5QP5cPkm9G4MEjDgkMtXGsPCw/xFQ==}
     peerDependencies:
       astro: ^5.0.0 || ^6.0.0 || ^7.0.0
 
-  '@contentbit/blocks@0.6.1':
-    resolution: {integrity: sha512-sEq3fxxVzfKomEgUUJ/i4sOKxEn64lSx5jSUSWoZG/EO0j3+o+A/e97QVPAF8uNHxXZUT+Ise1D2oKIH2S1x2Q==}
+  '@contentbit/blocks@0.7.0':
+    resolution: {integrity: sha512-BqzL1XITbAak41Fuzl2MN8D6wmnTC3UXBEWdGln/7Wd6AUEnsT1NerVCVUcHE9r8Z2b50yV6CyyJxZN6O9Qbeg==}
 
-  '@contentbit/core@0.6.1':
-    resolution: {integrity: sha512-bDksowvOBJurQARHpRgfmaB7RFTEVLbUU2BA0llc05RLLnX0T66Y/J2KydGUhO9v0Ld9A073QuvX0Yp7zjXB4w==}
+  '@contentbit/core@0.7.0':
+    resolution: {integrity: sha512-xCqdeQGXbWQbQU2hyUWi2LNT02wrNXiK7Zr1HMSq7AyrL/VhWXmf/uyyXl3VPc0e5Q+i+HYsg7DWM5v1Br0fbg==}
 
-  '@contentbit/react@0.6.1':
-    resolution: {integrity: sha512-zePJStDBv42+fCEL9ag9NpKCkkM2xsIL04l36ZxAuHCrGZ6jp47FMIFKZlfJZuqtMz+H+oHo6ESEzAbWrbXH4g==}
+  '@contentbit/react@0.7.0':
+    resolution: {integrity: sha512-jTF5CksNC3VPeiMGBKL+lLabwCRDzBnfpiDGnLY8gz/CroSEcLSATBYPiOaHbJR5oEZz/0TFKcMZcdAKEjy28Q==}
     peerDependencies:
       react: ^19.0.0
 
-  '@contentbit/studio@0.6.1':
-    resolution: {integrity: sha512-Zqst7zU3OozcXkdoMmniRxDKerjf/slksqZHYp+etk9+HRZFjj9t8FL/LQKMgCKTIXsXijtGiHcSQvPce5iOJQ==}
+  '@contentbit/studio@0.7.0':
+    resolution: {integrity: sha512-c+Ta34z0Ty18b13VqE0W+QnUreLbhcCJ16U64uV1RqP6x3gpjVruTc17hMDt3KRyR3jIi/2Y+PkkT3zNhSTPQA==}
 
   '@dotenvx/dotenvx@1.71.2':
     resolution: {integrity: sha512-Xj9T3Wr+Bo4ILKf9PZJBYJ4SJiZGC/pqIdzOMbX9jgAFb0oGuKkusLleYHN/N6zanZixNvmuMVWYR1T3YJuVTA==}
@@ -3062,8 +3062,8 @@ packages:
     resolution: {integrity: sha512-j/O/d7GcZCyNl7/hwZAb606rzqkyvaDctLmckbxLzHvFBzTJHuGEdodATcP3yIRoDrLHkIATJuvzbFlp/ki2cQ==}
     engines: {node: '>=18'}
 
-  contentbit@0.6.1:
-    resolution: {integrity: sha512-v/oNgFaJlVj7vKdEihREOW6B6UzKqgz/JQlaiPzC+c9eC2645mEsR4SlBz2XBVd6yTyy2hhfq3igC02iG8kCUg==}
+  contentbit@0.7.0:
+    resolution: {integrity: sha512-xpcr1Lm77nd7Ze84pPrAB8RU7DPhRvSbZcvV1n4lKNFEcN8hBhcNtH/CuTIUaTuPxOh2BL8XoN2y9LM4wg4Bhg==}
     engines: {node: '>=22.18'}
     hasBin: true
 
@@ -5558,30 +5558,30 @@ snapshots:
       fast-wrap-ansi: 0.2.2
       sisteransi: 1.0.5
 
-  '@contentbit/astro@0.6.1(astro@7.0.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(jiti@2.7.0)(yaml@2.9.0))':
+  '@contentbit/astro@0.7.0(astro@7.0.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
-      '@contentbit/core': 0.6.1
+      '@contentbit/core': 0.7.0
       astro: 7.0.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(jiti@2.7.0)(yaml@2.9.0)
 
-  '@contentbit/blocks@0.6.1':
+  '@contentbit/blocks@0.7.0':
     dependencies:
-      '@contentbit/core': 0.6.1
+      '@contentbit/core': 0.7.0
       zod: 4.4.3
 
-  '@contentbit/core@0.6.1':
+  '@contentbit/core@0.7.0':
     dependencies:
       zod: 4.4.3
 
-  '@contentbit/react@0.6.1(react@19.2.6)':
+  '@contentbit/react@0.7.0(react@19.2.6)':
     dependencies:
-      '@contentbit/core': 0.6.1
+      '@contentbit/core': 0.7.0
       react: 19.2.6
 
-  '@contentbit/studio@0.6.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.0.3)(typescript@6.0.3)(yaml@2.9.0)':
+  '@contentbit/studio@0.7.0(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.0.3)(typescript@6.0.3)(yaml@2.9.0)':
     dependencies:
-      '@contentbit/blocks': 0.6.1
-      '@contentbit/core': 0.6.1
-      '@contentbit/react': 0.6.1(react@19.2.6)
+      '@contentbit/blocks': 0.7.0
+      '@contentbit/core': 0.7.0
+      '@contentbit/react': 0.7.0(react@19.2.6)
       '@fontsource-variable/inter': 5.2.8
       '@tailwindcss/vite': 4.3.0(vite@8.0.16(esbuild@0.28.1)(jiti@2.7.0)(yaml@2.9.0))
       '@tanstack/react-router': 1.170.17(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -8309,47 +8309,13 @@ snapshots:
 
   content-type@2.0.0: {}
 
-  contentbit@0.6.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.0.3)(typescript@6.0.3)(yaml@2.9.0):
+  contentbit@0.7.0:
     dependencies:
       '@clack/prompts': 1.6.0
-      '@contentbit/blocks': 0.6.1
-      '@contentbit/core': 0.6.1
-      '@contentbit/studio': 0.6.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.0.3)(typescript@6.0.3)(yaml@2.9.0)
+      '@contentbit/blocks': 0.7.0
+      '@contentbit/core': 0.7.0
       commander: 15.0.0
       tinyglobby: 0.2.17
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - '@farmfe/core'
-      - '@rolldown/plugin-babel'
-      - '@rsbuild/core'
-      - '@rspack/core'
-      - '@types/node'
-      - '@types/react'
-      - '@types/react-dom'
-      - '@vitejs/devtools'
-      - '@vitejs/plugin-rsc'
-      - babel-plugin-macros
-      - babel-plugin-react-compiler
-      - bun-types-no-globals
-      - crossws
-      - esbuild
-      - jiti
-      - less
-      - react-server-dom-rspack
-      - rolldown
-      - rollup
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
-      - tsx
-      - typescript
-      - unloader
-      - vite-plugin-solid
-      - webpack
-      - yaml
 
   convert-source-map@2.0.0: {}
 
