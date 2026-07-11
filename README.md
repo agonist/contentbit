@@ -65,6 +65,11 @@ write the planned <page-key> page from its contentbit brief
 Only need structured Markdown and rendering? Run `contentbit init` without
 `--seo`.
 
+For a production-shaped Astro implementation, use
+[`astro-speedrun-seo`](https://github.com/agonist/astro-speedrun-seo). It is the
+separate reference template for multilingual programmatic SEO, while the small
+starters in this repository remain compatibility fixtures for package CI.
+
 Prefer the pieces? Install the core packages and a renderer:
 
 ```bash

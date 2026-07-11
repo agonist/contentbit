@@ -89,7 +89,7 @@ import { ContentRenderer } from '@/components/content-blocks/content-renderer'`
   return `'use client'
 
 import { genericBlocks } from '@contentbit/blocks'
-import { compileDocument, createBlockRegistry } from '@contentbit/core'
+import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
 ${reactImport}${mdImport}${rendererImport}
 // Everything block-related lives in the blocks/ folder: definitions in
 // registry.ts (shared with the validate CLI), components in components.tsx.
@@ -99,10 +99,10 @@ import { blockComponents } from '${blocksImport}/components'
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
 
 export function Content({ source }: { source: string }) {
-  const result = compileDocument(source, registry)
+  const document = assertValidDocument(compileDocument(source, registry))
   return (
     <${renderer}
-      document={result.document}
+      document={document}
       components={blockComponents}${mdProp}
     />
   )

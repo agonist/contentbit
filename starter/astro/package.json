@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "check": "pnpm lint && pnpm format:check && pnpm content:check && pnpm content:links && pnpm content:doctor && pnpm typecheck && pnpm build && pnpm smoke",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
@@ -14,16 +15,16 @@
     "typecheck": "astro check",
     "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts",
     "content:links": "contentbit links \"content/**/*.md\"",
-    "content:doctor": "contentbit doctor \"content/**/*.md\" --registry ./blocks/registry.ts",
+    "content:doctor": "contentbit doctor \"content/**/*.md\" --registry ./blocks/registry.ts --strict-warnings",
     "studio": "contentbit studio \"content/**/*.md\" --registry ./blocks/registry.ts",
     "smoke": "node ../../scripts/starter-smoke.mjs astro"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.3.1",
     "@astrojs/react": "^6.0.0",
-    "@contentbit/astro": "^0.6.1",
-    "@contentbit/blocks": "^0.6.1",
-    "@contentbit/core": "^0.6.1",
+    "@contentbit/astro": "^0.7.0",
+    "@contentbit/blocks": "^0.7.0",
+    "@contentbit/core": "^0.7.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4",
     "@types/react": "^19",
@@ -43,8 +44,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "@contentbit/studio": "^0.6.1",
-    "contentbit": "^0.6.1",
+    "@contentbit/studio": "^0.7.0",
+    "contentbit": "^0.7.0",
     "oxfmt": "^0.54.0",
     "oxlint": "^1.69.0",
     "typescript": "~6"

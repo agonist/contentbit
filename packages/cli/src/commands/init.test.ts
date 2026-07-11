@@ -43,6 +43,7 @@ test('init scaffolds a react project non-interactively', async () => {
   const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
   expect(component).toContain('ContentBlocks')
   expect(component).toContain('compileDocument')
+  expect(component).toContain('assertValidDocument(compileDocument(source, registry))')
   expect(component).toContain('blockComponents')
   const blockComponents = await readFile(join(dir, 'blocks/components.tsx'), 'utf8')
   expect(blockComponents).toContain('defineBlockComponent(quote')

@@ -25,12 +25,7 @@ Open `http://localhost:4321/blog` to see the content graph demo.
 Before publishing starter changes, run the same gates as CI:
 
 ```bash
-pnpm run content:check
-pnpm run content:links
-pnpm run content:doctor
-pnpm run typecheck
-pnpm run build
-pnpm run smoke
+pnpm run check
 ```
 
 ## What to edit
