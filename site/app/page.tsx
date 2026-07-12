@@ -103,6 +103,72 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="border-b">
+          <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
+            <div className="grid gap-6 lg:grid-cols-[0.65fr_1.35fr] lg:items-end">
+              <div>
+                <p className="font-mono text-[10px] tracking-widest text-emerald-600 uppercase dark:text-emerald-400">
+                  Choose your starting point
+                </p>
+                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-balance">
+                  Add the toolkit or start from the reference application.
+                </h2>
+              </div>
+              <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed lg:justify-self-end">
+                Contentbit can meet an established Markdown library where it is, or give a new Astro
+                project a production-shaped SEO foundation. Both paths use the same portable
+                contracts and quality gates.
+              </p>
+            </div>
+            <div className="mt-8 grid border md:grid-cols-2">
+              <div className="p-5 sm:p-6">
+                <FileStack className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <p className="text-muted-foreground mt-5 font-mono text-[10px] tracking-widest uppercase">
+                  Existing content library
+                </p>
+                <h3 className="mt-2 text-base font-semibold">Adopt without changing files</h3>
+                <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                  Scan current Markdown, integrity issues, locale coverage, and inferred contracts.
+                  The adoption report is read-only until you choose what to keep.
+                </p>
+                <code className="bg-muted mt-5 block overflow-x-auto px-3 py-2.5 font-mono text-[11px]">
+                  contentbit adopt &quot;content/**/*.md&quot; --dry-run
+                </code>
+                <Link
+                  href="/docs/guides/adoption"
+                  className="text-muted-foreground hover:text-foreground mt-5 inline-flex items-center gap-2 font-mono text-xs transition-colors"
+                >
+                  Follow the adoption guide
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
+              <div className="border-t p-5 sm:p-6 md:border-t-0 md:border-l">
+                <Sparkles className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <p className="text-muted-foreground mt-5 font-mono text-[10px] tracking-widest uppercase">
+                  New Astro application
+                </p>
+                <h3 className="mt-2 text-base font-semibold">
+                  Start from the production reference
+                </h3>
+                <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                  Use the separate multilingual Astro template with routes, metadata, structured
+                  data, feeds, social images, Studio, Doctor, and CI already connected.
+                </p>
+                <code className="bg-muted mt-5 block overflow-x-auto px-3 py-2.5 font-mono text-[11px]">
+                  github.com/agonist/astro-speedrun-seo
+                </code>
+                <Link
+                  href="/docs/guides/production-astro"
+                  className="text-muted-foreground hover:text-foreground mt-5 inline-flex items-center gap-2 font-mono text-xs transition-colors"
+                >
+                  Explore the Astro template
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
           <SectionHeading
             index="01"

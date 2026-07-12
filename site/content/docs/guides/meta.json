@@ -1,7 +1,8 @@
 {
-  "title": "Guides",
+  "title": "How-to guides",
   "pages": [
     "project-config",
+    "production-astro",
     "adoption",
     "programmatic-seo",
     "seo-briefs",

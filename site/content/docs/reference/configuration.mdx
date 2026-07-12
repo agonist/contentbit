@@ -1,0 +1,71 @@
+---
+title: Configuration reference
+description: Fields, defaults, discovery, paths, and command overrides for contentbit.config.*.
+---
+
+`contentbit.config.*` is the shared project interface used by validation,
+Doctor, Studio, links, briefs, generated instructions, and agent guidance.
+
+```ts
+import { defineContentConfig } from '@contentbit/core'
+
+export default defineContentConfig({
+  content: 'content/**/*.{md,mdx}',
+  registry: './blocks/registry.ts',
+  genericBlocks: true,
+  links: {
+    resolve: 'same-locale-key',
+    localeField: 'locale',
+    keyField: 'key',
+    slugField: 'slug',
+    defaultLocale: 'en',
+  },
+  seo: './contentbit.seo.config.ts',
+})
+```
+
+## File discovery
+
+Contentbit walks upward from the current directory and uses the nearest
+`contentbit.config.ts`, `.mts`, `.mjs`, or `.js`. This lets each package in a
+monorepo own its content boundary. Paths and globs are resolved relative to the
+configuration file, not the shell's current directory.
+
+## Top-level fields
+
+| Field | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `content` | `string \| string[]` | Required | One or more Markdown or MDX files/globs. `defineContentConfig` normalizes a string to an array. |
+| `registry` | `string` | None | Module that default-exports custom block definitions. |
+| `genericBlocks` | `boolean` | `true` | Include the built-in generic block pack before the custom registry. |
+| `links` | `LinkResolverOptions` | Global slug resolution | Shared page identity and locale fields for the internal-link graph. |
+| `seo` | `string \| false` | Automatic SEO config discovery | Path to an SEO contract module, or `false` to disable discovery. |
+
+## Link resolver fields
+
+| Field | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `resolve` | `global-slug \| same-locale-slug \| same-locale-key \| prefer-same-locale-key-fallback-slug` | `global-slug` | How a `linksTo` target identifies a page. |
+| `localeField` | `string` | `locale` | Frontmatter field containing the page locale. |
+| `slugField` | `string` | `slug` | Frontmatter field containing the public slug. |
+| `keyField` | `string` | `key` | Frontmatter field containing stable translation identity. |
+| `defaultLocale` | `string` | None | Locale assigned when a participating page omits its locale field. |
+
+Use `same-locale-slug` when translated pages have distinct identities but may
+reuse a slug. Use `same-locale-key` when translations share a stable key. Use
+the fallback mode when key-based links are preferred but legacy slug targets
+must continue to resolve.
+
+## Command overrides
+
+Explicit files, globs, `--registry`, `--seo-config`, link-field flags, and
+`--no-generic-blocks` override the discovered config for one invocation.
+Commands that accept `--no-seo` can disable the configured SEO contract for one
+run.
+
+When no config exists, project-aware commands can reuse a matching package
+script for backward compatibility. Once a config exists, config discovery wins
+over package-script inference.
+
+For the setup procedure, see [Configure a Contentbit project](/docs/guides/project-config).
+For every command option, see the [CLI reference](/docs/reference/cli).

@@ -1,0 +1,70 @@
+---
+title: Start from the production Astro template
+description: Use astro-speedrun-seo when you want Contentbit inside a complete multilingual SEO site.
+---
+
+Use [`astro-speedrun-seo`](https://github.com/agonist/astro-speedrun-seo) when
+you need a production-shaped Astro application, not only a renderer example.
+It is maintained as a separate consumer repository so its CI catches the same
+installation and integration problems that an application will encounter.
+
+The template includes:
+
+- a fully static Astro site with English and French routes
+- typed Contentbit blocks and strict content validation
+- page-family contracts, briefs, Doctor, Studio, and agent guidance
+- canonical URLs, hreflang, Open Graph, Twitter metadata, and JSON-LD
+- build-time social images, sitemap, robots.txt, llms.txt, and localized feeds
+- a typed programmatic glossary section and locale fallback behavior
+
+## Start a project
+
+Create a repository from the GitHub template, then run:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Before changing content, run the complete gate once:
+
+```bash
+pnpm check
+```
+
+That establishes a clean baseline across formatting, linting, types, tests,
+content validation, Doctor policy, and the production build.
+
+## Make the first production changes
+
+1. Set the site URL, name, and social account in
+   `apps/web/src/site.config.ts`.
+2. Replace the example authors and posts under `apps/web/src/content/`.
+3. Replace the glossary dataset in `apps/web/src/data/glossary.ts`, or remove
+   that example section.
+4. Update locale dictionaries and remove locales you do not plan to ship.
+5. Run `pnpm content:doctor`, inspect the site with
+   `pnpm content:studio`, then finish with `pnpm check`.
+
+## Understand repository ownership
+
+Contentbit owns portable content contracts, parsing, validation, briefs, the
+link graph, and review tooling. The template owns host behavior: routes,
+metadata, structured data, feeds, social images, locale fallback, and visual
+components. The boundary is intentional—SEO behavior stays testable in the
+application without becoming a Contentbit runtime requirement.
+
+The small starters inside the Contentbit repository are package compatibility
+fixtures. Use this separate template as the example for production application
+architecture.
+
+## Continue learning
+
+The template's README contains a recommended path through its executable
+onboarding articles. Return to the Contentbit docs for portable workflows:
+
+- [Programmatic SEO workflow](/docs/guides/programmatic-seo)
+- [Content Doctor](/docs/guides/doctor)
+- [Content Studio](/docs/guides/studio)
+- [Astro rendering](/docs/guides/astro)
+- [Stability and compatibility](/docs/compatibility)
