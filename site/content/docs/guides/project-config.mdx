@@ -1,10 +1,11 @@
 ---
-title: Project configuration
-description: Define content globs, custom blocks, links, and SEO once for every contentbit command.
+title: Configure a Contentbit project
+description: Add one shared config so Contentbit commands use the same content, blocks, links, and SEO contracts.
 ---
 
-`contentbit.config.ts` is the project interface shared by the CLI, Studio, and
-agent guidance. `init` creates it for new projects:
+Use `contentbit.config.ts` to stop repeating project flags across package
+scripts, local commands, Studio, and agent workflows. `contentbit init` creates
+this file for new projects. For an existing setup, add it at the project root:
 
 ```ts
 import { defineContentConfig } from '@contentbit/core'
@@ -44,6 +45,24 @@ Explicit files, globs, `--registry`, `--seo-config`, link fields, and
 projects that keep the full invocation in package scripts continue to work;
 config discovery takes precedence when both are present.
 
+## Check the discovered project
+
+Run a command from the project root without a glob or registry flag:
+
+```bash
+contentbit validate --strict-warnings
+```
+
+If the command scans the expected files, the other project-aware commands will
+use the same configuration. In a monorepo, run from the package that owns the
+nearest config.
+
+Use an explicit option only for a one-off override. For example:
+
+```bash
+contentbit doctor "drafts/**/*.md" --no-seo
+```
+
 `@contentbit/studio` is installed separately from the base CLI so validation
 and one-shot `init` installs stay lightweight. `contentbit init` installs both
 development packages for you. When adding Studio manually:
@@ -51,3 +70,6 @@ development packages for you. When adding Studio manually:
 ```bash
 pnpm add -D @contentbit/studio
 ```
+
+See the [configuration reference](/docs/reference/configuration) for every
+field, default, discovery rule, and override.

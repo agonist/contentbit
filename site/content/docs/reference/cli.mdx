@@ -110,8 +110,9 @@ contentbit adopt [globs...] [--dry-run] [--json]
 Without a glob, it scans `content/**/*.{md,mdx}`. The report counts common
 frontmatter fields, infers a locale-aware link strategy when appropriate,
 shows stable-key locale coverage, and includes a proposed `contentbit.config.ts`.
-Projects with observed page `type` values also receive an empty SEO contract
-starter to adapt deliberately. See [Adopt an existing content library](/docs/guides/adoption).
+Projects with observed page `type` values also receive a baseline SEO contract
+inferred from consistently present frontmatter and sections. Review that
+baseline before enforcing it. See [Adopt an existing content library](/docs/guides/adoption).
 
 | Option | Meaning |
 | --- | --- |

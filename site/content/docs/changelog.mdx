@@ -15,6 +15,27 @@ Terse by design - each release links its announcement post when there is one.
   smoke gates. Their first-run docs also include Studio as the human inspection
   step.
 
+## 0.7.0
+
+- **Shared project configuration.** Commands discover the nearest
+  `contentbit.config.*`, so content globs, custom blocks, link resolution, and
+  SEO contracts live in one place instead of package-script flags. See
+  [Configure a Contentbit project](/docs/guides/project-config).
+- **Existing-project adoption.** `contentbit adopt` scans a Markdown library and
+  prints a read-only integrity report plus reviewable configuration proposals.
+  See [Adopt an existing content library](/docs/guides/adoption).
+- **Faster editing feedback.** `contentbit doctor --watch` reruns the ranked
+  repair plan as content changes, while `--strict-warnings` and `--strict-seo`
+  remain the CI gates.
+- **Stronger rendering contracts.** Core exposes explicit processed and
+  validated document types, strict compile helpers, and inferred block props
+  for renderer integrations.
+- **Clearer CLI ergonomics.** Commands validate incompatible options, prop
+  diagnostics point to the offending key, unknown props include suggestions,
+  and `contentbit agents --check` reports stale integrations without writing.
+- **Lightweight CLI installs.** Studio is a separate development dependency;
+  `contentbit init` installs it automatically for new projects.
+
 ## 0.6.1
 
 - **Published package hardening.** The CLI and Studio bundles no longer expose

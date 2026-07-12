@@ -1,4 +1,4 @@
 {
   "title": "Reference",
-  "pages": ["cli", "syntax", "blocks"]
+  "pages": ["configuration", "cli", "syntax", "blocks"]
 }
