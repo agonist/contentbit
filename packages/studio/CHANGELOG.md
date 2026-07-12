@@ -1,5 +1,13 @@
 # @contentbit/studio
 
+## 0.7.1
+
+### Patch Changes
+
+- @contentbit/core@0.7.1
+- @contentbit/blocks@0.7.1
+- @contentbit/react@0.7.1
+
 ## 0.7.0
 
 ### Patch Changes
