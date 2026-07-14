@@ -1,5 +1,14 @@
 # contentbit
 
+## 0.7.1
+
+### Patch Changes
+
+- 8c65c6d: Generate React renderer wrappers that assert compilation succeeded before
+  passing a document to the validated renderer interface.
+  - @contentbit/core@0.7.1
+  - @contentbit/blocks@0.7.1
+
 ## 0.7.0
 
 ### Minor Changes
