@@ -1,5 +1,11 @@
 # @contentbit/blocks
 
+## 0.7.2
+
+### Patch Changes
+
+- @contentbit/core@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes

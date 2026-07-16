@@ -1,5 +1,15 @@
 # contentbit
 
+## 0.7.2
+
+### Patch Changes
+
+- bb24aac: Make Astro initialization build-safe without editing or depending on the host
+  project's content collections, and generate starter SEO content with no Doctor
+  findings.
+  - @contentbit/core@0.7.2
+  - @contentbit/blocks@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes
