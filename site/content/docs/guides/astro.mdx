@@ -22,10 +22,14 @@ It scaffolds the full loop:
 - `blocks/registry.ts` — a custom `quote` block, shared with the validate CLI
 - `blocks/QuoteBlock.astro` — its `.astro` component
 - `content/example.md` — a starter document
-- `src/content.config.ts` — an `articles` collection over `content/` using
-  Astro's builtin glob loader
-- `src/pages/example.astro` — a rendered example page
+- `src/pages/example.astro` — a rendered example page that imports the starter
+  Markdown as a build-time raw asset
 - the `content:check` script and the [LLM-agent integration](/docs/guides/agents)
+
+The initializer does not edit `src/content.config.*`. That keeps the first run
+safe in both fresh Astro starters and established applications: `/example`
+works immediately, while collection names, loaders, schemas, and route identity
+remain decisions owned by the host project.
 
 Wiring it by hand instead:
 
@@ -35,8 +39,24 @@ pnpm add @contentbit/core @contentbit/blocks @contentbit/astro
 
 ## Render a page
 
-The pattern is the same as every other target — parse, validate, render — in
-component frontmatter:
+The generated standalone example uses a raw import:
+
+```astro
+---
+import source from '../../content/example.md?raw'
+import { genericBlocks } from '@contentbit/blocks'
+import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
+import { ContentBlocks } from '@contentbit/astro/components'
+
+const registry = createBlockRegistry().use(genericBlocks())
+const document = assertValidDocument(compileDocument(source, registry), 'content/example.md')
+---
+
+<ContentBlocks document={document} />
+```
+
+When adopting Contentbit into an Astro content collection, keep the same
+parse–validate–render pattern and feed it the collection entry body:
 
 ```astro
 ---
@@ -57,6 +77,11 @@ const document = assertValidDocument(compileDocument(entry.body, registry), entr
 
 Static pages render at build time, so this is a real safety net: invalid blocks
 fail the build, not the reader.
+
+For a complete collection architecture—including typed schemas, multilingual
+identity, programmatic datasets, and production routes—start from the
+[`astro-speedrun-seo`](https://github.com/agonist/astro-speedrun-seo) reference
+template.
 
 `ContentBlocks` is intentionally headless. It walks the validated document,
 renders Markdown through `renderMarkdown`, and dispatches blocks to the

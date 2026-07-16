@@ -46,7 +46,8 @@ npx contentbit@latest init --seo
 `init` detects your framework and package manager, installs the right packages,
 creates the project and SEO configs, wires starter content and a rendered
 `/example` page when possible, adds quality scripts, generates the live LLM
-guide, and installs agent instructions.
+guide, and installs agent instructions. In Astro projects the example is
+self-contained and leaves existing content collections untouched.
 
 Plan a page, give the brief to a writer or agent, and run the publishing gate:
 

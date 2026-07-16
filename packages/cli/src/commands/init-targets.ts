@@ -1,8 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-import type { Io } from '../run.js'
-
 export type Target = 'react' | 'markdown' | 'astro'
 export type Md = 'react-markdown' | 'none'
 
@@ -21,7 +19,6 @@ interface InitTargetContext {
   md: Md
   noPage: boolean
   noStyled: boolean
-  io: Io
   installStyledPack: (pack: string) => Promise<boolean>
 }
 
@@ -175,19 +172,6 @@ export default async function ExamplePage() {
 }
 `
 
-const ASTRO_CONTENT_CONFIG = `import { defineCollection } from 'astro:content'
-import { glob } from 'astro/loaders'
-
-export const collections = {
-  articles: defineCollection({
-    // Astro's builtin Markdown loader. Entry bodies are parsed and validated
-    // where they render (see src/pages/example.astro); \`contentbit validate\`
-    // covers the same files in CI.
-    loader: glob({ pattern: '**/*.md', base: './content' }),
-  }),
-}
-`
-
 const ASTRO_QUOTE_BLOCK = `---
 // The Astro component for the custom \`quote\` block defined in blocks/registry.ts.
 // Block props arrive as component props; nested content arrives via <slot />.
@@ -216,7 +200,9 @@ function astroPage(styled: boolean): string {
   return `---
 import { genericBlocks } from '@contentbit/blocks'
 import { assertValidDocument, compileDocument, createBlockRegistry } from '@contentbit/core'
-import { getEntry } from 'astro:content'
+// Vite's ?raw import keeps this example independent from the host project's
+// content collections. See astro-speedrun-seo for a production collection.
+import source from '../../content/example.md?raw'
 
 ${importLine}
 
@@ -224,13 +210,9 @@ ${importLine}
 import customBlocks from '../../blocks/registry'
 import QuoteBlock from '../../blocks/QuoteBlock.astro'
 
-// Entry ids are the file path relative to the collection base, minus ".md".
-const entry = await getEntry('articles', 'example')
-if (!entry?.body) throw new Error('Entry "example" not found in the articles collection.')
-
 const registry = createBlockRegistry().use(genericBlocks()).use(customBlocks)
 // Static pages render at build time, so invalid blocks fail the build here.
-const document = assertValidDocument(compileDocument(entry.body, registry), entry.id)
+const document = assertValidDocument(compileDocument(source, registry), 'content/example.md')
 ---
 
 <main style="max-width: 42rem; margin: 0 auto; padding: 3rem 1.5rem;">
@@ -287,29 +269,21 @@ async function createAstroPlan(ctx: InitTargetContext): Promise<InitTargetPlan> 
     existsSync(componentsJsonPath) &&
     (await ctx.installStyledPack('@contentbit/astro-pack'))
 
-  // Every config filename Astro resolves (src/content.config.* plus the legacy
-  // src/content/config.* location), so we never scaffold a second config that
-  // Astro would silently ignore.
-  const configCandidates = ['ts', 'mts', 'mjs', 'js'].flatMap((ext) => [
-    `src/content.config.${ext}`,
-    `src/content/config.${ext}`,
-  ])
-  const existingConfig = configCandidates.find((p) => existsSync(join(ctx.cwd, p)))
-  if (existingConfig) {
-    ctx.io.stdout(`content config exists (${existingConfig}); add this collection manually:`)
-    ctx.io.stdout(ASTRO_CONTENT_CONFIG)
-    ctx.io.stdout('the example page expects the "articles" collection above')
-  } else {
-    files.push(['src/content.config.ts', ASTRO_CONTENT_CONFIG])
-  }
   if (!ctx.noPage) files.push(['src/pages/example.astro', astroPage(styled)])
+
+  const nextSteps = ctx.noPage
+    ? [
+        '  2. Wire content/ into your Astro content collection and render it with @contentbit/astro.',
+      ]
+    : ['  2. Start the dev server and open /example to see the article rendered.']
+  nextSteps.push(
+    '  3. Production Astro reference: https://github.com/agonist/astro-speedrun-seo',
+    '  4. Styled components: pnpm dlx shadcn@latest add @contentbit/astro-pack',
+  )
 
   return {
     files,
-    nextSteps: [
-      '  2. Start the dev server and open /example to see the article rendered.',
-      '  3. Styled components: pnpm dlx shadcn@latest add @contentbit/astro-pack',
-    ],
+    nextSteps,
   }
 }
 

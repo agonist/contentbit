@@ -78,8 +78,12 @@ test('init --seo scaffolds a starter SEO config', async () => {
   const config = await readFile(join(dir, 'contentbit.seo.config.ts'), 'utf8')
 
   expect(config).toContain('defineSeoConfig')
+  expect(config).toContain('article')
   expect(config).toContain('alternative')
   expect(config).toContain('requiredSections')
+  await expect(readFile(join(dir, 'content/example.md'), 'utf8')).resolves.toContain(
+    'type: article',
+  )
   await expect(readFile(join(dir, 'contentbit.config.ts'), 'utf8')).resolves.toContain(
     "seo: './contentbit.seo.config.ts'",
   )
@@ -258,13 +262,13 @@ test('init scaffolds an astro project non-interactively', async () => {
   const io = fakeIo()
   expect(await run(['init', '-y', '--no-install', '--cwd', dir], io)).toBe(0)
 
-  const config = await readFile(join(dir, 'src/content.config.ts'), 'utf8')
-  expect(config).toContain("import { glob } from 'astro/loaders'")
-  expect(config).toContain('defineCollection')
+  await expect(readFile(join(dir, 'src/content.config.ts'), 'utf8')).rejects.toThrow()
   const page = await readFile(join(dir, 'src/pages/example.astro'), 'utf8')
   expect(page).toContain("from '@contentbit/astro/components'")
-  expect(page).toContain("getEntry('articles', 'example')")
-  expect(page).toContain('assertValidDocument(compileDocument(entry.body, registry), entry.id)')
+  expect(page).toContain("import source from '../../content/example.md?raw'")
+  expect(page).toContain(
+    "assertValidDocument(compileDocument(source, registry), 'content/example.md')",
+  )
   expect(page).toContain('QuoteBlock')
   await expect(readFile(join(dir, 'blocks/QuoteBlock.astro'), 'utf8')).resolves.toContain(
     'Astro.props',
@@ -277,7 +281,7 @@ test('init scaffolds an astro project non-interactively', async () => {
   expect(io.out.join('\n')).toContain('Next steps')
 })
 
-test('astro init leaves an existing content config alone and prints the snippet', async () => {
+test('astro init leaves an existing content config alone and scaffolds an independent page', async () => {
   const dir = await project({ name: 'x', dependencies: { astro: '^6.0.0' } })
   await mkdir(join(dir, 'src'), { recursive: true })
   await writeFile(join(dir, 'src/content.config.ts'), 'export const collections = {}\n', 'utf8')
@@ -287,11 +291,13 @@ test('astro init leaves an existing content config alone and prints the snippet'
   await expect(readFile(join(dir, 'src/content.config.ts'), 'utf8')).resolves.toBe(
     'export const collections = {}\n',
   )
-  expect(io.out.join('\n')).toContain('add this collection manually')
-  expect(io.out.join('\n')).toContain('glob(')
+  await expect(readFile(join(dir, 'src/pages/example.astro'), 'utf8')).resolves.toContain(
+    'example.md?raw',
+  )
+  expect(io.out.join('\n')).toContain('astro-speedrun-seo')
 })
 
-test('astro init recognizes a content config Astro resolves before .ts', async () => {
+test('astro init leaves alternate content config filenames untouched', async () => {
   const dir = await project({ name: 'x', dependencies: { astro: '^6.0.0' } })
   await mkdir(join(dir, 'src'), { recursive: true })
   await writeFile(join(dir, 'src/content.config.mts'), 'export const collections = {}\n', 'utf8')
@@ -300,14 +306,19 @@ test('astro init recognizes a content config Astro resolves before .ts', async (
 
   // No second config that Astro would silently ignore.
   await expect(readFile(join(dir, 'src/content.config.ts'), 'utf8')).rejects.toThrow()
-  expect(io.out.join('\n')).toContain('content config exists (src/content.config.mts)')
+  await expect(readFile(join(dir, 'src/content.config.mts'), 'utf8')).resolves.toBe(
+    'export const collections = {}\n',
+  )
+  expect(io.out.join('\n')).toContain('astro-speedrun-seo')
 })
 
 test('--target astro works in a project without astro installed', async () => {
   const dir = await project({ name: 'x' })
   const io = fakeIo()
   expect(await run(['init', '-y', '--no-install', '--target', 'astro', '--cwd', dir], io)).toBe(0)
-  await expect(readFile(join(dir, 'src/content.config.ts'), 'utf8')).resolves.toContain('glob(')
+  await expect(readFile(join(dir, 'src/pages/example.astro'), 'utf8')).resolves.toContain(
+    'example.md?raw',
+  )
 })
 
 test('astro init in a shadcn project installs the astro pack and uses ContentRenderer', async () => {
