@@ -16,7 +16,7 @@ export interface ContentCommandDefaults extends LinkOptionValues {
   source?: string
 }
 
-type ContentCommand = 'validate' | 'doctor' | 'studio' | 'links' | 'stats' | 'brief'
+type ContentCommand = 'validate' | 'doctor' | 'studio' | 'links' | 'stats' | 'brief' | 'snapshot'
 
 const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   validate: ['content:check', 'content:validate'],
@@ -25,6 +25,7 @@ const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   links: ['content:links', 'content:check'],
   stats: ['content:stats', 'content:check'],
   brief: ['content:brief', 'content:check'],
+  snapshot: ['content:snapshot', 'content:check'],
 }
 
 export async function discoverContentCommandDefaults(

@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { expect, test } from 'vitest'
 
-import { loadContentProject, ProjectLoadError, resolveContentFiles } from './index.js'
+import {
+  inspectContentProject,
+  loadContentProject,
+  ProjectLoadError,
+  resolveContentFiles,
+} from './index.js'
 
 async function fixture(files: Record<string, string>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'cb-project-'))
@@ -58,4 +63,67 @@ test('loadContentProject can intentionally scan an empty planned project', async
 
   expect(project.files).toEqual([])
   expect(project.scan.files).toEqual([])
+})
+
+test('inspectContentProject returns a deterministic portable snapshot without source text', async () => {
+  const dir = await fixture({
+    'content/guides/alpha.md': `---
+slug: alpha
+title: Shared title
+type: guide
+linksTo:
+  - beta
+---
+
+# Alpha
+
+Private source body.
+`,
+    'content/guides/beta.md': `---
+slug: beta
+title: Shared title
+type: guide
+---
+
+# Beta
+
+Useful body.
+`,
+  })
+  const input = {
+    positionals: ['content/**/*.md'],
+    cwd: dir,
+    includeGenericBlocks: true,
+    revision: 'abc123',
+  }
+
+  const first = await inspectContentProject(input)
+  const second = await inspectContentProject(input)
+  const json = JSON.stringify(first)
+
+  expect(first).toEqual(second)
+  expect(first).toMatchObject({
+    schemaVersion: 'contentbit.project-snapshot.v1',
+    revision: 'abc123',
+    summary: { files: 2 },
+    families: [{ id: 'guide', files: 2 }],
+    pages: [
+      {
+        path: 'content/guides/alpha.md',
+        contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        facts: {
+          identity: { value: 'alpha', source: 'frontmatter', confidence: 'exact' },
+          family: { value: 'guide', source: 'frontmatter', confidence: 'exact' },
+        },
+      },
+      { path: 'content/guides/beta.md' },
+    ],
+    graph: {
+      summary: { pages: 2, links: 1 },
+      nodes: expect.arrayContaining([expect.objectContaining({ path: 'content/guides/alpha.md' })]),
+    },
+  })
+  expect(JSON.parse(json)).toEqual(first)
+  expect(json).not.toContain(dir)
+  expect(json).not.toContain('Private source body.')
 })

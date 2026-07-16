@@ -35,6 +35,7 @@ Commands:
   brief         print an agent-ready SEO brief
   doctor        inspect content health and repair suggestions
   studio        browse content locally
+  snapshot      print a portable project snapshot as JSON
   stats         print document stats as JSON
   render        render one file to plain Markdown
   instructions  print LLM authoring instructions
@@ -52,6 +53,7 @@ Common:
   brief <key-or-slug> [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--json]
   doctor [globs...] [--watch] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
   studio [globs...] [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
+  snapshot [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--revision <id>] [--link-resolve <mode>]
   stats <globs...> [--registry <module.ts>] [--no-generic-blocks] [--no-validate]
   render <file> [--target markdown] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   instructions [--audience llm|human] [--no-examples] [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
@@ -301,6 +303,35 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           minSectionWords: options.minSectionWords,
           seoConfig: options.seoConfig,
           noSeo: options.seo === false ? true : undefined,
+          ...linkOptionsFrom(options),
+        },
+        io,
+      ),
+    )
+  })
+
+  const snapshot = program
+    .command('snapshot')
+    .description('print a portable project snapshot as JSON')
+    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--seo-config <module>', 'Load SEO contracts from this module')
+    .option('--no-seo', 'Disable SEO config discovery and findings')
+    .option('--revision <id>', 'Attach a Git revision or other source identifier')
+  addLinkOptions(snapshot)
+  snapshot.action(async (globs: string[], rawOptions: Command | OptionValues) => {
+    const options = optionsFrom(rawOptions)
+    const { snapshotCommand } = await import('./commands/snapshot.js')
+    setExitCode(
+      await snapshotCommand(
+        {
+          globs,
+          registry: options.registry,
+          noGenericBlocks: options.genericBlocks === false,
+          seoConfig: options.seoConfig,
+          noSeo: options.seo === false ? true : undefined,
+          revision: options.revision,
           ...linkOptionsFrom(options),
         },
         io,
