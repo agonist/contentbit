@@ -27,6 +27,12 @@ contentbit init --seo
 contentbit agents
 ```
 
+Astro init creates a self-contained `/example` route without editing the
+project's content collections. Integrate `content/` into an existing collection
+deliberately, or use
+[`astro-speedrun-seo`](https://github.com/agonist/astro-speedrun-seo) as the
+production-shaped reference template.
+
 Everyday commands:
 
 ```bash

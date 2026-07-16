@@ -52,6 +52,8 @@ export default defineContentConfig({
 
 const EXAMPLE_CONTENT = `---
 slug: hello-content-blocks
+type: article
+intent: learn the contentbit authoring workflow
 linksTo:
   - related-contentbit-workflows
 aliases:
@@ -86,6 +88,8 @@ weaves flowers and leaves.
 
 const RELATED_CONTENT = `---
 slug: related-contentbit-workflows
+type: article
+intent: learn the contentbit validation workflow
 linksTo:
   - hello-content-blocks
 keywords:
@@ -110,6 +114,10 @@ const SEO_CONFIG_TEMPLATE = `import { defineSeoConfig } from '@contentbit/core'
 
 export default defineSeoConfig({
   pageTypes: {
+    article: {
+      requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
+      minOutgoingLinks: 1,
+    },
     alternative: {
       requiredFrontmatter: ['type', 'intent', 'keywords.primary'],
       requiredSections: [
@@ -284,7 +292,7 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
       initialValue: detected,
       options: [
         { value: 'react', label: 'React', hint: 'ContentBlocks component' },
-        { value: 'astro', label: 'Astro', hint: 'content collections + .astro components' },
+        { value: 'astro', label: 'Astro', hint: 'standalone .astro example' },
         { value: 'markdown', label: 'Plain Markdown', hint: 'fallback rendering only' },
       ],
     })
@@ -347,7 +355,6 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
     md,
     noPage: Boolean(input.noPage),
     noStyled: Boolean(input.noStyled),
-    io,
     installStyledPack: (pack) => installStyledPack(cwd, pack, Boolean(input.noInstall), io),
   })
 
