@@ -6,6 +6,8 @@
   "scripts": {
     "studio": "remotion studio",
     "render": "remotion render Launch out/launch.mp4",
+    "render:micros": "node scripts/render-micros.mjs",
+    "render:micro:control": "remotion render MicroControlLayer out/micros/control-layer.mp4 --overwrite",
     "still": "remotion still Launch"
   },
   "dependencies": {

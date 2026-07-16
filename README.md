@@ -169,6 +169,7 @@ custom blocks are picked up automatically. See the
 | `content:check`       | Validates content with the right glob and registry                 |
 | `content:doctor`      | Ranks validation, link, thin-section, and image-alt issues         |
 | `contentbit brief`    | Prints an agent-ready SEO brief for an existing or planned page    |
+| `contentbit snapshot` | Prints a portable, JSON-safe project read model for remote adapters |
 | `studio`              | Read-only browser for previews, stats, links, keywords, and health |
 | `/example`            | Rendered route when the detected framework supports it             |
 

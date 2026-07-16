@@ -41,6 +41,21 @@ export {
   type ContentPageKeywords,
 } from './page-facts.js'
 export {
+  discoverContentPageFacts,
+  type ContentPageFactConfidence,
+  type ContentPageFactSource,
+  type DiscoverContentPageFactsInput,
+  type DiscoveredContentPageFact,
+  type DiscoveredContentPageFacts,
+} from './page-discovery.js'
+export {
+  discoverContentProject,
+  type DiscoverContentProjectOptions,
+  type DiscoveredContentProject,
+  type DiscoveredContentProjectGroup,
+  type DiscoveredContentProjectPage,
+} from './project-discovery.js'
+export {
   createLinkGraphView,
   linkGraphSummary,
   pageIdentity,

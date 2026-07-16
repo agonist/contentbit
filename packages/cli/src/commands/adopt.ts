@@ -1,7 +1,10 @@
 import {
+  discoverContentProject,
   scanContentProject,
   type ContentProjectFileScan,
   type ContentProjectFinding,
+  type DiscoveredContentProjectPage,
+  type DiscoveredContentPageFacts,
   type LinkResolveMode,
 } from '@contentbit/core'
 
@@ -37,9 +40,12 @@ interface AdoptionReport {
     content: string[]
     links: { resolve: LinkResolveMode }
     pageTypes: string[]
+    families: Array<{ id: string; files: number }>
+    locales: Array<{ id: string; files: number }>
     contracts: ContractProposal[]
   }
   localeCoverage: Array<{ key: string; locales: string[] }>
+  pages: Array<{ path: string; facts: DiscoveredContentPageFacts }>
   findings: ContentProjectFinding[]
   proposals: {
     contentbitConfig: string
@@ -66,7 +72,13 @@ export async function adoptCommand(input: AdoptCommandInput, io: Io): Promise<nu
   const scan = scanContentProject(project.sources, project.registry, {
     linkOptions: { resolve: linkResolve },
   })
-  const report = createAdoptionReport(globs, project.files.length, scan.findings, scan.files)
+  const report = createAdoptionReport(
+    globs,
+    project.files.length,
+    scan.findings,
+    scan.files,
+    process.cwd(),
+  )
 
   if (input.json) io.stdout(JSON.stringify(report, null, 2))
   else io.stdout(formatAdoptionReport(report))
@@ -78,6 +90,7 @@ function createAdoptionReport(
   files: number,
   findings: ContentProjectFinding[],
   scannedFiles: ContentProjectFileScan[],
+  root: string,
 ): AdoptionReport {
   const frontmatters = scannedFiles.map((file) => file.frontmatter)
   const frontmatter = countFrontmatter(frontmatters)
@@ -85,6 +98,8 @@ function createAdoptionReport(
   const pageTypes = valuesForField(frontmatters, 'type')
   const contracts = inferContracts(scannedFiles, pageTypes)
   const localeCoverage = coverageByKey(frontmatters)
+  const discovery = discoverContentProject(scannedFiles, { root })
+  const pages = discovery.pages.map((page) => ({ path: page.path, facts: page.facts }))
   const contentbitConfig = contentbitConfigProposal(globs, links)
   const seoConfig = contracts.length > 0 ? seoConfigProposal(contracts) : undefined
   return {
@@ -92,12 +107,20 @@ function createAdoptionReport(
     dryRun: true,
     files,
     frontmatter,
-    inferred: { content: globs, links: { resolve: links }, pageTypes, contracts },
+    inferred: {
+      content: globs,
+      links: { resolve: links },
+      pageTypes,
+      families: discovery.families,
+      locales: discovery.locales,
+      contracts,
+    },
     localeCoverage,
+    pages,
     findings,
     proposals: {
       contentbitConfig,
-      frontmatter: frontmatterProposals(scannedFiles),
+      frontmatter: frontmatterProposals(scannedFiles, discovery.pages),
       ...(seoConfig ? { seoConfig } : {}),
     },
   }
@@ -185,31 +208,20 @@ function primaryKeyword(frontmatter: Record<string, unknown>): string | undefine
 
 function frontmatterProposals(
   files: ContentProjectFileScan[],
+  pages: DiscoveredContentProjectPage[],
 ): AdoptionReport['proposals']['frontmatter'] {
   const proposals: AdoptionReport['proposals']['frontmatter'] = []
   for (const file of files) {
+    const discovered = pages.find((page) => page.sourcePath === file.path)?.facts
+    if (!discovered) continue
     const add: Record<string, string> = {}
-    if (!stringValue(file.frontmatter.slug)) add.slug = slugFromPath(file.path)
+    if (!stringValue(file.frontmatter.slug)) add.slug = discovered.slug.value
     if (!stringValue(file.frontmatter.title)) {
-      add.title = file.stats.outline[0]?.text ?? titleFromPath(file.path)
+      add.title = discovered.title.value
     }
     if (Object.keys(add).length > 0) proposals.push({ path: file.path, add })
   }
   return proposals
-}
-
-function slugFromPath(path: string): string {
-  return titleFromPath(path)
-    .toLocaleLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-function titleFromPath(path: string): string {
-  const filename = path.slice(path.lastIndexOf('/') + 1).replace(/\.mdx?$/i, '')
-  return filename.replace(/[-_]+/g, ' ').replace(/\b\p{L}/gu, (letter) => letter.toUpperCase())
 }
 
 function stringValue(value: unknown): string | undefined {

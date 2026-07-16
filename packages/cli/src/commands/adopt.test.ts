@@ -75,6 +75,11 @@ type: guide
   expect(report.inferred.contracts).toEqual([
     { type: 'guide', files: 2, requiredFrontmatter: ['type'], requiredSections: [] },
   ])
+  expect(report.inferred.families).toEqual([{ id: 'guide', files: 2 }])
+  expect(report.inferred.locales).toEqual([
+    { id: 'en', files: 1 },
+    { id: 'fr', files: 1 },
+  ])
   expect(report.proposals.seoConfig).toContain('"guide": { requiredFrontmatter: ["type"] }')
 })
 
@@ -100,6 +105,24 @@ test('adopt proposes missing frontmatter without rewriting the source file', asy
     {
       path: expect.stringMatching(/content\/hello-world\.md$/),
       add: { slug: 'hello-world', title: 'Hello from an existing library' },
+    },
+  ])
+  expect(report.pages).toEqual([
+    {
+      path: expect.stringMatching(/content\/hello-world\.md$/),
+      facts: {
+        identity: {
+          value: 'content/hello-world.md',
+          source: 'path',
+          confidence: 'exact',
+        },
+        slug: { value: 'hello-world', source: 'path', confidence: 'guess' },
+        title: {
+          value: 'Hello from an existing library',
+          source: 'document',
+          confidence: 'likely',
+        },
+      },
     },
   ])
   expect(await readFile(join(dir, 'content/hello-world.md'), 'utf8')).toBe(source)

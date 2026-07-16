@@ -29,6 +29,22 @@ concept earns a name, add it here.
   description, type, intent, keywords, and declared outgoing links. Page facts
   normalize project-specific field names and accepted aliases such as
   `seoKeywords` before SEO, links, or Studio read them.
+- **Discovered page facts** (`DiscoveredContentPageFacts`) — page facts resolved
+  from the strongest information currently available, with provenance and
+  confidence attached to every value. Authored/configured facts are exact;
+  document and path fallbacks let Adoption understand unconfigured libraries
+  without presenting guesses as authored truth.
+- **Content project discovery** (`DiscoveredContentProject`) — the portable,
+  read-only view that resolves discovered page facts relative to a project root
+  and conservatively groups repeated path patterns into likely families and
+  locales. Adoption is its first adapter; Cloud and snapshots can consume the
+  same interface later.
+- **Content project snapshot** (`ContentProjectSnapshot`) — the versioned,
+  JSON-safe project read model returned by `inspectContentProject()`. It keeps
+  page facts, hashes, statistics, findings, families, locales, and graph data
+  while excluding raw Markdown, validation ASTs, registries, absolute paths,
+  and other runtime-only objects. The CLI exposes the same interface through
+  `contentbit snapshot`.
 - **Link graph view** (`LinkGraphView`) — the read model of a link index for
   adapters that need graph-shaped data: summary, nodes, edges, and edge status.
   It is derived from the link index and structured link diagnostics, not from
