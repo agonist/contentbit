@@ -1,6 +1,6 @@
 {
   "name": "@contentbit/core",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Parser, validator, and registry for Content Blocks: structured Markdown components for LLM-written content.",
   "keywords": [
     "ast",
