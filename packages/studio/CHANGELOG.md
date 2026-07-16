@@ -1,5 +1,14 @@
 # @contentbit/studio
 
+## 0.7.3
+
+### Patch Changes
+
+- Updated dependencies [3bf64e8]
+  - @contentbit/core@0.7.3
+  - @contentbit/blocks@0.7.3
+  - @contentbit/react@0.7.3
+
 ## 0.7.2
 
 ### Patch Changes

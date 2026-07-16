@@ -1,6 +1,6 @@
 {
   "name": "@contentbit/astro",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Astro renderer for Content Blocks: .astro components for rendering validated documents, with per-block component overrides.",
   "keywords": [
     "astro",
