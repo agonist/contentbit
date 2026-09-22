@@ -14,9 +14,9 @@ import {
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { fetchGraph, fetchProject } from '@/lib/api'
-import type { StudioFileSummary, StudioGraph, StudioProject, StudioStatus } from '@/server/types'
+import { Button } from '../components/ui/button'
+import { fetchGraph, fetchProject } from '../lib/api'
+import type { StudioFileSummary, StudioGraph, StudioProject, StudioStatus } from '../server/types'
 
 type StatusFilter = 'all' | StudioStatus
 type SortKey = 'document' | 'status' | 'blocks' | 'keywords' | 'findings'

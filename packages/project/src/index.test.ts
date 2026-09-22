@@ -127,3 +127,36 @@ Useful body.
   expect(json).not.toContain(dir)
   expect(json).not.toContain('Private source body.')
 })
+
+test('inspectContentProject keeps sibling content paths portable throughout the snapshot', async () => {
+  const dir = await fixture({
+    'project/.keep': '',
+    'shared/alpha.md': '---\nslug: alpha\ntitle: Shared title\nlinksTo: [beta]\n---\n\n# Alpha\n',
+    'shared/beta.md': '---\nslug: beta\ntitle: Shared title\n---\n\n# Beta\n',
+    'shared/plain.md': '# Plain\n',
+  })
+  const snapshot = await inspectContentProject({
+    cwd: join(dir, 'project'),
+    positionals: ['../shared/*.md'],
+  })
+
+  expect(snapshot.pages.map((page) => page.path)).toEqual([
+    '../shared/alpha.md',
+    '../shared/beta.md',
+    '../shared/plain.md',
+  ])
+  expect(snapshot.pages[2].facts.identity).toEqual({
+    value: '../shared/plain.md',
+    source: 'path',
+    confidence: 'exact',
+  })
+  expect(snapshot.graph?.nodes.map((node) => node.path)).toEqual([
+    '../shared/alpha.md',
+    '../shared/beta.md',
+  ])
+  expect(snapshot.findings.find((finding) => finding.code === 'CB_TITLE_DUPLICATE')).toMatchObject({
+    file: '../shared/beta.md',
+    message: expect.stringContaining('../shared/alpha.md'),
+  })
+  expect(JSON.stringify(snapshot)).not.toContain(dir)
+})

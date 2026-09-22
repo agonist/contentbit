@@ -24,7 +24,7 @@ export async function briefCommand(input: BriefCommandInput, io: Io): Promise<nu
   const seoConfig = await loadSeoConfig({
     cwd: defaults.cwd,
     seoConfig: input.seoConfig ?? defaults.seoConfig,
-    noSeo: defaults.noSeo,
+    noSeo: input.seoConfig ? false : defaults.noSeo,
   })
   if (!seoConfig.config) {
     io.stderr(
@@ -49,7 +49,7 @@ export async function briefCommand(input: BriefCommandInput, io: Io): Promise<nu
       defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
     }),
     scan: { seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
-    allowEmpty: globs.length === 0,
+    allowEmpty: true,
   })
 
   if (!scan.seo) {

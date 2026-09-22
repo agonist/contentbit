@@ -92,7 +92,7 @@ async function doctorOnce(input: DoctorCommandInput, io: Io): Promise<DoctorRun>
   const seoConfig = await loadSeoConfig({
     cwd: defaults.cwd,
     seoConfig: input.seoConfig ?? defaults.seoConfig,
-    noSeo: input.noSeo ?? defaults.noSeo,
+    noSeo: input.noSeo ?? (input.seoConfig ? false : defaults.noSeo),
   })
   const { files, scan } = await loadContentProject({
     cmd: 'doctor',

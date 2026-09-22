@@ -221,7 +221,8 @@ export function validateDocument(
         })
       }
 
-      if (!reportUnknownProps(node, def, report)) valid = false
+      const knownPropsValid = reportUnknownProps(node, def, report)
+      if (!knownPropsValid) valid = false
 
       if (def.props) {
         const result = def.props.safeParse(node.props)
@@ -230,7 +231,9 @@ export function validateDocument(
         } else {
           valid = false
           for (const issue of result.error.issues) {
-            if (issue.code === 'unrecognized_keys') continue
+            if (issue.code === 'unrecognized_keys' && issue.path.length === 0 && !knownPropsValid) {
+              continue
+            }
             const prop =
               typeof issue.path[0] === 'string' && issue.path[0].length > 0
                 ? issue.path[0]

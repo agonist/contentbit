@@ -20,7 +20,7 @@ export async function snapshotCommand(input: SnapshotCommandInput, io: Io): Prom
   const seoConfig = await loadSeoConfig({
     cwd: defaults.cwd,
     seoConfig: input.seoConfig ?? defaults.seoConfig,
-    noSeo: input.noSeo ?? defaults.noSeo,
+    noSeo: input.noSeo ?? (input.seoConfig ? false : defaults.noSeo),
   })
   const snapshot = await inspectContentProject({
     positionals: defaults.globs,

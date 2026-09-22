@@ -1,5 +1,9 @@
 import type { Io } from '../run.js'
 
+import { resolve as resolveImport } from 'import-meta-resolve'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+
 import { formatRows, section } from '../cli-format.js'
 import { resolveContentFiles } from '../content-project.js'
 import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
@@ -38,14 +42,26 @@ export async function studioCommand(input: StudioCommandInput, io: Io): Promise<
   const seoConfig = await loadSeoConfig({
     cwd: defaults.cwd,
     seoConfig: input.seoConfig ?? defaults.seoConfig,
-    noSeo: input.noSeo ?? defaults.noSeo,
+    noSeo: input.noSeo ?? (input.seoConfig ? false : defaults.noSeo),
   })
+
+  let studioUrl: string | undefined
+  try {
+    studioUrl = resolveImport(
+      '@contentbit/studio',
+      pathToFileURL(join(defaults.cwd ?? process.cwd(), 'package.json')).href,
+    )
+  } catch (error) {
+    if (!isMissingStudio(error)) throw error
+  }
 
   let startStudio: (typeof import('@contentbit/studio'))['startStudio']
   try {
-    ;({ startStudio } = (await import('@contentbit/studio')) as typeof import('@contentbit/studio'))
+    ;({ startStudio } = (await (studioUrl
+      ? import(studioUrl)
+      : import('@contentbit/studio'))) as typeof import('@contentbit/studio'))
   } catch (error) {
-    if (isMissingStudio(error)) {
+    if (!studioUrl && isMissingStudio(error)) {
       throw new Error(
         'Studio is installed separately to keep the base CLI lightweight. ' +
           'Install it with your package manager, for example: pnpm add -D @contentbit/studio',

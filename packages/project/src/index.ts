@@ -199,11 +199,16 @@ export async function inspectContentProject(
   const discoveredBySource = new Map(
     discovery.pages.map((page) => [page.sourcePath, page] as const),
   )
+  const sourcePaths = [
+    ...new Set([...project.files, ...project.scan.findings.map((finding) => finding.file)]),
+  ]
+    .filter(isAbsolute)
+    .sort((a, b) => b.length - a.length)
   const findings = project.scan.findings.map((finding) => ({
     ...finding,
     file: portablePath(finding.file, root),
-    message: portableText(finding.message, root),
-    ...(finding.hint ? { hint: portableText(finding.hint, root) } : {}),
+    message: portableText(finding.message, root, sourcePaths),
+    ...(finding.hint ? { hint: portableText(finding.hint, root, sourcePaths) } : {}),
   }))
   let words = 0
   let blocks = 0
@@ -215,10 +220,17 @@ export async function inspectContentProject(
     blocks += file.stats.blocks.total
     links += file.stats.links.total
     const pageFindings = summarizeContentProjectFindings(file.findings)
+    const path = portablePath(file.path, root)
     return {
-      path: discovered.path,
+      path,
       contentHash: createHash('sha256').update(file.source).digest('hex'),
-      facts: discovered.facts,
+      facts: {
+        ...discovered.facts,
+        identity:
+          discovered.facts.identity.source === 'path'
+            ? { ...discovered.facts.identity, value: path }
+            : discovered.facts.identity,
+      },
       stats: {
         bytes: file.stats.file.bytes,
         words: file.stats.length.words,
@@ -289,8 +301,11 @@ function portablePath(path: string, root: string): string {
   return value.replaceAll('\\', '/')
 }
 
-function portableText(value: string, root: string): string {
-  const normalized = value.replaceAll('\\', '/')
+function portableText(value: string, root: string, sourcePaths: string[]): string {
+  let normalized = value.replaceAll('\\', '/')
+  for (const path of sourcePaths) {
+    normalized = normalized.replaceAll(path.replaceAll('\\', '/'), portablePath(path, root))
+  }
   const normalizedRoot = root.replaceAll('\\', '/').replace(/\/$/, '')
   return normalized.replaceAll(`${normalizedRoot}/`, '')
 }

@@ -122,6 +122,44 @@ test('brief requires an SEO config', async () => {
   expect(io.err.join('\n')).toContain('brief: no SEO config found')
 })
 
+test('brief can plan the first page in a configured empty content library', async () => {
+  const dir = await fixture({
+    'contentbit.config.mjs': `export default { content: 'content/**/*.md', seo: './seo.mjs' }`,
+    'seo.mjs': seoConfig(),
+  })
+  const io = fakeIo()
+  const cwd = process.cwd()
+  process.chdir(dir)
+  try {
+    expect(await run(['brief', 'ahrefs-alternatives', '--json'], io)).toBe(0)
+  } finally {
+    process.chdir(cwd)
+  }
+  expect(JSON.parse(io.out.join('\n')).target).toMatchObject({
+    id: 'ahrefs-alternatives',
+    source: 'planned',
+  })
+})
+
+test('an explicit SEO config overrides the disabled project default', async () => {
+  const dir = await fixture({
+    'contentbit.config.mjs': `export default { content: 'content/**/*.md', seo: false }`,
+    'content/example.md': '# Example\n',
+    'seo.mjs': seoConfig(),
+  })
+  const io = fakeIo()
+  const cwd = process.cwd()
+  process.chdir(dir)
+  try {
+    expect(
+      await run(['brief', 'ahrefs-alternatives', '--seo-config', './seo.mjs', '--json'], io),
+    ).toBe(0)
+  } finally {
+    process.chdir(cwd)
+  }
+  expect(JSON.parse(io.out.join('\n')).target.source).toBe('planned')
+})
+
 test('brief reports a clean error when the target is unknown', async () => {
   const dir = await fixture({ 'seo.mjs': seoConfig() })
   const io = fakeIo()

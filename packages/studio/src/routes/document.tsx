@@ -20,9 +20,9 @@ import {
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { fetchDocument } from '@/lib/api'
-import type { StudioDocument, StudioFinding } from '@/server/types'
+import { Button } from '../components/ui/button'
+import { fetchDocument } from '../lib/api'
+import type { StudioDocument, StudioFinding } from '../server/types'
 
 interface DocumentSearch {
   path: string
