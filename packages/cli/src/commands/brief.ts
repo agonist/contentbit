@@ -3,10 +3,9 @@ import { glob } from 'tinyglobby'
 
 import type { Io } from '../run.js'
 
+import { resolveContentCommandConfig } from '../command-config.js'
 import { loadContentProject } from '../content-project.js'
-import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
-import { loadSeoConfig } from '../seo-config.js'
-import { discoverContentCommandDefaults } from '../script-defaults.js'
+import type { LinkOptionValues } from '../link-options.js'
 
 const DEFAULT_BRIEF_GLOBS = ['content/**/*.{md,mdx}']
 
@@ -20,12 +19,8 @@ export interface BriefCommandInput extends LinkOptionValues {
 }
 
 export async function briefCommand(input: BriefCommandInput, io: Io): Promise<number> {
-  const defaults = await discoverContentCommandDefaults('brief', input.globs)
-  const seoConfig = await loadSeoConfig({
-    cwd: defaults.cwd,
-    seoConfig: input.seoConfig ?? defaults.seoConfig,
-    noSeo: input.seoConfig ? false : defaults.noSeo,
-  })
+  const config = await resolveContentCommandConfig('brief', input)
+  const seoConfig = await config.loadSeo()
   if (!seoConfig.config) {
     io.stderr(
       'brief: no SEO config found. Add contentbit.seo.config.ts or pass --seo-config <path>.',
@@ -33,21 +28,15 @@ export async function briefCommand(input: BriefCommandInput, io: Io): Promise<nu
     return 2
   }
 
-  const includeGenericBlocks = !(input.noGenericBlocks || defaults.noGenericBlocks)
-  const globs = defaults.globs.length > 0 ? defaults.globs : await defaultBriefGlobs(defaults.cwd)
+  const includeGenericBlocks = config.includeGenericBlocks
+  const globs = config.globs.length > 0 ? config.globs : await defaultBriefGlobs(config.cwd)
   const { scan } = await loadContentProject({
     cmd: 'brief',
     positionals: globs,
-    cwd: defaults.cwd,
-    registry: input.registry ?? defaults.registry,
+    cwd: config.cwd,
+    registry: config.registry,
     includeGenericBlocks,
-    linkOptions: linkResolverOptions({
-      linkResolve: input.linkResolve ?? defaults.linkResolve,
-      localeField: input.localeField ?? defaults.localeField,
-      slugField: input.slugField ?? defaults.slugField,
-      keyField: input.keyField ?? defaults.keyField,
-      defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
-    }),
+    linkOptions: config.resolveLinkOptions(),
     scan: { seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
     allowEmpty: true,
   })

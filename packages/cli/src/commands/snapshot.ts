@@ -2,9 +2,8 @@ import { inspectContentProject } from '@contentbit/project'
 
 import type { Io } from '../run.js'
 
-import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
-import { loadSeoConfig } from '../seo-config.js'
-import { discoverContentCommandDefaults } from '../script-defaults.js'
+import { resolveContentCommandConfig } from '../command-config.js'
+import type { LinkOptionValues } from '../link-options.js'
 
 export interface SnapshotCommandInput extends LinkOptionValues {
   globs: string[]
@@ -16,24 +15,14 @@ export interface SnapshotCommandInput extends LinkOptionValues {
 }
 
 export async function snapshotCommand(input: SnapshotCommandInput, io: Io): Promise<number> {
-  const defaults = await discoverContentCommandDefaults('snapshot', input.globs)
-  const seoConfig = await loadSeoConfig({
-    cwd: defaults.cwd,
-    seoConfig: input.seoConfig ?? defaults.seoConfig,
-    noSeo: input.noSeo ?? (input.seoConfig ? false : defaults.noSeo),
-  })
+  const config = await resolveContentCommandConfig('snapshot', input)
+  const seoConfig = await config.loadSeo()
   const snapshot = await inspectContentProject({
-    positionals: defaults.globs,
-    cwd: defaults.cwd,
-    registry: input.registry ?? defaults.registry,
-    includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
-    linkOptions: linkResolverOptions({
-      linkResolve: input.linkResolve ?? defaults.linkResolve,
-      localeField: input.localeField ?? defaults.localeField,
-      slugField: input.slugField ?? defaults.slugField,
-      keyField: input.keyField ?? defaults.keyField,
-      defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
-    }),
+    positionals: config.globs,
+    cwd: config.cwd,
+    registry: config.registry,
+    includeGenericBlocks: config.includeGenericBlocks,
+    linkOptions: config.resolveLinkOptions(),
     scan: { seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
     revision: input.revision,
   })

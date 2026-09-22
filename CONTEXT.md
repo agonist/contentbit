@@ -57,6 +57,10 @@ concept earns a name, add it here.
   SEO config. CLI flags override it for one invocation; package-script parsing
   remains a compatibility fallback.
 
+- **Resolved Contentbit config** — the effective content globs, registry,
+  generic-block policy, link resolution, and SEO settings for one command
+  invocation, after combining explicit flags with project or compatibility defaults.
+
 - **Loaded content project** — the Node-side bundle that turns *(positional
   globs, flags)* into a ready-to-use project: the resolved source files, the
   loaded registry, the read sources, the parsed link options, and the produced
