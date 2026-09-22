@@ -140,6 +140,8 @@ test('inspectContentProject keeps sibling content paths portable throughout the 
     positionals: ['../shared/*.md'],
   })
 
+  expect(snapshot.families).toEqual([])
+  expect(snapshot.locales).toEqual([])
   expect(snapshot.pages.map((page) => page.path)).toEqual([
     '../shared/alpha.md',
     '../shared/beta.md',
@@ -159,4 +161,31 @@ test('inspectContentProject keeps sibling content paths portable throughout the 
     message: expect.stringContaining('../shared/alpha.md'),
   })
   expect(JSON.stringify(snapshot)).not.toContain(dir)
+})
+
+test('relocating sibling content preserves snapshot identities, families, and locales', async () => {
+  const files = {
+    'project/.keep': '',
+    'shared/en/guides/one.md': '# One',
+    'shared/fr/guides/one.md': '# Un',
+    'shared/en/guides/two.md': '# Two',
+    'shared/fr/guides/two.md': '# Deux',
+  }
+  const first = await fixture(files)
+  const second = await fixture(files)
+  const snapshots = await Promise.all(
+    [first, second].map((dir) =>
+      inspectContentProject({
+        cwd: join(dir, 'project'),
+        positionals: ['../shared/**/*.md'],
+      }),
+    ),
+  )
+  expect(snapshots[0]).toEqual(snapshots[1])
+  expect(snapshots[0].families).toEqual([])
+  expect(snapshots[0].locales).toEqual([])
+  for (const page of snapshots[0].pages) {
+    expect(page.facts.identity.value).toBe(page.path)
+    expect(page.path).toMatch(/^\.\.\/shared\//)
+  }
 })

@@ -12,7 +12,7 @@ const MIN_LOCALE_SIBLINGS = 2
 
 export interface DiscoverContentProjectOptions extends LinkResolverOptions {
   /** Repository root used to produce portable paths. Files outside it keep
-   * their normalized input path. */
+   * their normalized input path and use only authored family/locale facts. */
   root?: string
 }
 
@@ -55,8 +55,11 @@ export function discoverContentProject(
     return { sourcePath: file.path, path, facts }
   })
 
-  inferPathLocales(pages)
-  inferPathFamilies(pages)
+  // Absolute paths without a matching root and parent-relative paths can
+  // contain checkout names or machine directories, not content taxonomy.
+  const inferablePages = pages.filter((page) => isProjectRelativePath(page.path))
+  inferPathLocales(inferablePages)
+  inferPathFamilies(inferablePages)
 
   return {
     pages,
@@ -160,6 +163,10 @@ function pathFact(value: string): DiscoveredContentPageFact<string> {
 
 function isLocaleCandidate(value: string | undefined): value is string {
   return Boolean(value && /^[a-z]{2}(?:-[a-z0-9]{2,8})*$/i.test(value))
+}
+
+function isProjectRelativePath(path: string): boolean {
+  return !path.startsWith('/') && !/^[a-z]:/i.test(path) && !path.split('/').includes('..')
 }
 
 function pathSegments(path: string): string[] {

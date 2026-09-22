@@ -104,3 +104,52 @@ test('a single matching path is not enough to infer locale directories', () => {
   expect(discovery.locales).toEqual([])
   expect(discovery.pages.every((page) => page.facts.locale === undefined)).toBe(true)
 })
+
+test.each([
+  ['/repo/app', '/repo/shared'],
+  ['/elsewhere/app', '/elsewhere/shared'],
+  ['C:\\checkout\\app', 'C:\\checkout\\shared'],
+  ['//server/share/app', '//server/share/shared'],
+  [undefined, '/machine/content'],
+  [undefined, '../shared'],
+])('outside-root paths do not supply guessed families or locales (root %s)', (root, base) => {
+  const discovery = discoverContentProject(
+    ['en/guides/one.md', 'fr/guides/one.md', 'en/guides/two.md', 'fr/guides/two.md'].map((path) =>
+      file(`${base}/${path}`, '# Guide'),
+    ),
+    { root },
+  )
+
+  expect(discovery.families).toEqual([])
+  expect(discovery.locales).toEqual([])
+  for (const page of discovery.pages) {
+    expect(page.facts.family).toBeUndefined()
+    expect(page.facts.locale).toBeUndefined()
+  }
+})
+
+test('outside-root authored facts remain exact and cannot influence inside-root guesses', () => {
+  const discovery = discoverContentProject(
+    [
+      file('/repo/shared/en/guides/one.md', '# One', { type: 'guide', locale: 'en' }),
+      file('/repo/shared/fr/guides/one.md', '# Un', { type: 'guide', locale: 'fr' }),
+      file('/repo/app/content/ui/one.md', '# UI'),
+      file('/repo/app/content/ui/two.md', '# UI two'),
+    ],
+    { root: '/repo/app' },
+  )
+  expect(discovery.families).toEqual([
+    { id: 'guide', files: 2 },
+    { id: 'ui', files: 2 },
+  ])
+  expect(discovery.locales).toEqual([
+    { id: 'en', files: 1 },
+    { id: 'fr', files: 1 },
+  ])
+  expect(discovery.pages[0].facts.family).toEqual({
+    value: 'guide',
+    source: 'frontmatter',
+    confidence: 'exact',
+  })
+  expect(discovery.pages[2].facts.locale).toBeUndefined()
+})
