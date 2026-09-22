@@ -2,7 +2,7 @@
   "name": "contentbit-monorepo",
   "private": true,
   "scripts": {
-    "check": "pnpm check:packages && pnpm check:starters",
+    "check": "pnpm check:packages && pnpm check:starters && pnpm test:packed",
     "check:packages": "pnpm version:check && pnpm lint && pnpm fmt:check && pnpm build && pnpm test && pnpm test:versioning && pnpm pack:check",
     "check:starters": "pnpm --dir starter/astro install --frozen-lockfile && pnpm --dir starter/astro check && pnpm --dir starter/tanstack install --frozen-lockfile && pnpm --dir starter/tanstack check",
     "test": "pnpm -r test",
@@ -17,7 +17,9 @@
     "test:versioning": "node --test scripts/starter-version-state.test.mjs",
     "pack:check": "node scripts/check-packed-manifests.mjs",
     "changeset": "changeset",
-    "release": "pnpm check && changeset publish"
+    "release": "pnpm check && changeset publish",
+    "test:packed": "node scripts/packed-smoke.mjs",
+    "check:packed": "pnpm --filter contentbit... --filter @contentbit/studio... --filter @contentbit/astro... build && pnpm test:packed"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",

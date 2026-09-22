@@ -17,6 +17,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:packages
+      - run: pnpm test:packed
 
   starter:
     runs-on: ubuntu-latest
