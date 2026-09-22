@@ -177,3 +177,35 @@ locale: es
     ),
   ).toBe(false)
 })
+
+test('integrity ignores relative assets and resolves relative page routes', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/start.md',
+        source: '# Start\n\n[PDF](./manual.pdf)\n[Image](../assets/image.png)\n[Page](./other)\n',
+      },
+      { path: '/content/other.md', source: '---\nslug: other\n---\n\n# Other\n' },
+    ],
+    registry(),
+  )
+
+  expect(scan.findings.filter((finding) => finding.source === 'integrity')).toEqual([])
+})
+
+test('integrity decodes URL-encoded Markdown filenames before resolving them', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/start.md',
+        source: '# Start\n\n[Other](./other%20page.md#details)\n[Missing](./missing%20page.md)\n',
+      },
+      { path: '/content/other page.md', source: '# Other\n\n## Details\n' },
+    ],
+    registry(),
+  )
+
+  expect(scan.findings.filter((finding) => finding.source === 'integrity')).toMatchObject([
+    { code: 'CB_MARKDOWN_LINK_UNRESOLVED', line: 4 },
+  ])
+})

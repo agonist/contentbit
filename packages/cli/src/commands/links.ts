@@ -11,11 +11,11 @@ import { dirname, join } from 'node:path'
 
 import type { Io } from '../run.js'
 
+import { resolveContentCommandConfig } from '../command-config.js'
 import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
 import { resolveContentFiles } from '../content-project.js'
-import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
+import type { LinkOptionValues } from '../link-options.js'
 import { collectLinkInputs } from '../links-io.js'
-import { discoverContentCommandDefaults } from '../script-defaults.js'
 
 export interface LinksCommandInput extends LinkOptionValues {
   globs: string[]
@@ -24,17 +24,11 @@ export interface LinksCommandInput extends LinkOptionValues {
 }
 
 export async function linksCommand(input: LinksCommandInput, io: Io): Promise<number> {
-  const defaults = await discoverContentCommandDefaults('links', input.globs)
-  const files = await resolveContentFiles(defaults.globs, 'links', { cwd: defaults.cwd })
+  const config = await resolveContentCommandConfig('links', input)
+  const files = await resolveContentFiles(config.globs, 'links', { cwd: config.cwd })
 
   const inputs = await collectLinkInputs(files)
-  const linkOptions = linkResolverOptions({
-    linkResolve: input.linkResolve ?? defaults.linkResolve,
-    localeField: input.localeField ?? defaults.localeField,
-    slugField: input.slugField ?? defaults.slugField,
-    keyField: input.keyField ?? defaults.keyField,
-    defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
-  })
+  const linkOptions = config.resolveLinkOptions()
 
   let errors = 0
   let warnings = 0
@@ -82,7 +76,7 @@ export async function linksCommand(input: LinksCommandInput, io: Io): Promise<nu
     }
   }
 
-  const outPath = input.out ?? join(defaults.cwd ?? process.cwd(), '.contentbit', 'link-index.json')
+  const outPath = input.out ?? join(config.cwd ?? process.cwd(), '.contentbit', 'link-index.json')
   // The default target lives in a .contentbit/ dir that may not exist yet, and
   // the shared Io.writeFile is a thin fs wrapper that won't create it.
   await mkdir(dirname(outPath), { recursive: true })

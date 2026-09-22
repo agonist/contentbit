@@ -132,7 +132,10 @@ function detectFramework(cwd: string, deps: Record<string, string>): FrameworkLa
     if (existsSync(join(cwd, appDir))) {
       return {
         framework: 'next',
-        componentPath: 'components/content-blocks.tsx',
+        componentPath:
+          appDir === 'src/app'
+            ? 'src/components/content-blocks.tsx'
+            : 'components/content-blocks.tsx',
         pagePath: `${appDir}/example/page.tsx`,
       }
     }
@@ -159,8 +162,7 @@ function ExamplePage() {
 
 const NEXT_PAGE = `import { readFile } from 'node:fs/promises'
 
-// If your project has no "@/" path alias, switch to a relative import.
-import { Content } from '@/components/content-blocks'
+import { Content } from '../../components/content-blocks'
 
 export default async function ExamplePage() {
   const source = await readFile('content/example.md', 'utf8')

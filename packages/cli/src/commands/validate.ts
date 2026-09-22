@@ -2,10 +2,10 @@ import { type ContentProjectFinding, type Diagnostic } from '@contentbit/core'
 
 import type { Io } from '../run.js'
 
+import { resolveContentCommandConfig } from '../command-config.js'
 import { formatDiagnosticForCli, formatRows, section } from '../cli-format.js'
 import { loadContentProject } from '../content-project.js'
-import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
-import { discoverContentCommandDefaults } from '../script-defaults.js'
+import type { LinkOptionValues } from '../link-options.js'
 
 export interface ValidateCommandInput extends LinkOptionValues {
   globs: string[]
@@ -15,20 +15,14 @@ export interface ValidateCommandInput extends LinkOptionValues {
 }
 
 export async function validateCommand(input: ValidateCommandInput, io: Io): Promise<number> {
-  const defaults = await discoverContentCommandDefaults('validate', input.globs)
-  const linkOptions = linkResolverOptions({
-    linkResolve: input.linkResolve ?? defaults.linkResolve,
-    localeField: input.localeField ?? defaults.localeField,
-    slugField: input.slugField ?? defaults.slugField,
-    keyField: input.keyField ?? defaults.keyField,
-    defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
-  })
+  const config = await resolveContentCommandConfig('validate', input)
+  const linkOptions = config.resolveLinkOptions()
   const { files, scan } = await loadContentProject({
     cmd: 'validate',
-    positionals: defaults.globs,
-    cwd: defaults.cwd,
-    registry: input.registry ?? defaults.registry,
-    includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
+    positionals: config.globs,
+    cwd: config.cwd,
+    registry: config.registry,
+    includeGenericBlocks: config.includeGenericBlocks,
     linkOptions,
     scan: { includeStatsFindings: false, includeIntegrityFindings: false },
   })

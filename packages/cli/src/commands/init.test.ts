@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 
@@ -136,6 +136,24 @@ test('next projects get an app-router page reading the file', async () => {
   const component = await readFile(join(dir, 'components/content-blocks.tsx'), 'utf8')
   expect(component).toContain("'use client'")
 })
+
+test.each(['app', 'src/app'])(
+  'Next init resolves example imports without aliases in %s',
+  async (appDir) => {
+    const dir = await project({ name: 'x', dependencies: { react: '^19.0.0', next: '^16.0.0' } })
+    await mkdir(join(dir, appDir), { recursive: true })
+    expect(await run(['init', '-y', '--no-install', '--cwd', dir], fakeIo())).toBe(0)
+
+    const pagePath = join(dir, appDir, 'example/page.tsx')
+    const page = await readFile(pagePath, 'utf8')
+    const componentImport = page.match(/import \{ Content \} from '([^']+)'/)?.[1]
+    expect(componentImport).toMatch(/^\.\.?\//)
+    const componentPath = resolve(dirname(pagePath), `${componentImport}.tsx`)
+    const component = await readFile(componentPath, 'utf8')
+    const registryImport = component.match(/import customBlocks from '([^']+)'/)?.[1]
+    expect(existsSync(resolve(dirname(componentPath), `${registryImport}.ts`))).toBe(true)
+  },
+)
 
 test('--no-page skips the route scaffold', async () => {
   const dir = await project({

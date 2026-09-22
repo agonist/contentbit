@@ -15,7 +15,8 @@ pnpm check
 
 `check` is the authoritative package gate. It verifies synchronized package and
 standalone-starter manifest/lockfile versions, lint and formatting, builds,
-tests, packed package manifests, and both complete starter gates.
+tests, packed package manifests, both complete starter gates, and isolated
+consumer checks using newly packed artifacts.
 
 After publishing a new package version, update the standalone consumers and
 their lockfiles before changing starter code:
@@ -26,6 +27,32 @@ pnpm starter:sync <published-version>
 
 This is deliberately post-publication: release PRs cannot install the package
 version they are preparing to publish.
+
+## Candidate package gates
+
+To build the publishable packages and test their tarballs independently:
+
+```bash
+pnpm check:packed
+```
+
+After an existing full build, use `pnpm test:packed` to skip rebuilding. CI runs
+this after `pnpm check:packages`. The gate copies the standalone Astro and
+TanStack projects into an OS temporary directory, preserves their lockfiles as
+the dependency baseline, and overrides every Contentbit dependency with a fresh
+tarball. Only those temporary lockfiles change.
+
+It runs both complete starter checks, initializes and builds a fresh Next.js
+`src/app` consumer, and checks the installed Studio dashboard, graph, and document
+previews. TanStack previews must use the copied styled renderers. Each consumer
+asserts that its installed entry points match the candidate build. Temporary
+projects and local servers are removed when the checks finish.
+
+The gate needs registry access for third-party dependencies and permission to
+listen on a local port. It never publishes packages.
+
+Before the 1.0 release, review the [compatibility promise](/docs/reference/compatibility)
+and include migration notes for intentional changes from 0.x.
 
 ## Starter gates
 

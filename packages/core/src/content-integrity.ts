@@ -225,14 +225,15 @@ function resolveContentLink(
   if (rawPath === '') {
     return { path: normalizePath(sourcePath), ...(anchor ? { anchor } : {}), kind: 'markdown' }
   }
-  if (isRelativeMarkdownPath(rawPath)) {
+  const decodedPath = decodeUriComponent(rawPath)
+  if (isRelativeMarkdownPath(decodedPath)) {
     return {
-      path: joinPath(dirname(sourcePath), rawPath),
+      path: joinPath(dirname(sourcePath), decodedPath),
       ...(anchor ? { anchor } : {}),
       kind: 'markdown',
     }
   }
-  if (hasFileExtension(rawPath)) return undefined
+  if (hasFileExtension(decodedPath)) return undefined
 
   const destination = routeTarget(rawPath, byRoute)
   return {
@@ -243,7 +244,7 @@ function resolveContentLink(
 }
 
 function isRelativeMarkdownPath(value: string): boolean {
-  return value.startsWith('./') || value.startsWith('../') || /\.mdx?$/i.test(value)
+  return /\.mdx?$/i.test(value)
 }
 
 function hasFileExtension(value: string): boolean {

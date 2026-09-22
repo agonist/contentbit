@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises'
 
 import type { Io } from '../run.js'
 
+import { resolveContentCommandConfig } from '../command-config.js'
 import { loadContentProject, resolveContentFiles } from '../content-project.js'
-import { discoverContentCommandDefaults } from '../script-defaults.js'
 
 /** Stats plus a validation summary; a read tool, not a gate — always exits 0. */
 type StatsOutput = DocumentStats & { validation?: { errors: number; warnings: number } }
@@ -17,16 +17,16 @@ export interface StatsCommandInput {
 }
 
 export async function statsCommand(input: StatsCommandInput, io: Io): Promise<number> {
-  const defaults = await discoverContentCommandDefaults('stats', input.globs)
+  const config = await resolveContentCommandConfig('stats', input)
   const all = input.noValidate
-    ? await statsOnly(defaults.globs, defaults.cwd)
+    ? await statsOnly(config.globs, config.cwd)
     : await statsWithValidation(
         {
-          registry: input.registry ?? defaults.registry,
-          noGenericBlocks: input.noGenericBlocks || defaults.noGenericBlocks,
-          cwd: defaults.cwd,
+          registry: config.registry,
+          includeGenericBlocks: config.includeGenericBlocks,
+          cwd: config.cwd,
         },
-        defaults.globs,
+        config.globs,
       )
 
   // A single file keeps the flat object shape; multiple files emit an array.
@@ -37,7 +37,7 @@ export async function statsCommand(input: StatsCommandInput, io: Io): Promise<nu
 /** Default path: cross the loaded-content-project seam so stats and the other
  *  read-commands share one validation path. */
 async function statsWithValidation(
-  input: Pick<StatsCommandInput, 'registry' | 'noGenericBlocks'> & { cwd?: string },
+  input: { registry?: string; includeGenericBlocks: boolean; cwd?: string },
   positionals: string[],
 ): Promise<StatsOutput[]> {
   const { scan } = await loadContentProject({
@@ -45,7 +45,7 @@ async function statsWithValidation(
     positionals,
     cwd: input.cwd,
     registry: input.registry,
-    includeGenericBlocks: !input.noGenericBlocks,
+    includeGenericBlocks: input.includeGenericBlocks,
     linkOptions: {},
   })
   return scan.files.map((file) => {

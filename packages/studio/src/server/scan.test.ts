@@ -444,6 +444,29 @@ slug: alpha
   expect(document.previewHtml).not.toContain('data-cb-custom="quote"')
 })
 
+test('startStudio resolves copied renderers using the consuming project aliases', async () => {
+  const dir = await fixture({
+    'tsconfig.json': JSON.stringify({
+      compilerOptions: { paths: { '@/*': ['./src/*'] } },
+      include: ['src/**/*.tsx'],
+    }),
+    'src/components/content-blocks/content-renderer.tsx': `import { Callout } from '@/components/ui/project-callout'
+export const styledComponents = { callout: Callout }
+`,
+    'src/components/ui/project-callout.tsx': `import { createElement } from 'react'
+export function Callout() { return createElement('aside', { 'data-project-styled': 'callout' }, 'Project callout') }
+`,
+    'content/a.md': '# Alpha\n\n:::callout{type="tip"}\nUseful body.\n:::\n',
+  })
+  await linkContentbitCore(dir)
+  const server = await startStudio({ globs: ['content/*.md'], cwd: dir, port: 0, open: false })
+  runningServers.push(server)
+  const document = (await fetchJson(new URL('/api/document?path=content/a.md', server.url))) as {
+    previewHtml: string
+  }
+  expect(document.previewHtml).toContain('data-project-styled="callout"')
+})
+
 async function fixture(files: Record<string, string>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'cb-studio-'))
   for (const [path, content] of Object.entries(files)) {

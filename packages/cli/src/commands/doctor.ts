@@ -20,10 +20,9 @@ import {
   section,
   severityLabel,
 } from '../cli-format.js'
+import { resolveContentCommandConfig } from '../command-config.js'
 import { loadContentProject } from '../content-project.js'
-import { linkResolverOptions, type LinkOptionValues } from '../link-options.js'
-import { loadSeoConfig } from '../seo-config.js'
-import { discoverContentCommandDefaults } from '../script-defaults.js'
+import type { LinkOptionValues } from '../link-options.js'
 import auditSkill from './agent-templates/contentbit-audit/SKILL.md?raw'
 import authorSkill from './agent-templates/contentbit-author/SKILL.md?raw'
 
@@ -74,31 +73,21 @@ interface DoctorRun {
 }
 
 async function doctorOnce(input: DoctorCommandInput, io: Io): Promise<DoctorRun> {
-  const defaults = await discoverContentCommandDefaults('doctor', input.globs)
+  const config = await resolveContentCommandConfig('doctor', input)
   const minSectionWords = parseMinSectionWords(input.minSectionWords)
   if (minSectionWords === null) {
     io.stderr('doctor: --min-section-words must be a non-negative integer.')
     return { exitCode: 2, files: [] }
   }
 
-  const includeGenericBlocks = !(input.noGenericBlocks || defaults.noGenericBlocks)
-  const linkOptions = linkResolverOptions({
-    linkResolve: input.linkResolve ?? defaults.linkResolve,
-    localeField: input.localeField ?? defaults.localeField,
-    slugField: input.slugField ?? defaults.slugField,
-    keyField: input.keyField ?? defaults.keyField,
-    defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
-  })
-  const seoConfig = await loadSeoConfig({
-    cwd: defaults.cwd,
-    seoConfig: input.seoConfig ?? defaults.seoConfig,
-    noSeo: input.noSeo ?? defaults.noSeo,
-  })
+  const includeGenericBlocks = config.includeGenericBlocks
+  const linkOptions = config.resolveLinkOptions()
+  const seoConfig = await config.loadSeo()
   const { files, scan } = await loadContentProject({
     cmd: 'doctor',
-    positionals: defaults.globs,
-    cwd: defaults.cwd,
-    registry: input.registry ?? defaults.registry,
+    positionals: config.globs,
+    cwd: config.cwd,
+    registry: config.registry,
     includeGenericBlocks,
     linkOptions,
     scan: { minSectionWords, seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
@@ -126,8 +115,8 @@ async function doctorOnce(input: DoctorCommandInput, io: Io): Promise<DoctorRun>
     io.stdout(
       formatReport(
         report,
-        defaults.globs,
-        input.registry ?? defaults.registry,
+        config.globs,
+        config.registry,
         includeGenericBlocks,
         linkOptions,
         hasAliases(scan.linkInputs),

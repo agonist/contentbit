@@ -1,0 +1,141 @@
+---
+title: Compatibility and stability
+description: The v1 compatibility promise for packages, configuration, diagnostics, and machine-readable output.
+---
+
+This policy takes effect with Contentbit **1.0.0**. The current 0.x releases are
+pre-v1; a `schemaVersion` ending in `.v1` identifies a data format, not the
+package's release version.
+
+## Public interfaces
+
+The following are the supported package entry points:
+
+| Package | Public entry points |
+| --- | --- |
+| Core | `@contentbit/core` |
+| Generic block definitions | `@contentbit/blocks` |
+| React renderer | `@contentbit/react` |
+| Astro renderer | `@contentbit/astro`, `@contentbit/astro/components` |
+| CLI | `contentbit` executable and `contentbit` programmatic entry point |
+| Local Studio | `@contentbit/studio` |
+
+Exported functions and types, documented Markdown directive syntax, built-in
+block schemas, and documented command options are covered by the v1 promise.
+Import through these entry points. Files under `dist/` or `src/` are
+implementation details, even when included in a package. `@contentbit/project`
+is internal and is not a published dependency for consumers.
+
+Studio's local HTTP routes support its own dashboard. They are not a stable
+integration interface; use `contentbit snapshot` for portable project data.
+Renderer HTML structure and styling can evolve while documented props and
+rendering behavior remain compatible. Styled packs copied from the registry
+become your project's source files; package updates do not update those copies.
+
+## Version changes
+
+Within 1.x:
+
+- **Patch releases** fix incorrect behavior and packaging problems. A validation
+  bug fix may correctly reject content that an earlier version accepted.
+- **Minor releases** add compatible capabilities, optional fields, commands,
+  block definitions, or diagnostics. Existing supported inputs and documented
+  fields keep their meaning.
+- **Major releases** are required to remove or rename supported exports, make
+  optional inputs required, change documented configuration precedence, or
+  incompatibly change an existing output contract. Release notes must explain
+  the migration.
+
+Treat lists of diagnostic codes and optional output fields as extensible.
+New findings can affect strict CI policies. Keep exact package versions in your
+lockfile and review findings when upgrading. Install Contentbit packages at the
+same release version.
+
+## Configuration
+
+[Contentbit config](/docs/guides/project-config) is the shared source for content
+globs, registry location, generic-block policy, link resolution, and SEO settings.
+Explicit command flags override the corresponding project defaults. Package
+scripts supply compatibility defaults when no Contentbit config or explicit
+content globs are selected.
+
+Path rules are part of the contract:
+
+- Configured content globs and configured registry/SEO paths are relative to
+  the directory containing the discovered config.
+- Explicit content globs use the invocation's working directory.
+- Explicit relative registry/SEO paths use the selected command directory:
+  the discovered config or fallback script directory when its globs are used,
+  otherwise the invocation's working directory. Use an absolute path to avoid
+  ambiguity when invoking commands from a nested directory.
+- An explicit `--seo-config` overrides a configured `seo: false`.
+  An explicit `--no-seo`, where supported, takes precedence over both.
+
+Command-specific behavior remains distinct: Brief can describe a planned page
+before content files exist; commands that require existing files report empty
+matches as an input error. Stats with `--no-validate` does not load a registry.
+
+## Diagnostics and JSON
+
+Use diagnostic `code`, `severity`, source location, and structured fields for
+automation. Existing codes retain their documented meaning within a major
+version; new codes may be added. Human-readable messages, hints, terminal
+colors, whitespace, and formatted Markdown briefs are not parsing contracts.
+
+These outputs carry an explicit format identifier:
+
+| Output | `schemaVersion` |
+| --- | --- |
+| `contentbit snapshot` | `contentbit.project-snapshot.v1` |
+| `contentbit adopt --json` | `contentbit.adoption.v1` |
+| `contentbit brief <target> --json` | `contentbit.seo.brief.v1` |
+| Core SEO evaluation | `contentbit.seo.v1` |
+
+Consumers should check `schemaVersion`, tolerate unknown fields, and handle new
+diagnostic codes. An incompatible format requires a new identifier and a major
+package release unless the new format is separately opt-in and the old one
+remains available.
+
+Doctor's `--json`, Stats, and the serialized link index do not currently have a
+`schemaVersion` field. Their documented fields still follow package semantic
+versioning. Stats returns an object for one file and an array for multiple files;
+do not assume one shape for both cases. See the [CLI reference](/docs/reference/cli)
+for command-specific outputs and exit behavior.
+
+A content project snapshot excludes raw Markdown, processed documents, registries,
+and absolute source paths. Its content hashes reflect source bytes. Discovered
+page facts carry provenance and confidence: exact authored facts take precedence,
+while inferred facts are suggestions whose heuristics can improve in compatible
+releases. Files outside the configured project root keep authored family and
+locale facts; Contentbit does not guess those facts from machine directories.
+For path inference across sibling content directories, choose a shared project
+root that contains them.
+
+## Supported environments
+
+| Area | Requirement and verification |
+| --- | --- |
+| CLI and TypeScript configuration | Node.js 22.18 or newer; native TypeScript type stripping must be available. |
+| Module format | ESM package entry points. CommonJS `require()` is not a promised interface. |
+| React | React 19, matching the renderer's `^19.0.0` peer range. |
+| Astro | Peer range `^5.0.0 \|\| ^6.0.0 \|\| ^7.0.0`; the standalone release fixture currently exercises Astro 7. |
+| Next.js | React integration; the packed-package gate builds a fresh Next 16 project using `src/app`. |
+| TanStack | React integration; the standalone fixture's locked versions are exercised by release gates. |
+| Operating systems | Automated release gates run on Linux. macOS is used for local verification; Windows is not yet covered by an end-to-end release gate. |
+
+Peer ranges describe accepted dependency versions; they do not mean every
+combination is tested. Frameworks can impose stricter Node requirements than
+the CLI. pnpm is the repository's release tool; installed packages do not require
+consumers to use pnpm.
+
+## Release verification
+
+Before publishing, `pnpm check` builds and tests the workspace, checks packed
+manifests, verifies the standalone starters, and installs newly packed artifacts
+into isolated Astro, TanStack, and Next consumers. The packed gate verifies
+validation, rendering, Next initialization, and installed Studio dashboard and
+preview responses. It uses tarballs for direct and transitive Contentbit
+dependencies, so a workspace link cannot hide a missing published file.
+
+See the [release checklist](/docs/maintainers/release-checklist) for commands and
+post-publication starter updates.

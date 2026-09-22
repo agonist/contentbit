@@ -14,6 +14,14 @@ vi.mock('@contentbit/studio', () => ({
   startStudio: studioMock.startStudio,
 }))
 
+vi.mock('import-meta-resolve', () => ({
+  resolve: () => {
+    throw Object.assign(new Error("Cannot find package '@contentbit/studio'"), {
+      code: 'ERR_MODULE_NOT_FOUND',
+    })
+  },
+}))
+
 async function writeFixture(dir: string, files: Record<string, string>): Promise<void> {
   for (const [name, content] of Object.entries(files)) {
     await mkdir(dirname(join(dir, name)), { recursive: true })
@@ -116,4 +124,37 @@ test('studio with no globs reuses package script defaults from nested cwd', asyn
       includeGenericBlocks: false,
     }),
   )
+})
+
+test('studio forwards an explicit SEO config when project defaults disable SEO', async () => {
+  studioMock.startStudio.mockResolvedValue({
+    url: 'http://127.0.0.1:3030',
+    close: async () => {},
+    closed: Promise.resolve(),
+  })
+  const dir = await mkdtemp(join(tmpdir(), 'cb-studio-cli-'))
+  await writeFixture(dir, {
+    'contentbit.config.mjs': 'export default { content: ["content/*.md"], seo: false };\n',
+    'explicit-seo.mjs': 'export default { pageTypes: {} };\n',
+    'content/a.md': 'Prose.\n',
+  })
+
+  await withCwd(dir, async () => {
+    expect(await run(['studio', '--seo-config', './explicit-seo.mjs', '--no-open'], fakeIo())).toBe(
+      0,
+    )
+    expect(studioMock.startStudio).toHaveBeenLastCalledWith(
+      expect.objectContaining({ seoConfig: { pageTypes: {} } }),
+    )
+
+    expect(
+      await run(
+        ['studio', '--seo-config', './explicit-seo.mjs', '--no-seo', '--no-open'],
+        fakeIo(),
+      ),
+    ).toBe(0)
+    expect(studioMock.startStudio).toHaveBeenLastCalledWith(
+      expect.objectContaining({ seoConfig: undefined }),
+    )
+  })
 })

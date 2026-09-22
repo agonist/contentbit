@@ -2,11 +2,13 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 
-import type { LinkOptionValues } from './link-options.js'
+import type { LinkResolverOptions } from '@contentbit/core'
 
+import { linkResolverOptions, type LinkOptionValues } from './link-options.js'
 import { loadContentbitConfig } from './project-config.js'
+import { loadSeoConfig, type LoadedSeoConfig } from './seo-config.js'
 
-export interface ContentCommandDefaults extends LinkOptionValues {
+interface ContentCommandDefaults extends LinkOptionValues {
   cwd?: string
   globs: string[]
   registry?: string
@@ -18,6 +20,54 @@ export interface ContentCommandDefaults extends LinkOptionValues {
 
 type ContentCommand = 'validate' | 'doctor' | 'studio' | 'links' | 'stats' | 'brief' | 'snapshot'
 
+export interface ContentCommandOptions extends LinkOptionValues {
+  globs: string[]
+  registry?: string
+  noGenericBlocks?: boolean
+  seoConfig?: string
+  noSeo?: boolean
+}
+
+export interface ResolvedContentCommandConfig {
+  globs: string[]
+  cwd?: string
+  registry?: string
+  includeGenericBlocks: boolean
+  resolveLinkOptions(): LinkResolverOptions
+  loadSeo(): Promise<LoadedSeoConfig>
+}
+
+/** Resolve invocation flags over Contentbit config or package-script defaults.
+ * Link validation and SEO imports remain on demand so commands keep their
+ * existing input checks, error ordering, and optional scan behavior. */
+export async function resolveContentCommandConfig(
+  command: ContentCommand,
+  input: ContentCommandOptions,
+  startDir = process.cwd(),
+): Promise<ResolvedContentCommandConfig> {
+  const defaults = await discoverContentCommandDefaults(command, input.globs, startDir)
+  const links = {
+    linkResolve: input.linkResolve ?? defaults.linkResolve,
+    localeField: input.localeField ?? defaults.localeField,
+    slugField: input.slugField ?? defaults.slugField,
+    keyField: input.keyField ?? defaults.keyField,
+    defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
+  }
+  const seo = {
+    cwd: defaults.cwd,
+    seoConfig: input.seoConfig ?? defaults.seoConfig,
+    noSeo: input.noSeo ?? (input.seoConfig ? false : defaults.noSeo),
+  }
+  return {
+    globs: defaults.globs,
+    cwd: defaults.cwd,
+    registry: input.registry ?? defaults.registry,
+    includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
+    resolveLinkOptions: () => linkResolverOptions(links),
+    loadSeo: () => loadSeoConfig(seo),
+  }
+}
+
 const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   validate: ['content:check', 'content:validate'],
   doctor: ['content:doctor', 'content:check'],
@@ -28,7 +78,7 @@ const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   snapshot: ['content:snapshot', 'content:check'],
 }
 
-export async function discoverContentCommandDefaults(
+async function discoverContentCommandDefaults(
   command: ContentCommand,
   explicitGlobs: string[],
   startDir = process.cwd(),

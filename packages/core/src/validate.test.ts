@@ -93,6 +93,38 @@ test('unknown props produce CB_UNKNOWN_PROP with a did-you-mean hint', () => {
   expect(result.diagnostics[0].position.start.column).toBe(12)
 })
 
+test('strict wrapped schemas still reject unknown props', () => {
+  const wrapped = defineBlock({
+    ...calloutDef,
+    props: z.strictObject({ title: z.string() }).transform((props) => props),
+  })
+  const result = validateDocument(
+    parseDocument(':::callout{title="Hello" typo="bad"}\nbody\n:::\n'),
+    createBlockRegistry().add(wrapped),
+  )
+  expect(result.ok).toBe(false)
+  expect(result.diagnostics).toEqual([
+    expect.objectContaining({ code: 'CB_PROPS_INVALID', severity: 'error' }),
+  ])
+  expect(isValidatedDocument(result.document)).toBe(false)
+  expect(isValidatedBlock(result.document.children[0])).toBe(false)
+})
+
+test('direct strict objects report each unknown prop only once', () => {
+  const strict = defineBlock({
+    ...calloutDef,
+    props: z.strictObject({ title: z.string() }),
+  })
+  const result = validateDocument(
+    parseDocument(':::callout{title="Hello" typo="bad"}\nbody\n:::\n'),
+    createBlockRegistry().add(strict),
+  )
+  expect(result.ok).toBe(false)
+  expect(result.diagnostics).toEqual([
+    expect.objectContaining({ code: 'CB_UNKNOWN_PROP', severity: 'error' }),
+  ])
+})
+
 test('childOnly block at top level is rejected; nested children are validated', () => {
   const top = validateDocument(parseDocument('::tab{title="A"}\nx\n'), registry())
   // parser already warns CB_CHILD_OUTSIDE_BLOCK and treats it as text — no block at all

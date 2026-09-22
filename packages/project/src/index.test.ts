@@ -127,3 +127,65 @@ Useful body.
   expect(json).not.toContain(dir)
   expect(json).not.toContain('Private source body.')
 })
+
+test('inspectContentProject keeps sibling content paths portable throughout the snapshot', async () => {
+  const dir = await fixture({
+    'project/.keep': '',
+    'shared/alpha.md': '---\nslug: alpha\ntitle: Shared title\nlinksTo: [beta]\n---\n\n# Alpha\n',
+    'shared/beta.md': '---\nslug: beta\ntitle: Shared title\n---\n\n# Beta\n',
+    'shared/plain.md': '# Plain\n',
+  })
+  const snapshot = await inspectContentProject({
+    cwd: join(dir, 'project'),
+    positionals: ['../shared/*.md'],
+  })
+
+  expect(snapshot.families).toEqual([])
+  expect(snapshot.locales).toEqual([])
+  expect(snapshot.pages.map((page) => page.path)).toEqual([
+    '../shared/alpha.md',
+    '../shared/beta.md',
+    '../shared/plain.md',
+  ])
+  expect(snapshot.pages[2].facts.identity).toEqual({
+    value: '../shared/plain.md',
+    source: 'path',
+    confidence: 'exact',
+  })
+  expect(snapshot.graph?.nodes.map((node) => node.path)).toEqual([
+    '../shared/alpha.md',
+    '../shared/beta.md',
+  ])
+  expect(snapshot.findings.find((finding) => finding.code === 'CB_TITLE_DUPLICATE')).toMatchObject({
+    file: '../shared/beta.md',
+    message: expect.stringContaining('../shared/alpha.md'),
+  })
+  expect(JSON.stringify(snapshot)).not.toContain(dir)
+})
+
+test('relocating sibling content preserves snapshot identities, families, and locales', async () => {
+  const files = {
+    'project/.keep': '',
+    'shared/en/guides/one.md': '# One',
+    'shared/fr/guides/one.md': '# Un',
+    'shared/en/guides/two.md': '# Two',
+    'shared/fr/guides/two.md': '# Deux',
+  }
+  const first = await fixture(files)
+  const second = await fixture(files)
+  const snapshots = await Promise.all(
+    [first, second].map((dir) =>
+      inspectContentProject({
+        cwd: join(dir, 'project'),
+        positionals: ['../shared/**/*.md'],
+      }),
+    ),
+  )
+  expect(snapshots[0]).toEqual(snapshots[1])
+  expect(snapshots[0].families).toEqual([])
+  expect(snapshots[0].locales).toEqual([])
+  for (const page of snapshots[0].pages) {
+    expect(page.facts.identity.value).toBe(page.path)
+    expect(page.path).toMatch(/^\.\.\/shared\//)
+  }
+})
