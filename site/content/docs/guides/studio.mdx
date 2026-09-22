@@ -59,11 +59,13 @@ acceptance checks, and raw Markdown/JSON with copy and download actions. Use it
 when a human editor wants to inspect the page plan before handing work to an
 agent or writer.
 
-By default, generic blocks render through `@contentbit/react`. Custom blocks are
-still validated from your registry, and Studio automatically looks for project
-components next to the registry (`blocks/components.tsx` from `contentbit init`,
+Studio renders previews through `@contentbit/react`. Blocks are validated from
+your registry, and Studio automatically looks for project React components next
+to the registry (`blocks/components.tsx` from `contentbit init`,
 or `components.ts`, `preview.tsx`, and `renderers.tsx`). If no component exists,
 Studio falls back to a safe labelled block that shows the body as Markdown.
+This includes Astro-only renderers: `.astro` files render in the Astro app, while
+Studio needs a React preview renderer or uses the labelled fallback.
 
 ## Options
 

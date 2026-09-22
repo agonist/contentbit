@@ -236,6 +236,7 @@ brief, write the Markdown, run Doctor, inspect the page in Studio, and publish.
 ## Explore
 
 - [Docs](https://contentbit.dev/docs) with live-rendered examples
+- [Compatibility and stability](https://contentbit.dev/docs/reference/compatibility) for the v1 public interfaces and upgrade policy
 - [All blocks](https://contentbit.dev/blocks) from the generic pack
 - [Playground](https://contentbit.dev/playground) with live validation
 - [Blog](https://contentbit.dev/blog) written as validated contentbit documents
