@@ -1,0 +1,23 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@contentbit/astro": "0.7.2",
+    "@contentbit/blocks": "0.7.2",
+    "contentbit": "0.7.2",
+    "@contentbit/core": "0.7.2",
+    "@contentbit/project": "0.6.0",
+    "@contentbit/react": "0.7.2",
+    "@contentbit/studio": "0.7.2",
+    "@contentbit/registry-src": "0.0.1",
+    "@contentbit/site": "0.0.1",
+    "@contentbit/video": "0.0.0"
+  },
+  "changesets": [
+    "calm-pages-discover",
+    "portable-discovery-facts",
+    "shared-command-config",
+    "tidy-v1-boundaries",
+    "v1-release-candidate"
+  ]
+}

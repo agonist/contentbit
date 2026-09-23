@@ -1,5 +1,35 @@
 # @contentbit/core
 
+## 1.0.0-rc.0
+
+### Major Changes
+
+- Prepare the v1 release candidate with the documented public compatibility contract.
+  Initialize projects with Contentbit packages matching the running CLI, including
+  prereleases, and pin Studio's TanStack dependencies to the tested versions.
+
+  Upgrade all Contentbit packages together. See the v1 release candidate guide for
+  installation, changes from 0.7.2, known limitations, and promotion criteria.
+
+### Patch Changes
+
+- 3bf64e8: Add provenance-aware page and project discovery for unconfigured Markdown
+  libraries, including portable identities and conservative family/locale
+  grouping in the read-only adoption report, plus a JSON-safe project snapshot
+  interface for remote adapters.
+- 349774a: Avoid guessing content families and locales from absolute machine paths or paths
+  outside the project root. Preserve authored facts and keep sibling-content
+  snapshot facts stable when a checkout moves.
+- a6bd933: Fix v1 edge cases in validation and first-run workflows:
+
+  - Reject invalid props in wrapped strict schemas instead of marking the document valid.
+  - Resolve encoded Markdown links and avoid false broken-link warnings for relative assets.
+  - Generate working Next.js example imports with either app directory layout.
+  - Allow briefs before the first content file exists and honor explicit SEO config overrides.
+  - Load separately installed Studio from the consuming project when using a global or npx CLI.
+  - Resolve project path aliases when previewing copied styled components in Studio.
+  - Keep snapshot paths and path-derived identities portable for content outside the project root.
+
 ## 0.7.2
 
 ## 0.7.1
