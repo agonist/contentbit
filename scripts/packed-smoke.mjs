@@ -43,6 +43,10 @@ async function writeJson(path, value) {
 }
 
 async function install(dir) {
+  const pkg = await json(join(dir, 'package.json'))
+  // Use the same pnpm version as CI, including outside the repository.
+  pkg.packageManager = (await json(join(root, 'package.json'))).packageManager
+  await writeJson(join(dir, 'package.json'), pkg)
   const workspacePath = join(dir, 'pnpm-workspace.yaml')
   const config = await readFile(workspacePath, 'utf8')
   const overrides = [...artifacts].map(
@@ -55,7 +59,6 @@ async function install(dir) {
   // The starter's formatting gate also checks this generated override file.
   if (dir.includes(`${temp}/starter/`))
     await run(pnpm, ['exec', 'oxfmt', 'pnpm-workspace.yaml'], dir)
-  const pkg = await json(join(dir, 'package.json'))
   for (const name of Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })) {
     const artifact = artifacts.get(name)
     if (!artifact) continue
@@ -194,6 +197,8 @@ async function nextProject() {
   const registry = await candidateRegistry()
   try {
     await cli(dir, ['init', '--target', 'react', '--seo', '--no-agents', '--no-styled', '-y'], {
+      // pnpm 11 reads pnpm_config_*; retain npm_config_* for older pnpm versions.
+      pnpm_config_registry: registry.url,
       npm_config_registry: registry.url,
     })
   } finally {
