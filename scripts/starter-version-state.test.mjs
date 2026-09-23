@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { starterVersionIssues, syncStarterManifest } from './starter-version-state.mjs'
+import {
+  isReleaseVersion,
+  starterVersionIssues,
+  syncStarterManifest,
+} from './starter-version-state.mjs'
 
 const pkg = {
   dependencies: { '@contentbit/core': '^0.7.0', react: '^19' },
@@ -52,4 +56,37 @@ test('sync changes only Contentbit ranges and is idempotent', () => {
   })
   assert.deepEqual(syncStarterManifest(synced, '0.8.0'), synced)
   assert.equal(pkg.dependencies['@contentbit/core'], '^0.7.0')
+})
+
+test('pins prerelease starters and accepts their coherent lockfiles', () => {
+  const synced = syncStarterManifest(pkg, '1.0.0-rc.0')
+  assert.equal(synced.dependencies['@contentbit/core'], '1.0.0-rc.0')
+  assert.equal(synced.devDependencies.contentbit, '1.0.0-rc.0')
+  const candidateLock = lockfile
+    .replaceAll('^0.7.0', '1.0.0-rc.0')
+    .replaceAll('0.7.0', '1.0.0-rc.0')
+  assert.deepEqual(starterVersionIssues(synced, candidateLock), [])
+  assert.deepEqual(syncStarterManifest(synced, '1.0.0-rc.0'), synced)
+  const stale = candidateLock.replaceAll('version: 1.0.0-rc.0', 'version: 0.7.2')
+  assert.equal(starterVersionIssues(synced, stale).length, 2)
+  assert.equal(syncStarterManifest(synced, '1.0.0').dependencies['@contentbit/core'], '^1.0.0')
+})
+
+test('rejects malformed release versions and floating prerelease ranges', () => {
+  for (const version of [
+    undefined,
+    'latest',
+    '1.0',
+    '01.0.0',
+    '1.0.0-rc.01',
+    '1.0.0-',
+    '1.0.0-rc..0',
+  ]) {
+    assert.equal(isReleaseVersion(version), false)
+    assert.throws(() => syncStarterManifest(pkg, version), /Invalid release version/)
+  }
+  const floating = {
+    dependencies: { '@contentbit/core': '^1.0.0-rc.0' },
+  }
+  assert.match(starterVersionIssues(floating, '')[0], /exact prerelease version/)
 })

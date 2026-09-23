@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { VERSION } from '@contentbit/core'
 import { expect, test } from 'vitest'
 
 import { run } from '../run'
@@ -69,7 +70,7 @@ test('react init wires react-markdown by default and installs it', async () => {
   expect(component).toContain('ReactMarkdown')
   expect(component).not.toContain('TODO')
   expect(io.out.join('\n')).toContain('react-markdown')
-  expect(io.out.join('\n')).toContain('@contentbit/studio (dev)')
+  expect(io.out.join('\n')).toContain(`@contentbit/studio@${VERSION} (dev)`)
 })
 
 test('init --seo scaffolds a starter SEO config', async () => {

@@ -4,10 +4,10 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
-import { syncStarterManifest } from './starter-version-state.mjs'
+import { isReleaseVersion, syncStarterManifest } from './starter-version-state.mjs'
 
 const version = process.argv[2]
-if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
+if (!isReleaseVersion(version)) {
   console.error('usage: pnpm starter:sync <published-version>')
   process.exit(2)
 }

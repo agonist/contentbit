@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { createReadStream } from 'node:fs'
 import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -13,14 +16,14 @@ const packageDirs = ['core', 'blocks', 'react', 'astro', 'cli', 'studio']
 const artifacts = new Map()
 const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 
-async function run(command, args, cwd) {
+async function run(command, args, cwd, env = {}) {
   console.log(`[packed] ${basename(cwd)}: ${command} ${args.join(' ')}`)
   try {
     const result = await exec(command, args, {
       cwd,
       maxBuffer: 20 * 1024 * 1024,
       timeout: 300_000,
-      env: { ...process.env, CI: 'true', NEXT_TELEMETRY_DISABLED: '1' },
+      env: { ...process.env, CI: 'true', NEXT_TELEMETRY_DISABLED: '1', ...env },
     })
     if (result.stdout) console.log(result.stdout.trim())
     return result.stdout
@@ -68,8 +71,60 @@ async function install(dir) {
   }
 }
 
-async function cli(dir, args) {
-  return run(process.execPath, [join(dir, 'node_modules/contentbit/dist/bin.js'), ...args], dir)
+async function cli(dir, args, env) {
+  return run(
+    process.execPath,
+    [join(dir, 'node_modules/contentbit/dist/bin.js'), ...args],
+    dir,
+    env,
+  )
+}
+
+// pnpm add resolves explicit package versions before applying file overrides.
+// Serve real candidate metadata so init can install an unpublished RC. Other
+// packages still come from npm; nothing is published by this test registry.
+async function candidateRegistry() {
+  const server = createServer((request, response) => {
+    const path = decodeURIComponent(new URL(request.url, 'http://localhost').pathname.slice(1))
+    const artifact = artifacts.get(path)
+    if (artifact) {
+      const tarball = `http://127.0.0.1:${server.address().port}/tarballs/${basename(artifact.path)}`
+      response.setHeader('Content-Type', 'application/json')
+      response.end(
+        JSON.stringify({
+          name: path,
+          'dist-tags': { latest: artifact.version, rc: artifact.version },
+          versions: {
+            [artifact.version]: {
+              ...artifact.manifest,
+              dist: { tarball, integrity: artifact.integrity },
+            },
+          },
+        }),
+      )
+      return
+    }
+    const tarball = [...artifacts.values()].find(
+      (entry) => path === `tarballs/${basename(entry.path)}`,
+    )
+    if (tarball) {
+      createReadStream(tarball.path).pipe(response)
+      return
+    }
+    response.writeHead(302, { Location: `https://registry.npmjs.org${request.url}` })
+    response.end()
+  })
+  await new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', resolve)
+  })
+  return {
+    url: `http://127.0.0.1:${server.address().port}/`,
+    close: () =>
+      new Promise((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      ),
+  }
 }
 
 async function studio(dir, flags = []) {
@@ -136,16 +191,14 @@ async function nextProject() {
     'export default function Layout({ children }: { children: React.ReactNode }) { return <html lang="en"><body>{children}</body></html> }\n',
   )
   await install(dir)
-  await cli(dir, [
-    'init',
-    '--target',
-    'react',
-    '--seo',
-    '--no-install',
-    '--no-agents',
-    '--no-styled',
-    '-y',
-  ])
+  const registry = await candidateRegistry()
+  try {
+    await cli(dir, ['init', '--target', 'react', '--seo', '--no-agents', '--no-styled', '-y'], {
+      npm_config_registry: registry.url,
+    })
+  } finally {
+    await registry.close()
+  }
   await cli(dir, ['validate'])
   const doctor = JSON.parse(await cli(dir, ['doctor', '--json', '--strict-seo']))
   assert.equal(doctor.summary.errors, 0)
@@ -170,9 +223,18 @@ try {
     const manifest = await json(join(source, 'package.json'))
     const stdout = await run(pnpm, ['pack', '--json', '--pack-destination', packDir], source)
     const result = JSON.parse(stdout.slice(stdout.indexOf('{')))
+    const { stdout: packedManifest } = await exec('tar', [
+      '-xOf',
+      result.filename,
+      'package/package.json',
+    ])
     artifacts.set(manifest.name, {
       path: result.filename,
       version: manifest.version,
+      manifest: JSON.parse(packedManifest),
+      integrity: `sha512-${createHash('sha512')
+        .update(await readFile(result.filename))
+        .digest('base64')}`,
       source,
       entry: manifest.exports['.'].import.replace(/^\.\//, ''),
     })
@@ -184,5 +246,6 @@ try {
   await nextProject()
   console.log('[packed] Astro, TanStack, Next init, and installed Studio passed')
 } finally {
-  await rm(temp, { recursive: true, force: true })
+  if (process.argv.includes('--keep')) console.log(`[packed] retained consumers: ${temp}`)
+  else await rm(temp, { recursive: true, force: true })
 }
