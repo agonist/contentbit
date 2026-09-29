@@ -5,7 +5,7 @@ description: Install, evaluate, and promote Contentbit 1.0.0-rc.0.
 
 The candidate version is **1.0.0-rc.0** for all six public packages. It is a
 prerelease of the [v1 compatibility contract](/docs/reference/compatibility).
-The commands below become available after the candidate is published to npm.
+The candidate is published to npm and can be installed with the commands below.
 The `rc` tag tracks candidates; `latest` stays on the stable release until v1 is
 promoted.
 
@@ -64,17 +64,17 @@ these behavior corrections when upgrading:
   peer range is not exercised. See the compatibility policy for details.
 - Styled packs copied from the registry are project source files. Updating
   npm packages does not update those copies; check their rendered output.
-- Repository starters keep the last published stable version until the
-  candidate is available. Packed checks override their Contentbit dependencies
-  with candidate tarballs before publication.
+- Repository starters pin `1.0.0-rc.0` exactly and install it from npm. Packed
+  checks override their Contentbit dependencies with candidate tarballs to
+  verify unpublished changes.
 
 ## Publish and verify a candidate
 
 Prerelease state lives in `.changeset/pre.json` with the `rc` tag. The normal
 release workflow runs `pnpm release`, including the full `pnpm check` gate,
 before Changesets publishes. Do not publish this candidate with `--tag latest`.
-The old 0.7.3 release proposal must be refreshed from the RC preparation before
-it is merged.
+The old 0.7.3 release proposal (#40) was closed after this candidate was
+published.
 
 After publication:
 
