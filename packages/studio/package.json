@@ -1,6 +1,6 @@
 {
   "name": "@contentbit/studio",
-  "version": "0.7.2",
+  "version": "1.0.0-rc.0",
   "description": "Local read-only content studio for contentbit projects.",
   "license": "MIT",
   "repository": {
@@ -44,9 +44,9 @@
     "@contentbit/react": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4",
-    "@tanstack/react-router": "latest",
-    "@tanstack/react-start": "latest",
-    "@tanstack/router-plugin": "latest",
+    "@tanstack/react-router": "1.170.17",
+    "@tanstack/react-start": "1.168.27",
+    "@tanstack/router-plugin": "1.168.19",
     "@vitejs/plugin-react": "^6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -1,4 +1,17 @@
 const CONTENTBIT_NAME = /^(?:contentbit|@contentbit\/)/
+const NUMBER = '(?:0|[1-9]\\d*)'
+const IDENTIFIER = `(?:${NUMBER}|\\d*[A-Za-z-][0-9A-Za-z-]*)`
+const RELEASE_VERSION = new RegExp(
+  `^${NUMBER}\\.${NUMBER}\\.${NUMBER}(?:-${IDENTIFIER}(?:\\.${IDENTIFIER})*)?$`,
+)
+
+export function isReleaseVersion(version) {
+  return typeof version === 'string' && RELEASE_VERSION.test(version)
+}
+
+function starterRange(version) {
+  return version.includes('-') ? version : `^${version}`
+}
 
 export function contentbitDependencyEntries(pkg) {
   const entries = []
@@ -15,9 +28,14 @@ export function starterVersionIssues(pkg, lockfile) {
   if (entries.length === 0) return ['package.json has no Contentbit dependencies']
 
   const expectedRange = entries[0].range
-  const version = /^\^(\d+\.\d+\.\d+)$/.exec(expectedRange)?.[1]
+  const candidate = expectedRange.replace(/^\^/, '')
+  const version =
+    isReleaseVersion(candidate) && expectedRange === starterRange(candidate) ? candidate : null
   const issues = []
-  if (!version) issues.push(`${entries[0].field}.${entries[0].name} must use a ^x.y.z range`)
+  if (!version)
+    issues.push(
+      `${entries[0].field}.${entries[0].name} must use a ^x.y.z range or an exact prerelease version`,
+    )
 
   const importer = lockfile.split(/^packages:/m, 1)[0]
   for (const entry of entries) {
@@ -42,9 +60,10 @@ export function starterVersionIssues(pkg, lockfile) {
 }
 
 export function syncStarterManifest(pkg, version) {
+  if (!isReleaseVersion(version)) throw new Error(`Invalid release version: ${version}`)
   const next = structuredClone(pkg)
   for (const { field, name } of contentbitDependencyEntries(next)) {
-    next[field][name] = `^${version}`
+    next[field][name] = starterRange(version)
   }
   return next
 }

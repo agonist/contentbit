@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { VERSION } from '@contentbit/core'
 
 import type { Io } from '../run.js'
 
@@ -331,9 +332,12 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
   }
 
   // Install runtime packages plus the CLI and optional Studio as dev dependencies.
-  const runtime = adapter.runtimeDependencies(md)
+  const atCliVersion = (name: string) =>
+    name === 'contentbit' || name.startsWith('@contentbit/') ? `${name}@${VERSION}` : name
+  const runtime = adapter.runtimeDependencies(md).map(atCliVersion)
+  const dev = ['contentbit', '@contentbit/studio'].map(atCliVersion)
   if (input.noInstall) {
-    io.stdout(`skipped install: ${runtime.join(' ')} + contentbit @contentbit/studio (dev)`)
+    io.stdout(`skipped install: ${runtime.join(' ')} + ${dev.join(' ')} (dev)`)
   } else {
     const pm = detectPackageManager(cwd)
     io.stdout(`installing with ${pm}: ${runtime.join(' ')}`)
@@ -341,9 +345,7 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
       io.stderr('install failed')
       return 1
     }
-    if (
-      (await runInstall(pm, installArgs(pm, true, ['contentbit', '@contentbit/studio']), cwd)) !== 0
-    ) {
+    if ((await runInstall(pm, installArgs(pm, true, dev), cwd)) !== 0) {
       io.stderr('install failed')
       return 1
     }

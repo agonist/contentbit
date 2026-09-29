@@ -1,5 +1,24 @@
 # @contentbit/astro
 
+## 1.0.0-rc.0
+
+### Major Changes
+
+- Prepare the v1 release candidate with the documented public compatibility contract.
+  Initialize projects with Contentbit packages matching the running CLI, including
+  prereleases, and pin Studio's TanStack dependencies to the tested versions.
+
+  Upgrade all Contentbit packages together. See the v1 release candidate guide for
+  installation, changes from 0.7.2, known limitations, and promotion criteria.
+
+### Patch Changes
+
+- Updated dependencies [3bf64e8]
+- Updated dependencies [349774a]
+- Updated dependencies [a6bd933]
+- Updated dependencies
+  - @contentbit/core@1.0.0-rc.0
+
 ## 0.7.2
 
 ### Patch Changes

@@ -1,0 +1,106 @@
+---
+title: v1 release candidate
+description: Install, evaluate, and promote Contentbit 1.0.0-rc.0.
+---
+
+The candidate version is **1.0.0-rc.0** for all six public packages. It is a
+prerelease of the [v1 compatibility contract](/docs/reference/compatibility).
+The commands below become available after the candidate is published to npm.
+The `rc` tag tracks candidates; `latest` stays on the stable release until v1 is
+promoted.
+
+## Try the candidate
+
+In a new or disposable project, run:
+
+```bash
+npx contentbit@1.0.0-rc.0 init --seo
+```
+
+Init installs the CLI, Studio, and Contentbit runtime packages at the running
+CLI's version. Third-party dependencies still follow their normal installation
+rules. Commit the resulting lockfile to keep the installed dependency set.
+
+For an existing React project, update the packages you use together:
+
+```bash
+pnpm add --save-exact @contentbit/core@1.0.0-rc.0 @contentbit/blocks@1.0.0-rc.0 @contentbit/react@1.0.0-rc.0
+pnpm add --save-exact --save-dev contentbit@1.0.0-rc.0 @contentbit/studio@1.0.0-rc.0
+```
+
+For Astro, replace `@contentbit/react` with `@contentbit/astro` at the same
+version. Omit packages your project does not use. Then run your project's type
+check and build, `contentbit doctor --strict-seo`, and `contentbit studio`.
+Inspect the dashboard, document previews, links, and any copied custom or styled
+renderers.
+
+## Changes from 0.7.2
+
+No intentional public API removal or rename is included in this candidate.
+Existing project configuration and block definitions remain supported. Review
+these behavior corrections when upgrading:
+
+- Wrapped strict schemas now reject invalid block props that could previously
+  pass validation. Repair the reported content instead of bypassing validation.
+- Encoded Markdown links resolve correctly, and relative assets no longer
+  produce false broken-link warnings.
+- Explicit SEO config overrides and configuration precedence are consistent
+  across content commands. Briefs work before the first content file exists.
+- Next.js initialization handles both `app` and `src/app`. Studio resolves a
+  separately installed package from the consuming project and honors project
+  aliases in copied styled components.
+- Discovery no longer infers families or locales from absolute machine paths
+  or directories outside the project root. Configure authored facts or select
+  a shared project root when you relied on those guesses.
+- `contentbit snapshot` adds a portable, versioned project read model for
+  integrations. Studio's local HTTP routes remain internal.
+- Init selects matching Contentbit versions, including prereleases. Studio's
+  TanStack dependencies are pinned to the versions used for candidate testing.
+
+## Known limitations
+
+- Automated release gates cover Linux, Astro 7, React 19, and a Next 16
+  `src/app` consumer. Windows has no end-to-end release gate, and the full Astro
+  peer range is not exercised. See the compatibility policy for details.
+- Styled packs copied from the registry are project source files. Updating
+  npm packages does not update those copies; check their rendered output.
+- Repository starters keep the last published stable version until the
+  candidate is available. Packed checks override their Contentbit dependencies
+  with candidate tarballs before publication.
+
+## Publish and verify a candidate
+
+Prerelease state lives in `.changeset/pre.json` with the `rc` tag. The normal
+release workflow runs `pnpm release`, including the full `pnpm check` gate,
+before Changesets publishes. Do not publish this candidate with `--tag latest`.
+The old 0.7.3 release proposal must be refreshed from the RC preparation before
+it is merged.
+
+After publication:
+
+1. Check `npm view <package> dist-tags --json` for all six public packages:
+   `rc` must point to the candidate and `latest` must still point to the stable
+   version. Verify each candidate's declared Contentbit dependencies match.
+2. Repeat the fresh-project installation above using npm, and an existing-project
+   upgrade using pnpm. Validate, build, and visually inspect Studio and the
+   rendered example. These registry checks complement the prepublication
+   tarball tests.
+3. To update the repository's standalone consumers, run
+   `pnpm starter:sync 1.0.0-rc.0` and `pnpm check:starters`. Prerelease starter
+   dependencies are exact pins. Commit both manifests and lockfiles together.
+4. Record regressions as GitHub issues, including the package version, framework,
+   Node version, reproduction, and expected behavior. Add a changeset for each
+   fix and run `pnpm version:packages` to prepare the next candidate.
+
+## Promote to 1.0.0
+
+Promote only when the exact candidate passes all release gates, fresh npm and
+pnpm installs select matching packages, manual preview checks pass, and reported
+release-blocking regressions are resolved. Confirm the compatibility contract
+and these upgrade notes describe the final candidate.
+
+Exit prerelease mode with `pnpm exec changeset pre exit`, then run
+`pnpm version:packages`. Review the resulting stable versions and changelogs,
+rerun `pnpm check`, and publish through the normal release workflow. Verify
+`latest` points to `1.0.0`, then run `pnpm starter:sync 1.0.0` and the starter
+gates. Candidate publication alone does not constitute this promotion.

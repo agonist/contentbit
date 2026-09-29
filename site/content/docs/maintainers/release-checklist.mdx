@@ -48,11 +48,22 @@ previews. TanStack previews must use the copied styled renderers. Each consumer
 asserts that its installed entry points match the candidate build. Temporary
 projects and local servers are removed when the checks finish.
 
+The Next.js consumer exercises init's actual package installation against a
+temporary local registry serving the candidate tarballs. Third-party packages
+still resolve from npm. To keep the isolated projects for visual inspection,
+run `pnpm test:packed --keep`, open Studio from a retained consumer directory,
+and remove the printed temporary directory when finished.
+
 The gate needs registry access for third-party dependencies and permission to
 listen on a local port. It never publishes packages.
 
 Before the 1.0 release, review the [compatibility promise](/docs/reference/compatibility)
 and include migration notes for intentional changes from 0.x.
+
+For prerelease installation, changes from 0.7.2, publication checks, and stable
+promotion criteria, follow the [v1 release candidate guide](/docs/maintainers/v1-release-candidate).
+Starter synchronization accepts published prerelease versions and pins them
+exactly; stable versions retain their `^x.y.z` ranges.
 
 ## Starter gates
 
