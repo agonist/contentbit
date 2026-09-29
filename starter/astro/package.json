@@ -22,9 +22,9 @@
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.3.1",
     "@astrojs/react": "^6.0.0",
-    "@contentbit/astro": "^0.7.0",
-    "@contentbit/blocks": "^0.7.0",
-    "@contentbit/core": "^0.7.0",
+    "@contentbit/astro": "1.0.0-rc.0",
+    "@contentbit/blocks": "1.0.0-rc.0",
+    "@contentbit/core": "1.0.0-rc.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4",
     "@types/react": "^19",
@@ -44,8 +44,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "@contentbit/studio": "^0.7.0",
-    "contentbit": "^0.7.0",
+    "@contentbit/studio": "1.0.0-rc.0",
+    "contentbit": "1.0.0-rc.0",
     "oxfmt": "^0.54.0",
     "oxlint": "^1.69.0",
     "typescript": "~6"

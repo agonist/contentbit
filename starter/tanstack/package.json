@@ -19,9 +19,9 @@
     "smoke": "node ../../scripts/starter-smoke.mjs tanstack"
   },
   "dependencies": {
-    "@contentbit/blocks": "^0.7.0",
-    "@contentbit/core": "^0.7.0",
-    "@contentbit/react": "^0.7.0",
+    "@contentbit/blocks": "1.0.0-rc.0",
+    "@contentbit/core": "1.0.0-rc.0",
+    "@contentbit/react": "1.0.0-rc.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4",
     "@tanstack/react-devtools": "latest",
@@ -44,7 +44,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@contentbit/studio": "^0.7.0",
+    "@contentbit/studio": "1.0.0-rc.0",
     "@tanstack/devtools-vite": "latest",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
@@ -52,7 +52,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",
-    "contentbit": "^0.7.0",
+    "contentbit": "1.0.0-rc.0",
     "jsdom": "^28",
     "oxfmt": "^0.54.0",
     "oxlint": "^1.69.0",
