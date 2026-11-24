@@ -1,10 +1,17 @@
 import type { DocumentStats } from './analyze.js'
 import type { LinkResolverOptions } from './links.js'
 
+import { readContentPageFacts, type ContentPageFacts } from './page-facts.js'
+
 export interface ContentIntegrityFile {
   path: string
   frontmatter: Record<string, unknown>
   stats: DocumentStats
+}
+
+interface IntegrityPage {
+  file: ContentIntegrityFile
+  facts: ContentPageFacts
 }
 
 export interface ContentIntegrityFinding {
@@ -39,17 +46,21 @@ export function scanContentIntegrity(
   options: LinkResolverOptions = {},
 ): ContentIntegrityFinding[] {
   const findings: ContentIntegrityFinding[] = []
+  const pages = files.map((file) => ({
+    file,
+    facts: readContentPageFacts(file.frontmatter, options),
+  }))
   const byPath = new Map(files.map((file) => [normalizePath(file.path), file]))
-  const byRoute = routeIndex(files, options)
+  const byRoute = routeIndex(pages)
 
   const titles = new Map<string, string>()
   const descriptions = new Map<string, string>()
-  for (const file of files) {
-    addDuplicateFinding(findings, titles, file, 'title', 'CB_TITLE_DUPLICATE')
-    addDuplicateFinding(findings, descriptions, file, 'description', 'CB_DESCRIPTION_DUPLICATE')
-    findings.push(...documentStructureFindings(file))
+  for (const page of pages) {
+    addDuplicateFinding(findings, titles, page, 'title', 'CB_TITLE_DUPLICATE')
+    addDuplicateFinding(findings, descriptions, page, 'description', 'CB_DESCRIPTION_DUPLICATE')
+    findings.push(...documentStructureFindings(page))
   }
-  findings.push(...localeKeyFindings(files, options))
+  findings.push(...localeKeyFindings(pages, options))
 
   for (const file of files) {
     for (const link of file.stats.links.items) {
@@ -89,25 +100,19 @@ export function scanContentIntegrity(
 }
 
 function localeKeyFindings(
-  files: ContentIntegrityFile[],
+  pages: IntegrityPage[],
   options: LinkResolverOptions,
 ): ContentIntegrityFinding[] {
-  const localeField = options.localeField ?? 'locale'
   const keyField = options.keyField ?? 'key'
-  const slugField = options.slugField ?? 'slug'
-  const locales = new Set(
-    files
-      .map((file) => normalizedFrontmatterString(file.frontmatter[localeField]))
-      .filter(isDefined),
-  )
+  const locales = new Set(pages.map(({ facts }) => normalizedFact(facts.locale)).filter(isDefined))
   if (locales.size < 2) return []
 
   const findings: ContentIntegrityFinding[] = []
   const coverage = new Map<string, { file: ContentIntegrityFile; locales: Set<string> }>()
-  for (const file of files) {
-    const locale = normalizedFrontmatterString(file.frontmatter[localeField])
-    if (!locale || !normalizedFrontmatterString(file.frontmatter[slugField])) continue
-    const key = normalizedFrontmatterString(file.frontmatter[keyField])
+  for (const { file, facts } of pages) {
+    const locale = normalizedFact(facts.locale)
+    if (!locale || !facts.slug) continue
+    const key = normalizedFact(facts.key)
     if (!key) {
       findings.push({
         severity: 'warning',
@@ -143,11 +148,11 @@ function localeKeyFindings(
 function addDuplicateFinding(
   findings: ContentIntegrityFinding[],
   seen: Map<string, string>,
-  file: ContentIntegrityFile,
+  { file, facts }: IntegrityPage,
   field: 'title' | 'description',
   code: 'CB_TITLE_DUPLICATE' | 'CB_DESCRIPTION_DUPLICATE',
 ): void {
-  const value = normalizedFrontmatterString(file.frontmatter[field])
+  const value = normalizedFact(facts[field])
   if (!value) return
   const prior = seen.get(value)
   if (!prior) {
@@ -160,18 +165,17 @@ function addDuplicateFinding(
     file: file.path,
     line: 1,
     column: 1,
-    message: `${field} "${String(file.frontmatter[field]).trim()}" also appears in ${prior}`,
+    message: `${field} "${facts[field]?.trim()}" also appears in ${prior}`,
     hint: `Give each content page a distinct ${field}.`,
   })
 }
 
-function documentStructureFindings(file: ContentIntegrityFile): ContentIntegrityFinding[] {
+function documentStructureFindings({ file, facts }: IntegrityPage): ContentIntegrityFinding[] {
   const findings: ContentIntegrityFinding[] = []
   const headings = file.stats.outline
   const h1s = headings.filter((heading) => heading.level === 1)
-  const isPage = typeof file.frontmatter.slug === 'string' && file.frontmatter.slug.trim() !== ''
 
-  if (isPage && h1s.length === 0) {
+  if (facts.slug && h1s.length === 0) {
     findings.push({
       severity: 'warning',
       code: 'CB_H1_MISSING',
@@ -254,16 +258,10 @@ function hasFileExtension(value: string): boolean {
   return /\/[^/]+\.[a-z\d]+$/i.test(`/${value}`)
 }
 
-function routeIndex(
-  files: ContentIntegrityFile[],
-  options: LinkResolverOptions,
-): Map<string, ContentIntegrityFile> {
-  const slugField = options.slugField ?? 'slug'
-  const keyField = options.keyField ?? 'key'
+function routeIndex(pages: IntegrityPage[]): Map<string, ContentIntegrityFile> {
   const out = new Map<string, ContentIntegrityFile>()
-  for (const file of files) {
-    for (const field of [slugField, keyField]) {
-      const value = normalizedFrontmatterString(file.frontmatter[field])
+  for (const { file, facts } of pages) {
+    for (const value of [normalizedFact(facts.slug), normalizedFact(facts.key)]) {
       if (value) out.set(normalizeRoute(value), file)
     }
   }
@@ -306,10 +304,8 @@ function headingAnchors(stats: DocumentStats): Set<string> {
   return anchors
 }
 
-function normalizedFrontmatterString(value: unknown): string | undefined {
-  if (typeof value !== 'string') return undefined
-  const normalized = value.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
-  return normalized || undefined
+function normalizedFact(value: string | undefined): string | undefined {
+  return value?.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
 }
 
 function dirname(path: string): string {
