@@ -17,6 +17,7 @@ import {
   type ScanContentProjectOptions,
 } from '@contentbit/core'
 import { createHash } from 'node:crypto'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { isAbsolute, join, relative } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -70,6 +71,9 @@ export async function loadRegistry(
   const resolvedPath = isAbsolute(registryPath)
     ? registryPath
     : join(options.cwd ?? process.cwd(), registryPath)
+  if (!existsSync(resolvedPath)) {
+    throw new ProjectLoadError(2, `Registry module not found: ${resolvedPath}`)
+  }
   let mod: { default?: BlockDefinition<unknown>[] }
   try {
     mod = (await import(pathToFileURL(resolvedPath).href)) as typeof mod

@@ -27,8 +27,9 @@ export default defineContentConfig({
 ## File discovery
 
 Contentbit walks upward from the current directory and uses the nearest
-`contentbit.config.ts`, `.mts`, `.mjs`, or `.js`. This lets each package in a
-monorepo own its content boundary. Paths and globs are resolved relative to the
+`contentbit.config.ts`, `.mts`, `.mjs`, or `.js`. The search stops at the
+nearest `package.json`, which lets each package in a monorepo own its content
+boundary. Paths and globs in the config are resolved relative to the
 configuration file, not the shell's current directory.
 
 ## Top-level fields
@@ -60,12 +61,13 @@ must continue to resolve.
 
 Explicit files, globs, `--registry`, `--seo-config`, link-field flags, and
 `--no-generic-blocks` override the discovered config for one invocation.
-Commands that accept `--no-seo` can disable the configured SEO contract for one
-run.
+Relative paths you pass on the command line resolve against the shell's current
+directory. Commands that accept `--no-seo` can disable the configured SEO
+contract for one run.
 
-When no config exists, project-aware commands can reuse a matching package
-script for backward compatibility. Once a config exists, config discovery wins
-over package-script inference.
+When no config exists, project-aware commands can reuse a matching script from
+the nearest `package.json` for backward compatibility. Once a config exists,
+config discovery wins over package-script inference.
 
 For the setup procedure, see [Configure a Contentbit project](/docs/guides/project-config).
 For every command option, see the [CLI reference](/docs/reference/cli).

@@ -6,7 +6,7 @@ import { VERSION } from '@contentbit/core'
 
 import type { Io } from '../run.js'
 
-import { loadRegistry } from '../load-registry.js'
+import { loadRegistry } from '../content-project.js'
 import { installAgentIntegration } from './agents.js'
 import { detectTarget, TARGET_ADAPTERS, TARGETS, type Md, type Target } from './init-targets.js'
 

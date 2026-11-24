@@ -64,10 +64,11 @@ Path rules are part of the contract:
 - Configured content globs and configured registry/SEO paths are relative to
   the directory containing the discovered config.
 - Explicit content globs use the invocation's working directory.
-- Explicit relative registry/SEO paths use the selected command directory:
-  the discovered config or fallback script directory when its globs are used,
-  otherwise the invocation's working directory. Use an absolute path to avoid
-  ambiguity when invoking commands from a nested directory.
+- Explicit relative `--registry` and `--seo-config` paths use the invocation's
+  working directory, with or without explicit globs. Paths inside a fallback
+  package script are relative to that script's `package.json`.
+- Config and package-script discovery stop at the nearest `package.json`. A
+  config above it belongs to another project and is not used.
 - An explicit `--seo-config` overrides a configured `seo: false`.
   An explicit `--no-seo`, where supported, takes precedence over both.
 

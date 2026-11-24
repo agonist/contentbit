@@ -26,7 +26,8 @@ export default defineContentConfig({
 
 Paths and globs are relative to the config file. Contentbit searches upward
 from the current directory for `contentbit.config.ts`, `.mts`, `.mjs`, or
-`.js`, which makes the nearest config win in a monorepo.
+`.js`, stopping at the nearest `package.json`, which makes the nearest config
+win in a monorepo.
 
 With a config present, daily commands need no repeated project flags:
 

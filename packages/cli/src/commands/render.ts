@@ -5,8 +5,8 @@ import { readFile } from 'node:fs/promises'
 import type { Io } from '../run.js'
 
 import { formatDiagnosticForCli } from '../cli-format.js'
-import { loadRegistry } from '../load-registry.js'
-import { loadContentbitConfig } from '../project-config.js'
+import { loadRegistry } from '../content-project.js'
+import { loadContentbitConfig, registryPath } from '../project-config.js'
 
 export interface RenderCommandInput {
   file?: string
@@ -28,8 +28,7 @@ export async function renderCommand(input: RenderCommandInput, io: Io): Promise<
   const includeGenericBlocks = !(
     input.noGenericBlocks || loadedConfig?.config.genericBlocks === false
   )
-  const registry = await loadRegistry(input.registry ?? loadedConfig?.config.registry, {
-    cwd: loadedConfig?.cwd,
+  const registry = await loadRegistry(registryPath(input.registry, loadedConfig), {
     includeGenericBlocks,
   })
   const source = await readFile(input.file, 'utf8')

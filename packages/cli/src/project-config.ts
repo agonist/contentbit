@@ -39,6 +39,17 @@ export async function loadContentbitConfig(
   }
 }
 
+/** A --registry flag was typed in the user's shell, so it resolves against the
+ * current directory; a configured registry resolves against its config file. */
+export function registryPath(
+  flag: string | undefined,
+  loaded: LoadedContentbitConfig | undefined,
+): string | undefined {
+  if (flag) return resolve(flag)
+  const configured = loaded?.config.registry
+  return configured && loaded ? resolve(loaded.cwd, configured) : undefined
+}
+
 function findConfig(startDir: string): string | undefined {
   let current = resolve(startDir)
   while (true) {
@@ -46,6 +57,9 @@ function findConfig(startDir: string): string | undefined {
       const candidate = join(current, name)
       if (existsSync(candidate)) return candidate
     }
+    // The nearest package.json is the project boundary: a config above it
+    // belongs to another project and must not shadow this one's scripts.
+    if (existsSync(join(current, 'package.json'))) return undefined
     const parent = dirname(current)
     if (parent === current) return undefined
     current = parent

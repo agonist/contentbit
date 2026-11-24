@@ -1,3 +1,4 @@
+import { VERSION } from '@contentbit/core'
 import { Command, CommanderError, Option, type OptionValues } from 'commander'
 
 import { color, section } from './cli-format.js'
@@ -79,7 +80,13 @@ export async function run(argv: string[], io: Io): Promise<number> {
       return err.exitCode
     }
     if (err instanceof CommanderError) {
-      if (err.code === 'commander.helpDisplayed') return 0
+      if (
+        err.code === 'commander.helpDisplayed' ||
+        err.code === 'commander.help' ||
+        err.code === 'commander.version'
+      ) {
+        return 0
+      }
       io.stderr(
         [
           section(`contentbit ${commandNameForError(argv)}`),
@@ -106,6 +113,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
   const program = new Command()
     .name('contentbit')
     .description('Structured Markdown components for LLM-written content.')
+    .version(VERSION)
     .exitOverride((err) => {
       throw err
     })

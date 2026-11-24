@@ -1,7 +1,7 @@
 import type { Io } from '../run.js'
 
-import { loadRegistry } from '../load-registry.js'
-import { loadContentbitConfig } from '../project-config.js'
+import { loadRegistry } from '../content-project.js'
+import { loadContentbitConfig, registryPath } from '../project-config.js'
 
 export interface DocsCommandInput {
   registry?: string
@@ -11,8 +11,7 @@ export interface DocsCommandInput {
 
 export async function docsCommand(input: DocsCommandInput, io: Io): Promise<number> {
   const loadedConfig = await loadContentbitConfig()
-  const registry = await loadRegistry(input.registry ?? loadedConfig?.config.registry, {
-    cwd: loadedConfig?.cwd,
+  const registry = await loadRegistry(registryPath(input.registry, loadedConfig), {
     includeGenericBlocks: !(input.noGenericBlocks || loadedConfig?.config.genericBlocks === false),
   })
   const guide = registry.toAuthoringGuide({ audience: 'human', includeExamples: true })
