@@ -91,3 +91,16 @@ test('filename supplies a guessed title when the document has no h1', () => {
     confidence: 'guess',
   })
 })
+
+test('a configured slug field is the provenance even when a slug field also exists', () => {
+  const facts = discoverContentPageFacts(
+    {
+      path: '/content/pricing.md',
+      frontmatter: { slug: 'legacy', permalink: 'pricing' },
+      stats: analyzeDocument('# Pricing'),
+    },
+    { slugField: 'permalink' },
+  )
+
+  expect(facts.slug).toEqual({ value: 'pricing', source: 'config', confidence: 'exact' })
+})

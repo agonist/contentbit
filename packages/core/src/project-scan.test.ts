@@ -209,3 +209,61 @@ test('integrity decodes URL-encoded Markdown filenames before resolving them', (
     { code: 'CB_MARKDOWN_LINK_UNRESOLVED', line: 4 },
   ])
 })
+
+test('integrity resolves heading anchors the way renderers slug them', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/start.md',
+        source: `# Install \`contentbit\` now
+
+## Les tarifs détaillés
+
+## Intro
+
+## Intro
+
+## Intro 1
+
+[Install](#install-contentbit-now)
+[Prices](#les-tarifs-détaillés)
+[Encoded prices](#les-tarifs-d%C3%A9taill%C3%A9s)
+[Second intro](#intro-1)
+[Intro 1 heading](#intro-1-1)
+`,
+      },
+    ],
+    registry(),
+  )
+
+  expect(scan.findings.filter((finding) => finding.source === 'integrity')).toEqual([])
+})
+
+test('integrity leaves the site root to the host app and checks other routes', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/start.md',
+        source:
+          '---\nslug: start\n---\n\n# Start\n\n[Home](/)\n[Home section](/#intro)\n[Contact](/contact)\n',
+      },
+    ],
+    registry(),
+  )
+
+  expect(scan.findings.filter((finding) => finding.source === 'integrity')).toMatchObject([
+    { code: 'CB_INTERNAL_URL_UNRESOLVED', message: expect.stringContaining('"/contact"') },
+  ])
+})
+
+test('integrity reads page identity through configured field names', () => {
+  const scan = scanContentProject(
+    [{ path: '/content/start.md', source: '---\npermalink: start\n---\n\nNo heading here.\n' }],
+    registry(),
+    { linkOptions: { slugField: 'permalink' }, includeStatsFindings: false },
+  )
+
+  expect(scan.findings.filter((finding) => finding.source === 'integrity')).toMatchObject([
+    { code: 'CB_H1_MISSING', file: '/content/start.md' },
+  ])
+})

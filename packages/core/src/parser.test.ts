@@ -112,6 +112,23 @@ test('::: inside a code fence is literal text', () => {
   expect(document.children[0].type).toBe('markdown')
 })
 
+test('inline triple-backtick code at line start is prose, not a fence', () => {
+  const src = ['```js``` is inline code.', '', ':::callout', 'body', ':::', ''].join('\n')
+  const { document, diagnostics } = parseDocument(src)
+  expect(diagnostics).toEqual([])
+  expect(
+    document.children.filter((node) => node.type === 'block').map((node) => node.name),
+  ).toEqual(['callout'])
+})
+
+test('a fence line with an info string does not close an open code fence', () => {
+  const src = ['```', '```js', ':::callout', 'body', ':::', '```', ''].join('\n')
+  const { document, diagnostics } = parseDocument(src)
+  expect(diagnostics).toEqual([])
+  expect(document.children).toHaveLength(1)
+  expect(document.children[0].type).toBe('markdown')
+})
+
 test('code fence inside a block body stays opaque', () => {
   const src = [':::callout', '```', '::: not a close', '```', 'real body', ':::'].join('\n')
   const { document, diagnostics } = parseDocument(src)
