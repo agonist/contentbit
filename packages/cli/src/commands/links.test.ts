@@ -135,6 +135,79 @@ test('--fix skips rewrites when the link graph has errors', async () => {
   expect(Object.keys(writes).some((p) => p.endsWith('.md'))).toBe(false)
 })
 
+function fsIo() {
+  return { ...fakeIo(), writeFile: (p: string, c: string) => writeFile(p, c, 'utf8') }
+}
+
+test('--fix rewrites whole alias entries, never an alias inside another slug', async () => {
+  const p1 = '---\nslug: getting-started\naliases:\n  - guide\nlinksTo:\n  - setup-guide\n---\n'
+  const dir = await fixture({
+    'p1.md': p1,
+    'p2.md': '---\nslug: setup-guide\nlinksTo:\n  - getting-started\n---\n',
+    'p3.md': '---\nslug: intro\nlinksTo:\n  - setup-guide\n  - guide\n---\n',
+  })
+  expect(await run(['links', join(dir, '*.md'), '--fix'], fsIo())).toBe(0)
+  expect(await readFile(join(dir, 'p1.md'), 'utf8')).toBe(p1)
+  expect(await readFile(join(dir, 'p3.md'), 'utf8')).toBe(
+    '---\nslug: intro\nlinksTo:\n  - setup-guide\n  - getting-started\n---\n',
+  )
+  const recheck = fakeIo()
+  expect(await run(['links', join(dir, '*.md')], recheck)).toBe(0)
+  expect(recheck.err.join('\n')).not.toContain('CB_LINK_UNRESOLVED')
+})
+
+test('--fix leaves an entry that resolves to a page key, even when another page lists it as an alias', async () => {
+  const a = '---\nlocale: en\nslug: a\nkey: a-key\nlinksTo:\n  - shared\n---\n'
+  const dir = await fixture({
+    'a.md': a,
+    'b.md': '---\nlocale: en\nslug: b\nkey: shared\nlinksTo:\n  - a-key\n---\n',
+    'c.md':
+      '---\nlocale: en\nslug: c\nkey: c-key\naliases:\n  - shared\nlinksTo:\n  - a-key\n---\n',
+  })
+  const args = ['--link-resolve', 'prefer-same-locale-key-fallback-slug']
+  expect(await run(['links', join(dir, '*.md'), '--fix', ...args], fsIo())).toBe(0)
+  expect(await readFile(join(dir, 'a.md'), 'utf8')).toBe(a)
+})
+
+test('--fix rewrites alias entries in CRLF files and keeps their line endings', async () => {
+  const dir = await fixture({
+    'p1.md':
+      '---\r\nslug: getting-started\r\naliases:\r\n  - old-start\r\nlinksTo:\r\n  - intro\r\n---\r\n',
+    'p3.md': '---\r\nslug: intro\r\nlinksTo:\r\n  - old-start\r\n---\r\n\r\n# Intro\r\n',
+  })
+  expect(await run(['links', join(dir, '*.md'), '--fix'], fsIo())).toBe(0)
+  expect(await readFile(join(dir, 'p3.md'), 'utf8')).toBe(
+    '---\r\nslug: intro\r\nlinksTo:\r\n  - getting-started\r\n---\r\n\r\n# Intro\r\n',
+  )
+})
+
+test('--fix rewrites inline-array and quoted alias entries, keeping their quotes', async () => {
+  const dir = await fixture({
+    'a.md': '---\nslug: a\nlinksTo: [old-b, "old-c"]\n---\n',
+    'b.md': "---\nslug: b\naliases:\n  - old-b\nlinksTo:\n  - 'old-c'\n---\n",
+    'c.md': '---\nslug: c\naliases:\n  - old-c\nlinksTo:\n  - a\n---\n',
+  })
+  expect(await run(['links', join(dir, '*.md'), '--fix'], fsIo())).toBe(0)
+  expect(await readFile(join(dir, 'a.md'), 'utf8')).toBe('---\nslug: a\nlinksTo: [b, "c"]\n---\n')
+  expect(await readFile(join(dir, 'b.md'), 'utf8')).toBe(
+    "---\nslug: b\naliases:\n  - old-b\nlinksTo:\n  - 'c'\n---\n",
+  )
+})
+
+test('--fix writes the link index of the fixed files', async () => {
+  const dir = await fixture({
+    'fr-a.md': '---\nlocale: fr\nslug: a\nlinksTo:\n  - old-b\n---\nA\n',
+    'fr-b.md': '---\nlocale: fr\nslug: b\naliases:\n  - old-b\nlinksTo:\n  - a\n---\nB\n',
+  })
+  const writes: Record<string, string> = {}
+  const io = { ...fakeIo(), writeFile: async (p: string, c: string) => void (writes[p] = c) }
+  const args = ['--fix', '--link-resolve', 'same-locale-slug']
+  expect(await run(['links', join(dir, '*.md'), ...args], io)).toBe(0)
+  const index = JSON.parse(writes[Object.keys(writes).find((p) => p.endsWith('link-index.json'))!])
+  const a = index.pages.find((p: { slug: string }) => p.slug === 'a')
+  expect(a.linksTo).toEqual([{ target: 'b', locale: 'fr', slug: 'b' }])
+})
+
 test('supports same-locale slug resolution from the CLI', async () => {
   const dir = await fixture({
     'en-a.md': '---\nlocale: en\nslug: pizza\nlinksTo:\n  - cold\n---\nA\n',
