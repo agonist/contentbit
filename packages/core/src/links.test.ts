@@ -2,6 +2,7 @@ import { expect, test } from 'vitest'
 
 import { createLinkGraphView } from './link-graph.js'
 import { buildLinkIndex, parseLinkFrontmatter, serializeLinkIndex, validateLinks } from './links.js'
+import { readContentPageFacts } from './page-facts.js'
 
 test('parses a full authored link frontmatter', () => {
   const r = parseLinkFrontmatter({
@@ -84,6 +85,40 @@ test('warns on orphan and self-link', () => {
 test('reports shape errors as CB_LINK_SHAPE', () => {
   const rows = validateLinks([{ path: 'a.md', data: { slug: 'a', linksTo: 'b' } }])
   expect(codes(rows)).toContain('CB_LINK_SHAPE')
+})
+
+test('reads title and keywords as page facts do, so other shapes keep the page linked', () => {
+  const inputs = [
+    { path: 'a.md', data: { slug: 'a', title: 2024, keywords: ['x', 'y'], linksTo: ['b'] } },
+    { path: 'b.md', data: { slug: 'b', linksTo: ['a'] } },
+  ]
+  const facts = readContentPageFacts(inputs[0].data)
+
+  expect(validateLinks(inputs)).toEqual([])
+  const a = buildLinkIndex(inputs).pages.get('a')
+  expect(a?.linkedFrom).toEqual(['b'])
+  expect(a?.title).toEqual(facts.title)
+  expect(a?.keywords).toEqual(facts.keywords)
+})
+
+test('a malformed linksTo is reported on its page, which stays a link target', () => {
+  const inputs = [
+    { path: 'a.md', data: { slug: 'a', linksTo: 'b' } },
+    { path: 'b.md', data: { slug: 'b', linksTo: ['a', 'c'] } },
+    { path: 'c.md', data: { slug: 'c', locale: 3 } },
+  ]
+
+  expect(validateLinks(inputs).map((r) => [r.file, r.diagnostic.code])).toEqual([
+    ['a.md', 'CB_LINK_SHAPE'],
+    ['c.md', 'CB_LINK_SHAPE'],
+    ['b.md', 'CB_LINK_UNRESOLVED'],
+    ['b.md', 'CB_LINK_ORPHAN'],
+  ])
+  const index = buildLinkIndex(inputs)
+  expect(index.pages.get('a')?.linkedFrom).toEqual(['b'])
+  expect(index.pages.get('a')?.linksTo).toEqual([])
+  // A malformed identity leaves nothing to link to.
+  expect(index.pages.has('c')).toBe(false)
 })
 
 test('a valid symmetric graph produces no errors', () => {
