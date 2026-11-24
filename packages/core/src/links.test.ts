@@ -94,6 +94,25 @@ test('a valid symmetric graph produces no errors', () => {
   expect(rows.filter((r) => r.diagnostic.severity === 'error')).toEqual([])
 })
 
+test('indexes and validates thousands of pages in linear time', () => {
+  const size = 4000
+  const inputs = Array.from({ length: size }, (_, i) => ({
+    path: `p${i}.md`,
+    data: { slug: `p${i}`, linksTo: [`p${(i + 1) % size}`] },
+  }))
+
+  const started = performance.now()
+  const index = buildLinkIndex(inputs)
+  const rows = validateLinks(inputs)
+  const elapsed = performance.now() - started
+
+  expect(index.pages.get('p0')?.linkedFrom).toEqual([`p${size - 1}`])
+  expect(rows).toEqual([])
+  // Linear work takes tens of milliseconds here; re-reading every input for
+  // every page took seconds.
+  expect(elapsed).toBeLessThan(1000)
+})
+
 test('serializes to a stable sorted plain object', () => {
   const index = buildLinkIndex([
     { path: 'b.md', data: { slug: 'b', linksTo: ['a'] } },
