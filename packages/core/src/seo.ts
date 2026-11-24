@@ -412,7 +412,7 @@ function evaluatePage(page: SeoPage, config: SeoConfig): SeoFinding[] {
   }
 
   for (const field of contract.requiredFrontmatter ?? []) {
-    if (getPath(page.frontmatter, field) === undefined) {
+    if (isBlank(getPath(page.frontmatter, field))) {
       findings.push(
         finding(
           page,
@@ -556,6 +556,11 @@ function getPath(record: Record<string, unknown>, path: string): unknown {
     current = (current as Record<string, unknown>)[part]
   }
   return current
+}
+
+/** Absent the way page facts read it: undefined, null, or a blank string. */
+function isBlank(value: unknown): boolean {
+  return value === undefined || value === null || (typeof value === 'string' && !value.trim())
 }
 
 function normalizeText(value: string): string {
