@@ -196,7 +196,10 @@ function indexLinkPages(
   }
 
   const lookup = buildLookup(pages, resolvedOptions)
+  const linkedFrom = new Map<IndexedPage, Set<string>>()
   for (const page of pages.values()) {
+    const from = replacementFor(page, resolvedOptions)
+    const linked = new Set<IndexedPage>()
     for (const rawTarget of linksToByPage.get(page) ?? []) {
       const resolved = resolveTarget(rawTarget, page, lookup, resolvedOptions)
       if (!resolved.page) {
@@ -205,14 +208,15 @@ function indexLinkPages(
       }
       page.linksTo.push(replacementFor(resolved.page, resolvedOptions))
       page.linkRefs.push(referenceFor(resolved.page, resolved.target))
-      if (resolved.page === page) continue
-      const from = replacementFor(page, resolvedOptions)
-      if (!resolved.page.linkedFrom.includes(from)) resolved.page.linkedFrom.push(from)
-      if (!resolved.page.linkedFromRefs.some((r) => sameReference(r, page))) {
-        resolved.page.linkedFromRefs.push(referenceFor(page))
-      }
+      if (resolved.page === page || linked.has(resolved.page)) continue
+      linked.add(resolved.page)
+      resolved.page.linkedFromRefs.push(referenceFor(page))
+      // Pages in different locales can share a slug or key, so linkedFrom is
+      // deduplicated by value rather than by source page.
+      linkedFrom.set(resolved.page, (linkedFrom.get(resolved.page) ?? new Set()).add(from))
     }
   }
+  for (const [page, sources] of linkedFrom) page.linkedFrom = [...sources]
 
   return { pages, aliases, aliasEntries, options: resolvedOptions }
 }
@@ -495,10 +499,6 @@ function referenceFor(page: IndexedPage, target?: string): LinkReference {
     slug: page.slug,
     ...(page.key ? { key: page.key } : {}),
   }
-}
-
-function sameReference(ref: LinkReference, page: IndexedPage): boolean {
-  return ref.slug === page.slug && ref.locale === page.locale && ref.key === page.key
 }
 
 function sortedRefs(refs: LinkReference[]): LinkReference[] {
