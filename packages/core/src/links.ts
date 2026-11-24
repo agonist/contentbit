@@ -140,19 +140,35 @@ export function parseLinkFrontmatter(
   return { ok: false, errors: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) }
 }
 
-// Pure: builds the resolved link graph from per-file frontmatter data. Pass 1
-// collects pages and registers aliases; pass 2 resolves each linksTo through
-// the configured identity maps and inverts edges to derive linkedFrom.
+// Pure: builds the resolved link graph from per-file frontmatter data.
 export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions = {}): LinkIndex {
   const resolvedOptions = { ...DEFAULT_OPTIONS, ...options }
+  const parsedPages: ParsedLinkPage[] = []
+  for (const { path, data } of inputs) {
+    const parsed = parseLinkFrontmatter(data, resolvedOptions)
+    if (parsed.ok && parsed.value !== null) parsedPages.push({ path, fm: parsed.value })
+  }
+  return indexLinkPages(parsedPages, resolvedOptions)
+}
+
+interface ParsedLinkPage {
+  path: string
+  fm: LinkFrontmatter
+}
+
+// Pass 1 collects pages and registers aliases; pass 2 resolves each page's own
+// linksTo through the configured identity maps and inverts edges to derive
+// linkedFrom.
+function indexLinkPages(
+  parsedPages: ParsedLinkPage[],
+  resolvedOptions: LinkIndex['options'],
+): LinkIndex {
   const pages = new Map<string, IndexedPage>()
+  const linksToByPage = new Map<IndexedPage, LinkTarget[]>()
   const aliases = new Map<string, string>()
   const aliasEntries: LinkAliasEntry[] = []
 
-  for (const { path, data } of inputs) {
-    const parsed = parseLinkFrontmatter(data, resolvedOptions)
-    if (!parsed.ok || parsed.value === null) continue
-    const fm = parsed.value
+  for (const { path, fm } of parsedPages) {
     const page: IndexedPage = {
       slug: fm.slug,
       key: fm.key,
@@ -167,6 +183,7 @@ export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions
       linkedFromRefs: [],
     }
     pages.set(pageMapKey(page, resolvedOptions), page)
+    linksToByPage.set(page, fm.linksTo ?? [])
   }
 
   for (const page of pages.values()) {
@@ -180,12 +197,7 @@ export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions
 
   const lookup = buildLookup(pages, resolvedOptions)
   for (const page of pages.values()) {
-    const source = parseLinkFrontmatter(
-      inputForPage(page, inputs, resolvedOptions),
-      resolvedOptions,
-    )
-    if (!source.ok || source.value === null) continue
-    for (const rawTarget of source.value.linksTo ?? []) {
+    for (const rawTarget of linksToByPage.get(page) ?? []) {
       const resolved = resolveTarget(rawTarget, page, lookup, resolvedOptions)
       if (!resolved.page) {
         page.linksTo.push(resolved.target)
@@ -263,9 +275,18 @@ export function validateLinks(
   inputs: LinkInput[],
   options: LinkResolverOptions = {},
 ): LinkDiagnostic[] {
+  return analyzeLinks(inputs, options).diagnostics
+}
+
+// Builds the link index and validates links against it in one pass over the
+// inputs, for callers such as the content project scan that need both.
+export function analyzeLinks(
+  inputs: LinkInput[],
+  options: LinkResolverOptions = {},
+): { index: LinkIndex; diagnostics: LinkDiagnostic[] } {
   const resolvedOptions = { ...DEFAULT_OPTIONS, ...options }
   const out: LinkDiagnostic[] = []
-  const validInputs: Array<{ path: string; fm: LinkFrontmatter }> = []
+  const validInputs: ParsedLinkPage[] = []
   const seenSlug = new Map<string, string>() // identity -> first file
   const seenKey = new Map<string, string>() // identity -> first file
   const seenAlias = new Map<string, string>() // identity -> file
@@ -318,7 +339,7 @@ export function validateLinks(
   }
 
   const ambiguousPageKeys = ambiguousValidationPageKeys(validInputs, resolvedOptions)
-  const index = buildLinkIndex(inputs, resolvedOptions)
+  const index = indexLinkPages(validInputs, resolvedOptions)
   const lookup = buildLookup(index.pages, resolvedOptions)
 
   for (const { fm } of validInputs) {
@@ -387,11 +408,11 @@ export function validateLinks(
         diag(page.path, 'CB_LINK_ORPHAN', 'warning', `page "${page.slug}" has no inbound links`),
       )
   }
-  return out
+  return { index, diagnostics: out }
 }
 
 function ambiguousValidationPageKeys(
-  inputs: Array<{ path: string; fm: LinkFrontmatter }>,
+  inputs: ParsedLinkPage[],
   options: LinkResolverOptions,
 ): Set<string> {
   const pageCounts = new Map<string, number>()
@@ -639,20 +660,6 @@ function candidatesFor(
       out.push(usesKeyResolution(options) && page.key ? page.key : page.slug)
   }
   return out
-}
-
-function inputForPage(
-  page: IndexedPage,
-  inputs: LinkInput[],
-  options: LinkResolverOptions,
-): Record<string, unknown> {
-  for (const input of inputs) {
-    const parsed = parseLinkFrontmatter(input.data, options)
-    if (!parsed.ok || parsed.value === null) continue
-    const identity = frontmatterIdentity(parsed.value, options)
-    if (pageMapKey(identity, options) === pageMapKey(page, options)) return input.data
-  }
-  return {}
 }
 
 function diag(

@@ -8,7 +8,7 @@ import { analyzeDocument } from './analyze.js'
 import { compileDocument } from './compile.js'
 import { extractFrontmatter } from './frontmatter.js'
 import { createLinkGraphView, type LinkGraphSummary } from './link-graph.js'
-import { buildLinkIndex, validateLinks } from './links.js'
+import { analyzeLinks } from './links.js'
 import { evaluateSeoProject, type SeoProjectEvaluation } from './seo.js'
 import { scanContentIntegrity } from './content-integrity.js'
 
@@ -112,14 +112,15 @@ export function scanContentProject(
   let linkGraph: ContentProjectLinkGraph | undefined
   let linkDiagnostics: LinkDiagnostic[] | undefined
   if (hasLinkFrontmatter(linkInputs, options.linkOptions?.slugField)) {
-    linkDiagnostics = validateLinks(linkInputs, options.linkOptions)
+    const links = analyzeLinks(linkInputs, options.linkOptions)
+    linkIndex = links.index
+    linkDiagnostics = links.diagnostics
     for (const { file, diagnostic } of linkDiagnostics) {
       const finding = findingFromDiagnostic('links', file, diagnostic)
       findings.push(finding)
       const scanned = scannedFiles.find((item) => item.path === file)
       if (scanned) scanned.findings.push(finding)
     }
-    linkIndex = buildLinkIndex(linkInputs, options.linkOptions)
     linkGraph = createLinkGraphView(linkIndex, linkDiagnostics).summary
   }
 
