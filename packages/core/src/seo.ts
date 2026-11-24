@@ -88,6 +88,7 @@ export type SeoFindingCode =
   | 'CB_SEO_CONFIG_INVALID'
   | 'CB_SEO_TYPE_MISSING'
   | 'CB_SEO_TYPE_UNKNOWN'
+  | 'CB_SEO_PAGE_ID_DUPLICATE'
   | 'CB_SEO_FRONTMATTER_MISSING'
   | 'CB_SEO_SECTION_MISSING'
   | 'CB_SEO_BLOCK_REQUIRED'
@@ -192,7 +193,7 @@ export function evaluateSeoProject(input: EvaluateSeoProjectInput): SeoProjectEv
   }
 
   const pages = normalizeSeoPages(parsed.config, input.files, input.linkIndex, input.linkOptions)
-  const findings: SeoFinding[] = []
+  const findings = duplicatePageIdFindings(pages)
   for (const page of pages) {
     if (page.source === 'planned') continue
     findings.push(...evaluatePage(page, parsed.config))
@@ -294,8 +295,8 @@ function normalizeSeoPages(
   linkIndex: LinkIndex | undefined,
   linkOptions: LinkResolverOptions = {},
 ): SeoPage[] {
-  const byId = new Map<string, SeoPage>()
-  const byConfigId = new Map<string, SeoPage>()
+  const plannedById = new Map<string, SeoPage>()
+  const plannedByConfigId = new Map<string, SeoPage>()
   for (const [id, page] of Object.entries(config.pages)) {
     const key = page.key ?? id
     const slug = page.slug
@@ -313,13 +314,15 @@ function normalizeSeoPages(
       linkedFrom: [],
       frontmatter: pageToFrontmatter(page),
     }
-    byId.set(normalized.id, normalized)
-    byConfigId.set(id, normalized)
+    plannedById.set(normalized.id, normalized)
+    plannedByConfigId.set(id, normalized)
   }
 
   const linkPageByPath = new Map(
     linkIndex ? [...linkIndex.pages.values()].map((page) => [page.path, page]) : [],
   )
+  const existing: SeoPage[] = []
+  const claimed = new Set<SeoPage>()
   for (const file of files) {
     const facts = readContentPageFacts(file.frontmatter, linkOptions)
     const fm = facts.frontmatter
@@ -327,10 +330,11 @@ function normalizeSeoPages(
     const id = seoPageId(facts, identity)
     const defaults = pageDefaultsForPath(config.pageDefaults, file.path)
     const planned =
-      byId.get(id) ??
-      (facts.key ? byId.get(facts.key) : undefined) ??
-      (facts.slug ? byId.get(facts.slug) : undefined) ??
-      findPlannedByPath(byConfigId, file.path)
+      plannedById.get(id) ??
+      (facts.key ? plannedById.get(facts.key) : undefined) ??
+      (facts.slug ? plannedById.get(facts.slug) : undefined) ??
+      findPlannedByPath(plannedByConfigId, file.path)
+    if (planned) claimed.add(planned)
     const pageId = planned && !facts.locale ? planned.id : id
     const linkPage = linkPageByPath.get(file.path)
     const page: SeoPage = {
@@ -357,11 +361,33 @@ function normalizeSeoPages(
       frontmatter: { ...pageToFrontmatter(defaults), ...planned?.frontmatter, ...fm },
       stats: file.stats,
     }
-    byId.set(page.id, page)
-    if (page.slug && page.slug !== page.id) byId.delete(page.slug)
+    existing.push(page)
   }
 
-  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id))
+  const unclaimed = [...plannedById.values()].filter((page) => !claimed.has(page))
+  return [...existing, ...unclaimed].sort((a, b) => a.id.localeCompare(b.id))
+}
+
+function duplicatePageIdFindings(pages: SeoPage[]): SeoFinding[] {
+  const firstPath = new Map<string, string>()
+  const findings: SeoFinding[] = []
+  for (const page of pages) {
+    const prior = firstPath.get(page.id)
+    if (prior === undefined) {
+      firstPath.set(page.id, page.path ?? page.id)
+      continue
+    }
+    findings.push({
+      ...finding(
+        page,
+        'warning',
+        'CB_SEO_PAGE_ID_DUPLICATE',
+        `SEO page id "${page.id}" is also used by ${prior}`,
+      ),
+      hint: 'Give one of the pages a distinct key. An SEO page id is the key, or the slug when there is no key.',
+    })
+  }
+  return findings
 }
 
 function evaluatePage(page: SeoPage, config: SeoConfig): SeoFinding[] {
