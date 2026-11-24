@@ -88,6 +88,17 @@ const IMAGE_RE = /!\[([^\]]*)\]\(([^)]*)\)/g
 const LINK_RE = /\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g
 const AUTOLINK_RE = /<(https?:\/\/[^>\s]+)>/g
 const EXTERNAL_URL_RE = /^(?:https?:)?\/\//i
+const HEADING_INLINE_RE =
+  /`([^`]+)`|!\[[^\]]*\]\([^)]*\)|\[([^\]]+)\]\([^)\s]+(?:\s+"[^"]*")?\)|<(https?:\/\/[^>\s]+)>/g
+
+/** A heading's visible text, which renderers display and derive its id from. */
+function headingText(markdown: string): string {
+  return markdown.replace(
+    HEADING_INLINE_RE,
+    (_, code?: string, label?: string, url?: string) =>
+      code ?? (label === undefined ? (url ?? ' ') : headingText(label)),
+  )
+}
 
 /**
  * Scan a document and return structured stats: prose length, heading outline,
@@ -193,9 +204,9 @@ export function analyzeDocument(source: string, options: AnalyzeOptions = {}): D
       const heading = trimmed.match(HEADING_RE)
       if (heading) {
         const raw = heading[2].replace(/\s+#+\s*$/, '')
-        const text = inlineToProse(raw, lineNo).replace(/\s+/g, ' ').trim()
+        const text = headingText(raw).replace(/\s+/g, ' ').trim()
         outline.push({ level: heading[1].length, text, line: lineNo, words: 0 })
-        addWords(countWords(text))
+        addWords(countWords(inlineToProse(raw, lineNo)))
         inBlockquote = false
         prevLineHasPipe = false
         continue

@@ -30,8 +30,9 @@ export interface ContentIntegrityFinding {
 /**
  * Content-quality checks that need to see more than one document. These stay
  * deliberately conservative: page-only requirements apply to slugged pages,
- * while Markdown links are checked only when they name a local Markdown file
- * or an in-document anchor. Site-router URLs remain the host app's concern.
+ * and Markdown links are checked only when they name a local Markdown file, an
+ * in-document anchor, or a site route that should match a scanned page's slug
+ * or key. The site root and file assets remain the host app's concern.
  */
 export function scanContentIntegrity(
   files: ContentIntegrityFile[],
@@ -235,9 +236,11 @@ function resolveContentLink(
   }
   if (hasFileExtension(decodedPath)) return undefined
 
-  const destination = routeTarget(rawPath, byRoute)
+  const route = normalizeRoute(rawPath)
+  if (!route) return undefined
+  const destination = routeTarget(route, byRoute)
   return {
-    path: destination?.path ?? `\0${normalizeRoute(rawPath)}`,
+    path: destination?.path ?? `\0${route}`,
     ...(anchor ? { anchor } : {}),
     kind: 'route',
   }
@@ -268,11 +271,9 @@ function routeIndex(
 }
 
 function routeTarget(
-  rawPath: string,
+  route: string,
   byRoute: Map<string, ContentIntegrityFile>,
 ): ContentIntegrityFile | undefined {
-  const route = normalizeRoute(rawPath)
-  if (!route) return undefined
   return byRoute.get(route) ?? byRoute.get(route.slice(route.lastIndexOf('/') + 1))
 }
 
@@ -282,27 +283,27 @@ function normalizeRoute(value: string): string {
     .replace(/^\/+|\/+$/g, '')
 }
 
+/**
+ * Heading ids as github-slugger makes them, which is what Astro, Fumadocs and
+ * GitHub emit: lowercase, keep letters, marks, digits, `_`, `-` and spaces,
+ * turn each space into `-`, and suffix repeats with `-1`, `-2`, ...
+ */
+const SLUG_REMOVED_RE = /[^\p{Alphabetic}\p{M}\p{Nd}\p{Pc} -]/gu
+
 function headingAnchors(stats: DocumentStats): Set<string> {
   const anchors = new Set<string>()
   const occurrences = new Map<string, number>()
   for (const heading of stats.outline) {
-    const base = headingAnchor(heading.text)
-    if (!base) continue
-    const count = occurrences.get(base) ?? 0
-    occurrences.set(base, count + 1)
-    anchors.add(count === 0 ? base : `${base}-${count}`)
+    const base = heading.text.toLowerCase().replace(SLUG_REMOVED_RE, '').replaceAll(' ', '-')
+    let anchor = base
+    while (anchors.has(anchor)) {
+      const count = (occurrences.get(base) ?? 0) + 1
+      occurrences.set(base, count)
+      anchor = `${base}-${count}`
+    }
+    anchors.add(anchor)
   }
   return anchors
-}
-
-function headingAnchor(value: string): string {
-  return value
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s-]/gu, '')
-    .trim()
-    .replace(/\s+/g, '-')
 }
 
 function normalizedFrontmatterString(value: unknown): string | undefined {

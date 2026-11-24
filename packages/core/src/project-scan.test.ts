@@ -225,7 +225,10 @@ test('integrity resolves heading anchors the way renderers slug them', () => {
 
 ## Intro 1
 
+## C++ & Rust
+
 [Install](#install-contentbit-now)
+[Languages](#c--rust)
 [Prices](#les-tarifs-détaillés)
 [Encoded prices](#les-tarifs-d%C3%A9taill%C3%A9s)
 [Second intro](#intro-1)
