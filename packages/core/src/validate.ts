@@ -63,6 +63,8 @@ export function isValidatedBlock(node: ContentNode): node is ValidatedBlockNode 
 }
 
 const HAS_SCHEME_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/
+/** Every CommonMark link, image, definition, or autolink contains one of these. */
+const MAY_LINK_RE = /\]\(|\]:|</
 
 /** The mdast fields the URL check reads. fromMarkdown positions every node it parses. */
 interface MdastNode {
@@ -92,6 +94,7 @@ function checkUrls(
   allowed: string[],
   report: (d: Diagnostic) => void,
 ): void {
+  if (!MAY_LINK_RE.test(markdown.value)) return
   const visit = (node: MdastNode): void => {
     const scheme = node.url?.match(HAS_SCHEME_RE) // relative URLs are fine
     const protocol = scheme && `${scheme[0].slice(0, -1).toLowerCase()}:`
