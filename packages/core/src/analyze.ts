@@ -1,7 +1,7 @@
 import type { ContentNode } from './ast.js'
 
 import { extractFrontmatter, stripFrontmatter } from './frontmatter.js'
-import { parseDocument } from './parser.js'
+import { closesCodeFence, openCodeFence, parseDocument } from './parser.js'
 
 export interface OutlineEntry {
   /** ATX heading level, 1-6. */
@@ -80,7 +80,6 @@ function utf8Length(source: string): number {
   return bytes
 }
 
-const CODE_FENCE_RE = /^(`{3,}|~{3,})(.*)$/
 const HEADING_RE = /^(#{1,6})\s+(.*)$/
 const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])\s+/
 const TABLE_SEPARATOR_RE = /^\|?[\s:|-]+$/
@@ -170,17 +169,15 @@ export function analyzeDocument(source: string, options: AnalyzeOptions = {}): D
       const lineNo = startLine + i
       const trimmed = line.trim()
 
-      const fenceMatch = trimmed.match(CODE_FENCE_RE)
       if (fence !== null) {
-        if (fenceMatch && fenceMatch[1][0] === fence[0] && fenceMatch[1].length >= fence.length) {
-          fence = null
-        }
+        if (closesCodeFence(trimmed, fence)) fence = null
         continue
       }
-      if (fenceMatch) {
-        fence = fenceMatch[1]
+      const opened = openCodeFence(trimmed)
+      if (opened) {
+        fence = opened.fence
         code.fences++
-        const lang = fenceMatch[2].trim().split(/\s+/)[0]
+        const lang = opened.info.split(/\s+/)[0]
         if (lang) languages.add(lang)
         inBlockquote = false
         prevLineHasPipe = false
