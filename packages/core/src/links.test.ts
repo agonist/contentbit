@@ -113,6 +113,25 @@ test('indexes and validates thousands of pages in linear time', () => {
   expect(elapsed).toBeLessThan(1000)
 })
 
+test('indexes a page linked from every other page in linear time', () => {
+  const size = 20000
+  const inputs = Array.from({ length: size }, (_, i) => ({
+    path: `p${i}.md`,
+    data: { slug: `p${i}`, linksTo: ['hub', 'hub'] },
+  }))
+  inputs.push({ path: 'hub.md', data: { slug: 'hub', linksTo: [] } })
+
+  const started = performance.now()
+  const hub = buildLinkIndex(inputs).pages.get('hub')
+  const elapsed = performance.now() - started
+
+  expect(hub?.linkedFrom).toHaveLength(size)
+  expect(hub?.linkedFrom[size - 1]).toBe(`p${size - 1}`)
+  expect(hub?.linkedFromRefs).toHaveLength(size)
+  // Checking each new inbound link against all earlier ones took seconds.
+  expect(elapsed).toBeLessThan(500)
+})
+
 test('serializes to a stable sorted plain object', () => {
   const index = buildLinkIndex([
     { path: 'b.md', data: { slug: 'b', linksTo: ['a'] } },
