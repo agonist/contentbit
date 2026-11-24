@@ -1,8 +1,10 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { createServer as createNetServer, type AddressInfo } from 'node:net'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createServer, searchForWorkspaceRoot, type Plugin, type ViteDevServer } from 'vite'
+import { createServer, type Plugin, type ViteDevServer } from 'vite'
 import type { BlockComponent } from '@contentbit/react'
 
 import { handleStudioApiRequest } from './api.js'
@@ -28,19 +30,18 @@ export interface StudioServer {
 export async function startStudio(options: StartStudioOptions): Promise<StudioServer> {
   const root = findPackageRoot()
   const host = options.host ?? '127.0.0.1'
-  const port = options.port ?? 4377
+  // Vite treats port 0 as unset and falls back to 5173.
+  const port = options.port === 0 ? await freePort(host) : (options.port ?? 4377)
   const cwd = options.cwd ?? process.cwd()
-  // Vite serves only files under `fs.allow`. We need:
-  // - `root`: the Studio package itself (its built UI and source).
-  // - `searchForWorkspaceRoot(root)`: the workspace that hoists Studio's deps,
-  //   so packaged fonts and other Vite-served dependency assets resolve when
-  //   Studio is installed into a monorepo.
-  // - `cwd`: the consuming project, so Studio can read its content/blocks.
-  // We deliberately do NOT add `searchForWorkspaceRoot(cwd)`: in a project with
-  // no workspace marker, Vite walks up past the git root to the nearest ancestor
-  // `package.json`, which can expose an unexpectedly broad directory over HTTP
-  // (notably with `--host`).
-  const fsAllow = [...new Set([root, searchForWorkspaceRoot(root), cwd])]
+  // Vite serves `/@fs/` files from `fs.allow` and the modules the UI imports.
+  // The UI reads the project only through /api/*, and previews and project
+  // components render on the server, so the list holds the Studio package and
+  // the font its stylesheet loads by url(). A project or workspace root here
+  // would serve every file under it, to the network with --host.
+  const fontRoot = dirname(
+    createRequire(join(root, 'package.json')).resolve('@fontsource-variable/inter/package.json'),
+  )
+  const fsAllow = [root, fontRoot]
   const apiOptions: StudioOptions = {
     globs: options.globs,
     cwd,
@@ -159,6 +160,17 @@ function studioApiPlugin(options: StudioOptions): Plugin {
       })
     },
   }
+}
+
+async function freePort(host: string): Promise<number> {
+  const server = createNetServer()
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, host, resolve)
+  })
+  const { port } = server.address() as AddressInfo
+  await new Promise((resolve) => server.close(resolve))
+  return port
 }
 
 function findPackageRoot(): string {

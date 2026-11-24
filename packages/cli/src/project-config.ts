@@ -1,7 +1,7 @@
 import type { ContentbitConfig, ContentbitConfigInput } from '@contentbit/core'
+import { importFresh } from '@contentbit/project'
 import { existsSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
 
 const CONFIG_FILES = [
   'contentbit.config.ts',
@@ -27,7 +27,7 @@ export async function loadContentbitConfig(
     : findConfig(startDir)
   if (!path) return undefined
 
-  const mod = (await import(pathToFileURL(path).href)) as { default?: ContentbitConfigInput }
+  const mod = (await importFresh(path)) as { default?: ContentbitConfigInput }
   if (!mod.default || typeof mod.default !== 'object') {
     throw new Error(`Contentbit config must default-export a config object: ${path}`)
   }
