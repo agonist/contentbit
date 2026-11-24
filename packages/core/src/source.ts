@@ -5,5 +5,5 @@
  * Unix ones, and line and column numbers match what an editor shows.
  */
 export function normalizeSource(source: string): string {
-  return source.replace(/^﻿/, '').replace(/\r\n?/g, '\n')
+  return source.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n')
 }
