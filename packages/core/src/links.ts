@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { Diagnostic, SourceRange } from './diagnostics.js'
-import { normalizeContentPageFrontmatter } from './page-facts.js'
+import { readContentPageFacts, type ContentPageKeywords } from './page-facts.js'
 
 const LinkTarget = z.union([
   z.string(),
@@ -16,24 +16,22 @@ const LinkTarget = z.union([
     }),
 ])
 
-const LinkFrontmatter = z.object({
+const LinkIdentity = z.object({
   slug: z.string().min(1),
   key: z.string().min(1).optional(),
   locale: z.string().min(1).optional(),
-  title: z.string().optional(),
-  linksTo: z.array(LinkTarget).optional(),
-  aliases: z.array(z.string()).optional(),
-  keywords: z
-    .object({
-      primary: z.string().optional(),
-      secondary: z.array(z.string()).optional(),
-      lsi: z.array(z.string()).optional(),
-    })
-    .optional(),
 })
 
+const LinksTo = z.array(LinkTarget).optional()
+const Aliases = z.array(z.string()).optional()
+
 export type LinkTarget = z.infer<typeof LinkTarget>
-export type LinkFrontmatter = z.infer<typeof LinkFrontmatter>
+export interface LinkFrontmatter extends z.infer<typeof LinkIdentity> {
+  title?: string
+  linksTo?: LinkTarget[]
+  aliases?: string[]
+  keywords?: ContentPageKeywords
+}
 
 export type LinkResolveMode =
   | 'global-slug'
@@ -51,7 +49,7 @@ export interface LinkResolverOptions {
 
 export type ParseLinkResult =
   | { ok: true; value: LinkFrontmatter | null }
-  | { ok: false; errors: string[] }
+  | { ok: false; errors: string[]; value: LinkFrontmatter | null }
 
 export interface LinkReference {
   target?: string
@@ -126,18 +124,46 @@ const FM_POSITION: SourceRange = {
   end: { line: 1, column: 1, offset: 0 },
 }
 
-// Returns { value: null } when there is no `slug` (a non-participating page),
-// parsed data when the link shape is valid, or shape errors otherwise. Never
-// throws — callers turn errors into diagnostics.
+// Returns { value: null } when there is no `slug` (a non-participating page).
+// Title and keywords are read as page facts read them. A malformed linksTo or
+// aliases is reported and ignored, so the page stays a link target; a
+// malformed slug, key, or locale leaves no identity to index, so the value is
+// null. Never throws — callers turn errors into diagnostics.
 export function parseLinkFrontmatter(
   data: Record<string, unknown>,
   options: LinkResolverOptions = {},
 ): ParseLinkResult {
-  const normalized = normalizeContentPageFrontmatter(data, options)
+  const facts = readContentPageFacts(data, options)
+  const normalized = facts.frontmatter
   if (!('slug' in normalized)) return { ok: true, value: null }
-  const parsed = LinkFrontmatter.safeParse(normalized)
-  if (parsed.success) return { ok: true, value: parsed.data }
-  return { ok: false, errors: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) }
+  const errors: string[] = []
+  const identity = parseLinkField(LinkIdentity, normalized, errors)
+  const linksTo = parseLinkField(LinksTo, normalized.linksTo, errors, 'linksTo')
+  const aliases = parseLinkField(Aliases, normalized.aliases, errors, 'aliases')
+  if (!identity) return { ok: false, errors, value: null }
+  const value: LinkFrontmatter = {
+    ...identity,
+    ...(facts.title ? { title: facts.title } : {}),
+    ...(linksTo ? { linksTo } : {}),
+    ...(aliases ? { aliases } : {}),
+    ...(facts.keywords ? { keywords: facts.keywords } : {}),
+  }
+  return errors.length === 0 ? { ok: true, value } : { ok: false, errors, value }
+}
+
+function parseLinkField<T>(
+  schema: z.ZodType<T>,
+  input: unknown,
+  errors: string[],
+  field?: string,
+): T | undefined {
+  const parsed = schema.safeParse(input)
+  if (parsed.success) return parsed.data
+  for (const issue of parsed.error.issues) {
+    const path = field ? [field, ...issue.path] : issue.path
+    errors.push(`${path.join('.')}: ${issue.message}`)
+  }
+  return undefined
 }
 
 // Pure: builds the resolved link graph from per-file frontmatter data.
@@ -146,7 +172,7 @@ export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions
   const parsedPages: ParsedLinkPage[] = []
   for (const { path, data } of inputs) {
     const parsed = parseLinkFrontmatter(data, resolvedOptions)
-    if (parsed.ok && parsed.value !== null) parsedPages.push({ path, fm: parsed.value })
+    if (parsed.value !== null) parsedPages.push({ path, fm: parsed.value })
   }
   return indexLinkPages(parsedPages, resolvedOptions)
 }
@@ -261,7 +287,7 @@ export function aliasReplacementsForPage(
 ): Map<string, string> {
   const parsed = parseLinkFrontmatter(data, index.options)
   const out = new Map<string, string>()
-  if (!parsed.ok || parsed.value === null) return out
+  if (parsed.value === null) return out
   const locale = effectiveLocale(parsed.value, index.options)
   for (const entry of index.aliasEntries) {
     if (index.options.resolve === 'global-slug' || entry.locale === locale) {
@@ -301,7 +327,6 @@ export function analyzeLinks(
     if (!parsed.ok) {
       for (const e of parsed.errors)
         out.push(diag(path, 'CB_LINK_SHAPE', 'error', `invalid link frontmatter: ${e}`))
-      continue
     }
     if (parsed.value === null) continue
     const fm = parsed.value
