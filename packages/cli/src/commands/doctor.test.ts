@@ -88,6 +88,40 @@ test('watch re-scans a newly added nested content file and shuts down cleanly', 
   }
 })
 
+test('watch re-scans with an edited registry', async () => {
+  const coreUrl = pathToFileURL(
+    join(new URL('../../..', import.meta.url).pathname, 'core/dist/index.js'),
+  ).href
+  const dir = await fixture({
+    'content/post.md': ':::shout\nHEY\n:::\n',
+    'blocks/registry.mjs': 'export default []\n',
+  })
+  const io = fakeIo()
+  const reports = () => io.out.filter((line) => line.includes('contentbit doctor'))
+  const watching = doctorCommand(
+    { globs: [join(dir, 'content/*.md')], registry: join(dir, 'blocks/registry.mjs'), watch: true },
+    io,
+  )
+
+  try {
+    await waitFor(() => io.out.some((line) => line.includes('Press Ctrl+C to stop.')))
+    expect(reports()[0]).toContain('CB_UNKNOWN_BLOCK')
+    await writeFile(
+      join(dir, 'blocks/registry.mjs'),
+      `import { defineBlock, markdownBody } from "${coreUrl}";
+export default [defineBlock({ name: "shout", description: "Shouts.", content: markdownBody() })];
+`,
+    )
+    await writeFile(join(dir, 'content/post.md'), ':::shout\nHEY THERE\n:::\n')
+    await waitFor(() => reports().length >= 2)
+    expect(reports()[1]).not.toContain('CB_UNKNOWN_BLOCK')
+    expect(reports()[1]).toMatch(/Errors\s+0/)
+  } finally {
+    process.emit('SIGINT')
+    await watching
+  }
+})
+
 test('invalid blocks are reported as validation errors', async () => {
   const dir = await fixture({ 'bad.md': ':::comparison\n- only | two\n:::\n' })
   const io = fakeIo()

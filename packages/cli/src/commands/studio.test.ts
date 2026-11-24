@@ -58,6 +58,28 @@ test('studio validates port input before starting the server', async () => {
   expect(io.err.join('\n')).toContain('--port must be an integer')
 })
 
+test('studio warns when it listens beyond the loopback interface', async () => {
+  studioMock.startStudio.mockResolvedValue({
+    url: 'http://0.0.0.0:3030/',
+    close: async () => {},
+    closed: Promise.resolve(),
+  })
+  const dir = await mkdtemp(join(tmpdir(), 'cb-studio-cli-'))
+  await writeFile(join(dir, 'a.md'), 'Prose.\n', 'utf8')
+  const start = async (host?: string) => {
+    const io = fakeIo()
+    const args = ['studio', join(dir, '*.md'), '--no-open', ...(host ? ['--host', host] : [])]
+    expect(await run(args, io)).toBe(0)
+    return io.err.join('\n')
+  }
+
+  expect(await start('0.0.0.0')).toContain('Studio is reachable from your network')
+  expect(await start('192.168.1.20')).toContain('Studio is reachable from your network')
+  for (const host of [undefined, '127.0.0.1', '127.0.0.2', 'localhost', '::1', '[::1]']) {
+    expect(await start(host)).toBe('')
+  }
+})
+
 test('studio forwards link resolver and generic block flags', async () => {
   studioMock.startStudio.mockResolvedValueOnce({
     url: 'http://127.0.0.1:3030',
