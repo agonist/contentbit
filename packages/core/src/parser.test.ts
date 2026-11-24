@@ -148,3 +148,20 @@ test('multiple errors are all reported (recovery)', () => {
   const codes = diagnostics.map((d) => d.code).sort()
   expect(codes).toEqual(['CB_PROPS_SYNTAX', 'CB_UNCLOSED_BLOCK'])
 })
+
+test('CRLF and lone CR line endings parse exactly like LF', () => {
+  const lf = 'intro\n\n:::callout{title="Hey"}\nUse a **scale**.\n:::\noutro\n'
+  const expected = parseDocument(lf)
+  expect(parseDocument(lf.replace(/\n/g, '\r\n'))).toEqual(expected)
+  expect(parseDocument(lf.replace(/\n/g, '\r'))).toEqual(expected)
+})
+
+test('a leading byte order mark is not part of line 1', () => {
+  const { document } = parseDocument('﻿:::callout{title="Hi"}\nBody.\n:::\n')
+  const block = document.children[0] as BlockNode
+  expect(block.openPosition.end.column).toBe(23)
+  expect(block.propPositions.title.start.column).toBe(12)
+
+  const heading = parseDocument('﻿# Title\n').document.children[0] as MarkdownNode
+  expect(heading.value).toBe('# Title\n')
+})

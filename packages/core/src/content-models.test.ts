@@ -99,3 +99,30 @@ test('childBlocks validates allowed names and child count', () => {
   const codes = d2.map((d) => d.code).sort()
   expect(codes).toEqual(['CB_CHILD_COUNT', 'CB_CHILD_NOT_ALLOWED'])
 })
+
+test('list items and pipe rows parse from CRLF sources', () => {
+  const { report, diags } = collect()
+  const list = listItems({ marker: 'bullet' }).parse(
+    firstBlock(':::steps\r\n- Mix\r\n- Bake\r\n:::\r\n'),
+    report,
+  )
+  const rows = pipeRows({ columns: ['label', 'value'] }).parse(
+    firstBlock(':::specs\r\n- Time | 20 min\r\n:::\r\n'),
+    report,
+  )
+  expect(diags).toEqual([])
+  expect(list.items).toEqual([{ text: 'Mix' }, { text: 'Bake' }])
+  expect(rows.rows).toEqual([{ label: 'Time', value: '20 min' }])
+})
+
+test('row diagnostics in a CRLF source point at the row line and its columns', () => {
+  const { report, diags } = collect()
+  const node = firstBlock('# Specs\r\n\r\n:::specs\r\n- Time | 20 min\r\nno dash\r\n:::\r\n')
+  pipeRows({ columns: ['label', 'value'] }).parse(node, report)
+  expect(diags).toHaveLength(1)
+  expect(diags[0].code).toBe('CB_ROW_SYNTAX')
+  expect(diags[0].position).toMatchObject({
+    start: { line: 5, column: 1 },
+    end: { line: 5, column: 8 },
+  })
+})
