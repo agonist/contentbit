@@ -2,6 +2,7 @@ import type { BlockNode, ContentNode, DocumentNode, MarkdownNode } from './ast.j
 import type { Diagnostic, SourcePoint, SourceRange } from './diagnostics.js'
 
 import { parseProps } from './props.js'
+import { normalizeSource } from './source.js'
 
 export interface ParseResult {
   document: DocumentNode
@@ -20,7 +21,8 @@ interface Frame {
   bodyStart: number
 }
 
-export function parseDocument(source: string): ParseResult {
+export function parseDocument(input: string): ParseResult {
+  const source = normalizeSource(input)
   const diagnostics: Diagnostic[] = []
   const lines = source.split('\n')
   const lineStart: number[] = Array.from({ length: lines.length })

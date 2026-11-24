@@ -3,7 +3,7 @@ export interface SourcePoint {
   line: number
   /** 1-based */
   column: number
-  /** 0-based char offset into the source string */
+  /** 0-based char offset into the source string, read with LF line endings and no byte order mark */
   offset: number
 }
 
