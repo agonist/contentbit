@@ -39,6 +39,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "mdast-util-from-markdown": "^2.0.3",
     "zod": "^4.0.0"
   },
   "devDependencies": {
