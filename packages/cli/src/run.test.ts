@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
@@ -37,15 +37,35 @@ test('render on a missing file exits 1 with a clean error, no stack trace', asyn
   expect(io.err.join('\n')).not.toContain('    at ') // no stack frames
 })
 
-test('validate with a bad --registry path exits 1 with a clean error', async () => {
+test('validate with a bad --registry path exits 2 naming the missing module', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'cb-'))
   await writeFile(join(dir, 'a.md'), ':::callout{type="tip"}\nWeigh your flour.\n:::\n', 'utf8')
   const io = fakeIo()
   expect(
     await run(['validate', join(dir, '*.md'), '--registry', '/nonexistent/registry.mjs'], io),
-  ).toBe(1)
-  expect(io.err.join('\n')).toContain('contentbit validate')
-  expect(io.err.join('\n')).toContain('error Cannot find module')
+  ).toBe(2)
+  expect(io.err.join('\n')).toContain('/nonexistent/registry.mjs')
+  expect(io.err.join('\n')).not.toContain('Cannot find module')
+})
+
+test('help prints usage and exits 0', async () => {
+  const io = fakeIo()
+  expect(await run(['help'], io)).toBe(0)
+  expect(io.out.join('\n')).toContain('Usage: contentbit')
+  expect(io.err).toEqual([])
+
+  const command = fakeIo()
+  expect(await run(['help', 'validate'], command)).toBe(0)
+  expect(command.out.join('\n')).toContain('--registry <module>')
+  expect(command.err).toEqual([])
+})
+
+test.each(['--version', '-V'])('%s prints the package version and exits 0', async (flag) => {
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+  const io = fakeIo()
+  expect(await run([flag], io)).toBe(0)
+  expect(io.out).toEqual([pkg.version])
+  expect(io.err).toEqual([])
 })
 
 test('an unrecognized flag exits 1 with a clean error', async () => {

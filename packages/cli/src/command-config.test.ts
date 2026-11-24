@@ -92,7 +92,51 @@ test('explicit globs retain invocation-relative paths while config paths stay pr
     { globs: ['drafts/*.md'], registry: './custom.mjs' },
     join(root, 'nested'),
   )
-  expect(overridden.registry).toBe('./custom.mjs')
+  expect(overridden.registry).toBe(join(root, 'nested/custom.mjs'))
+})
+
+test.each([[[]], [['a.md']]])(
+  'flag paths resolve against the invocation directory (globs: %j)',
+  async (globs) => {
+    const root = await project({
+      'contentbit.config.mjs': contentConfig,
+      'seo.mjs': seoConfig,
+      'custom-seo.mjs': seoConfig,
+      'content/a.md': '# A\n',
+    })
+    const config = await resolveContentCommandConfig(
+      'doctor',
+      { globs, registry: '../blocks/custom.mjs', seoConfig: '../custom-seo.mjs' },
+      join(root, 'content'),
+    )
+    expect(config.registry).toBe(join(root, 'blocks/custom.mjs'))
+    expect((await config.loadSeo()).path).toBe(join(root, 'custom-seo.mjs'))
+  },
+)
+
+test('discovery stops at the nearest package.json', async () => {
+  const root = await project({
+    'contentbit.config.mjs': contentConfig,
+    'package.json': JSON.stringify({
+      scripts: { 'content:check': 'contentbit validate "root/*.md"' },
+    }),
+    'site/package.json': JSON.stringify({
+      scripts: { 'content:check': 'contentbit validate "docs/*.md"' },
+    }),
+    'site/docs/.keep': '',
+    'plain/package.json': JSON.stringify({ name: 'plain' }),
+  })
+
+  const site = await resolveContentCommandConfig('validate', { globs: [] }, join(root, 'site/docs'))
+  expect(site).toMatchObject({
+    globs: ['docs/*.md'],
+    cwd: join(root, 'site'),
+    registry: undefined,
+    includeGenericBlocks: true,
+  })
+
+  const plain = await resolveContentCommandConfig('validate', { globs: [] }, join(root, 'plain'))
+  expect(plain).toMatchObject({ globs: [], cwd: undefined, registry: undefined })
 })
 
 test('script fallback preserves quoted globs, its directory, and explicit flag overrides', async () => {
@@ -115,7 +159,7 @@ test('script fallback preserves quoted globs, its directory, and explicit flag o
   expect(config).toMatchObject({
     globs: ['articles with spaces/*.md'],
     cwd: root,
-    registry: 'override.mjs',
+    registry: join(root, 'nested/override.mjs'),
     includeGenericBlocks: false,
   })
   expect(config.resolveLinkOptions()).toEqual({ resolve: 'global-slug', keyField: 'id' })
