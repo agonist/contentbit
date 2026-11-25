@@ -84,7 +84,7 @@ blog posts.
 
 | Field | Meaning |
 | --- | --- |
-| `requiredFrontmatter` | Dot paths that must exist after frontmatter normalization. |
+| `requiredFrontmatter` | Dot paths that must have a value after frontmatter normalization. An empty string or `null` counts as missing. |
 | `requiredSections` | Headings that must appear in the document outline. Each section can provide allowed heading variants. |
 | `requiredBlocks` | Block names that must appear at least once. |
 | `recommendedBlocks` | Block names that produce informational suggestions when absent. |
@@ -133,7 +133,13 @@ pages: {
 
 When the file is later created, contentbit merges the plan with the live
 frontmatter and stats. Existing frontmatter wins for page facts such as `title`,
-`slug`, `key`, `intent`, `keywords`, and `linksTo`.
+`slug`, `key`, `intent`, `keywords`, and `linksTo`. A file takes over a plan
+when its key, slug, or path matches it, so every localized file that shares the
+plan's key counts as the created page.
+
+Each page has one SEO id: its key, or its slug when it has no key, with the
+locale appended for localized pages. Two pages with the same id both stay in
+the result, and the second gets a `CB_SEO_PAGE_ID_DUPLICATE` warning.
 
 ## Print a brief
 

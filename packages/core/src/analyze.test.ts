@@ -162,6 +162,17 @@ test('code fences are opaque to headings, links, and words', () => {
   expect(stats.code).toEqual({ fences: 1, languages: ['md'], inlineSpans: 2 })
 })
 
+test('inline triple-backtick code at line start does not hide later headings', () => {
+  const stats = analyzeDocument('```js``` is inline code.\n\n## Later\n\nText.\n')
+  expect(stats.outline.map((entry) => entry.text)).toEqual(['Later'])
+  expect(stats.code.fences).toBe(0)
+})
+
+test('heading text keeps inline code while words still exclude it', () => {
+  const stats = analyzeDocument('# Install `contentbit` now\n')
+  expect(stats.outline).toEqual([{ level: 1, text: 'Install contentbit now', line: 1, words: 2 }])
+})
+
 test('empty source yields empty stats', () => {
   const stats = analyzeDocument('')
   expect(stats.file).toEqual({ path: null, bytes: 0, lines: 0 })

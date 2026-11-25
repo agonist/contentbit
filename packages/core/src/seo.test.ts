@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import { z } from 'zod'
 
+import { analyzeDocument } from './analyze.js'
 import { markdownBody } from './content-models.js'
 import { createSeoBrief, defineSeoConfig, evaluateSeoProject, parseSeoConfig } from './seo.js'
 import { createBlockRegistry, defineBlock } from './registry.js'
@@ -485,4 +486,87 @@ Ship it.
     linksTo: ['docs'],
   })
   expect(scan.seo?.findings).toEqual([])
+})
+
+test('blank required frontmatter counts as missing, as in page facts', () => {
+  const evaluation = evaluateSeoProject({
+    config: {
+      pageTypes: { guide: { requiredFrontmatter: ['title', 'description', 'intent'] } },
+    },
+    files: [
+      {
+        path: 'a.md',
+        frontmatter: { type: 'guide', title: '  ', description: null, intent: 'learn' },
+        stats: analyzeDocument('# A\n'),
+      },
+    ],
+  })
+
+  expect(evaluation.findings.map((finding) => finding.message)).toEqual([
+    'required frontmatter "title" is missing',
+    'required frontmatter "description" is missing',
+  ])
+})
+
+test('pages that share an SEO id are both kept and reported', () => {
+  const evaluation = evaluateSeoProject({
+    config: { pageTypes: { guide: {} } },
+    files: [
+      {
+        path: 'a.md',
+        frontmatter: { key: 'contact', slug: 'contact-us', type: 'guide' },
+        stats: analyzeDocument('# A\n'),
+      },
+      {
+        path: 'b.md',
+        frontmatter: { slug: 'contact', type: 'guide' },
+        stats: analyzeDocument('# B\n'),
+      },
+    ],
+  })
+
+  expect(evaluation.pages.map((page) => [page.path, page.key, page.slug])).toEqual([
+    ['a.md', 'contact', 'contact-us'],
+    ['b.md', undefined, 'contact'],
+  ])
+  expect(evaluation.findings).toMatchObject([
+    {
+      code: 'CB_SEO_PAGE_ID_DUPLICATE',
+      severity: 'warning',
+      file: 'b.md',
+      pageId: 'contact',
+      message: expect.stringContaining('a.md'),
+    },
+  ])
+})
+
+test('localized files claim the planned page that shares their key', () => {
+  const evaluation = evaluateSeoProject({
+    config: {
+      pageTypes: { guide: {} },
+      pages: { pricing: { type: 'guide', title: 'Pricing' } },
+    },
+    files: [
+      {
+        path: 'en/pricing.md',
+        frontmatter: { key: 'pricing', slug: 'plans', locale: 'en' },
+        stats: analyzeDocument('# Plans\n'),
+      },
+      {
+        path: 'fr/pricing.md',
+        frontmatter: { key: 'pricing', slug: 'tarifs', locale: 'fr' },
+        stats: analyzeDocument('# Tarifs\n'),
+      },
+    ],
+  })
+
+  expect(evaluation.pages.map((page) => [page.id, page.source, page.type])).toEqual([
+    ['pricing:en', 'existing', 'guide'],
+    ['pricing:fr', 'existing', 'guide'],
+  ])
+  const brief = createSeoBrief(evaluation, 'pricing')
+  expect(brief.target).toMatchObject({ id: 'pricing:en', source: 'existing' })
+  expect(brief.acceptanceChecks).not.toContain(
+    'Create the Markdown source file for this planned page.',
+  )
 })

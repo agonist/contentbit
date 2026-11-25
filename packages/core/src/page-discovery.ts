@@ -127,7 +127,7 @@ function configuredSource(
   canonical: string,
   configured: string | undefined,
 ): Extract<ContentPageFactSource, 'frontmatter' | 'config'> {
-  if (!(canonical in frontmatter) && configured && configured in frontmatter) return 'config'
+  if (configured && configured !== canonical && configured in frontmatter) return 'config'
   return 'frontmatter'
 }
 

@@ -84,7 +84,7 @@ function copyConfiguredField(
   from: string | undefined,
   to: string,
 ): void {
-  if (!from || from === to || !(from in data) || to in out) return
+  if (!from || from === to || !(from in data)) return
   out[to] = data[from]
 }
 

@@ -12,7 +12,25 @@ const NAME = '[a-z][a-z0-9]*(?:-[a-z0-9]+)*'
 const OPEN_RE = new RegExp(`^(:{3,})(${NAME})(\\{.*)?\\s*$`)
 const CHILD_RE = new RegExp(`^::(${NAME})(\\{.*)?\\s*$`)
 const CLOSE_RE = /^(:{3,})\s*$/
-const CODE_FENCE_RE = /^(`{3,}|~{3,})/
+const CODE_FENCE_RE = /^(`{3,}|~{3,})(.*)$/
+
+/**
+ * CommonMark code fence opener: three or more backticks or tildes. A backtick
+ * fence's info string cannot contain a backtick, so "```js``` here" is inline code.
+ */
+export function openCodeFence(trimmedLine: string): { fence: string; info: string } | null {
+  const match = trimmedLine.match(CODE_FENCE_RE)
+  if (!match || (match[1][0] === '`' && match[2].includes('`'))) return null
+  return { fence: match[1], info: match[2].trim() }
+}
+
+/** CommonMark closing fence: the opener's character, at least as long, and nothing after it. */
+export function closesCodeFence(trimmedLine: string, fence: string): boolean {
+  const match = trimmedLine.match(CODE_FENCE_RE)
+  return (
+    match !== null && match[2] === '' && match[1][0] === fence[0] && match[1].length >= fence.length
+  )
+}
 
 interface Frame {
   node: BlockNode
@@ -146,20 +164,14 @@ export function parseDocument(source: string): ParseResult {
     const trimmed = lines[i].trim()
 
     // Code fences are opaque: nothing inside them opens or closes blocks.
-    const fenceMatch = trimmed.match(CODE_FENCE_RE)
     if (codeFence !== null) {
-      if (
-        fenceMatch &&
-        fenceMatch[1][0] === codeFence[0] &&
-        fenceMatch[1].length >= codeFence.length
-      ) {
-        codeFence = null
-      }
+      if (closesCodeFence(trimmed, codeFence)) codeFence = null
       if (mdStartLine === null) mdStartLine = i
       continue
     }
-    if (fenceMatch) {
-      codeFence = fenceMatch[1]
+    const opened = openCodeFence(trimmed)
+    if (opened) {
+      codeFence = opened.fence
       if (mdStartLine === null) mdStartLine = i
       continue
     }

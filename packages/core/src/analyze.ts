@@ -1,7 +1,7 @@
 import type { ContentNode } from './ast.js'
 
 import { extractFrontmatter, stripFrontmatter } from './frontmatter.js'
-import { parseDocument } from './parser.js'
+import { closesCodeFence, openCodeFence, parseDocument } from './parser.js'
 
 export interface OutlineEntry {
   /** ATX heading level, 1-6. */
@@ -80,7 +80,6 @@ function utf8Length(source: string): number {
   return bytes
 }
 
-const CODE_FENCE_RE = /^(`{3,}|~{3,})(.*)$/
 const HEADING_RE = /^(#{1,6})\s+(.*)$/
 const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])\s+/
 const TABLE_SEPARATOR_RE = /^\|?[\s:|-]+$/
@@ -89,6 +88,17 @@ const IMAGE_RE = /!\[([^\]]*)\]\(([^)]*)\)/g
 const LINK_RE = /\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g
 const AUTOLINK_RE = /<(https?:\/\/[^>\s]+)>/g
 const EXTERNAL_URL_RE = /^(?:https?:)?\/\//i
+const HEADING_INLINE_RE =
+  /`([^`]+)`|!\[[^\]]*\]\([^)]*\)|\[([^\]]+)\]\([^)\s]+(?:\s+"[^"]*")?\)|<(https?:\/\/[^>\s]+)>/g
+
+/** A heading's visible text, which renderers display and derive its id from. */
+function headingText(markdown: string): string {
+  return markdown.replace(
+    HEADING_INLINE_RE,
+    (_, code?: string, label?: string, url?: string) =>
+      code ?? (label === undefined ? (url ?? ' ') : headingText(label)),
+  )
+}
 
 /**
  * Scan a document and return structured stats: prose length, heading outline,
@@ -170,17 +180,15 @@ export function analyzeDocument(source: string, options: AnalyzeOptions = {}): D
       const lineNo = startLine + i
       const trimmed = line.trim()
 
-      const fenceMatch = trimmed.match(CODE_FENCE_RE)
       if (fence !== null) {
-        if (fenceMatch && fenceMatch[1][0] === fence[0] && fenceMatch[1].length >= fence.length) {
-          fence = null
-        }
+        if (closesCodeFence(trimmed, fence)) fence = null
         continue
       }
-      if (fenceMatch) {
-        fence = fenceMatch[1]
+      const opened = openCodeFence(trimmed)
+      if (opened) {
+        fence = opened.fence
         code.fences++
-        const lang = fenceMatch[2].trim().split(/\s+/)[0]
+        const lang = opened.info.split(/\s+/)[0]
         if (lang) languages.add(lang)
         inBlockquote = false
         prevLineHasPipe = false
@@ -196,9 +204,9 @@ export function analyzeDocument(source: string, options: AnalyzeOptions = {}): D
       const heading = trimmed.match(HEADING_RE)
       if (heading) {
         const raw = heading[2].replace(/\s+#+\s*$/, '')
-        const text = inlineToProse(raw, lineNo).replace(/\s+/g, ' ').trim()
+        const text = headingText(raw).replace(/\s+/g, ' ').trim()
         outline.push({ level: heading[1].length, text, line: lineNo, words: 0 })
-        addWords(countWords(text))
+        addWords(countWords(inlineToProse(raw, lineNo)))
         inBlockquote = false
         prevLineHasPipe = false
         continue
