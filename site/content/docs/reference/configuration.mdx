@@ -51,11 +51,52 @@ configuration file, not the shell's current directory.
 | `slugField` | `string` | `slug` | Frontmatter field containing the public slug. |
 | `keyField` | `string` | `key` | Frontmatter field containing stable translation identity. |
 | `defaultLocale` | `string` | None | Locale assigned when a participating page omits its locale field. |
+| `routes` | `Record<string, string>` | None | Public URL pattern for the content files under each directory. See [Page routes](#page-routes). |
+| `hostRoutes` | `string[]` | None | Routes the host app serves outside the scanned content, such as `/playground`. |
 
 Use `same-locale-slug` when translated pages have distinct identities but may
 reuse a slug. Use `same-locale-key` when translations share a stable key. Use
 the fallback mode when key-based links are preferred but legacy slug targets
 must continue to resolve.
+
+## Page routes
+
+Doctor, Studio, and snapshots check each internal URL in a Markdown link, such
+as `[Doctor](/docs/guides/doctor)`, against the scanned pages. Without
+`routes`, a URL matches a page whose `slug` or `key` equals the URL or its
+last segment. Describe your routes when the host app serves pages at other
+URLs, for example by file path:
+
+```ts
+export default defineContentConfig({
+  content: 'content/**/*.{md,mdx}',
+  links: {
+    routes: {
+      'content/docs': '/docs/{path}',
+      'content/blog': '/blog/{slug}',
+    },
+    hostRoutes: ['/pricing', '/playground'],
+  },
+})
+```
+
+Each key is a directory relative to the config file. A page takes its URL from
+the deepest directory that holds it. Patterns can use these placeholders:
+
+| Placeholder | Value |
+| --- | --- |
+| `{path}` | The file path below the directory, without `.md` or `.mdx` and without a final `index`, so `content/docs/guides/index.mdx` gives `guides`. |
+| `{slug}` | The page's slug, read through `slugField`. |
+| `{key}` | The page's key, read through `keyField`. |
+| `{locale}` | The page's locale, read through `localeField`, or `defaultLocale`. |
+
+A page outside every route directory, or one missing a fact its pattern needs,
+has no URL. With `routes` set, an internal URL must equal a page URL or a
+`hostRoutes` entry, ignoring a trailing slash; the slug and key fallback no
+longer applies. A `#anchor` must match a heading on the page. Relative URLs
+such as `./other` are not checked, because where they lead depends on the
+linking page's URL; relative `.md` and `.mdx` paths still are. `hostRoutes`
+entries are exact routes, and they apply with or without `routes`.
 
 ## Command overrides
 

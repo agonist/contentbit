@@ -15,6 +15,8 @@ interface ContentCommandDefaults extends LinkOptionValues {
   noGenericBlocks?: boolean
   seoConfig?: string
   noSeo?: boolean
+  routes?: Record<string, string>
+  hostRoutes?: string[]
   source?: string
 }
 
@@ -53,6 +55,10 @@ export async function resolveContentCommandConfig(
     keyField: input.keyField ?? defaults.keyField,
     defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
   }
+  const routes = {
+    ...(defaults.routes ? { routes: defaults.routes } : {}),
+    ...(defaults.hostRoutes ? { hostRoutes: defaults.hostRoutes } : {}),
+  }
   // Flag paths were typed in the user's shell, so they resolve against the
   // invocation directory; config and script paths resolve against their file.
   const seo = {
@@ -65,7 +71,7 @@ export async function resolveContentCommandConfig(
     cwd: defaults.cwd,
     registry: resolvePath(startDir, input.registry) ?? defaults.registry,
     includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
-    resolveLinkOptions: () => linkResolverOptions(links),
+    resolveLinkOptions: () => ({ ...linkResolverOptions(links), ...routes }),
     loadSeo: () => loadSeoConfig(seo),
   }
 }
@@ -101,6 +107,8 @@ async function discoverContentCommandDefaults(
         slugField: loadedConfig.config.links?.slugField,
         keyField: loadedConfig.config.links?.keyField,
         defaultLocale: loadedConfig.config.links?.defaultLocale,
+        routes: resolveRouteDirs(loadedConfig.cwd, loadedConfig.config.links?.routes),
+        hostRoutes: loadedConfig.config.links?.hostRoutes,
         source: loadedConfig.path,
       }
     : {}
@@ -124,6 +132,14 @@ async function discoverContentCommandDefaults(
 
 function resolvePath(base: string, path?: string): string | undefined {
   return path ? resolve(base, path) : undefined
+}
+
+function resolveRouteDirs(
+  base: string,
+  routes?: Record<string, string>,
+): Record<string, string> | undefined {
+  if (!routes) return undefined
+  return Object.fromEntries(Object.entries(routes).map(([dir, url]) => [resolve(base, dir), url]))
 }
 
 async function findPackageScript(

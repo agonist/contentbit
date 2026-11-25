@@ -45,6 +45,12 @@ export interface LinkResolverOptions {
   slugField?: string
   keyField?: string
   defaultLocale?: string
+  /** Public URL pattern for the content files under each directory, such as
+   * `{ 'content/docs': '/docs/{path}' }`. Directories use the same form as the
+   * scanned file paths; the deepest one that holds a page gives its URL. */
+  routes?: Record<string, string>
+  /** Routes the host app serves outside the scanned content, such as `/playground`. */
+  hostRoutes?: string[]
 }
 
 export type ParseLinkResult =

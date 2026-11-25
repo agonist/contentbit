@@ -40,6 +40,11 @@ Repair plan:
   or multiple H1s on slugged pages, heading-level jumps, and unresolved local
   route/Markdown links or heading anchors. Multilingual libraries also flag
   missing stable keys and incomplete locale variants for a key.
+- **Internal URLs** such as `/docs/guides/doctor` must match a scanned page.
+  By default that means a page's `slug` or `key`. When pages live at other
+  URLs, such as their file path, describe them with `links.routes`, and list
+  pages the app serves outside content, such as `/playground`, in
+  `links.hostRoutes`. See [Page routes](/docs/reference/configuration#page-routes).
 - **SEO contract findings** when `contentbit.seo.config.ts` exists or
   `--seo-config` is passed.
 
