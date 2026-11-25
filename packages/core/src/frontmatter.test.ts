@@ -17,10 +17,22 @@ test('handles trailing whitespace on the fences', () => {
 })
 
 test('handles CRLF line endings', () => {
-  // The \r goes with the rest of the blanked line; the \n (what the parser
-  // splits on) survives, so line numbers are unaffected.
+  // Line endings come out as LF, so line numbers are unaffected.
   const out = stripFrontmatter('---\r\ntitle: x\r\n---\r\n# Body\r\n')
-  expect(out).toBe('\n\n\n# Body\r\n')
+  expect(out).toBe('\n\n\n# Body\n')
+})
+
+test('a leading byte order mark does not hide frontmatter', () => {
+  const source = '﻿---\ntitle: Hello\n---\n# Body\n'
+  expect(stripFrontmatter(source)).toBe('\n\n\n# Body\n')
+  expect(extractFrontmatter(source)?.data).toEqual({ title: 'Hello' })
+})
+
+test('extractFrontmatter reads CRLF frontmatter', () => {
+  const fm = extractFrontmatter('---\r\ntitle: x\r\ntags:\r\n  - a\r\n---\r\n# Body\r\n')
+  expect(fm?.data).toEqual({ title: 'x', tags: ['a'] })
+  expect(fm?.raw).toBe('title: x\ntags:\n  - a')
+  expect(fm?.lines).toEqual({ start: 1, end: 5 })
 })
 
 test('handles frontmatter closing at end of file', () => {
@@ -81,6 +93,57 @@ test('extractFrontmatter parses dash lists', () => {
   expect(fm?.data).toEqual({ tags: ['alpha', 'beta'], title: 'x' })
 })
 
+test('extractFrontmatter parses dash lists at the key indentation', () => {
+  // PyYAML and other dumpers write sequences without indenting them.
+  const fm = extractFrontmatter(
+    '---\ntags:\n- alpha\n- beta\nlinksTo:\n- locale: en\n  slug: pizza\ntitle: x\n---\n',
+  )
+  expect(fm?.data).toEqual({
+    tags: ['alpha', 'beta'],
+    linksTo: [{ locale: 'en', slug: 'pizza' }],
+    title: 'x',
+  })
+})
+
+test('dash-list items that contain a colon without a space are scalars', () => {
+  const fm = extractFrontmatter('---\nlinksTo:\n  - https://example.com/x\n  - b\n---\n')
+  expect(fm?.data.linksTo).toEqual(['https://example.com/x', 'b'])
+})
+
+test('extractFrontmatter drops trailing comments outside quotes', () => {
+  const fm = extractFrontmatter(
+    [
+      '---',
+      'title: "Foo" # draft',
+      'slug: foo # old',
+      "alt: 'It''s # fine' # note",
+      'quoted: "a # b"',
+      "note: Don't stop # aside",
+      'url: https://example.com/page#section',
+      'lang: C#',
+      'tags: # SEO tags',
+      '  - a # first',
+      '  - "b # c"',
+      'snippet: | # literal',
+      '  # kept',
+      '  line',
+      '---',
+      '',
+    ].join('\n'),
+  )
+  expect(fm?.data).toEqual({
+    title: 'Foo',
+    slug: 'foo',
+    alt: "It's # fine",
+    quoted: 'a # b',
+    note: "Don't stop",
+    url: 'https://example.com/page#section',
+    lang: 'C#',
+    tags: ['a', 'b # c'],
+    snippet: '# kept\nline',
+  })
+})
+
 test('extractFrontmatter parses simple dash-list mappings', () => {
   const fm = extractFrontmatter(
     '---\nlinksTo:\n  - locale: en\n    slug: sourdough-pizza\n  - key: pizza-flour\n---\n',
@@ -120,6 +183,13 @@ test('parses nested mapping dash-list values', () => {
     secondary: ['oil smoke point chart', 'high smoke point oils'],
     lsi: ['avocado oil smoke point'],
   })
+})
+
+test('nested mappings accept dash lists at the key indentation', () => {
+  const fm = extractFrontmatter(
+    '---\nkeywords:\n  primary: foo\n  secondary:\n  - bar\n  - baz\n---\n',
+  )
+  expect(fm?.data.keywords).toEqual({ primary: 'foo', secondary: ['bar', 'baz'] })
 })
 
 test('nested mapping coexists with flat keys and dash lists', () => {

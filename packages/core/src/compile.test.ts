@@ -36,3 +36,14 @@ test('valid compiled content strips frontmatter and returns a validated document
   expect(document.children).toHaveLength(1)
   expect(document.children[0]).toMatchObject({ type: 'block', name: 'callout' })
 })
+
+test('a byte order mark or CRLF line endings do not change the compiled document', () => {
+  for (const source of [
+    '﻿---\ntitle: Hello\n---\n\n:::callout\nBody.\n:::\n',
+    '---\r\ntitle: Hello\r\n---\r\n\r\n:::callout\r\nBody.\r\n:::\r\n',
+  ]) {
+    const document = assertValidDocument(compileDocument(source, registry), 'article.md')
+    expect(document.children).toHaveLength(1)
+    expect(document.children[0]).toMatchObject({ type: 'block', name: 'callout', body: 'Body.' })
+  }
+})

@@ -1,19 +1,23 @@
+import { normalizeSource } from './source.js'
+
 // A YAML frontmatter block at the very start of the file: an opening ---
 // fence, an optional body (empty frontmatter is legal), and a closing ---
 // fence. Both fences tolerate trailing spaces/tabs, which editors and CMS
 // exports routinely leave behind.
-const FM_RE = /^---[ \t]*\r?\n(?:[\s\S]*?\r?\n)?---[ \t]*(?:\r?\n|$)/
+const FM_RE = /^---[ \t]*\n(?:[\s\S]*?\n)?---[ \t]*(?:\n|$)/
 
 /**
  * Blank out a leading YAML frontmatter block so block syntax inside it is
  * never parsed as content. Every line is replaced by an empty line (the
  * newlines stay), so diagnostic positions in the remaining document are
- * unchanged. Sources without frontmatter are returned as-is.
+ * unchanged. The result has LF line endings and no byte order mark, the form
+ * `parseDocument` reads. Sources without frontmatter are otherwise unchanged.
  */
 export function stripFrontmatter(source: string): string {
-  const match = FM_RE.exec(source)
-  if (!match) return source
-  return match[0].replace(/[^\n]+/g, '') + source.slice(match[0].length)
+  const text = normalizeSource(source)
+  const match = FM_RE.exec(text)
+  if (!match) return text
+  return match[0].replace(/[^\n]+/g, '') + text.slice(match[0].length)
 }
 
 export interface Frontmatter {
@@ -35,15 +39,54 @@ export interface Frontmatter {
  * value, so no input ever throws. Returns null when there is no frontmatter.
  */
 export function extractFrontmatter(source: string): Frontmatter | null {
-  const match = source.match(FM_RE)
+  const match = normalizeSource(source).match(FM_RE)
   if (!match) return null
-  const blockLines = match[0].replace(/\r?\n$/, '').split(/\r?\n/)
+  const blockLines = match[0].replace(/\n$/, '').split('\n')
   const inner = blockLines.slice(1, -1)
   const { data, keys } = parseYamlSubset(inner)
   return { raw: inner.join('\n'), data, keys, lines: { start: 1, end: blockLines.length } }
 }
 
-const KEY_RE = /^([A-Za-z0-9_.-]+):(.*)$/
+// YAML needs whitespace after a key's colon, so `https://x` is a scalar.
+const KEY_RE = /^([A-Za-z0-9_.-]+):(?=[ \t]|$)(.*)$/
+
+/** Split a `key: value` line; the value loses its trailing comment. */
+function matchKey(line: string): { key: string; value: string } | null {
+  const m = line.match(KEY_RE)
+  return m ? { key: m[1], value: stripComment(m[2]).trim() } : null
+}
+
+// A quote opens a quoted scalar only where a scalar can start, so the
+// apostrophe in `Don't` is plain text.
+const SCALAR_START_RE = /(?:^|[[{,:])[ \t]*$/
+
+/** Cut a YAML comment: a `#` at the start or after whitespace, outside quotes. */
+function stripComment(value: string): string {
+  let quote: '"' | "'" | null = null
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i]
+    if (quote === '"') {
+      if (ch === '\\') i++
+      else if (ch === '"') quote = null
+    } else if (quote === "'") {
+      if (ch === "'" && value[i + 1] === "'") i++
+      else if (ch === "'") quote = null
+    } else if (ch === '#' && (i === 0 || value[i - 1] === ' ' || value[i - 1] === '\t')) {
+      return value.slice(0, i)
+    } else if ((ch === '"' || ch === "'") && SCALAR_START_RE.test(value.slice(0, i))) {
+      quote = ch
+    }
+  }
+  return value
+}
+
+// The lines after a key that belong to its value: indented lines and, for an
+// empty value, dash-list items at the key's own indentation, which YAML allows
+// and PyYAML writes (`tags:\n- a\n- b`).
+function isChildLine(line: string, value: string): boolean {
+  if (line.trim() === '') return false
+  return /^[ \t]/.test(line) || (value === '' && line.startsWith('- '))
+}
 
 function parseYamlSubset(lines: string[]): { data: Record<string, unknown>; keys: string[] } {
   const data: Record<string, unknown> = {}
@@ -56,16 +99,15 @@ function parseYamlSubset(lines: string[]): { data: Record<string, unknown>; keys
       i++
       continue
     }
-    const m = line.match(KEY_RE)
-    if (!m) {
+    const entry = matchKey(line)
+    if (!entry) {
       i++
       continue
     }
-    const [, key, rawValue] = m
-    const value = rawValue.trim()
+    const { key, value } = entry
     i++
     const indented: string[] = []
-    while (i < lines.length && /^[ \t]/.test(lines[i]) && lines[i].trim() !== '') {
+    while (i < lines.length && isChildLine(lines[i], value)) {
       indented.push(lines[i])
       i++
     }
@@ -98,18 +140,17 @@ function parseNestedMapping(items: string[]): Record<string, unknown> | null {
   while (i < items.length) {
     const line = items[i]
     if (/^[ \t]/.test(line)) return null
-    const m = line.match(KEY_RE)
-    if (!m) return null
-    const [, key, rawValue] = m
-    const v = rawValue.trim()
+    const entry = matchKey(line)
+    if (!entry) return null
+    const { key, value } = entry
     i++
-    if (v !== '') {
-      out[key] = parseScalar(v)
+    if (value !== '') {
+      out[key] = parseScalar(value)
       continue
     }
 
     const childLines: string[] = []
-    while (i < items.length && /^[ \t]/.test(items[i]) && items[i].trim() !== '') {
+    while (i < items.length && isChildLine(items[i], value)) {
       childLines.push(items[i])
       i++
     }
@@ -144,7 +185,7 @@ function parseDashList(items: string[]): unknown[] | null {
 }
 
 function parseDashItem(lines: string[]): unknown {
-  const first = lines[0].trim()
+  const first = stripComment(lines[0]).trim()
   if (lines.length === 1) return parseNestedMapping([first]) ?? parseScalar(first)
   const rest = dedent(lines.slice(1))
   const mapping = parseNestedMapping([first, ...rest])
