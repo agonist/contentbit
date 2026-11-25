@@ -88,8 +88,9 @@ contentbit studio "content/**/*.md" \
 
 Defaults:
 
-- host: `127.0.0.1`
-- port: first free port starting at `4377`
+- host: `127.0.0.1`. Studio warns when you pass a non-loopback host such as
+  `0.0.0.0`, because anyone on your network can then read your content.
+- port: first free port starting at `4377`; `--port 0` picks any free port
 - browser: opens automatically unless `--no-open` is passed
 - generic blocks: definitions and preview components load automatically unless
   `--no-generic-blocks` is passed
@@ -110,7 +111,9 @@ Studio v1 never mutates content. It does not:
 - run `contentbit links --fix`
 - watch files or refresh automatically
 
-Use the Refresh button after editing files. Use `contentbit links --fix`
+Use the Refresh button after editing files. Refresh reads content and the
+registry module again. Restart Studio after changing `contentbit.config.ts`, the
+SEO config, or a module the registry imports. Use `contentbit links --fix`
 explicitly when you want alias references rewritten.
 
 Future Studio capabilities may include editing, live file watching, alias

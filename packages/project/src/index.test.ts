@@ -6,6 +6,7 @@ import { expect, test } from 'vitest'
 import {
   inspectContentProject,
   loadContentProject,
+  loadRegistry,
   ProjectLoadError,
   resolveContentFiles,
 } from './index.js'
@@ -188,4 +189,29 @@ test('relocating sibling content preserves snapshot identities, families, and lo
     expect(page.facts.identity.value).toBe(page.path)
     expect(page.path).toMatch(/^\.\.\/shared\//)
   }
+})
+
+test('loadRegistry reads an edited registry module on the next load', async () => {
+  const dir = await fixture({ 'blocks/registry.mjs': "export default [{ name: 'first' }]\n" })
+  const load = async () =>
+    (await loadRegistry('blocks/registry.mjs', { cwd: dir, includeGenericBlocks: false }))
+      .all()
+      .map((block) => block.name)
+
+  expect(await load()).toEqual(['first'])
+  await writeFile(join(dir, 'blocks/registry.mjs'), "export default [{ name: 'second' }]\n")
+  expect(await load()).toEqual(['second'])
+})
+
+test('loadRegistry evaluates an unchanged registry module once', async () => {
+  const dir = await fixture({
+    'blocks/registry.mjs': `globalThis.cbRegistryEvaluations = (globalThis.cbRegistryEvaluations ?? 0) + 1
+export default []
+`,
+  })
+  const globals = globalThis as { cbRegistryEvaluations?: number }
+  delete globals.cbRegistryEvaluations
+
+  for (let load = 0; load < 3; load++) await loadRegistry('blocks/registry.mjs', { cwd: dir })
+  expect(globals.cbRegistryEvaluations).toBe(1)
 })

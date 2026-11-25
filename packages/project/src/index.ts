@@ -72,7 +72,7 @@ export async function loadRegistry(
     : join(options.cwd ?? process.cwd(), registryPath)
   let mod: { default?: BlockDefinition<unknown>[] }
   try {
-    mod = (await import(pathToFileURL(resolvedPath).href)) as typeof mod
+    mod = (await importFresh(resolvedPath)) as typeof mod
   } catch (err) {
     if (err instanceof Error && 'code' in err && err.code === 'ERR_UNKNOWN_FILE_EXTENSION') {
       throw new Error(
@@ -88,6 +88,23 @@ export async function loadRegistry(
   }
   registry.use(mod.default)
   return registry
+}
+
+/** Import a project module (registry, Contentbit config, SEO config) as it is
+ * on disk now. Node caches ES modules by URL for the life of the process, so
+ * Studio and `doctor --watch` would otherwise keep the first copy. The URL
+ * carries a hash of the file's contents: an unchanged file reuses Node's cached
+ * module, and each distinct version is evaluated once. Node never evicts a
+ * module, so memory grows by one module per version saved during a session,
+ * not per load. Modules the file itself imports stay cached. */
+export async function importFresh(path: string): Promise<unknown> {
+  const url = pathToFileURL(path)
+  // An unreadable file falls through to import(), which reports it as before.
+  const source = await readFile(path).catch(() => undefined)
+  if (source) {
+    url.searchParams.set('v', createHash('sha256').update(source).digest('hex').slice(0, 16))
+  }
+  return import(url.href)
 }
 
 export interface LoadContentProjectInput {

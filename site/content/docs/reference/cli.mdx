@@ -184,8 +184,8 @@ Options:
 | Option | Meaning |
 | --- | --- |
 | `--registry <module>` | Load custom blocks and preview components. |
-| `--port <n>` | Choose the first port to try. |
-| `--host <host>` | Bind to a custom host. |
+| `--port <n>` | Listen on this port; `0` picks any free port. |
+| `--host <host>` | Bind to a custom host. A non-loopback host such as `0.0.0.0` makes Studio reachable from your network, and the CLI warns. |
 | `--no-open` | Start the server without opening a browser. |
 | `--no-generic-blocks` | Do not load generic blocks or preview components. |
 | `--min-section-words <n>` | Change the thin-section threshold. |

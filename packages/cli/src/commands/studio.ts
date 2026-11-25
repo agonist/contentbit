@@ -88,6 +88,13 @@ export async function studioCommand(input: StudioCommandInput, io: Io): Promise<
       ]),
     ].join('\n'),
   )
+  if (input.host !== undefined && !isLoopbackHost(input.host)) {
+    io.stderr(
+      `studio: listening on ${input.host}, so Studio is reachable from your network. ` +
+        'Anyone who can connect can read your content, findings and previews. ' +
+        'Use --host 127.0.0.1 to keep it on this machine.',
+    )
+  }
 
   const close = () => {
     void server.close()
@@ -98,6 +105,11 @@ export async function studioCommand(input: StudioCommandInput, io: Io): Promise<
   process.off('SIGINT', close)
   process.off('SIGTERM', close)
   return 0
+}
+
+function isLoopbackHost(host: string): boolean {
+  const name = host.toLowerCase().replace(/^\[(.*)\]$/, '$1')
+  return name === 'localhost' || name === '::1' || /^127\.\d+\.\d+\.\d+$/.test(name)
 }
 
 function isMissingStudio(error: unknown): boolean {

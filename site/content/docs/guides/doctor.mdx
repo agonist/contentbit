@@ -56,8 +56,10 @@ contentbit doctor --watch
 ```
 
 It prints the first report immediately, then reruns after a change in a
-directory that supplied an initially matched content file. Watch mode is local
-feedback only; use the ordinary command with strict flags for CI.
+directory that supplied an initially matched content file. Each rerun reads the
+registry module, `contentbit.config.ts`, and the SEO config again, so edits to
+them show up in the next report. Watch mode is local feedback only; use the
+ordinary command with strict flags for CI.
 
 ## JSON for agents and CI
 

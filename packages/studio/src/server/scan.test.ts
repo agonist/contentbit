@@ -383,6 +383,74 @@ test('startStudio serves read-only local API responses on port 0', async () => {
   expect(write.status).toBe(405)
 })
 
+test('startStudio with port 0 listens on an OS-assigned port and reports it', async () => {
+  const dir = await fixture({ 'content/a.md': '# Alpha\n\nReadable body.\n' })
+  const server = await startStudio({ globs: ['content/*.md'], cwd: dir, port: 0, open: false })
+  runningServers.push(server)
+
+  const port = Number(new URL(server.url).port)
+  const project = await fetch(new URL('/api/project', server.url))
+
+  expect(project.status).toBe(200)
+  // Operating systems assign port 0 from their ephemeral range (32768 and up
+  // on Linux, 49152 and up on macOS and Windows). Vite's own fallback scans up
+  // from 5173, and Studio's default starts at 4377.
+  expect(port).toBeGreaterThanOrEqual(32768)
+})
+
+test('startStudio serves its UI fonts but not other project files', async () => {
+  const dir = await fixture({
+    'content/a.md': '# Alpha\n\nReadable body.\n',
+    'secrets.json': '{"token":"s3cret"}\n',
+  })
+  const server = await startStudio({ globs: ['content/*.md'], cwd: dir, port: 0, open: false })
+  runningServers.push(server)
+
+  const html = await (await fetch(server.url)).text()
+  const stylesheets = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1])
+  const css = await Promise.all(
+    stylesheets.map(async (href) => {
+      const response = await fetch(new URL(href, server.url), { headers: { accept: 'text/css' } })
+      return response.text()
+    }),
+  )
+  const fonts = css.flatMap((text) =>
+    [...text.matchAll(/url\(["']?([^"')]+\.woff2)/g)].map((m) => m[1]),
+  )
+  const fontStatuses = await Promise.all(
+    fonts.map(async (font) => (await fetch(new URL(font, server.url))).status),
+  )
+  const secret = await fetch(new URL(`/@fs${join(dir, 'secrets.json')}`, server.url))
+
+  expect(fonts.length).toBeGreaterThan(0)
+  expect(new Set(fontStatuses)).toEqual(new Set([200]))
+  expect(secret.status).toBe(403)
+  expect(await secret.text()).not.toContain('s3cret')
+})
+
+test('scanProject validates against the registry as it is on disk now', async () => {
+  const dir = await fixture({
+    'blocks/registry.mjs': 'export default []\n',
+    'content/a.md': '# Alpha\n\n:::shout\nHello there.\n:::\n',
+  })
+  await linkContentbitCore(dir)
+  const errors = async () =>
+    (
+      await scanProject({ globs: ['content/*.md'], cwd: dir, registryPath: 'blocks/registry.mjs' })
+    ).findings
+      .filter((finding) => finding.severity === 'error')
+      .map((finding) => finding.code)
+
+  expect(await errors()).toEqual(['CB_UNKNOWN_BLOCK'])
+  await writeFile(
+    join(dir, 'blocks/registry.mjs'),
+    `import { defineBlock, markdownBody } from '@contentbit/core'
+export default [defineBlock({ name: 'shout', description: 'Shouts.', content: markdownBody() })]
+`,
+  )
+  expect(await errors()).toEqual([])
+})
+
 test('startStudio renders project block components from the registry folder', async () => {
   const dir = await fixture({
     'blocks/registry.mjs': `import { defineBlock, markdownBody } from '@contentbit/core'

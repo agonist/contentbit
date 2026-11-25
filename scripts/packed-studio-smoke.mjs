@@ -1,5 +1,6 @@
 // Copied into each isolated consumer so imports resolve installed tarballs.
 import assert from 'node:assert/strict'
+import { join } from 'node:path'
 import { startStudio } from '@contentbit/studio'
 
 const server = await startStudio({
@@ -19,6 +20,19 @@ async function get(path) {
 try {
   const dashboard = await (await get('/')).text()
   assert(dashboard.includes('Content dashboard'), 'installed Studio dashboard failed to render')
+  const stylesheets = [...dashboard.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)]
+  const css = await Promise.all(
+    stylesheets.map(async ([, href]) => {
+      const response = await fetch(new URL(href, server.url), { headers: { accept: 'text/css' } })
+      assert.equal(response.status, 200, `${href}: stylesheet failed to load`)
+      return response.text()
+    }),
+  )
+  const fonts = css.flatMap((text) => [...text.matchAll(/url\(["']?([^"')]+\.woff2)/g)])
+  assert(fonts.length > 0, 'installed Studio stylesheet references no fonts')
+  await Promise.all(fonts.map(([, font]) => get(font)))
+  const projectFile = await fetch(new URL(`/@fs${join(process.cwd(), 'package.json')}`, server.url))
+  assert.equal(projectFile.status, 403, 'installed Studio served a project file over /@fs')
   const project = await (await get('/api/project')).json()
   assert(project.files.length > 0, 'installed Studio found no content')
   const graph = await (await get('/api/graph')).json()

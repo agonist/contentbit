@@ -1,6 +1,6 @@
+import { importFresh } from '@contentbit/project'
 import { existsSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 
 export const DEFAULT_SEO_CONFIG = 'contentbit.seo.config.ts'
 
@@ -24,7 +24,7 @@ export async function loadSeoConfig(input: LoadSeoConfigInput = {}): Promise<Loa
       : join(cwd, input.seoConfig)
     : join(cwd, DEFAULT_SEO_CONFIG)
   if (!input.seoConfig && !existsSync(path)) return {}
-  const mod = (await import(pathToFileURL(path).href)) as { default?: unknown }
+  const mod = (await importFresh(path)) as { default?: unknown }
   if (mod.default === undefined) {
     throw new Error(`SEO config must default-export a config object: ${path}`)
   }

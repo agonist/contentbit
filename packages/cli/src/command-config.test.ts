@@ -62,6 +62,24 @@ test.each(['validate', 'doctor', 'studio', 'links', 'stats', 'brief', 'snapshot'
   },
 )
 
+test('resolving again reads edited project and SEO config files', async () => {
+  const root = await project({
+    'contentbit.config.mjs': "export default { content: ['content/**/*.md'], seo: './seo.mjs' }",
+    'seo.mjs': seoConfig,
+  })
+  await (await resolveContentCommandConfig('doctor', { globs: [] }, root)).loadSeo()
+
+  await writeFile(
+    join(root, 'contentbit.config.mjs'),
+    "export default { content: ['docs/**/*.md'], seo: './seo.mjs' }",
+  )
+  await writeFile(join(root, 'seo.mjs'), 'export default { pageTypes: { faq: {} }, pages: {} }')
+  const config = await resolveContentCommandConfig('doctor', { globs: [] }, root)
+
+  expect(config.globs).toEqual(['docs/**/*.md'])
+  expect((await config.loadSeo()).config).toEqual({ pageTypes: { faq: {} }, pages: {} })
+})
+
 test('explicit globs retain invocation-relative paths while config paths stay project-relative', async () => {
   const root = await project({
     'contentbit.config.mjs': contentConfig,

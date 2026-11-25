@@ -50,5 +50,7 @@ contentbit studio <globs...> \
 
 The CLI binds `127.0.0.1` by default, starts at port `4377` and lets Vite choose
 the next free port, and opens the browser unless `--no-open` is passed.
+`--port 0` picks any free port. The CLI warns when `--host` is not a loopback
+address, because Studio is then reachable from your network.
 Studio loads the generic block definitions by default; pass `--no-generic-blocks`
 when your registry should own the full block set.
