@@ -119,6 +119,7 @@ root that contains them.
 | CLI and TypeScript configuration | Node.js 22.18 or newer; native TypeScript type stripping must be available. |
 | Module format | ESM package entry points. CommonJS `require()` is not a promised interface. |
 | React | React 19, matching the renderer's `^19.0.0` peer range. |
+| zod | zod 4, matching the `^4.0.0` peer range of `@contentbit/core` and `@contentbit/blocks`. Block schemas and Contentbit share the project's zod; `contentbit init` adds it. |
 | Astro | Peer range `^5.0.0 \|\| ^6.0.0 \|\| ^7.0.0`; the standalone release fixture currently exercises Astro 7. |
 | Next.js | React integration; the packed-package gate builds a fresh Next 16 project using `src/app`. |
 | TanStack | React integration; the standalone fixture's locked versions are exercised by release gates. |
