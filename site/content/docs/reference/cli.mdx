@@ -18,16 +18,17 @@ export default defineContentConfig({
 })
 ```
 
-Commands discover the nearest config by walking upward. Explicit options and
-globs override it for one invocation. Quote explicit globs so your shell does
-not expand them before contentbit receives them:
+Commands discover the nearest config by walking upward, stopping at the nearest
+`package.json`. Explicit options and globs override it for one invocation, and
+relative paths in them resolve against the current directory. Quote explicit
+globs so your shell does not expand them before contentbit receives them:
 
 ```bash
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
 Without a config, `validate`, `doctor`, `studio`, and `links` retain backward
-compatibility by reading the nearest matching package script.
+compatibility by reading the matching script in the nearest `package.json`.
 
 ## Commands
 
@@ -95,7 +96,8 @@ Exit codes:
 - `0` when no errors are found.
 - `1` when errors are found.
 - `1` when warnings are found and `--strict-warnings` is passed.
-- `2` for command input problems such as missing or unmatched globs.
+- `2` for command input problems such as missing or unmatched globs, or a
+  missing registry module.
 
 ## adopt
 

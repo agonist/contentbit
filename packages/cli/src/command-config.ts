@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, isAbsolute, join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 
 import type { LinkResolverOptions } from '@contentbit/core'
 
@@ -53,15 +53,17 @@ export async function resolveContentCommandConfig(
     keyField: input.keyField ?? defaults.keyField,
     defaultLocale: input.defaultLocale ?? defaults.defaultLocale,
   }
+  // Flag paths were typed in the user's shell, so they resolve against the
+  // invocation directory; config and script paths resolve against their file.
   const seo = {
     cwd: defaults.cwd,
-    seoConfig: input.seoConfig ?? defaults.seoConfig,
+    seoConfig: resolvePath(startDir, input.seoConfig) ?? defaults.seoConfig,
     noSeo: input.noSeo ?? (input.seoConfig ? false : defaults.noSeo),
   }
   return {
     globs: defaults.globs,
     cwd: defaults.cwd,
-    registry: input.registry ?? defaults.registry,
+    registry: resolvePath(startDir, input.registry) ?? defaults.registry,
     includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
     resolveLinkOptions: () => linkResolverOptions(links),
     loadSeo: () => loadSeoConfig(seo),
@@ -87,11 +89,11 @@ async function discoverContentCommandDefaults(
   const configDefaults = loadedConfig
     ? {
         cwd: loadedConfig.cwd,
-        registry: resolveConfigPath(loadedConfig.cwd, loadedConfig.config.registry),
+        registry: resolvePath(loadedConfig.cwd, loadedConfig.config.registry),
         noGenericBlocks: loadedConfig.config.genericBlocks === false ? true : undefined,
         seoConfig:
           typeof loadedConfig.config.seo === 'string'
-            ? resolveConfigPath(loadedConfig.cwd, loadedConfig.config.seo)
+            ? resolvePath(loadedConfig.cwd, loadedConfig.config.seo)
             : undefined,
         noSeo: loadedConfig.config.seo === false ? true : undefined,
         linkResolve: loadedConfig.config.links?.resolve,
@@ -120,9 +122,8 @@ async function discoverContentCommandDefaults(
   }
 }
 
-function resolveConfigPath(cwd: string, path?: string): string | undefined {
-  if (!path) return undefined
-  return isAbsolute(path) ? path : resolve(cwd, path)
+function resolvePath(base: string, path?: string): string | undefined {
+  return path ? resolve(base, path) : undefined
 }
 
 async function findPackageScript(
@@ -146,6 +147,7 @@ async function findPackageScript(
           return { cwd: current, packageJson, scriptName: name, script }
         }
       }
+      return undefined // the nearest package.json is the project boundary
     }
 
     const parent = dirname(current)

@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, realpath, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -189,4 +189,54 @@ test('validate with no globs uses the nearest contentbit config', async () => {
     expect(await run(['validate'], io)).toBe(0)
   })
   expect(io.out.join('\n')).toContain('Files     1')
+})
+
+test('a relative --registry resolves against the current directory, with or without globs', async () => {
+  const coreUrl = pathToFileURL(
+    join(new URL('../../..', import.meta.url).pathname, 'core/dist/index.js'),
+  ).href
+  const dir = await fixture({
+    'contentbit.config.mjs': `export default { content: ["content/**/*.md"] }`,
+    'content/a.md': ':::shout\nHEY\n:::\n',
+    'blocks/registry.mjs': `
+import { defineBlock, markdownBody } from "${coreUrl}";
+export default [
+  defineBlock({
+    name: "shout",
+    description: "Shouts.",
+    content: markdownBody(),
+    authoring: { useWhen: [], avoidWhen: [], example: "" },
+  }),
+];
+`,
+  })
+
+  await withCwd(join(dir, 'content'), async () => {
+    expect(await run(['validate', '--registry', '../blocks/registry.mjs'], fakeIo())).toBe(0)
+    expect(await run(['validate', 'a.md', '--registry', '../blocks/registry.mjs'], fakeIo())).toBe(
+      0,
+    )
+  })
+})
+
+test('a missing registry module is an input error, not a crash', async () => {
+  const dir = await realpath(
+    await fixture({
+      'contentbit.config.mjs': `export default { content: ["content/**/*.md"], registry: "./gone.mjs" }`,
+      'content/a.md': 'Prose.\n',
+    }),
+  )
+
+  const flag = fakeIo()
+  await withCwd(join(dir, 'content'), async () => {
+    expect(await run(['validate', 'a.md', '--registry', './missing.mjs'], flag)).toBe(2)
+  })
+  expect(flag.err.join('\n')).toContain(join(dir, 'content/missing.mjs'))
+  expect(flag.err.join('\n')).not.toContain('Cannot find module')
+
+  const configured = fakeIo()
+  await withCwd(dir, async () => {
+    expect(await run(['validate'], configured)).toBe(2)
+  })
+  expect(configured.err.join('\n')).toContain(join(dir, 'gone.mjs'))
 })

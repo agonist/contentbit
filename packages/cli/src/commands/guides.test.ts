@@ -66,6 +66,23 @@ export default [defineBlock({
     const io = fakeIo()
     expect(await run(['instructions'], io)).toBe(0)
     expect(io.out.join('\n')).toContain('## project-quote')
+
+    await writeFile(
+      join(dir, 'apps/flag-registry.mjs'),
+      `import { defineBlock, markdownBody } from "${coreUrl}";
+export default [defineBlock({
+  name: "flag-quote",
+  description: "Flag quote.",
+  content: markdownBody(),
+  authoring: { useWhen: [], avoidWhen: [], example: "" },
+})];`,
+      'utf8',
+    )
+    const flagged = fakeIo()
+    expect(await run(['instructions', '--registry', '../flag-registry.mjs'], flagged)).toBe(0)
+    expect(flagged.out.join('\n')).toContain('## flag-quote')
+
+    expect(await run(['docs', '--registry', './missing.mjs'], fakeIo())).toBe(2)
   } finally {
     process.chdir(previous)
   }
