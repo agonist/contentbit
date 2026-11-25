@@ -1,5 +1,25 @@
 # @contentbit/studio
 
+## 1.0.0-rc.1
+
+### Patch Changes
+
+- 97a7d2a: Stop Studio from serving project files over `/@fs/`: it now serves only its own
+  UI and font files, so `--host 0.0.0.0` no longer exposes the project to the
+  network, and the CLI warns when `--host` is not a loopback address. Studio
+  refreshes and `doctor --watch` reruns now read edited registry, Contentbit
+  config, and SEO config modules instead of the first copy loaded.
+  `studio --port 0` now listens on a free port chosen by the operating system
+  instead of 5173.
+- Updated dependencies [aca73ce]
+- Updated dependencies [512e1d2]
+- Updated dependencies [09c7364]
+- Updated dependencies [20e31ca]
+- Updated dependencies [0872923]
+  - @contentbit/core@1.0.0-rc.1
+  - @contentbit/blocks@1.0.0-rc.1
+  - @contentbit/react@1.0.0-rc.1
+
 ## 1.0.0-rc.0
 
 ### Major Changes
