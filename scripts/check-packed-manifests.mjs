@@ -17,6 +17,10 @@ const dependencyFields = [
 ]
 const runtimeDependencyFields = ['dependencies', 'optionalDependencies', 'peerDependencies']
 const internalPackages = new Set(['@contentbit/project'])
+// Block definitions take the project's zod schemas, so these packages must use
+// the project's zod. Their own copy would give TypeScript two incompatible
+// zod types whenever the two copies resolve to different versions.
+const projectZodPackages = new Set(['@contentbit/core', '@contentbit/blocks'])
 
 const packDir = await mkdtemp(join(tmpdir(), 'contentbit-pack-check-'))
 let failed = false
@@ -27,6 +31,12 @@ try {
     const manifest = await packedManifest(cwd)
     const leaks = workspaceRanges(manifest)
     const internalDeps = internalRuntimeDependencies(manifest)
+    const zodProblem = projectZodPackages.has(manifest.name) && ownZodProblem(manifest)
+
+    if (zodProblem) {
+      failed = true
+      console.error(`${manifest.name}@${manifest.version} ${zodProblem}`)
+    }
 
     if (leaks.length > 0 || internalDeps.length > 0) {
       failed = true
@@ -40,7 +50,7 @@ try {
         console.error(`${manifest.name}@${manifest.version} exposes internal runtime dependencies:`)
         for (const dep of internalDeps) console.error(`  - ${dep}`)
       }
-    } else {
+    } else if (!zodProblem) {
       console.log(`ok ${manifest.name}@${manifest.version}`)
     }
   }
@@ -49,7 +59,9 @@ try {
 }
 
 if (failed) {
-  console.error('Packed manifests must not contain workspace: dependency ranges.')
+  console.error(
+    'Packed manifests must not contain workspace: ranges or internal packages, and must use the project zod.',
+  )
   process.exit(1)
 }
 
@@ -83,6 +95,12 @@ function workspaceRanges(manifest) {
   }
 
   return leaks
+}
+
+function ownZodProblem(manifest) {
+  if (manifest.dependencies?.zod) return 'installs its own zod; declare it in peerDependencies.'
+  if (!manifest.peerDependencies?.zod) return 'must declare zod in peerDependencies.'
+  return null
 }
 
 function internalRuntimeDependencies(manifest) {
