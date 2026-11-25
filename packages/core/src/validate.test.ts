@@ -67,6 +67,36 @@ test('unknown block is an error by default, warning when configured', () => {
   expect(lax.diagnostics[0].hint).toContain('callout')
 })
 
+test('known blocks inside an unknown block are still validated and enriched', () => {
+  const invalid = validateDocument(
+    parseDocument(':::wrapper\n:::callout{type="shout"}\nhi\n:::\n:::\n'),
+    registry(),
+    { unknownBlocks: 'warning' },
+  )
+  expect(invalid.ok).toBe(false)
+  expect(invalid.diagnostics.map((d) => d.code)).toEqual(['CB_UNKNOWN_BLOCK', 'CB_PROPS_INVALID'])
+
+  const valid = validateDocument(
+    parseDocument(':::wrapper\n:::callout{type="tip"}\nhi\n:::\n:::\n'),
+    registry(),
+    { unknownBlocks: 'warning' },
+  )
+  expect(valid.ok).toBe(true)
+  const inner = (valid.document.children[0] as BlockNode).children[0]
+  expect(isValidatedBlock(inner)).toBe(true)
+  if (isValidatedBlock(inner)) expect(inner.data).toEqual({ markdown: 'hi' })
+})
+
+test('links inside an unknown block are still checked', () => {
+  const result = validateDocument(
+    parseDocument(':::wrapper\n[x](javascript:alert(1))\n:::\n'),
+    registry(),
+    { unknownBlocks: 'warning' },
+  )
+  expect(result.ok).toBe(false)
+  expect(result.diagnostics.map((d) => d.code)).toEqual(['CB_UNKNOWN_BLOCK', 'CB_URL_PROTOCOL'])
+})
+
 test('unknown block hints at the closest registered block', () => {
   const result = validateDocument(parseDocument(':::calluot\nhm\n:::\n'), registry())
   expect(result.ok).toBe(false)
@@ -172,6 +202,62 @@ test('disallowed URL protocols in markdown are flagged', () => {
   expect(result.ok).toBe(false)
   expect(result.diagnostics).toHaveLength(1)
   expect(result.diagnostics[0].code).toBe('CB_URL_PROTOCOL')
+})
+
+test('every link destination a CommonMark renderer reads is checked, at its own line', () => {
+  const src = [
+    'Intro.',
+    '',
+    'See [plain](javascript:alert(1)).',
+    '',
+    '[angle](<javascript:alert(1)>)',
+    '',
+    '[spaced]( javascript:alert(1))',
+    '',
+    '[encoded](java&#115;cript:alert(1))',
+    '',
+    '<javascript:alert(1)>',
+    '',
+    '![image](javascript:alert(1))',
+    '',
+    '[ref]',
+    '',
+    '[ref]: javascript:alert(1)',
+    '',
+  ].join('\n')
+  const result = validateDocument(parseDocument(src), registry())
+  expect(result.ok).toBe(false)
+  expect(
+    result.diagnostics.map((d) => [d.code, d.position.start.line, d.position.start.column]),
+  ).toEqual([
+    ['CB_URL_PROTOCOL', 3, 5],
+    ['CB_URL_PROTOCOL', 5, 1],
+    ['CB_URL_PROTOCOL', 7, 1],
+    ['CB_URL_PROTOCOL', 9, 1],
+    ['CB_URL_PROTOCOL', 11, 1],
+    ['CB_URL_PROTOCOL', 13, 1],
+    ['CB_URL_PROTOCOL', 17, 1],
+  ])
+})
+
+test('URL diagnostics inside a block point at the link line', () => {
+  const result = validateDocument(
+    parseDocument(':::callout\nFirst.\n\nThen [x](javascript:alert(1)).\n:::\n'),
+    registry(),
+  )
+  expect(result.diagnostics).toEqual([
+    expect.objectContaining({
+      code: 'CB_URL_PROTOCOL',
+      position: expect.objectContaining({ start: { line: 4, column: 6, offset: 24 } }),
+    }),
+  ])
+})
+
+test('link syntax inside code is not a link', () => {
+  const src = 'Write `[x](javascript:alert(1))` inline.\n\n```md\n[x](javascript:alert(1))\n```\n'
+  const result = validateDocument(parseDocument(src), registry())
+  expect(result.ok).toBe(true)
+  expect(result.diagnostics).toEqual([])
 })
 
 test('rows blocks validate against pipe schema', () => {

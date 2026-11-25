@@ -1,8 +1,10 @@
-import type { BlockNode, ContentNode, DocumentNode } from './ast.js'
-import type { Diagnostic, SourceRange } from './diagnostics.js'
+import type { BlockNode, ContentNode, DocumentNode, MarkdownNode } from './ast.js'
+import type { Diagnostic, SourcePoint } from './diagnostics.js'
 import type { ParseResult } from './parser.js'
 import type { BlockDefinition, BlockProps, BlockRegistry } from './registry.js'
 import type { ZodType } from 'zod'
+
+import { fromMarkdown } from 'mdast-util-from-markdown'
 
 export interface ValidateOptions {
   /** Severity of unknown block names. Default "error". */
@@ -60,8 +62,17 @@ export function isValidatedBlock(node: ContentNode): node is ValidatedBlockNode 
   return node.type === 'block' && 'data' in node && 'definition' in node
 }
 
-const LINK_URL_RE = /\]\(([^)\s]+)/g
 const HAS_SCHEME_RE = /^[a-zA-Z][a-zA-Z0-9+.-]*:/
+/** Every CommonMark link, image, definition, or autolink contains one of these. */
+const MAY_LINK_RE = /\]\(|\]:|</
+
+/** The mdast fields the URL check reads. fromMarkdown positions every node it parses. */
+interface MdastNode {
+  /** Set on links, images, and definitions, decoded as renderers decode it. */
+  url?: string
+  position: { start: SourcePoint; end: SourcePoint }
+  children?: MdastNode[]
+}
 
 interface ZodObjectDef {
   type: string
@@ -73,26 +84,43 @@ interface ZodLike {
   def: ZodObjectDef
 }
 
+/**
+ * Check every link, image, and definition URL in a Markdown run. The run is
+ * parsed as CommonMark, the way renderers read it, so link syntax inside code
+ * is not a link.
+ */
 function checkUrls(
-  value: string,
-  position: SourceRange,
+  markdown: MarkdownNode,
   allowed: string[],
   report: (d: Diagnostic) => void,
 ): void {
-  for (const match of value.matchAll(LINK_URL_RE)) {
-    const url = match[1]
-    const scheme = url.match(HAS_SCHEME_RE)
-    if (!scheme) continue // relative URLs are fine
-    const protocol = `${scheme[0].slice(0, -1).toLowerCase()}:`
-    if (!allowed.includes(protocol)) {
+  if (!MAY_LINK_RE.test(markdown.value)) return
+  const visit = (node: MdastNode): void => {
+    const scheme = node.url?.match(HAS_SCHEME_RE) // relative URLs are fine
+    const protocol = scheme && `${scheme[0].slice(0, -1).toLowerCase()}:`
+    if (protocol && !allowed.includes(protocol)) {
       report({
         code: 'CB_URL_PROTOCOL',
         severity: 'error',
         message: `URL protocol "${protocol}" is not allowed.`,
         hint: `Allowed: ${allowed.join(', ')}. Configure via validateDocument options.allowedProtocols.`,
-        position,
+        position: {
+          start: runPoint(markdown.position.start, node.position.start),
+          end: runPoint(markdown.position.start, node.position.end),
+        },
       })
     }
+    node.children?.forEach(visit)
+  }
+  visit(fromMarkdown(markdown.value) as MdastNode)
+}
+
+/** Map a point inside a Markdown run to the document. */
+function runPoint(run: SourcePoint, point: SourcePoint): SourcePoint {
+  return {
+    line: run.line + point.line - 1,
+    column: point.line === 1 ? run.column + point.column - 1 : point.column,
+    offset: run.offset + point.offset,
   }
 }
 
@@ -180,7 +208,7 @@ export function validateDocument(
   function walk(nodes: ContentNode[], parent: BlockNode | null, depth: number): void {
     for (const node of nodes) {
       if (node.type === 'markdown') {
-        checkUrls(node.value, node.position, opts.allowedProtocols, report)
+        checkUrls(node, opts.allowedProtocols, report)
         continue
       }
       if (depth > opts.maxDepth) {
@@ -207,6 +235,7 @@ export function validateDocument(
           blockName: node.name,
           position: node.openPosition,
         })
+        walk(node.children, node, depth + 1)
         continue
       }
       let valid = true
