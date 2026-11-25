@@ -167,6 +167,122 @@ test('indexes a page linked from every other page in linear time', () => {
   expect(elapsed).toBeLessThan(500)
 })
 
+function seededRandom(seed: number): () => number {
+  let state = seed
+  return () => {
+    state = (Math.imul(state, 1103515245) + 12345) >>> 0
+    return state / 2 ** 32
+  }
+}
+
+// Slugs as one site writes them: a few words from one topic, some in a
+// numbered series.
+function siteSlugs(count: number, random: () => number): string[] {
+  const words = (
+    'pizza dough cold fermentation sourdough starter bread flour yeast oven stone pan ' +
+    'crust sauce tomato cheese basil olive oil garlic recipe guide easy quick overnight bake'
+  ).split(' ')
+  const slugs = new Set<string>()
+  while (slugs.size < count) {
+    const length = 1 + Math.floor(random() * 5)
+    const slug = Array.from({ length }, () => words[Math.floor(random() * words.length)]).join('-')
+    slugs.add(slug)
+    if (random() < 0.3) for (const n of [2, 3]) slugs.add(`${slug}-${n}`)
+  }
+  return [...slugs]
+}
+
+// A link to a page of the site with a few typos, or to a page it lacks.
+function brokenTarget(names: string[], random: () => number): string {
+  if (random() < 0.3) return siteSlugs(1, random)[0]
+  let target = names[Math.floor(random() * names.length)]
+  for (let edits = 1 + Math.floor(random() * 4); edits > 0; edits--) {
+    const at = Math.floor(random() * (target.length + 1))
+    const letter = 'abcdefghijklmnopqrstuvwxyz-'[Math.floor(random() * 27)]
+    const kind = Math.floor(random() * 3)
+    target = target.slice(0, at) + (kind < 2 ? letter : '') + target.slice(kind === 1 ? at : at + 1)
+  }
+  return target
+}
+
+function editDistance(a: string, b: string): number {
+  let previous = Array.from({ length: b.length + 1 }, (_, j) => j)
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i]
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      row[j] = Math.min(previous[j] + 1, row[j - 1] + 1, previous[j - 1] + cost)
+    }
+    previous = row
+  }
+  return previous[b.length]
+}
+
+test.each(['global-slug', 'same-locale-slug', 'same-locale-key'] as const)(
+  'a did-you-mean hint names the first closest page in the link scope (%s)',
+  (resolve) => {
+    const random = seededRandom(3)
+    const locales = resolve === 'global-slug' ? [undefined] : ['en', 'fr']
+    const pages = siteSlugs(150, random).map((slug, i) => ({
+      slug,
+      locale: locales[i % locales.length],
+      name: resolve === 'same-locale-key' ? `key-${slug}` : slug,
+    }))
+    const names = pages.map((page) => page.name)
+    const inputs = pages.map((page, i) => ({
+      path: `${i}.md`,
+      data: {
+        slug: page.slug,
+        ...(page.locale ? { locale: page.locale } : {}),
+        ...(resolve === 'same-locale-key' ? { key: page.name } : {}),
+        linksTo: [brokenTarget(names, random), brokenTarget(names, random)],
+      },
+    }))
+
+    // The first page in input order at the smallest edit distance, within a
+    // third of the target's length (at least 2), among pages in its locale.
+    const expectedHint = (target: string, locale: string | undefined) => {
+      let best: string | undefined
+      let bestDistance = Math.max(2, Math.floor(target.length / 3)) + 1
+      for (const page of pages.filter((p) => p.locale === locale)) {
+        const distance = editDistance(target, page.name)
+        if (distance < bestDistance) [best, bestDistance] = [page.name, distance]
+      }
+      return best && `Did you mean "${best}"?`
+    }
+    const unresolved = validateLinks(inputs, { resolve }).filter(
+      (r) => r.diagnostic.code === 'CB_LINK_UNRESOLVED',
+    )
+    const hints = unresolved.map((r) => r.diagnostic.hint)
+
+    expect(hints).toEqual(
+      unresolved.map((r) => expectedHint(r.target!, pages[Number.parseInt(r.file)].locale)),
+    )
+    expect(hints.filter(Boolean).length).toBeGreaterThan(100)
+    expect(hints.filter((hint) => !hint).length).toBeGreaterThan(50)
+  },
+)
+
+test('hints for a broken link on every one of a thousand pages', () => {
+  const random = seededRandom(5)
+  const slugs = siteSlugs(1000, random)
+  const inputs = slugs.map((slug, i) => ({
+    path: `${slug}.md`,
+    data: { slug, linksTo: [slugs[(i + 1) % slugs.length], brokenTarget(slugs, random)] },
+  }))
+
+  const started = performance.now()
+  const rows = validateLinks(inputs)
+  const elapsed = performance.now() - started
+
+  const unresolved = rows.filter((r) => r.diagnostic.code === 'CB_LINK_UNRESOLVED')
+  expect(unresolved.length).toBeGreaterThan(900)
+  expect(unresolved.filter((r) => r.diagnostic.hint).length).toBeGreaterThan(500)
+  // Tens of milliseconds; a full edit-distance matrix against every page for
+  // every broken link took seconds.
+  expect(elapsed).toBeLessThan(1000)
+})
+
 test('serializes to a stable sorted plain object', () => {
   const index = buildLinkIndex([
     { path: 'b.md', data: { slug: 'b', linksTo: ['a'] } },
