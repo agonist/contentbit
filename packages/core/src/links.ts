@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { Diagnostic, SourceRange } from './diagnostics.js'
-import { normalizeContentPageFrontmatter } from './page-facts.js'
+import { readContentPageFacts, type ContentPageKeywords } from './page-facts.js'
 
 const LinkTarget = z.union([
   z.string(),
@@ -16,24 +16,22 @@ const LinkTarget = z.union([
     }),
 ])
 
-const LinkFrontmatter = z.object({
+const LinkIdentity = z.object({
   slug: z.string().min(1),
   key: z.string().min(1).optional(),
   locale: z.string().min(1).optional(),
-  title: z.string().optional(),
-  linksTo: z.array(LinkTarget).optional(),
-  aliases: z.array(z.string()).optional(),
-  keywords: z
-    .object({
-      primary: z.string().optional(),
-      secondary: z.array(z.string()).optional(),
-      lsi: z.array(z.string()).optional(),
-    })
-    .optional(),
 })
 
+const LinksTo = z.array(LinkTarget).optional()
+const Aliases = z.array(z.string()).optional()
+
 export type LinkTarget = z.infer<typeof LinkTarget>
-export type LinkFrontmatter = z.infer<typeof LinkFrontmatter>
+export interface LinkFrontmatter extends z.infer<typeof LinkIdentity> {
+  title?: string
+  linksTo?: LinkTarget[]
+  aliases?: string[]
+  keywords?: ContentPageKeywords
+}
 
 export type LinkResolveMode =
   | 'global-slug'
@@ -51,7 +49,7 @@ export interface LinkResolverOptions {
 
 export type ParseLinkResult =
   | { ok: true; value: LinkFrontmatter | null }
-  | { ok: false; errors: string[] }
+  | { ok: false; errors: string[]; value: LinkFrontmatter | null }
 
 export interface LinkReference {
   target?: string
@@ -126,33 +124,77 @@ const FM_POSITION: SourceRange = {
   end: { line: 1, column: 1, offset: 0 },
 }
 
-// Returns { value: null } when there is no `slug` (a non-participating page),
-// parsed data when the link shape is valid, or shape errors otherwise. Never
-// throws — callers turn errors into diagnostics.
+// Returns { value: null } when there is no `slug` (a non-participating page).
+// Title and keywords are read as page facts read them. A malformed linksTo or
+// aliases is reported and ignored, so the page stays a link target; a
+// malformed slug, key, or locale leaves no identity to index, so the value is
+// null. Never throws — callers turn errors into diagnostics.
 export function parseLinkFrontmatter(
   data: Record<string, unknown>,
   options: LinkResolverOptions = {},
 ): ParseLinkResult {
-  const normalized = normalizeContentPageFrontmatter(data, options)
+  const facts = readContentPageFacts(data, options)
+  const normalized = facts.frontmatter
   if (!('slug' in normalized)) return { ok: true, value: null }
-  const parsed = LinkFrontmatter.safeParse(normalized)
-  if (parsed.success) return { ok: true, value: parsed.data }
-  return { ok: false, errors: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) }
+  const errors: string[] = []
+  const identity = parseLinkField(LinkIdentity, normalized, errors)
+  const linksTo = parseLinkField(LinksTo, normalized.linksTo, errors, 'linksTo')
+  const aliases = parseLinkField(Aliases, normalized.aliases, errors, 'aliases')
+  if (!identity) return { ok: false, errors, value: null }
+  const value: LinkFrontmatter = {
+    ...identity,
+    ...(facts.title ? { title: facts.title } : {}),
+    ...(linksTo ? { linksTo } : {}),
+    ...(aliases ? { aliases } : {}),
+    ...(facts.keywords ? { keywords: facts.keywords } : {}),
+  }
+  return errors.length === 0 ? { ok: true, value } : { ok: false, errors, value }
 }
 
-// Pure: builds the resolved link graph from per-file frontmatter data. Pass 1
-// collects pages and registers aliases; pass 2 resolves each linksTo through
-// the configured identity maps and inverts edges to derive linkedFrom.
+function parseLinkField<T>(
+  schema: z.ZodType<T>,
+  input: unknown,
+  errors: string[],
+  field?: string,
+): T | undefined {
+  const parsed = schema.safeParse(input)
+  if (parsed.success) return parsed.data
+  for (const issue of parsed.error.issues) {
+    const path = field ? [field, ...issue.path] : issue.path
+    errors.push(`${path.join('.')}: ${issue.message}`)
+  }
+  return undefined
+}
+
+// Pure: builds the resolved link graph from per-file frontmatter data.
 export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions = {}): LinkIndex {
   const resolvedOptions = { ...DEFAULT_OPTIONS, ...options }
+  const parsedPages: ParsedLinkPage[] = []
+  for (const { path, data } of inputs) {
+    const parsed = parseLinkFrontmatter(data, resolvedOptions)
+    if (parsed.value !== null) parsedPages.push({ path, fm: parsed.value })
+  }
+  return indexLinkPages(parsedPages, resolvedOptions)
+}
+
+interface ParsedLinkPage {
+  path: string
+  fm: LinkFrontmatter
+}
+
+// Pass 1 collects pages and registers aliases; pass 2 resolves each page's own
+// linksTo through the configured identity maps and inverts edges to derive
+// linkedFrom.
+function indexLinkPages(
+  parsedPages: ParsedLinkPage[],
+  resolvedOptions: LinkIndex['options'],
+): LinkIndex {
   const pages = new Map<string, IndexedPage>()
+  const linksToByPage = new Map<IndexedPage, LinkTarget[]>()
   const aliases = new Map<string, string>()
   const aliasEntries: LinkAliasEntry[] = []
 
-  for (const { path, data } of inputs) {
-    const parsed = parseLinkFrontmatter(data, resolvedOptions)
-    if (!parsed.ok || parsed.value === null) continue
-    const fm = parsed.value
+  for (const { path, fm } of parsedPages) {
     const page: IndexedPage = {
       slug: fm.slug,
       key: fm.key,
@@ -167,6 +209,7 @@ export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions
       linkedFromRefs: [],
     }
     pages.set(pageMapKey(page, resolvedOptions), page)
+    linksToByPage.set(page, fm.linksTo ?? [])
   }
 
   for (const page of pages.values()) {
@@ -179,13 +222,11 @@ export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions
   }
 
   const lookup = buildLookup(pages, resolvedOptions)
+  const linkedFrom = new Map<IndexedPage, Set<string>>()
   for (const page of pages.values()) {
-    const source = parseLinkFrontmatter(
-      inputForPage(page, inputs, resolvedOptions),
-      resolvedOptions,
-    )
-    if (!source.ok || source.value === null) continue
-    for (const rawTarget of source.value.linksTo ?? []) {
+    const from = replacementFor(page, resolvedOptions)
+    const linked = new Set<IndexedPage>()
+    for (const rawTarget of linksToByPage.get(page) ?? []) {
       const resolved = resolveTarget(rawTarget, page, lookup, resolvedOptions)
       if (!resolved.page) {
         page.linksTo.push(resolved.target)
@@ -193,14 +234,15 @@ export function buildLinkIndex(inputs: LinkInput[], options: LinkResolverOptions
       }
       page.linksTo.push(replacementFor(resolved.page, resolvedOptions))
       page.linkRefs.push(referenceFor(resolved.page, resolved.target))
-      if (resolved.page === page) continue
-      const from = replacementFor(page, resolvedOptions)
-      if (!resolved.page.linkedFrom.includes(from)) resolved.page.linkedFrom.push(from)
-      if (!resolved.page.linkedFromRefs.some((r) => sameReference(r, page))) {
-        resolved.page.linkedFromRefs.push(referenceFor(page))
-      }
+      if (resolved.page === page || linked.has(resolved.page)) continue
+      linked.add(resolved.page)
+      resolved.page.linkedFromRefs.push(referenceFor(page))
+      // Pages in different locales can share a slug or key, so linkedFrom is
+      // deduplicated by value rather than by source page.
+      linkedFrom.set(resolved.page, (linkedFrom.get(resolved.page) ?? new Set()).add(from))
     }
   }
+  for (const [page, sources] of linkedFrom) page.linkedFrom = [...sources]
 
   return { pages, aliases, aliasEntries, options: resolvedOptions }
 }
@@ -239,18 +281,23 @@ export function serializeLinkIndex(index: LinkIndex): SerializedLinkIndex {
   return { pages, aliases }
 }
 
+// The aliases this page's linksTo entries resolved through, each mapped to the
+// current slug or key of the page it reached. `links --fix` rewrites exactly
+// these entries.
 export function aliasReplacementsForPage(
   index: LinkIndex,
   data: Record<string, unknown>,
 ): Map<string, string> {
   const parsed = parseLinkFrontmatter(data, index.options)
   const out = new Map<string, string>()
-  if (!parsed.ok || parsed.value === null) return out
-  const locale = effectiveLocale(parsed.value, index.options)
-  for (const entry of index.aliasEntries) {
-    if (index.options.resolve === 'global-slug' || entry.locale === locale) {
-      out.set(entry.alias, entry.replacement)
-    }
+  if (parsed.value === null) return out
+  const identity = frontmatterIdentity(parsed.value, index.options)
+  const page = index.pages.get(pageMapKey(identity, index.options))
+  for (const ref of page?.linkRefs ?? []) {
+    const entry = index.aliasEntries.find(
+      (e) => e.alias === ref.target && sameReference(ref, e.page),
+    )
+    if (entry) out.set(entry.alias, entry.replacement)
   }
   return out
 }
@@ -263,9 +310,18 @@ export function validateLinks(
   inputs: LinkInput[],
   options: LinkResolverOptions = {},
 ): LinkDiagnostic[] {
+  return analyzeLinks(inputs, options).diagnostics
+}
+
+// Builds the link index and validates links against it in one pass over the
+// inputs, for callers such as the content project scan that need both.
+export function analyzeLinks(
+  inputs: LinkInput[],
+  options: LinkResolverOptions = {},
+): { index: LinkIndex; diagnostics: LinkDiagnostic[] } {
   const resolvedOptions = { ...DEFAULT_OPTIONS, ...options }
   const out: LinkDiagnostic[] = []
-  const validInputs: Array<{ path: string; fm: LinkFrontmatter }> = []
+  const validInputs: ParsedLinkPage[] = []
   const seenSlug = new Map<string, string>() // identity -> first file
   const seenKey = new Map<string, string>() // identity -> first file
   const seenAlias = new Map<string, string>() // identity -> file
@@ -276,7 +332,6 @@ export function validateLinks(
     if (!parsed.ok) {
       for (const e of parsed.errors)
         out.push(diag(path, 'CB_LINK_SHAPE', 'error', `invalid link frontmatter: ${e}`))
-      continue
     }
     if (parsed.value === null) continue
     const fm = parsed.value
@@ -318,7 +373,7 @@ export function validateLinks(
   }
 
   const ambiguousPageKeys = ambiguousValidationPageKeys(validInputs, resolvedOptions)
-  const index = buildLinkIndex(inputs, resolvedOptions)
+  const index = indexLinkPages(validInputs, resolvedOptions)
   const lookup = buildLookup(index.pages, resolvedOptions)
 
   for (const { fm } of validInputs) {
@@ -387,11 +442,11 @@ export function validateLinks(
         diag(page.path, 'CB_LINK_ORPHAN', 'warning', `page "${page.slug}" has no inbound links`),
       )
   }
-  return out
+  return { index, diagnostics: out }
 }
 
 function ambiguousValidationPageKeys(
-  inputs: Array<{ path: string; fm: LinkFrontmatter }>,
+  inputs: ParsedLinkPage[],
   options: LinkResolverOptions,
 ): Set<string> {
   const pageCounts = new Map<string, number>()
@@ -436,6 +491,10 @@ function frontmatterIdentity(
   return { slug: fm.slug, key: fm.key, locale: effectiveLocale(fm, options) }
 }
 
+function sameReference(ref: LinkReference, page: IndexedPage): boolean {
+  return ref.slug === page.slug && ref.locale === page.locale && ref.key === page.key
+}
+
 function pageMapKey(
   page: Pick<IndexedPage, 'slug' | 'key' | 'locale'>,
   options: LinkResolverOptions,
@@ -474,10 +533,6 @@ function referenceFor(page: IndexedPage, target?: string): LinkReference {
     slug: page.slug,
     ...(page.key ? { key: page.key } : {}),
   }
-}
-
-function sameReference(ref: LinkReference, page: IndexedPage): boolean {
-  return ref.slug === page.slug && ref.locale === page.locale && ref.key === page.key
 }
 
 function sortedRefs(refs: LinkReference[]): LinkReference[] {
@@ -639,20 +694,6 @@ function candidatesFor(
       out.push(usesKeyResolution(options) && page.key ? page.key : page.slug)
   }
   return out
-}
-
-function inputForPage(
-  page: IndexedPage,
-  inputs: LinkInput[],
-  options: LinkResolverOptions,
-): Record<string, unknown> {
-  for (const input of inputs) {
-    const parsed = parseLinkFrontmatter(input.data, options)
-    if (!parsed.ok || parsed.value === null) continue
-    const identity = frontmatterIdentity(parsed.value, options)
-    if (pageMapKey(identity, options) === pageMapKey(page, options)) return input.data
-  }
-  return {}
 }
 
 function diag(

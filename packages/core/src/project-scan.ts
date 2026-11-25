@@ -8,7 +8,7 @@ import { analyzeDocument } from './analyze.js'
 import { compileDocument } from './compile.js'
 import { extractFrontmatter } from './frontmatter.js'
 import { createLinkGraphView, type LinkGraphSummary } from './link-graph.js'
-import { buildLinkIndex, validateLinks } from './links.js'
+import { analyzeLinks } from './links.js'
 import { evaluateSeoProject, type SeoProjectEvaluation } from './seo.js'
 import { scanContentIntegrity } from './content-integrity.js'
 
@@ -108,18 +108,20 @@ export function scanContentProject(
     })
   }
 
+  const scannedByPath = new Map(scannedFiles.map((file) => [file.path, file]))
   let linkIndex: LinkIndex | undefined
   let linkGraph: ContentProjectLinkGraph | undefined
   let linkDiagnostics: LinkDiagnostic[] | undefined
   if (hasLinkFrontmatter(linkInputs, options.linkOptions?.slugField)) {
-    linkDiagnostics = validateLinks(linkInputs, options.linkOptions)
+    const links = analyzeLinks(linkInputs, options.linkOptions)
+    linkIndex = links.index
+    linkDiagnostics = links.diagnostics
     for (const { file, diagnostic } of linkDiagnostics) {
       const finding = findingFromDiagnostic('links', file, diagnostic)
       findings.push(finding)
-      const scanned = scannedFiles.find((item) => item.path === file)
+      const scanned = scannedByPath.get(file)
       if (scanned) scanned.findings.push(finding)
     }
-    linkIndex = buildLinkIndex(linkInputs, options.linkOptions)
     linkGraph = createLinkGraphView(linkIndex, linkDiagnostics).summary
   }
 
@@ -127,7 +129,7 @@ export function scanContentProject(
     for (const integrity of scanContentIntegrity(scannedFiles, options.linkOptions)) {
       const finding: ContentProjectFinding = { source: 'integrity', ...integrity }
       findings.push(finding)
-      const scanned = scannedFiles.find((item) => item.path === finding.file)
+      const scanned = scannedByPath.get(finding.file)
       if (scanned) scanned.findings.push(finding)
     }
   }
@@ -148,7 +150,7 @@ export function scanContentProject(
   if (seo) {
     findings.push(...seo.findings)
     for (const finding of seo.findings) {
-      const scanned = scannedFiles.find((item) => item.path === finding.file)
+      const scanned = scannedByPath.get(finding.file)
       if (scanned) scanned.findings.push(finding)
     }
   }
