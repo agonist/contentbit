@@ -281,6 +281,9 @@ export function serializeLinkIndex(index: LinkIndex): SerializedLinkIndex {
   return { pages, aliases }
 }
 
+// The aliases this page's linksTo entries resolved through, each mapped to the
+// current slug or key of the page it reached. `links --fix` rewrites exactly
+// these entries.
 export function aliasReplacementsForPage(
   index: LinkIndex,
   data: Record<string, unknown>,
@@ -288,11 +291,13 @@ export function aliasReplacementsForPage(
   const parsed = parseLinkFrontmatter(data, index.options)
   const out = new Map<string, string>()
   if (parsed.value === null) return out
-  const locale = effectiveLocale(parsed.value, index.options)
-  for (const entry of index.aliasEntries) {
-    if (index.options.resolve === 'global-slug' || entry.locale === locale) {
-      out.set(entry.alias, entry.replacement)
-    }
+  const identity = frontmatterIdentity(parsed.value, index.options)
+  const page = index.pages.get(pageMapKey(identity, index.options))
+  for (const ref of page?.linkRefs ?? []) {
+    const entry = index.aliasEntries.find(
+      (e) => e.alias === ref.target && sameReference(ref, e.page),
+    )
+    if (entry) out.set(entry.alias, entry.replacement)
   }
   return out
 }
@@ -484,6 +489,10 @@ function frontmatterIdentity(
   options: LinkResolverOptions,
 ): Pick<IndexedPage, 'slug' | 'key' | 'locale'> {
   return { slug: fm.slug, key: fm.key, locale: effectiveLocale(fm, options) }
+}
+
+function sameReference(ref: LinkReference, page: IndexedPage): boolean {
+  return ref.slug === page.slug && ref.locale === page.locale && ref.key === page.key
 }
 
 function pageMapKey(
