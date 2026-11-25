@@ -2,6 +2,7 @@ import type { DocumentStats } from './analyze.js'
 import type { LinkResolverOptions } from './links.js'
 
 import { readContentPageFacts, type ContentPageFacts } from './page-facts.js'
+import { contentPageUrlResolver } from './page-routes.js'
 
 export interface ContentIntegrityFile {
   path: string
@@ -12,6 +13,13 @@ export interface ContentIntegrityFile {
 interface IntegrityPage {
   file: ContentIntegrityFile
   facts: ContentPageFacts
+}
+
+interface RouteTable {
+  pages: Map<string, ContentIntegrityFile>
+  host: Set<string>
+  /** Pages have the URLs `links.routes` gives them, rather than slug and key guesses. */
+  configured: boolean
 }
 
 export interface ContentIntegrityFinding {
@@ -38,8 +46,10 @@ export interface ContentIntegrityFinding {
  * Content-quality checks that need to see more than one document. These stay
  * deliberately conservative: page-only requirements apply to slugged pages,
  * and Markdown links are checked only when they name a local Markdown file, an
- * in-document anchor, or a site route that should match a scanned page's slug
- * or key. The site root and file assets remain the host app's concern.
+ * in-document anchor, or a site route. A route must match a page URL from
+ * `links.routes` when the project configures routes, and otherwise a scanned
+ * page's slug or key. The site root, `links.hostRoutes`, and file assets remain
+ * the host app's concern.
  */
 export function scanContentIntegrity(
   files: ContentIntegrityFile[],
@@ -51,7 +61,7 @@ export function scanContentIntegrity(
     facts: readContentPageFacts(file.frontmatter, options),
   }))
   const byPath = new Map(files.map((file) => [normalizePath(file.path), file]))
-  const byRoute = routeIndex(pages)
+  const routes = routeTable(pages, options)
 
   const titles = new Map<string, string>()
   const descriptions = new Map<string, string>()
@@ -64,7 +74,7 @@ export function scanContentIntegrity(
 
   for (const file of files) {
     for (const link of file.stats.links.items) {
-      const target = resolveContentLink(link.url, file.path, byRoute)
+      const target = resolveContentLink(link.url, file.path, routes)
       if (!target) continue
       const destination = byPath.get(target.path)
       if (!destination) {
@@ -78,7 +88,7 @@ export function scanContentIntegrity(
           line: link.line,
           column: 1,
           message: `${label} "${link.url}" does not match a scanned content page`,
-          hint: 'Use a known page slug, a relative .md/.mdx path, or update the link target.',
+          hint: unresolvedLinkHint(target.kind, routes.configured),
         })
         continue
       }
@@ -97,6 +107,16 @@ export function scanContentIntegrity(
   }
 
   return findings
+}
+
+function unresolvedLinkHint(kind: 'markdown' | 'route', routesConfigured: boolean): string {
+  if (kind === 'markdown') {
+    return 'Use a known page slug, a relative .md/.mdx path, or update the link target.'
+  }
+  if (routesConfigured) {
+    return 'Link to a page URL from links.routes, a route in links.hostRoutes, or a relative .md/.mdx path.'
+  }
+  return 'Use a known page slug, a relative .md/.mdx path, or update the link target. If the site serves this URL, describe its routes with links.routes or links.hostRoutes.'
 }
 
 function localeKeyFindings(
@@ -217,7 +237,7 @@ function documentStructureFindings({ file, facts }: IntegrityPage): ContentInteg
 function resolveContentLink(
   url: string,
   sourcePath: string,
-  byRoute: Map<string, ContentIntegrityFile>,
+  routes: RouteTable,
 ): { path: string; anchor?: string; kind: 'markdown' | 'route' } | undefined {
   if (url === '' || /^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//')) {
     return undefined
@@ -239,10 +259,13 @@ function resolveContentLink(
     }
   }
   if (hasFileExtension(decodedPath)) return undefined
+  // A relative URL resolves against the linking page's URL, and whether that
+  // URL ends in a slash is the host's choice, so routes check only root-relative URLs.
+  if (routes.configured && !rawPath.startsWith('/')) return undefined
 
   const route = normalizeRoute(rawPath)
-  if (!route) return undefined
-  const destination = routeTarget(route, byRoute)
+  if (!route || routes.host.has(route)) return undefined
+  const destination = routes.configured ? routes.pages.get(route) : slugTarget(route, routes.pages)
   return {
     path: destination?.path ?? `\0${route}`,
     ...(anchor ? { anchor } : {}),
@@ -258,21 +281,29 @@ function hasFileExtension(value: string): boolean {
   return /\/[^/]+\.[a-z\d]+$/i.test(`/${value}`)
 }
 
-function routeIndex(pages: IntegrityPage[]): Map<string, ContentIntegrityFile> {
+function routeTable(pages: IntegrityPage[], options: LinkResolverOptions): RouteTable {
+  const pageUrl = contentPageUrlResolver(options)
   const out = new Map<string, ContentIntegrityFile>()
   for (const { file, facts } of pages) {
-    for (const value of [normalizedFact(facts.slug), normalizedFact(facts.key)]) {
+    const urls = pageUrl
+      ? [pageUrl(file.path, facts)]
+      : [normalizedFact(facts.slug), normalizedFact(facts.key)]
+    for (const value of urls) {
       if (value) out.set(normalizeRoute(value), file)
     }
   }
-  return out
+  return {
+    pages: out,
+    host: new Set((options.hostRoutes ?? []).map(normalizeRoute)),
+    configured: pageUrl !== undefined,
+  }
 }
 
-function routeTarget(
+function slugTarget(
   route: string,
-  byRoute: Map<string, ContentIntegrityFile>,
+  bySlug: Map<string, ContentIntegrityFile>,
 ): ContentIntegrityFile | undefined {
-  return byRoute.get(route) ?? byRoute.get(route.slice(route.lastIndexOf('/') + 1))
+  return bySlug.get(route) ?? bySlug.get(route.slice(route.lastIndexOf('/') + 1))
 }
 
 function normalizeRoute(value: string): string {
