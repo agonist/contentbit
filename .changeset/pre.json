@@ -15,9 +15,16 @@
   },
   "changesets": [
     "calm-pages-discover",
+    "cli-config-resolution",
+    "core-input-normalization",
+    "core-integrity-seo-fixes",
+    "linear-link-index",
+    "links-fix-whole-entries",
     "portable-discovery-facts",
     "shared-command-config",
+    "studio-server-fixes",
     "tidy-v1-boundaries",
-    "v1-release-candidate"
+    "v1-release-candidate",
+    "validate-nested-links"
   ]
 }

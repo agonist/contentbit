@@ -1,5 +1,16 @@
 # @contentbit/blocks
 
+## 1.0.0-rc.1
+
+### Patch Changes
+
+- Updated dependencies [aca73ce]
+- Updated dependencies [512e1d2]
+- Updated dependencies [09c7364]
+- Updated dependencies [20e31ca]
+- Updated dependencies [0872923]
+  - @contentbit/core@1.0.0-rc.1
+
 ## 1.0.0-rc.0
 
 ### Major Changes
