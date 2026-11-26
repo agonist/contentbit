@@ -39,11 +39,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "mdast-util-from-markdown": "^2.0.3",
-    "zod": "^4.0.0"
+    "mdast-util-from-markdown": "^2.0.3"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "zod": "^4.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
   }
 }

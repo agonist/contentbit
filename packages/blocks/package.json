@@ -37,11 +37,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@contentbit/core": "workspace:*",
-    "zod": "^4.0.0"
+    "@contentbit/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
-    "vitest": "^4.0.17"
+    "vitest": "^4.0.17",
+    "zod": "^4.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
   }
 }
