@@ -18,13 +18,16 @@
     "cli-config-resolution",
     "core-input-normalization",
     "core-integrity-seo-fixes",
+    "fast-link-hints",
     "linear-link-index",
     "links-fix-whole-entries",
+    "page-routes",
     "portable-discovery-facts",
     "shared-command-config",
     "studio-server-fixes",
     "tidy-v1-boundaries",
     "v1-release-candidate",
-    "validate-nested-links"
+    "validate-nested-links",
+    "zod-peer-dependency"
   ]
 }

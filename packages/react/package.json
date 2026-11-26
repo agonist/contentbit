@@ -1,6 +1,6 @@
 {
   "name": "@contentbit/react",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "description": "Headless React renderer for validated Contentbit documents.",
   "keywords": [
     "content-blocks",

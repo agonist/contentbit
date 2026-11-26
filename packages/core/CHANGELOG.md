@@ -1,5 +1,33 @@
 # @contentbit/core
 
+## 1.0.0-rc.2
+
+### Minor Changes
+
+- 4ef5743: Check internal URLs against the routes a site really serves. `links.routes` in
+  `contentbit.config.ts` maps each content directory to a URL pattern such as
+  `/docs/{path}` or `/blog/{slug}`, and `links.hostRoutes` lists pages the host
+  app serves outside content, such as `/playground`. With routes set, Doctor,
+  Studio, and snapshots flag an internal URL only when no page or host route has
+  it, check its `#anchor` against that page, and no longer accept a link because
+  its last segment matches some page's slug. Sites that route pages by file path
+  no longer get a `CB_INTERNAL_URL_UNRESOLVED` warning on every working link.
+
+### Patch Changes
+
+- 287b8e7: Find did-you-mean hints for unresolved links about a hundred times faster.
+  With a broken `linksTo` on every one of 4000 pages, link validation took
+  nearly three minutes and now takes under two seconds. A target that many pages
+  link to is looked up once. Hints are unchanged: each names the same page as
+  before, and unknown block and prop hints use the same search.
+- 71a48e9: Use the project's zod instead of installing a separate copy. `@contentbit/core`
+  and `@contentbit/blocks` now declare zod `^4.0.0` as a peer dependency. Before,
+  a project whose zod resolved to a different version than Contentbit's own copy
+  got a TypeScript error on every block schema in its registry, such as
+  "missing the following properties from type 'ZodType': validate,
+  validateAsync". Projects created with `contentbit init` already depend on zod.
+  Other projects that define blocks should add zod 4 to their own dependencies.
+
 ## 1.0.0-rc.1
 
 ### Patch Changes
