@@ -1,5 +1,14 @@
 # @contentbit/astro
 
+## 1.0.0-rc.2
+
+### Patch Changes
+
+- Updated dependencies [287b8e7]
+- Updated dependencies [4ef5743]
+- Updated dependencies [71a48e9]
+  - @contentbit/core@1.0.0-rc.2
+
 ## 1.0.0-rc.1
 
 ### Patch Changes
