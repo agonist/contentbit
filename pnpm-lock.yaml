@@ -48,9 +48,6 @@ importers:
       '@contentbit/core':
         specifier: workspace:*
         version: link:../core
-      zod:
-        specifier: ^4.0.0
-        version: 4.4.3
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -58,6 +55,9 @@ importers:
       vitest:
         specifier: ^4.0.17
         version: 4.1.8(@types/node@25.9.2)(happy-dom@20.10.2)(jsdom@28.1.0)(vite@8.0.16(@types/node@25.9.2)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.48.0))
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
 
   packages/cli:
     dependencies:
@@ -101,9 +101,6 @@ importers:
       mdast-util-from-markdown:
         specifier: ^2.0.3
         version: 2.0.3
-      zod:
-        specifier: ^4.0.0
-        version: 4.4.3
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -111,6 +108,9 @@ importers:
       vitest:
         specifier: ^4.0.17
         version: 4.1.8(@types/node@25.9.2)(happy-dom@20.10.2)(jsdom@28.1.0)(vite@8.0.16(@types/node@25.9.2)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.48.0))
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
 
   packages/project:
     dependencies:

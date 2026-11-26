@@ -270,3 +270,109 @@ test('integrity reads page identity through configured field names', () => {
     { code: 'CB_H1_MISSING', file: '/content/start.md' },
   ])
 })
+
+function integrityLinks(scan: ReturnType<typeof scanContentProject>) {
+  return scan.findings
+    .filter((finding) => finding.source === 'integrity')
+    .map((finding) => [finding.code, finding.message.match(/"([^"]+)"/)?.[1]])
+}
+
+test('integrity resolves internal URLs through configured routes', () => {
+  const scan = scanContentProject(
+    [
+      { path: '/site/content/about.md', source: '# About\n' },
+      { path: '/site/content/docs/index.mdx', source: '# Docs\n' },
+      { path: '/site/content/docs/guides/doctor.mdx', source: '# Doctor\n\n## JSON output\n' },
+      { path: '/site/content/blog/2026-01-hello.md', source: '---\nslug: hello\n---\n\n# Hello\n' },
+      {
+        path: '/site/content/start.md',
+        source: `# Start
+
+[About](/about)
+[Docs](/docs)
+[Doctor](/docs/guides/doctor)
+[Doctor with slash](/docs/guides/doctor/)
+[Doctor JSON](/docs/guides/doctor#json-output)
+[Post](/blog/hello)
+[Playground](/playground)
+[Relative](./guides/doctor)
+[Missing guide](/docs/guides/does-not-exist)
+[Missing section](/docs/guides/doctor#missing)
+[Post file name](/blog/2026-01-hello)
+[Bare slug](/hello)
+[Slug in the wrong section](/docs/hello)
+`,
+      },
+    ],
+    registry(),
+    {
+      linkOptions: {
+        routes: {
+          '/site/content': '/{path}',
+          '/site/content/docs': '/docs/{path}',
+          '/site/content/blog': '/blog/{slug}',
+        },
+        hostRoutes: ['/playground'],
+      },
+    },
+  )
+
+  expect(integrityLinks(scan)).toEqual([
+    ['CB_INTERNAL_URL_UNRESOLVED', '/docs/guides/does-not-exist'],
+    ['CB_MARKDOWN_ANCHOR_UNRESOLVED', '/docs/guides/doctor#missing'],
+    ['CB_INTERNAL_URL_UNRESOLVED', '/blog/2026-01-hello'],
+    ['CB_INTERNAL_URL_UNRESOLVED', '/hello'],
+    ['CB_INTERNAL_URL_UNRESOLVED', '/docs/hello'],
+  ])
+})
+
+test('routes fill page facts, and a page without the fact has no URL', () => {
+  const scan = scanContentProject(
+    [
+      { path: '/content/guides/a.md', source: '---\nlocale: fr\nslug: bonjour\n---\n\n# A\n' },
+      { path: '/content/guides/b.md', source: '---\nslug: hello\n---\n\n# B\n' },
+      { path: '/content/guides/c.md', source: '# C\n' },
+      {
+        path: '/content/start.md',
+        source:
+          '# Start\n\n[French](/fr/guides/bonjour)\n[Default locale](/en/guides/hello)\n[No locale](/guides/hello)\n[No slug](/en/guides/c)\n',
+      },
+    ],
+    registry(),
+    {
+      linkOptions: {
+        defaultLocale: 'en',
+        routes: { '/content/guides': '/{locale}/guides/{slug}', '/content': '/{path}' },
+      },
+    },
+  )
+
+  expect(integrityLinks(scan)).toEqual([
+    ['CB_INTERNAL_URL_UNRESOLVED', '/guides/hello'],
+    ['CB_INTERNAL_URL_UNRESOLVED', '/en/guides/c'],
+  ])
+})
+
+test('host routes resolve alongside slug routes', () => {
+  const scan = scanContentProject(
+    [
+      {
+        path: '/content/start.md',
+        source:
+          '---\nslug: start\n---\n\n# Start\n\n[Playground](/playground/)\n[Start](/start)\n[Contact](/contact)\n',
+      },
+    ],
+    registry(),
+    { linkOptions: { hostRoutes: ['/playground'] } },
+  )
+
+  expect(integrityLinks(scan)).toEqual([['CB_INTERNAL_URL_UNRESOLVED', '/contact']])
+})
+
+test('routes reject unknown placeholders', () => {
+  expect(() =>
+    scanContentProject([{ path: '/content/a.md', source: '# A\n' }], registry(), {
+      linkOptions: { routes: { '/content': '/{slg}' } },
+    }),
+  ).toThrow('{slg}')
+})

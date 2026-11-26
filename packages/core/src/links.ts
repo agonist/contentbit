@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { closest } from './closest.js'
 import type { Diagnostic, SourceRange } from './diagnostics.js'
 import { readContentPageFacts, type ContentPageKeywords } from './page-facts.js'
 
@@ -45,6 +46,12 @@ export interface LinkResolverOptions {
   slugField?: string
   keyField?: string
   defaultLocale?: string
+  /** Public URL pattern for the content files under each directory, such as
+   * `{ 'content/docs': '/docs/{path}' }`. Directories use the same form as the
+   * scanned file paths; the deepest one that holds a page gives its URL. */
+  routes?: Record<string, string>
+  /** Routes the host app serves outside the scanned content, such as `/playground`. */
+  hostRoutes?: string[]
 }
 
 export type ParseLinkResult =
@@ -375,6 +382,7 @@ export function analyzeLinks(
   const ambiguousPageKeys = ambiguousValidationPageKeys(validInputs, resolvedOptions)
   const index = indexLinkPages(validInputs, resolvedOptions)
   const lookup = buildLookup(index.pages, resolvedOptions)
+  const hintFor = linkHints(lookup, resolvedOptions)
 
   for (const { fm } of validInputs) {
     const mapKey = pageMapKey(frontmatterIdentity(fm, resolvedOptions), resolvedOptions)
@@ -424,7 +432,7 @@ export function analyzeLinks(
           )
           continue
         }
-        const hint = closest(resolved.target, candidatesFor(page.locale, lookup, resolvedOptions))
+        const hint = hintFor(resolved.target, page.locale)
         out.push(
           diag(
             page.path,
@@ -682,6 +690,28 @@ function targetExistsOutsideLocale(
   return (byIdentity.get(target) ?? []).some((page) => page.locale !== locale)
 }
 
+// Did-you-mean hints for unresolved targets. Every page in a locale shares one
+// candidate list, and a target that many pages link to is looked up once.
+function linkHints(
+  lookup: Lookup,
+  options: LinkResolverOptions,
+): (target: string, locale: string | undefined) => string | undefined {
+  const candidates = new Map<string | undefined, string[]>()
+  const hints = new Map<string, string | undefined>()
+  return (target, locale) => {
+    const key = scopedKey(target, locale, options)
+    if (hints.has(key)) return hints.get(key)
+    let names = candidates.get(locale)
+    if (!names) {
+      names = candidatesFor(locale, lookup, options)
+      candidates.set(locale, names)
+    }
+    const hint = closest(target, names)
+    hints.set(key, hint)
+    return hint
+  }
+}
+
 function candidatesFor(
   locale: string | undefined,
   lookup: Lookup,
@@ -705,31 +735,4 @@ function diag(
   target?: string,
 ): LinkDiagnostic {
   return { file, diagnostic: { code, severity, message, hint, position: FM_POSITION }, target }
-}
-
-// Levenshtein distance for did-you-mean hints. Small inputs (slugs), so the
-// simple O(n*m) matrix is fine.
-function editDistance(a: string, b: string): number {
-  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)])
-  for (let j = 0; j <= b.length; j++) dp[0][j] = j
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1
-      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost)
-    }
-  }
-  return dp[a.length][b.length]
-}
-
-function closest(target: string, candidates: string[]): string | undefined {
-  let best: string | undefined
-  let bestD = Infinity
-  for (const c of candidates) {
-    const d = editDistance(target, c)
-    if (d < bestD) {
-      bestD = d
-      best = c
-    }
-  }
-  return best && bestD <= Math.max(2, Math.floor(target.length / 3)) ? best : undefined
 }

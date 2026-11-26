@@ -416,6 +416,33 @@ test('doctor with no globs reuses the nearest package content:doctor script', as
   expect(io.out.join('\n')).toMatch(/Files\s+1/)
 })
 
+test('doctor checks internal URLs against routes from the project config', async () => {
+  const dir = await fixture({
+    'contentbit.config.mjs': `export default {
+      content: 'content/**/*.md',
+      links: { routes: { 'content/docs': '/docs/{path}' }, hostRoutes: ['/playground'] },
+    }`,
+    'content/docs/guides/doctor.md': '# Doctor\n',
+    'content/docs/start.md':
+      '# Start\n\n[Doctor](/docs/guides/doctor)\n[Playground](/playground)\n[Missing](/docs/guides/does-not-exist)\n',
+    'src/.keep': '',
+  })
+
+  const io = fakeIo()
+  await withCwd(join(dir, 'src'), async () => {
+    expect(await run(['doctor', '--json'], io)).toBe(0)
+  })
+  const report = JSON.parse(io.out.join('\n')) as {
+    findings: Array<{ source: string; code: string; message: string }>
+  }
+  expect(report.findings.filter((finding) => finding.source === 'integrity')).toMatchObject([
+    {
+      code: 'CB_INTERNAL_URL_UNRESOLVED',
+      message: expect.stringContaining('"/docs/guides/does-not-exist"'),
+    },
+  ])
+})
+
 test('requires at least one file', async () => {
   expect(await run(['doctor'], fakeIo())).toBe(2)
 })

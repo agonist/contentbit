@@ -49,6 +49,10 @@ concept earns a name, add it here.
   adapters that need graph-shaped data: summary, nodes, edges, and edge status.
   It is derived from the link index and structured link diagnostics, not from
   formatted diagnostic messages.
+- **Page routes** (`links.routes`, `links.hostRoutes`) — the configured map
+  from content directories to public URL patterns, plus the routes the host
+  app serves outside content. It gives each page the URL a reader reaches it
+  at, so integrity checks internal URLs exactly instead of guessing from slugs.
 
 ## CLI
 
