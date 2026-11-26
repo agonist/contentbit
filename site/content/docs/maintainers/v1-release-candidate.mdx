@@ -1,9 +1,9 @@
 ---
 title: v1 release candidate
-description: Install, evaluate, and promote Contentbit 1.0.0-rc.0.
+description: Install, evaluate, and promote Contentbit 1.0.0-rc.1.
 ---
 
-The candidate version is **1.0.0-rc.0** for all six public packages. It is a
+The candidate version is **1.0.0-rc.1** for all six public packages. It is a
 prerelease of the [v1 compatibility contract](/docs/reference/compatibility).
 The candidate is published to npm and can be installed with the commands below.
 The `rc` tag tracks candidates; `latest` stays on the stable release until v1 is
@@ -14,7 +14,7 @@ promoted.
 In a new or disposable project, run:
 
 ```bash
-npx contentbit@1.0.0-rc.0 init --seo
+npx contentbit@1.0.0-rc.1 init --seo
 ```
 
 Init installs the CLI, Studio, and Contentbit runtime packages at the running
@@ -24,8 +24,8 @@ rules. Commit the resulting lockfile to keep the installed dependency set.
 For an existing React project, update the packages you use together:
 
 ```bash
-pnpm add --save-exact @contentbit/core@1.0.0-rc.0 @contentbit/blocks@1.0.0-rc.0 @contentbit/react@1.0.0-rc.0
-pnpm add --save-exact --save-dev contentbit@1.0.0-rc.0 @contentbit/studio@1.0.0-rc.0
+pnpm add --save-exact @contentbit/core@1.0.0-rc.1 @contentbit/blocks@1.0.0-rc.1 @contentbit/react@1.0.0-rc.1
+pnpm add --save-exact --save-dev contentbit@1.0.0-rc.1 @contentbit/studio@1.0.0-rc.1
 ```
 
 For Astro, replace `@contentbit/react` with `@contentbit/astro` at the same
@@ -57,6 +57,28 @@ these behavior corrections when upgrading:
 - Init selects matching Contentbit versions, including prereleases. Studio's
   TanStack dependencies are pinned to the versions used for candidate testing.
 
+## Changes from 1.0.0-rc.0
+
+The second candidate fixes bugs found in review. The package changelogs list
+every fix. Review these before you upgrade from rc.0 or 0.7.2:
+
+- Relative `--registry` and `--seo-config` paths resolve against the directory
+  you run the command in. Paths written inside `contentbit.config` still resolve
+  against the config file's folder.
+- The search for `contentbit.config` and for a `content:check` package script
+  stops at the nearest `package.json`. A package with its own `package.json`
+  no longer uses a parent folder's config.
+- In frontmatter, a `#` after whitespace starts a comment, as in YAML:
+  `title: Issue #4` reads as `Issue`. Quote any value that must keep a ` #`.
+- Validation reports `CB_URL_PROTOCOL` for more link forms, such as
+  `[x](<javascript:…>)` and reference definitions, and checks blocks nested in
+  unknown blocks. SEO checks add a `CB_SEO_PAGE_ID_DUPLICATE` warning. Fix the
+  reported content.
+- Studio no longer serves project files over Vite's `/@fs` route, warns when
+  `--host` is not a loopback address, and reloads an edited registry without a
+  restart.
+- `contentbit help` exits 0, and `contentbit --version` prints the version.
+
 ## Known limitations
 
 - Automated release gates cover Linux, Astro 7, React 19, and a Next 16
@@ -64,7 +86,7 @@ these behavior corrections when upgrading:
   peer range is not exercised. See the compatibility policy for details.
 - Styled packs copied from the registry are project source files. Updating
   npm packages does not update those copies; check their rendered output.
-- Repository starters pin `1.0.0-rc.0` exactly and install it from npm. Packed
+- Repository starters pin `1.0.0-rc.1` exactly and install it from npm. Packed
   checks override their Contentbit dependencies with candidate tarballs to
   verify unpublished changes.
 
@@ -86,7 +108,7 @@ After publication:
    rendered example. These registry checks complement the prepublication
    tarball tests.
 3. To update the repository's standalone consumers, run
-   `pnpm starter:sync 1.0.0-rc.0` and `pnpm check:starters`. Prerelease starter
+   `pnpm starter:sync <candidate version>` and `pnpm check:starters`. Prerelease starter
    dependencies are exact pins. Commit both manifests and lockfiles together.
 4. Record regressions as GitHub issues, including the package version, framework,
    Node version, reproduction, and expected behavior. Add a changeset for each
