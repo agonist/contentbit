@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -171,4 +171,26 @@ test('a missing build folder is an error, not an empty site', async () => {
   await expect(readBuildFolder(join(tmpdir(), 'cb-built-site-missing'))).rejects.toMatchObject({
     code: 'ENOENT',
   })
+})
+
+test('the build time is the root index.html time, or the newest page time without one', async () => {
+  const touch = (dir: string, file: string, seconds: number) =>
+    utimes(join(dir, file), seconds, seconds)
+
+  const withIndex = await buildFolder({ 'index.html': page('Home'), 'a/index.html': page('A') })
+  await touch(withIndex, 'index.html', 1_000)
+  await touch(withIndex, 'a/index.html', 3_000)
+  expect((await readBuildFolder(withIndex)).builtAtMs).toBe(1_000_000)
+
+  const withoutIndex = await buildFolder({
+    'a/index.html': page('A'),
+    'b.html': page('B'),
+    'notes.txt': 'not a page',
+  })
+  await touch(withoutIndex, 'a/index.html', 2_000)
+  await touch(withoutIndex, 'b.html', 1_000)
+  await touch(withoutIndex, 'notes.txt', 9_000)
+  expect((await readBuildFolder(withoutIndex)).builtAtMs).toBe(2_000_000)
+
+  expect((await readBuildFolder(await buildFolder({ 'notes.txt': '' }))).builtAtMs).toBeUndefined()
 })

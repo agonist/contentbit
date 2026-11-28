@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
-import { contentPageUrlResolver, normalizeRoute, readContentPageFacts } from '@contentbit/core'
+import { contentPageUrlResolver, readContentPageFacts } from '@contentbit/core'
 import {
   attributeToSources,
   checkSite,
@@ -12,7 +12,8 @@ import {
   httpOrigin,
   inferOrigin,
   readBuildFolder,
-  SITE_FINDING_CODES,
+  DEFAULT_SEVERITY_BY_CODE,
+  siteSources,
   type BuiltSite,
   type FindingElement,
   type PagePath,
@@ -106,16 +107,30 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
   }
 
   const origin = resolveOrigin(flagOrigin, config.site?.origin, site)
-  const sources = site && markdown ? sourceDocuments(site, markdown) : new Map()
-  const findings = site
-    ? checkSite(site, { origin: origin?.url, hostRoutes: config.resolveLinkOptions().hostRoutes })
-    : []
+  const sources =
+    site &&
+    siteSources(site, markdown ? await sourceDocuments(markdown) : [], {
+      draftField: config.site?.draftField,
+      dateField: config.site?.dateField,
+      now: new Date(),
+    })
+  const findings =
+    site && sources
+      ? attributeToSources(
+          checkSite(site, {
+            origin: origin?.url,
+            hostRoutes: config.resolveLinkOptions().hostRoutes,
+            sources,
+          }),
+          sources.pages,
+        )
+      : []
   const check = createSiteCheck({
     input: site ? { kind: 'folder', path: site.root } : { kind: 'none', searched },
     site,
     origin,
     sources,
-    findings: groupTemplateFindings(attributeToSources(findings, sources)),
+    findings: groupTemplateFindings(findings),
     content:
       site && content
         ? {
@@ -130,6 +145,10 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
   if (!site) {
     io.stderr(
       `check: no build folder was found, so only the Markdown checks ran. Build the site first with ${await buildCommand(root)}, or pass its folder: contentbit check <folder>`,
+    )
+  } else if (check.staleSources) {
+    io.stderr(
+      `check: ${plural(check.staleSources.length, 'Markdown file')} changed after the build in ${displayPath(site.root)}, so its pages may not show them yet. Rebuild the site with ${await buildCommand(root)} and check again.`,
     )
   }
 
@@ -178,24 +197,19 @@ async function loadMarkdown(
   return project.files.length === 0 ? undefined : project
 }
 
-function sourceDocuments(
-  site: BuiltSite,
-  { scan, linkOptions }: LoadedContentProject,
-): Map<PagePath, SourceDocument> {
-  const sources = new Map<PagePath, SourceDocument>()
+async function sourceDocuments({
+  scan,
+  linkOptions,
+}: LoadedContentProject): Promise<SourceDocument[]> {
   const pageUrl = contentPageUrlResolver(linkOptions)
-  if (!pageUrl) return sources
-  const byRoute = new Map<string, SourceDocument>()
-  for (const { path, source, frontmatter } of scan.files) {
-    const url = pageUrl(path, readContentPageFacts(frontmatter, linkOptions))
-    const route = url === undefined ? undefined : normalizeRoute(url)
-    if (route !== undefined && !byRoute.has(route)) byRoute.set(route, { file: path, text: source })
-  }
-  for (const { path } of site.pages) {
-    const source = byRoute.get(normalizeRoute(path))
-    if (source) sources.set(path, source)
-  }
-  return sources
+  return Promise.all(
+    scan.files.map(async ({ path, source, frontmatter }) => {
+      const facts = readContentPageFacts(frontmatter, linkOptions)
+      const route = pageUrl?.(path, facts)
+      const modifiedMs = (await stat(path)).mtimeMs
+      return { file: path, text: source, ...(route !== undefined && { route }), facts, modifiedMs }
+    }),
+  )
 }
 
 function resolveOrigin(
@@ -265,23 +279,23 @@ function formatCheck(check: SiteCheck): string {
 }
 
 function formatSiteFindings(findings: SiteFinding[]): string[] {
-  const groups = new Map<SiteFindingCode, SiteFinding[]>()
+  const groups = new Map<string, SiteFinding[]>()
   for (const finding of findings) {
-    const group = groups.get(finding.code)
+    const key = `${finding.severity} ${finding.code}`
+    const group = groups.get(key)
     if (group) group.push(finding)
-    else groups.set(finding.code, [finding])
+    else groups.set(key, [finding])
   }
-  const codes = Object.keys(SITE_FINDING_CODES) as SiteFindingCode[]
-  const ordered = [
-    ...codes.filter((code) => SITE_FINDING_CODES[code] === 'error'),
-    ...codes.filter((code) => SITE_FINDING_CODES[code] === 'warning'),
-  ]
+  const codes = Object.keys(DEFAULT_SEVERITY_BY_CODE) as SiteFindingCode[]
+  const ordered = (['error', 'warning'] as const).flatMap((severity) =>
+    codes.map((code) => ({ severity, code })),
+  )
 
   const lines: string[] = []
-  for (const code of ordered) {
-    const label = `${severityLabel(SITE_FINDING_CODES[code])} ${code}`
+  for (const { severity, code } of ordered) {
+    const label = `${severityLabel(severity)} ${code}`
     const located: Array<{ place: string; page: PagePath; finding: SiteFinding }> = []
-    for (const finding of groups.get(code) ?? []) {
+    for (const finding of groups.get(`${severity} ${code}`) ?? []) {
       const { origin } = finding
       if (origin.kind === 'template') {
         lines.push(`  ${label}  ${formatTemplate(origin, finding.occurrences ?? [])}`)

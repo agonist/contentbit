@@ -4,6 +4,10 @@ export interface ContentbitSiteConfig {
   /** The static build folder, relative to this config file. */
   build?: string
   origin?: string
+  /** The frontmatter field that makes a document a draft when it is `true` or the string `true` in any case. Default `draft`. */
+  draftField?: string
+  /** The frontmatter field with a document's publication date. Default `date`. */
+  dateField?: string
 }
 
 export interface ContentbitConfig {

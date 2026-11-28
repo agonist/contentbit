@@ -11,6 +11,8 @@ import { loadSeoConfig, type LoadedSeoConfig } from './seo-config.js'
 interface ResolvedSiteConfig {
   buildPath?: string
   origin?: string
+  draftField?: string
+  dateField?: string
 }
 
 interface ContentCommandDefaults extends LinkOptionValues {
@@ -129,6 +131,8 @@ async function discoverContentCommandDefaults(
         site: loadedConfig.config.site && {
           buildPath: resolvePath(loadedConfig.cwd, loadedConfig.config.site.build),
           origin: loadedConfig.config.site.origin,
+          draftField: loadedConfig.config.site.draftField,
+          dateField: loadedConfig.config.site.dateField,
         },
         source: loadedConfig.path,
       }

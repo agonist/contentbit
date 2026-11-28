@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, realpath, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -198,6 +198,92 @@ test('with links.routes, a finding that a Markdown source writes points at its f
   expect(out).toContain(
     '     content/blog/post.md:6:18  The link /guide/ points to no built page, redirect or host route.',
   )
+})
+
+const routedBlog = {
+  'contentbit.config.mjs': `export default { content: 'content/**/*.md', links: { routes: { 'content/blog': '/blog/{slug}/' } }, site: { dateField: 'publishedOn' } }`,
+  'content/blog/post.md': '---\nslug: post\ntitle: How to proof dough\n---\n\nText.\n',
+  'content/blog/new.md': '---\nslug: new\ntitle: A new post\n---\n\nText.\n',
+  'content/blog/draft.md': '---\nslug: draft\ntitle: A draft\ndraft: true\n---\n\nText.\n',
+  'content/blog/later.md':
+    '---\nslug: later\ntitle: Later\npublishedOn: 2999-01-01\n---\n\nText.\n',
+  'dist/index.html':
+    '<title>Home</title><meta name="description" content="Home."><link rel="canonical" href="https://example.com/"><h1>Home</h1>',
+  'dist/blog/post/index.html':
+    '<title>Bread basics | Example</title><meta name="description" content="A post."><link rel="canonical" href="https://example.com/blog/post/"><h1>Bread basics</h1>',
+}
+
+test('with links.routes, check compares each source document with its built page and reports a published one never built', async () => {
+  const root = await project(routedBlog)
+
+  const { code, out } = await check(root, ['--json'])
+  expect(code).toBe(1)
+  expect(JSON.parse(out).findings).toEqual([
+    {
+      code: 'CB_SITE_SOURCE_NOT_BUILT',
+      severity: 'error',
+      message:
+        'links.routes gives this document the route /blog/new/, which has no built page, redirect or host route.',
+      hint: expect.any(String),
+      target: '/blog/new/',
+      origin: {
+        kind: 'source',
+        file: join(root, 'content/blog/new.md'),
+        line: 1,
+        page: '/blog/new/',
+      },
+    },
+    {
+      code: 'CB_PAGE_TITLE_MISMATCH',
+      severity: 'warning',
+      message:
+        'The page\'s title "Bread basics | Example" does not contain the title "How to proof dough" from its source document.',
+      hint: expect.any(String),
+      target: 'How to proof dough',
+      element: 'title',
+      origin: {
+        kind: 'source',
+        file: join(root, 'content/blog/post.md'),
+        line: 3,
+        column: 8,
+        page: '/blog/post/',
+      },
+    },
+  ])
+
+  const report = (await check(root)).out
+  expect(report).toContain('error CB_SITE_SOURCE_NOT_BUILT  1 finding on 1 page')
+  expect(report).toContain('     content/blog/new.md:1  links.routes gives this document')
+  expect(report).toContain('warning CB_PAGE_TITLE_MISMATCH  1 finding on 1 page')
+  expect(report).toContain('     content/blog/post.md:3:8  The page\'s title "Bread basics')
+})
+
+test('a Markdown file newer than the build gives a notice, and its source findings become warnings', async () => {
+  const root = await project(routedBlog)
+  const age = (seconds: number, ...files: string[]) =>
+    Promise.all(files.map((file) => utimes(join(root, file), seconds, seconds)))
+  await age(1_000, 'dist/index.html', 'dist/blog/post/index.html')
+  await age(500, 'content/blog/post.md', 'content/blog/draft.md', 'content/blog/later.md')
+  await age(2_000, 'content/blog/new.md')
+
+  const { code, out, err } = await check(root, ['--json'])
+  expect(code).toBe(0)
+  expect(err).toBe(
+    "check: 1 Markdown file changed after the build in dist, so its pages may not show them yet. Rebuild the site with your site's build command and check again.",
+  )
+  const result = JSON.parse(out)
+  expect(result.staleSources).toEqual([join(root, 'content/blog/new.md')])
+  expect(result.summary.errors).toBe(0)
+  expect(result.findings[0]).toMatchObject({
+    code: 'CB_SITE_SOURCE_NOT_BUILT',
+    severity: 'warning',
+    message: expect.stringContaining('The document changed after the build'),
+  })
+
+  const report = await check(root)
+  expect(report.out).toContain('warning CB_SITE_SOURCE_NOT_BUILT  1 finding on 1 page')
+  expect(report.out).not.toContain('error CB_SITE_SOURCE_NOT_BUILT')
+  expect(report.err).toBe(err)
 })
 
 test('a site without built-page findings prints no built-page section', async () => {

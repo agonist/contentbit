@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
 import { Parser } from 'htmlparser2'
@@ -31,12 +31,13 @@ export async function readBuildFolder(root: string): Promise<BuiltSite> {
   const files = found.map(({ file }) => file).sort()
   const pageFiles = found.filter(({ page }) => page).map(({ file }) => file)
   const robots = robotsText === undefined ? undefined : readRobots(robotsText)
-  const [pages, sitemap] = await Promise.all([
+  const [pages, sitemap, builtAtMs] = await Promise.all([
     mapConcurrently(pageFiles, READ_CONCURRENCY, async (file): Promise<BuiltPage> => {
       const html = await readFile(join(buildRoot, file), 'utf8')
       return { path: pagePathFromFile(file), file, facts: readRenderedPageFacts(html) }
     }),
     readSitemap(buildRoot, robots?.sitemaps ?? []),
+    buildTime(buildRoot, pageFiles),
   ])
   pages.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
 
@@ -47,7 +48,18 @@ export async function readBuildFolder(root: string): Promise<BuiltSite> {
     ...(sitemap && { sitemap }),
     ...(robots && { robots }),
     redirects: redirectsText === undefined ? [] : readRedirects(redirectsText),
+    ...(builtAtMs !== undefined && { builtAtMs }),
   }
+}
+
+async function buildTime(root: string, pageFiles: string[]): Promise<number | undefined> {
+  const files = pageFiles.includes('index.html') ? ['index.html'] : pageFiles
+  const times = await mapConcurrently(
+    files,
+    READ_CONCURRENCY,
+    async (file) => (await stat(join(root, file))).mtimeMs,
+  )
+  return times.length === 0 ? undefined : Math.max(...times)
 }
 
 async function findFiles(root: string, dir = '', holdsPages = true): Promise<BuildFile[]> {

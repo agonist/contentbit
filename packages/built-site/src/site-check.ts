@@ -1,8 +1,8 @@
 import type { ContentProjectFinding } from '@contentbit/core'
 
-import type { SourceDocument } from './finding-origins.js'
 import type { SiteFinding } from './findings.js'
 import type { BuiltSite, PagePath, RenderedPageFacts } from './model.js'
+import type { SiteSources } from './sources.js'
 
 export const SITE_CHECK_SCHEMA_VERSION = 'contentbit.site-check.v1' as const
 
@@ -23,6 +23,8 @@ export interface SiteCheck {
   pages: Array<{ path: PagePath; file?: string; source?: string; facts: RenderedPageFacts }>
   findings: SiteFinding[]
   content?: { files: number; findings: ContentProjectFinding[] }
+  /** The files of the source documents that changed after the build was made. */
+  staleSources?: string[]
 }
 
 export function createSiteCheck({
@@ -38,13 +40,14 @@ export function createSiteCheck({
   origin?: SiteOrigin
   findings: SiteFinding[]
   content?: SiteCheck['content']
-  sources?: ReadonlyMap<PagePath, SourceDocument>
+  sources?: SiteSources
 }): SiteCheck {
   const pages = (site?.pages ?? []).map(({ path, file, facts }) => {
-    const source = sources?.get(path)
+    const source = sources?.pages.get(path)
     return { path, file, ...(source && { source: source.file }), facts }
   })
   const severities = [...findings, ...(content?.findings ?? [])].map(({ severity }) => severity)
+  const staleSources = [...(sources?.stale ?? [])].map(({ file }) => file)
   return {
     schemaVersion: SITE_CHECK_SCHEMA_VERSION,
     input,
@@ -57,5 +60,6 @@ export function createSiteCheck({
     pages,
     findings,
     content,
+    ...(staleSources.length > 0 && { staleSources }),
   }
 }

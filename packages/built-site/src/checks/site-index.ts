@@ -2,10 +2,12 @@ import { normalizeRoute } from '@contentbit/core'
 
 import { pagePath, type BuiltPage, type BuiltSite, type PagePath, type Redirect } from '../model.js'
 import { httpOrigin } from '../origin.js'
+import type { SiteSources } from '../sources.js'
 
 export interface SiteIndexOptions {
   origin?: string
   hostRoutes?: string[]
+  sources?: SiteSources
 }
 
 export type LinkTarget =
@@ -20,6 +22,7 @@ export interface SiteIndex {
   pages: BuiltPage[]
   origin?: string
   sitemap?: string[]
+  sources?: SiteSources
   resolveLink(href: string, from: BuiltPage): LinkTarget
   resolveSiteUrl(url: string): LinkTarget
   hasId(page: BuiltPage, id: string): boolean
@@ -84,6 +87,7 @@ export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {})
     pages: site.pages,
     ...(origin && { origin }),
     ...(site.sitemap && { sitemap: site.sitemap.urls }),
+    ...(options.sources && { sources: options.sources }),
     hasId: (page, id) => ids.get(page)?.has(id) ?? false,
     resolveLink: (href, from) => resolve(href, pageUrl(from)),
     resolveSiteUrl: (url) => resolve(url, base),

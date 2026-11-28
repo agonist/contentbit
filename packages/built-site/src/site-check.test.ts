@@ -4,6 +4,7 @@ import { expect, test } from 'vitest'
 import {
   createSiteCheck,
   pagePath,
+  siteSources,
   type BuiltSite,
   type RenderedPageFacts,
   type SiteFinding,
@@ -91,18 +92,28 @@ test('a site check without a build has no pages and says where it looked', () =>
   })
 })
 
-test('a built page with a source document names its file', () => {
+test('a built page with a source document names its file, and a document newer than the build is stale', () => {
+  const document = (name: string, modifiedMs: number, route?: string) => ({
+    file: `/site/content/${name}.md`,
+    text: `# ${name}\n`,
+    ...(route && { route }),
+    facts: { frontmatter: {} },
+    modifiedMs,
+  })
   const check = createSiteCheck({
     input: { kind: 'folder', path: '/site/dist' },
     site,
     findings: [],
-    sources: new Map([
-      [pagePath('/about/'), { file: '/site/content/about.md', text: '# About\n' }],
-    ]),
+    sources: siteSources(
+      { ...site, builtAtMs: 1_000 },
+      [document('about', 500, '/about'), document('notes', 2_000)],
+      { now: new Date() },
+    ),
   })
 
   expect(check.pages.map(({ path, source }) => [path, source])).toEqual([
     ['/', undefined],
     ['/about/', '/site/content/about.md'],
   ])
+  expect(check.staleSources).toEqual(['/site/content/notes.md'])
 })
