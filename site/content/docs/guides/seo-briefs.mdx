@@ -170,14 +170,14 @@ A brief includes:
 Studio shows the same data in the document Brief view, with copy and download
 actions for Markdown and JSON.
 
-## Doctor integration
+## Check integration
 
-When an SEO config exists, `doctor` includes SEO findings in the normal repair
-plan:
+When an SEO config exists, `check` includes SEO findings with the other
+Markdown findings:
 
 ```bash
-contentbit doctor "content/**/*.md" --strict-seo
-contentbit doctor "content/**/*.md" --no-seo
+contentbit check --strict-seo
+contentbit check --no-seo
 ```
 
 Use `--strict-seo` in CI when missing contract requirements should fail the
@@ -185,7 +185,7 @@ build. Use `--no-seo` when you only want validation, link, and stats checks.
 
 ## Multilingual pages
 
-Use the same link resolver options for `brief`, `doctor`, `studio`, and
+Use the same link resolver options for `brief`, `check`, `studio`, and
 `links`.
 
 ```bash

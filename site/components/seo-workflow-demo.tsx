@@ -99,7 +99,7 @@ export function SeoWorkflowDemo() {
         </div>
 
         <div className="min-w-0 border-t lg:border-t-0">
-          <WindowBar>contentbit doctor --strict-seo</WindowBar>
+          <WindowBar>contentbit check --strict-seo</WindowBar>
           <div className="space-y-4 p-5 font-mono text-xs">
             <div className="flex items-center justify-between border-b pb-3">
               <span className="text-muted-foreground">semrush.md</span>

@@ -10,10 +10,13 @@ Terse by design - each release links its announcement post when there is one.
 
 ## Next
 
+- **One command checks a site.** `contentbit check` reads the built pages and
+  the Markdown content, and replaces `contentbit doctor`. Three Markdown codes
+  that guessed at the rendered page are removed. See the
+  [v2 upgrade notes](/docs/maintainers/v2-upgrade).
 - **First-run proof.** Standalone Astro and TanStack starters track the current
-  contentbit package version and exercise validate, links, doctor, build, and
-  smoke gates. Their first-run docs also include Studio as the human inspection
-  step.
+  contentbit package version and exercise validate, links, build, and smoke
+  gates. Their first-run docs also include Studio as the human inspection step.
 
 ## 0.7.0
 
@@ -75,7 +78,7 @@ Terse by design - each release links its announcement post when there is one.
 - **Content doctor.** New `contentbit doctor` command reads matched content once
   and prints a ranked repair plan across block validation, internal-link
   diagnostics, thin sections, block-less long documents, and missing image alt
-  text. Use `--json` for agents and CI. See [Content doctor](/docs/guides/doctor).
+  text. Use `--json` for agents and CI. See [Check a site](/docs/guides/check), which replaced it in 2.0.
 
 ## 0.3.0
 

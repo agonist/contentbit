@@ -62,7 +62,7 @@
   <g filter="url(#soft-shadow)">
     <rect x="814" y="262" width="314" height="228" rx="10" fill="#0c1712" stroke="#ffffff" stroke-opacity="0.14"/>
     <rect x="814" y="262" width="314" height="48" rx="10" fill="#111d17"/>
-    <text x="842" y="292" fill="#f6fff9" fill-opacity="0.58" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">contentbit doctor</text>
+    <text x="842" y="292" fill="#f6fff9" fill-opacity="0.58" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">contentbit check</text>
     <text x="842" y="349" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700">0 required findings</text>
     <text x="842" y="387" fill="#d7e0db" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">sections       3 / 3</text>
     <text x="842" y="420" fill="#d7e0db" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">blocks         2 / 2</text>

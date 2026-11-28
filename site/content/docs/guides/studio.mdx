@@ -4,8 +4,8 @@ description: Browse content health, previews, stats, links, backlinks, keywords,
 ---
 
 `contentbit studio` opens a local dashboard over your Markdown content. It is
-the human-friendly view next to [`contentbit doctor`](/docs/guides/doctor):
-doctor prints the ranked repair plan; Studio lets you browse the same project
+the human-friendly view next to [`contentbit check`](/docs/guides/check):
+check prints the findings, and Studio lets you browse the same project
 health, preview documents, inspect links, and review SEO briefs without jumping
 between files.
 
@@ -73,7 +73,7 @@ Studio needs a React preview renderer or uses the labelled fallback.
 contentbit studio <globs...> [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open]
 ```
 
-Link resolver options match `contentbit links` and `contentbit doctor`:
+Link resolver options match `contentbit links` and `contentbit check`:
 
 ```bash
 contentbit studio "content/**/*.md" \

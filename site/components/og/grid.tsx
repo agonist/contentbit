@@ -185,7 +185,7 @@ export const Grid = ({ title, description, brand, accent }: GridProps) => {
           ['', '#ffffff'],
           ['internal links: 4', '#ffffff'],
           ['brief: ready', '#ffffff'],
-          ['doctor: 0 findings', color],
+          ['check: 0 findings', color],
         ].map(([line, lineColor], index) => (
           <div
             key={`${line}-${index}`}

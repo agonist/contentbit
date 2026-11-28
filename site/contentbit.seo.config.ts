@@ -38,7 +38,7 @@ export default defineSeoConfig({
       },
       linksTo: [
         'docs/guides/programmatic-seo',
-        'docs/guides/doctor',
+        'docs/guides/check',
         'docs/guides/agents',
         'docs/guides/internal-linking',
       ],
@@ -55,7 +55,7 @@ export default defineSeoConfig({
         primary: 'programmatic SEO workflow',
         secondary: ['contentbit SEO workflow', 'agent SEO brief workflow'],
       },
-      linksTo: ['docs/guides/seo-briefs', 'docs/guides/studio', 'docs/guides/doctor'],
+      linksTo: ['docs/guides/seo-briefs', 'docs/guides/studio', 'docs/guides/check'],
     },
   },
 })

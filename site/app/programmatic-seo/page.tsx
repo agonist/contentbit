@@ -5,7 +5,7 @@ import { Frame } from '@/components/frame'
 import { InstallTabs } from '@/components/install-tabs'
 import { LandingFooter } from '@/components/landing-footer'
 import { SectionHeading } from '@/components/section-heading'
-import { SeoDoctorDemo } from '@/components/seo-doctor-demo'
+import { SeoCheckDemo } from '@/components/seo-check-demo'
 import { SeoWorkflowDemo } from '@/components/seo-workflow-demo'
 import { SiteHeader } from '@/components/site-header'
 import {
@@ -228,7 +228,7 @@ export default function ProgrammaticSeoPage() {
             </div>
             <div className="reveal-on-scroll">
               <Frame>
-                <SeoDoctorDemo />
+                <SeoCheckDemo />
               </Frame>
             </div>
           </div>

@@ -3,9 +3,8 @@ title: CLI reference
 description: Commands, options, shared flags, and exit behavior for the contentbit CLI.
 ---
 
-Use `contentbit` for project setup, validation, content health reports,
-rendering, internal-link indexes, generated authoring docs, and LLM-agent
-integration.
+Use `contentbit` for project setup, site checks, validation, rendering,
+internal-link indexes, generated authoring docs, and LLM-agent integration.
 
 Put shared project settings in `contentbit.config.ts`:
 
@@ -27,8 +26,9 @@ globs so your shell does not expand them before contentbit receives them:
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 ```
 
-Without a config, `validate`, `doctor`, `studio`, and `links` retain backward
+Without a config, `validate`, `studio`, and `links` retain backward
 compatibility by reading the matching script in the nearest `package.json`.
+`check` reads Markdown only from the config's `content`.
 
 ## Commands
 
@@ -40,9 +40,9 @@ contentbit <command> [options]
 | --- | --- |
 | `init` | Scaffold contentbit into a project. |
 | `adopt` | Inspect an existing Markdown library and propose read-only setup. |
+| `check` | Check the built pages and the Markdown content of a site. |
 | `validate` | Check block syntax, block schemas, and internal links. |
 | `brief` | Print an agent-ready SEO brief. |
-| `doctor` | Print a ranked content repair plan. |
 | `studio` | Open the local read-only content dashboard. |
 | `stats` | Print document stats as JSON. |
 | `render` | Render one file to plain Markdown. |
@@ -73,6 +73,47 @@ Options:
 | `--no-styled` | Skip styled component pack setup. |
 | `--no-agents` | Skip `AGENTS.md` and Claude Code skills. |
 | `--seo` | Scaffold `contentbit.seo.config.ts`. |
+
+## check
+
+Check a site's built pages and its Markdown content.
+
+```bash
+contentbit check [folder] [--origin <url>] [--strict] [--json] [--watch]
+```
+
+`check` reads the build folder you pass, `site.build` from the config, or the
+first of `dist/client`, `dist`, `out`, `build`, and `public` that has an
+`index.html`. When the config lists `content`, it also runs the Markdown
+checks on those files. It needs a build folder, Markdown files, or both.
+
+Options:
+
+| Option | Meaning |
+| --- | --- |
+| `--origin <url>` | Use this site origin. Defaults to `site.origin`, then to the origin most canonical URLs use. |
+| `--strict` | Exit 1 when warnings are present. |
+| `--strict-seo` | Exit 1 when SEO contract warnings are present. |
+| `--json` | Print one `contentbit.site-check.v1` report. |
+| `--watch` | Rerun after a file changes in a scanned content folder or the build folder. Cannot be combined with `--json`. |
+| `--min-section-words <n>` | Change the thin-section threshold. Defaults to `25`. |
+| `--registry <module>` | Load custom block definitions. |
+| `--no-generic-blocks` | Do not load the generic block pack first. |
+| `--seo-config <module>` | Use a non-default SEO config file. |
+| `--no-seo` | Ignore SEO config even when one exists. |
+| Link resolver options | See [Shared link options](#shared-link-options). |
+
+Exit codes:
+
+- `0` when no errors are found.
+- `1` when errors are found.
+- `1` when warnings are found and `--strict` is passed.
+- `1` when SEO warnings are found and `--strict-seo` is passed.
+- `2` for command input problems: nothing to check, a missing build folder, a
+  URL in place of a folder, or an invalid option value.
+
+`contentbit doctor` was removed in 2.0. It exits 2 and names `check`.
+Use [Check a site](/docs/guides/check) for workflow guidance.
 
 ## validate
 
@@ -145,32 +186,6 @@ Targets resolve by page `key` first, then by `slug`, then by internal page id.
 Use [SEO briefs and contracts](/docs/guides/seo-briefs) for config details and
 [Programmatic SEO workflows](/docs/guides/programmatic-seo) for the full
 writing loop.
-
-## doctor
-
-Print a ranked repair plan across validation, internal links, document stats,
-image alt text, and optional SEO contracts.
-
-```bash
-contentbit doctor [globs...] [--watch] [--registry <module.ts>] [--json]
-```
-
-Options:
-
-| Option | Meaning |
-| --- | --- |
-| `--registry <module>` | Load custom block definitions. |
-| `--no-generic-blocks` | Do not load the generic block pack first. |
-| `--strict-warnings` | Exit 1 when warnings are present. |
-| `--strict-seo` | Treat required SEO contract findings as build failures. |
-| `--watch` | Rerun when a scanned content directory changes. |
-| `--json` | Print stable JSON for agents and CI. |
-| `--min-section-words <n>` | Change the thin-section threshold. |
-| `--seo-config <module>` | Use a non-default SEO config file. |
-| `--no-seo` | Ignore SEO config even when one exists. |
-| Link resolver options | See [Shared link options](#shared-link-options). |
-
-Use [Content doctor](/docs/guides/doctor) for workflow guidance.
 
 ## studio
 
@@ -326,7 +341,7 @@ block set, including generic names such as `callout` or `comparison`.
 
 ## Shared link options
 
-`validate`, `brief`, `doctor`, `studio`, and `links` accept the same internal
+`check`, `validate`, `brief`, `studio`, and `links` accept the same internal
 link resolver options:
 
 | Option | Meaning |

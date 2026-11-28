@@ -23,7 +23,7 @@ const TARGET_LINES = [
   'intent: commercial comparison',
   'linksTo: [seo-tools-comparison]',
   '',
-  'contentbit doctor --strict-seo',
+  'contentbit check --strict-seo',
   '32 pages · 0 errors · ready to publish',
   '',
 ]

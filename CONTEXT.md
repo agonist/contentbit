@@ -94,7 +94,7 @@ concept earns a name, add it here.
   loaded registry, the read sources, the parsed link options, and the produced
   **content project scan**. Created by `loadContentProject()` in the internal
   workspace package `@contentbit/project`. It is the single seam the `validate`,
-  `doctor`, `stats`, `brief`, and Studio read paths cross to obtain their input,
+  `check`, `stats`, `brief`, and Studio read paths cross to obtain their input,
   so the glob → registry-load → read → scan plumbing lives in exactly one place
   without publishing another runtime package.
 - **CliError** — a typed error (`exitCode` + user-facing `message`) thrown by

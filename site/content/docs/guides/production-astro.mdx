@@ -12,7 +12,7 @@ The template includes:
 
 - a fully static Astro site with English and French routes
 - typed Contentbit blocks and strict content validation
-- page-family contracts, briefs, Doctor, Studio, and agent guidance
+- page-family contracts, briefs, Contentbit checks, Studio, and agent guidance
 - canonical URLs, hreflang, Open Graph, Twitter metadata, and JSON-LD
 - build-time social images, sitemap, robots.txt, llms.txt, and localized feeds
 - a typed programmatic glossary section and locale fallback behavior
@@ -33,7 +33,7 @@ pnpm check
 ```
 
 That establishes a clean baseline across formatting, linting, types, tests,
-content validation, Doctor policy, and the production build.
+content validation, Contentbit checks, and the production build.
 
 ## Make the first production changes
 
@@ -43,7 +43,7 @@ content validation, Doctor policy, and the production build.
 3. Replace the glossary dataset in `apps/web/src/data/glossary.ts`, or remove
    that example section.
 4. Update locale dictionaries and remove locales you do not plan to ship.
-5. Run `pnpm content:doctor`, inspect the site with
+5. Run the template's Contentbit checks, inspect the site with
    `pnpm content:studio`, then finish with `pnpm check`.
 
 ## Understand repository ownership
@@ -64,7 +64,7 @@ The template's README contains a recommended path through its executable
 onboarding articles. Return to the Contentbit docs for portable workflows:
 
 - [Programmatic SEO workflow](/docs/guides/programmatic-seo)
-- [Content Doctor](/docs/guides/doctor)
+- [Check a site](/docs/guides/check)
 - [Content Studio](/docs/guides/studio)
 - [Astro rendering](/docs/guides/astro)
 - [Stability and compatibility](/docs/compatibility)

@@ -1,0 +1,80 @@
+---
+title: v2 upgrade notes
+description: What changes from Contentbit 1.x to 2.0, and how to move a project from doctor to check.
+---
+
+Contentbit 2.0 makes `contentbit check` the one command that checks a site. It
+reads the pages your build wrote, with the titles, canonical URLs, ids, and
+links that a reader receives, and runs the Markdown checks on the content your
+config lists. These notes cover the changes since 1.0.0.
+
+## Replace doctor with check
+
+`contentbit doctor` is removed. Running it exits 2 and names `check`. Change
+each script and CI step:
+
+| 1.x | 2.0 |
+| --- | --- |
+| `contentbit doctor` | `contentbit check` |
+| `contentbit doctor --json` | `contentbit check --json` |
+| `contentbit doctor --strict-warnings` | `contentbit check --strict` |
+| `contentbit doctor --strict-seo` | `contentbit check --strict-seo` |
+| `contentbit doctor --watch` | `contentbit check --watch` |
+| `contentbit doctor --min-section-words <n>` | `contentbit check --min-section-words <n>` |
+
+Then review these differences:
+
+- Build the site before `check` runs in CI, so it reads the built pages.
+  Without a build folder, it runs the Markdown checks alone and says so on
+  stderr.
+- `check` takes a build folder as its argument, not content globs. It reads
+  Markdown from `content` in `contentbit.config.ts`, and not from a package
+  script. Move globs from a `content:doctor` script into the config.
+- `--json` prints a `contentbit.site-check.v1` report. The Markdown findings
+  that `doctor --json` printed in `findings` are in `content.findings`, with
+  the same fields. The report has no `linkGraph`, `seo`, or `suggestions`
+  count. Use `contentbit links` or Studio for the link graph.
+- The text report has no repair plan heading and no list of next commands.
+- `contentbit init` writes a `content:check` script that runs
+  `contentbit check`, and no `content:doctor` script.
+- Run `contentbit agents` to refresh installed agent guidance. `check` warns
+  with `CB_SKILL_DRIFT` when an installed skill is older than the CLI's.
+
+## Removed Markdown findings
+
+The Markdown checks no longer report three codes that guessed at the rendered
+page. `check` reports the same problems from the built pages:
+
+| Removed code | Built-page finding |
+| --- | --- |
+| `CB_H1_MISSING` | `CB_PAGE_H1_MISSING` |
+| `CB_INTERNAL_URL_UNRESOLVED` | `CB_LINK_PAGE_MISSING` |
+| `CB_MARKDOWN_ANCHOR_UNRESOLVED` | `CB_LINK_ANCHOR_MISSING` |
+
+The two link findings are errors, where the Markdown codes were warnings. A
+Markdown-only run, with no build, no longer checks internal URLs or `#anchor`
+links in Markdown. `CB_MARKDOWN_LINK_UNRESOLVED` still reports a relative `.md`
+or `.mdx` link to a file that does not exist. Studio and `contentbit snapshot`
+no longer report the three codes either.
+
+## Configuration
+
+- `content` is optional. A site without Markdown can have a config with only
+  `site` or `links`. Commands that read Markdown, such as `validate`, still
+  need `content` or explicit globs.
+- The new `site` section names the build folder, relative to the config file,
+  the public origin, and the frontmatter fields that mark drafts and
+  publication dates. See [Site fields](/docs/reference/configuration#site-fields).
+- `links.routes` and `links.hostRoutes` connect Markdown documents to their
+  built pages and tell `check` which paths the host serves. See
+  [Page routes](/docs/reference/configuration#page-routes).
+
+## Known limitations
+
+- `check` reads a build folder. Checking a running server comes later.
+- The repository starters install the published CLI, which has no `check`
+  command, so their `check` script runs `validate` and `links` without
+  `check`. The packed checks run the candidate's `check` on their build. After
+  2.0 is published, run `pnpm starter:sync <version>`, then add
+  `contentbit check` after the build to both starters and to
+  `scripts/starter-smoke.mjs`.
