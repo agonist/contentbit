@@ -1,11 +1,11 @@
-import { elementKey, siteFinding, type SiteFinding } from '../findings.js'
+import { elementKey, siteFinding, type ElementKey, type SiteFinding } from '../findings.js'
 import { isBrowserRendered, type SiteIndex } from './site-index.js'
 
 export function checkImages(index: SiteIndex): SiteFinding[] {
   const findings: SiteFinding[] = []
   for (const page of index.pages) {
     if (isBrowserRendered(page)) continue
-    const images = new Map<string, { src?: string; element: string }>()
+    const images = new Map<string, { src?: string; element: ElementKey }>()
     for (const image of page.facts.images) {
       if (image.alt !== undefined) continue
       const element = elementKey(image)

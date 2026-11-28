@@ -1,8 +1,13 @@
-import { siteFinding, type SiteFinding, type SiteFindingOrigin } from '../findings.js'
+import {
+  siteFinding,
+  type SiteFinding,
+  type SiteFindingOrigin,
+  type SiteFindingSubject,
+} from '../findings.js'
 import { httpOrigin } from '../origin.js'
 import { isIndexable, type SiteIndex } from './site-index.js'
 
-const canonicalSubject = { element: 'link[rel=canonical]' }
+const canonicalSubject: SiteFindingSubject = { element: 'link[rel=canonical]' }
 
 export function checkMetadata(index: SiteIndex): SiteFinding[] {
   const findings: SiteFinding[] = []

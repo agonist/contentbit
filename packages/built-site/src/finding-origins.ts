@@ -1,6 +1,12 @@
 import { extractFrontmatter, readContentPageFacts } from '@contentbit/core'
 
-import { siteFinding, type SiteFinding, type SiteFindingCode } from './findings.js'
+import {
+  elementParts,
+  siteFinding,
+  type FindingElement,
+  type SiteFinding,
+  type SiteFindingCode,
+} from './findings.js'
 import type { PagePath } from './model.js'
 
 export interface SourceDocument {
@@ -47,13 +53,13 @@ function sourceLocation(
       ? undefined
       : { line: 1 }
   }
-  const index = target ? indexOfValue(text, target) : -1
+  const index = target ? indexOfWholeValue(text, target) : -1
   if (index === -1) return undefined
   const before = text.slice(0, index)
   return { line: before.split('\n').length, column: index - before.lastIndexOf('\n') }
 }
 
-function indexOfValue(text: string, value: string): number {
+function indexOfWholeValue(text: string, value: string): number {
   for (let index = text.indexOf(value); index !== -1; index = text.indexOf(value, index + 1)) {
     const before = text[index - 1]
     const after = text[index + value.length]
@@ -101,10 +107,9 @@ function groupKey({ code, element, target }: SiteFinding): string {
   return `${code} ${element} ${target ?? ''}`
 }
 
-function isLayoutElement(element: string): boolean {
-  const space = element.indexOf(' ')
-  if (space === -1) return true
-  return LAYOUT_LANDMARKS.has(element.slice(0, space)) || element.slice(space + 1).includes('.')
+function isLayoutElement(element: FindingElement): boolean {
+  const parts = elementParts(element)
+  return !parts || LAYOUT_LANDMARKS.has(parts.landmark) || parts.selector.includes('.')
 }
 
 function templateFinding(group: PageFinding[], pages: PagePath[]): SiteFinding {

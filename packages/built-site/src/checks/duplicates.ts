@@ -1,10 +1,18 @@
-import { siteFinding, type SiteFinding, type SiteFindingCode } from '../findings.js'
+import {
+  siteFinding,
+  type FixedSubject,
+  type SiteFinding,
+  type SiteFindingCode,
+} from '../findings.js'
 import type { BuiltPage } from '../model.js'
 import { listOf } from './list.js'
 import { isIndexable, isOwnCanonical, type SiteIndex } from './site-index.js'
 
 const MAX_OTHERS = 3
-const ELEMENTS = { title: 'title', description: 'meta[name=description]' }
+const ELEMENTS = {
+  title: 'title',
+  description: 'meta[name=description]',
+} as const satisfies Record<string, FixedSubject>
 
 export function checkDuplicates(index: SiteIndex): SiteFinding[] {
   const pages = index.pages.filter((page) => isIndexable(page) && isOwnCanonical(index, page))

@@ -1,4 +1,10 @@
-import { elementKey, siteFinding, type SiteFinding, type SiteFindingOrigin } from '../findings.js'
+import {
+  elementKey,
+  siteFinding,
+  type ElementKey,
+  type SiteFinding,
+  type SiteFindingOrigin,
+} from '../findings.js'
 import type { BuiltPage } from '../model.js'
 import { isIndexable, type SiteIndex } from './site-index.js'
 
@@ -6,7 +12,7 @@ export function checkLinks(index: SiteIndex): SiteFinding[] {
   const findings: SiteFinding[] = []
   for (const page of index.pages) {
     const origin: SiteFindingOrigin = { kind: 'page', page: page.path }
-    const links = new Map<string, { href: string; element: string }>()
+    const links = new Map<string, { href: string; element: ElementKey }>()
     for (const link of page.facts.links) {
       const element = elementKey(link)
       links.set(`${element} ${link.href}`, { href: link.href, element })
@@ -23,7 +29,7 @@ function linkFindings(
   page: BuiltPage,
   href: string,
   origin: SiteFindingOrigin,
-  element: string,
+  element: ElementKey,
 ): SiteFinding[] {
   const subject = { target: href, element }
   const target = index.resolveLink(href, page)

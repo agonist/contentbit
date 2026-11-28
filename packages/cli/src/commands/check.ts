@@ -7,12 +7,14 @@ import {
   attributeToSources,
   checkSite,
   createSiteCheck,
+  elementParts,
   groupTemplateFindings,
   httpOrigin,
   inferOrigin,
   readBuildFolder,
   SITE_FINDING_CODES,
   type BuiltSite,
+  type FindingElement,
   type PagePath,
   type SiteCheck,
   type SiteFinding,
@@ -326,9 +328,10 @@ function formatTemplate(
   return `${subject}on ${plural(pages.length, 'page')}: ${list}`
 }
 
-function shortElement(element: string): string {
-  const [landmark, selector] = element.split(' ')
-  if (selector === undefined) return element
+function shortElement(element: FindingElement): string {
+  const parts = elementParts(element)
+  if (!parts) return element
+  const { landmark, selector } = parts
   const [tag, ...classes] = selector.split('.')
   const shown = [tag, ...classes.slice(0, 2)].join('.')
   return `${landmark} ${shown}${classes.length > 2 ? '…' : ''}`

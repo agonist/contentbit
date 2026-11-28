@@ -1,4 +1,4 @@
-import type { ElementContext, PagePath } from './model.js'
+import type { ElementContext, Landmark, PagePath } from './model.js'
 
 export type SiteFindingSeverity = 'error' | 'warning'
 
@@ -33,13 +33,12 @@ export type SiteFindingCode = keyof typeof SITE_FINDING_CODES
 
 export type SiteFindingOrigin =
   | { kind: 'source'; file: string; line: number; column?: number; page: PagePath }
-  | { kind: 'template'; element?: string; pages: PagePath[] }
+  | { kind: 'template'; element?: FindingElement; pages: PagePath[] }
   | { kind: 'page'; page: PagePath }
 
 export interface SiteFindingSubject {
   target?: string
-  /** What on the page has the problem: a link or image as elementKey() names it, or a fixed subject such as 'title' or 'h1'. */
-  element?: string
+  element?: FindingElement
 }
 
 export interface SiteFindingOccurrence {
@@ -75,6 +74,39 @@ export function siteFinding(
   }
 }
 
-export function elementKey({ landmark, selector }: ElementContext): string {
+/** What has the problem when it is not one link or image. */
+export type FixedSubject =
+  | 'title'
+  | 'meta[name=description]'
+  | 'link[rel=canonical]'
+  | 'h1'
+  | 'script[type=application/ld+json]'
+
+/** A link or image: the landmark it sits in, or body, then its selector. */
+export type ElementKey = `${Landmark | 'body'} ${string}`
+
+export type FindingElement = FixedSubject | ElementKey
+
+const FIXED_SUBJECTS: ReadonlySet<string> = new Set<FixedSubject>([
+  'title',
+  'meta[name=description]',
+  'link[rel=canonical]',
+  'h1',
+  'script[type=application/ld+json]',
+])
+
+export function elementKey({ landmark, selector }: ElementContext): ElementKey {
   return `${landmark ?? 'body'} ${selector}`
+}
+
+/** The landmark and selector of a link or image element; undefined for a fixed subject. */
+export function elementParts(
+  element: FindingElement,
+): { landmark: Landmark | 'body'; selector: string } | undefined {
+  if (FIXED_SUBJECTS.has(element)) return undefined
+  const space = element.indexOf(' ')
+  return {
+    landmark: element.slice(0, space) as Landmark | 'body',
+    selector: element.slice(space + 1),
+  }
 }
