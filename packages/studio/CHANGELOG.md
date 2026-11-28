@@ -1,5 +1,54 @@
 # @contentbit/studio
 
+## 1.0.0
+
+### Major Changes
+
+- f8ae48e: Release Contentbit 1.0 under the documented public compatibility contract.
+  Init installs Contentbit packages matching the running CLI, and Studio pins its
+  TanStack dependencies to the tested versions.
+
+  Upgrade all Contentbit packages together. The v1 release candidate guide lists
+  the changes from 0.7.2 and the known limitations.
+
+### Patch Changes
+
+- 349774a: Avoid guessing content families and locales from absolute machine paths or paths
+  outside the project root. Preserve authored facts and keep sibling-content
+  snapshot facts stable when a checkout moves.
+- 97a7d2a: Stop Studio from serving project files over `/@fs/`: it now serves only its own
+  UI and font files, so `--host 0.0.0.0` no longer exposes the project to the
+  network, and the CLI warns when `--host` is not a loopback address. Studio
+  refreshes and `doctor --watch` reruns now read edited registry, Contentbit
+  config, and SEO config modules instead of the first copy loaded.
+  `studio --port 0` now listens on a free port chosen by the operating system
+  instead of 5173.
+- a6bd933: Fix v1 edge cases in validation and first-run workflows:
+
+  - Reject invalid props in wrapped strict schemas instead of marking the document valid.
+  - Resolve encoded Markdown links and avoid false broken-link warnings for relative assets.
+  - Generate working Next.js example imports with either app directory layout.
+  - Allow briefs before the first content file exists and honor explicit SEO config overrides.
+  - Load separately installed Studio from the consuming project when using a global or npx CLI.
+  - Resolve project path aliases when previewing copied styled components in Studio.
+  - Keep snapshot paths and path-derived identities portable for content outside the project root.
+
+- Updated dependencies [3bf64e8]
+- Updated dependencies [aca73ce]
+- Updated dependencies [512e1d2]
+- Updated dependencies [287b8e7]
+- Updated dependencies [09c7364]
+- Updated dependencies [20e31ca]
+- Updated dependencies [4ef5743]
+- Updated dependencies [349774a]
+- Updated dependencies [a6bd933]
+- Updated dependencies [f8ae48e]
+- Updated dependencies [0872923]
+- Updated dependencies [71a48e9]
+  - @contentbit/core@1.0.0
+  - @contentbit/blocks@1.0.0
+  - @contentbit/react@1.0.0
+
 ## 1.0.0-rc.2
 
 ### Patch Changes
