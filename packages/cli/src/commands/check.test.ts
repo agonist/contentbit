@@ -31,27 +31,49 @@ async function check(cwd: string, args: string[] = []) {
   }
 }
 
-const page = (canonical?: string) =>
-  `<!doctype html><html><head><title>Page</title>${
+const page = (canonical?: string, body = '<h1>Page</h1>') =>
+  `<!doctype html><html><head><title>Page</title><meta name="description" content="A page.">${
     canonical ? `<link rel="canonical" href="${canonical}">` : ''
-  }</head><body><h1>Page</h1></body></html>`
+  }</head><body>${body}</body></html>`
 
 const unknownBlock = ':::nope\nText\n:::\n'
 const unmatchedClose = 'Prose.\n\n:::\n'
 
-test('--json prints one site check with every built page and nothing else', async () => {
+test('--json prints one site check with every built page and its findings, and nothing else', async () => {
   const { code, out, err } = await check(await project(), [fixture('astro-like'), '--json'])
 
-  expect(code).toBe(0)
+  expect(code).toBe(1)
   expect(err).toBe('')
   const result = JSON.parse(out)
   expect(result).toMatchObject({
     schemaVersion: 'contentbit.site-check.v1',
     input: { kind: 'folder', path: fixture('astro-like') },
     origin: { url: 'https://harbor.example', source: 'canonicals' },
-    summary: { pages: 3, errors: 0, warnings: 0 },
-    findings: [],
+    summary: { pages: 3, errors: 2, warnings: 1 },
   })
+  expect(result.findings).toEqual([
+    {
+      code: 'CB_LINK_ANCHOR_MISSING',
+      severity: 'error',
+      message: 'The link #what-doesnt-work points to an id that this page does not have.',
+      hint: expect.any(String),
+      origin: { kind: 'page', page: '/blog/first-post/' },
+    },
+    {
+      code: 'CB_PAGE_IMAGE_ALT_MISSING',
+      severity: 'warning',
+      message: '1 image has no alt attribute: /_astro/build-times.B7cq2Lp1.webp.',
+      hint: expect.any(String),
+      origin: { kind: 'page', page: '/blog/first-post/' },
+    },
+    {
+      code: 'CB_LINK_PAGE_MISSING',
+      severity: 'error',
+      message: 'The link /fr/ points to no built page, redirect or host route.',
+      hint: expect.any(String),
+      origin: { kind: 'page', page: '/fr/blog/first-post/' },
+    },
+  ])
   expect(result.pages).toHaveLength(3)
   expect(result.content).toBeUndefined()
 })
@@ -59,12 +81,97 @@ test('--json prints one site check with every built page and nothing else', asyn
 test('the report names the build, its page count and where the origin came from', async () => {
   const { code, out } = await check(await project(), [fixture('next-like')])
 
-  expect(code).toBe(0)
+  expect(code).toBe(1)
   expect(out).toContain(`${fixture('next-like')}, 2 pages`)
   expect(out).toMatch(/Origin\s+https:\/\/ledger\.example \(inferred from canonicals\)/)
-  expect(out).toMatch(/Errors\s+0/)
-  expect(out).toMatch(/Warnings\s+0/)
+  expect(out).toMatch(/Errors\s+1/)
+  expect(out).toMatch(/Warnings\s+1/)
   expect(out).not.toContain('Markdown')
+})
+
+test('the report groups built-page findings by code, errors first, with five examples each', async () => {
+  const links = Array.from({ length: 7 }, (_, n) => `<a href="/gone-${n}/">Gone</a>`).join('')
+  const root = await project({
+    'dist/index.html': `<title>Home</title><meta name="description" content="Home."><link rel="canonical" href="https://example.com/"><h1>Home</h1>${links}`,
+    'dist/a/index.html': `<title>A</title><meta name="description" content="A."><h1>A</h1><a href="/gone-0/">Gone</a>`,
+  })
+
+  const { code, out } = await check(root)
+  expect(code).toBe(1)
+  const report = out.slice(out.indexOf('Built-page findings'), out.indexOf('  Errors'))
+  expect(report).toBe(
+    [
+      'Built-page findings',
+      '  error CB_LINK_PAGE_MISSING  8 findings on 2 pages',
+      '     hint Fix the link or add a redirect. If the host app serves the path, add it to links.hostRoutes.',
+      '     /  The link /gone-0/ points to no built page, redirect or host route.',
+      '     /  The link /gone-1/ points to no built page, redirect or host route.',
+      '     /  The link /gone-2/ points to no built page, redirect or host route.',
+      '     /  The link /gone-3/ points to no built page, redirect or host route.',
+      '     /  The link /gone-4/ points to no built page, redirect or host route.',
+      '     and 3 more, listed by contentbit check --json',
+      '  warning CB_PAGE_CANONICAL_MISSING  1 finding on 1 page',
+      '     hint Add a <link rel="canonical"> with the URL of the page itself.',
+      '     /a/  The page has no canonical URL.',
+      '',
+      '',
+    ].join('\n'),
+  )
+  expect(out).toMatch(/Errors\s+8/)
+  expect(out).toMatch(/Warnings\s+1/)
+})
+
+test('a site without built-page findings prints no built-page section', async () => {
+  const root = await project({ 'dist/index.html': page('https://example.com/') })
+
+  const { code, out } = await check(root)
+  expect(code).toBe(0)
+  expect(out).not.toContain('Built-page findings')
+})
+
+test('the checks use the resolved origin and the links.hostRoutes of the config', async () => {
+  const root = await project({
+    'contentbit.config.mjs': `export default { links: { hostRoutes: ['/api/status'] } }`,
+    'dist/index.html': page(
+      'https://www.example.com/',
+      '<h1>Home</h1><a href="/api/status">Status</a><a href="https://example.com/gone/">Gone</a>',
+    ),
+  })
+
+  const withOrigin = JSON.parse(
+    (await check(root, ['--json', '--origin', 'https://example.com'])).out,
+  )
+  expect(withOrigin.findings.map(({ code }: { code: string }) => code)).toEqual([
+    'CB_LINK_PAGE_MISSING',
+    'CB_PAGE_CANONICAL_ORIGIN',
+  ])
+
+  const inferred = JSON.parse((await check(root, ['--json'])).out)
+  expect(inferred.origin).toEqual({ url: 'https://www.example.com', source: 'canonicals' })
+  expect(inferred.findings).toEqual([])
+})
+
+test('with a build, the Markdown checks that guessed at the rendered page are dropped; without one they stay', async () => {
+  const guessed = ['CB_H1_MISSING', 'CB_INTERNAL_URL_UNRESOLVED', 'CB_MARKDOWN_ANCHOR_UNRESOLVED']
+  const markdown = {
+    'contentbit.config.mjs': `export default { content: 'content/*.md' }`,
+    'content/post.md':
+      '---\nslug: post\n---\n\nSee [a page](/nowhere), [a section](#nope) and [a file](./gone.md).\n',
+  }
+  const codes = (result: { content: { findings: Array<{ code: string }> } }) =>
+    result.content.findings.map(({ code }) => code)
+
+  const markdownOnly = JSON.parse((await check(await project(markdown), ['--json'])).out)
+  expect(codes(markdownOnly)).toEqual(
+    expect.arrayContaining([...guessed, 'CB_MARKDOWN_LINK_UNRESOLVED']),
+  )
+
+  const built = await project({ ...markdown, 'dist/index.html': page('https://example.com/') })
+  const withBuild = JSON.parse((await check(built, ['--json'])).out)
+  expect(withBuild.findings).toEqual([])
+  expect(withBuild.content.files).toBe(1)
+  expect(codes(withBuild)).toEqual(codes(markdownOnly).filter((code) => !guessed.includes(code)))
+  expect(withBuild.summary.warnings).toBe(markdownOnly.summary.warnings - guessed.length)
 })
 
 test('--origin wins over site.origin, which wins over the canonicals', async () => {
