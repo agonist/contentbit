@@ -20,7 +20,7 @@ rendered HTML shows.
   Contentbit reads the HTML as the server sends it, as Google's first pass
   does, and reports pages whose content renders only in the browser.
 - **A Rust reader now.** Deferred. Measured on fond-site, the time goes to
-  one Markdown dependency, and a JavaScript HTML parser reads its 594 built
-  pages in under half a second. Readers sit behind a file-in, facts-out
+  one Markdown dependency, and the JavaScript reader takes every rendered
+  page fact from its 593 built pages in 0.7 seconds. Readers sit behind a file-in, facts-out
   interface so a faster one can replace them; checks stay in TypeScript so
   contributors can write rules.
