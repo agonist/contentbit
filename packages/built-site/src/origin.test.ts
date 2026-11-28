@@ -34,6 +34,7 @@ function siteWithCanonicals(canonicals: Array<string | undefined>): BuiltSite {
         textLength: 0,
       },
     })),
+    files: [],
     redirects: [],
   }
 }

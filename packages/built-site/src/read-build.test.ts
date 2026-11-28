@@ -110,6 +110,28 @@ test('pages inside build internals, dot folders and error pages are not built pa
   expect(site.redirects).toEqual([])
 })
 
+test('the build lists every file outside dot folders and node_modules, pages and assets alike', async () => {
+  const root = await buildFolder({
+    'index.html': page('Home'),
+    '404.html': page('Not found'),
+    'guides/menu été.pdf': '%PDF',
+    '_astro/cover.webp': 'webp',
+    '_astro/chunk.html': page('Asset'),
+    'node_modules/pkg/readme.html': page('Dependency'),
+    '.well-known/security.txt': 'Contact: x',
+  })
+  const site = await readBuildFolder(root)
+
+  expect(site.files).toEqual([
+    '404.html',
+    '_astro/chunk.html',
+    '_astro/cover.webp',
+    'guides/menu été.pdf',
+    'index.html',
+  ])
+  expect(site.pages.map((built) => built.file)).toEqual(['index.html'])
+})
+
 test('the sitemap reads each file once and skips entries outside the build', async () => {
   const root = await buildFolder({
     'index.html': page('Home'),

@@ -3,18 +3,29 @@ import { readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
 import {
+  checkSite,
   createSiteCheck,
   httpOrigin,
   inferOrigin,
   readBuildFolder,
+  SITE_FINDING_CODES,
   type BuiltSite,
   type SiteCheck,
+  type SiteFinding,
+  type SiteFindingCode,
   type SiteOrigin,
 } from '@contentbit/built-site'
 
 import { CliError, type Io } from '../run.js'
 
-import { displayPath, formatFinding, formatRows, section } from '../cli-format.js'
+import {
+  color,
+  displayPath,
+  formatFinding,
+  formatRows,
+  section,
+  severityLabel,
+} from '../cli-format.js'
 import {
   resolveContentCommandConfig,
   type ResolvedContentCommandConfig,
@@ -40,6 +51,14 @@ const BUILD_COMMANDS: Array<[dependency: string, command: string]> = [
   ['next', 'next build'],
   ['@11ty/eleventy', 'eleventy'],
 ]
+
+const MARKDOWN_CODES_REPLACED_BY_BUILT_PAGES = new Set([
+  'CB_H1_MISSING',
+  'CB_INTERNAL_URL_UNRESOLVED',
+  'CB_MARKDOWN_ANCHOR_UNRESOLVED',
+])
+
+const MAX_EXAMPLES = 5
 
 const ORIGIN_SOURCES: Record<SiteOrigin['source'], string> = {
   flag: 'from --origin',
@@ -76,12 +95,23 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
     )
   }
 
+  const origin = resolveOrigin(flagOrigin, config.site?.origin, site)
   const check = createSiteCheck({
     input: site ? { kind: 'folder', path: site.root } : { kind: 'none', searched },
     site,
-    origin: resolveOrigin(flagOrigin, config.site?.origin, site),
-    findings: [],
-    content,
+    origin,
+    findings: site
+      ? checkSite(site, { origin: origin?.url, hostRoutes: config.resolveLinkOptions().hostRoutes })
+      : [],
+    content:
+      site && content
+        ? {
+            ...content,
+            findings: content.findings.filter(
+              ({ code }) => !MARKDOWN_CODES_REPLACED_BY_BUILT_PAGES.has(code),
+            ),
+          }
+        : content,
   })
   io.stdout(input.json ? JSON.stringify(check, null, 2) : formatCheck(check))
   if (!site) {
@@ -161,7 +191,7 @@ async function buildCommand(root: string): Promise<string> {
 }
 
 function formatCheck(check: SiteCheck): string {
-  const { input, origin, content, summary } = check
+  const { input, origin, findings, content, summary } = check
   const lines = [section('contentbit check'), '']
   lines.push(
     ...formatRows([
@@ -180,6 +210,9 @@ function formatCheck(check: SiteCheck): string {
       ...(content ? [{ label: 'Markdown', value: plural(content.files, 'file') }] : []),
     ]),
   )
+  if (findings.length > 0) {
+    lines.push('', section('Built-page findings'), ...formatSiteFindings(findings))
+  }
   if (content && content.findings.length > 0) {
     lines.push('', section('Markdown findings'))
     content.findings.forEach((finding, index) => lines.push(...formatFinding(index + 1, finding)))
@@ -196,6 +229,46 @@ function formatCheck(check: SiteCheck): string {
     ]),
   )
   return lines.join('\n')
+}
+
+function formatSiteFindings(findings: SiteFinding[]): string[] {
+  const groups = new Map<SiteFindingCode, SiteFinding[]>()
+  for (const finding of findings) {
+    const group = groups.get(finding.code)
+    if (group) group.push(finding)
+    else groups.set(finding.code, [finding])
+  }
+  const codes = Object.keys(SITE_FINDING_CODES) as SiteFindingCode[]
+  const ordered = [
+    ...codes.filter((code) => SITE_FINDING_CODES[code] === 'error'),
+    ...codes.filter((code) => SITE_FINDING_CODES[code] === 'warning'),
+  ]
+
+  const lines: string[] = []
+  for (const code of ordered) {
+    const group = groups.get(code)
+    if (!group) continue
+    const pages = new Set(
+      group.flatMap(({ origin }) => (origin.kind === 'template' ? origin.pages : [origin.page])),
+    )
+    lines.push(
+      `  ${severityLabel(SITE_FINDING_CODES[code])} ${code}  ${plural(group.length, 'finding')} on ${plural(pages.size, 'page')}`,
+    )
+    const { hint } = group[0]
+    if (hint && group.every((finding) => finding.hint === hint)) {
+      lines.push(`     ${color('hint', 'muted')} ${hint}`)
+    }
+    for (const { origin, message } of group.slice(0, MAX_EXAMPLES)) {
+      const place = origin.kind === 'template' ? origin.element : origin.page
+      lines.push(`     ${color(place, 'muted')}  ${message}`)
+    }
+    if (group.length > MAX_EXAMPLES) {
+      lines.push(
+        `     ${color(`and ${group.length - MAX_EXAMPLES} more, listed by contentbit check --json`, 'muted')}`,
+      )
+    }
+  }
+  return lines
 }
 
 function plural(count: number, noun: string): string {
