@@ -205,6 +205,20 @@ test('the same href in the footer and in main gives one template finding for eac
   ])
 })
 
+test('a bare element in the page content groups only when the same target repeats on other pages', () => {
+  const site = builtSite([
+    builtPage('/a/', { links: [link('/gone-a/', 'main'), link('/private/', 'main')] }),
+    builtPage('/b/', { links: [link('/gone-b/', 'main'), link('/private/', 'main')] }),
+    builtPage('/private/', noindex),
+  ])
+
+  expect(places(located(site))).toEqual([
+    'CB_LINK_NOINDEX_TARGET main a on /a/ /b/',
+    'CB_LINK_PAGE_MISSING main a at /a/',
+    'CB_LINK_PAGE_MISSING main a at /b/',
+  ])
+})
+
 test('duplicate titles and descriptions never group: each finding already names the other pages', () => {
   const site = builtSite(
     ['/a/', '/b/', '/c/'].map((path) => builtPage(path, { title: 'Same', description: 'Same.' })),

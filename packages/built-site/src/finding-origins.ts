@@ -20,6 +20,9 @@ const NEVER_GROUPED = new Set<SiteFindingCode>([
   'CB_PAGE_DESCRIPTION_DUPLICATE',
 ])
 
+// Landmarks that a layout renders on every page, unlike the page's own content in main.
+const LAYOUT_LANDMARKS = new Set(['header', 'nav', 'footer', 'aside'])
+
 // What can stand next to a value written in Markdown or frontmatter, so /fr/ is not found inside /fr/blog/.
 const VALUE_EDGE = /[\s"'`()<>[\]{},]/
 
@@ -83,7 +86,7 @@ export function groupTemplateFindings(findings: SiteFinding[]): SiteFinding[] {
   const groups = new Map<string, PageFinding[]>()
   for (const finding of findings) {
     if (finding.origin.kind !== 'page' || NEVER_GROUPED.has(finding.code)) continue
-    const key = `${finding.code} ${finding.element ?? ''}`
+    const key = groupKey(finding)
     const member = { finding, page: finding.origin.page }
     const group = groups.get(key)
     if (group) group.push(member)
@@ -101,6 +104,23 @@ export function groupTemplateFindings(findings: SiteFinding[]): SiteFinding[] {
   return findings.flatMap(
     (finding) => templates.get(finding) ?? (grouped.has(finding) ? [] : finding),
   )
+}
+
+/**
+ * A bare element in the page's content, such as `main a`, says nothing about a layout: two
+ * pages that each have their own broken link there are two content problems. It groups only
+ * with the same target on other pages. Every other element groups by itself.
+ */
+function groupKey({ code, element, target }: SiteFinding): string {
+  if (element === undefined || isLayoutElement(element)) return `${code} ${element ?? ''}`
+  return `${code} ${element} ${target ?? ''}`
+}
+
+/** A head subject such as `link[rel=canonical]`, an element with a class, or one in a layout landmark. */
+function isLayoutElement(element: string): boolean {
+  const space = element.indexOf(' ')
+  if (space === -1) return true
+  return LAYOUT_LANDMARKS.has(element.slice(0, space)) || element.slice(space + 1).includes('.')
 }
 
 function templateFinding(group: PageFinding[], pages: PagePath[]): SiteFinding {
