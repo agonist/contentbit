@@ -12,14 +12,7 @@ import {
 
 import type { Io } from '../run.js'
 
-import {
-  color,
-  displayPath,
-  formatCommandList,
-  formatRows,
-  section,
-  severityLabel,
-} from '../cli-format.js'
+import { color, formatCommandList, formatFinding, formatRows, section } from '../cli-format.js'
 import { resolveContentCommandConfig } from '../command-config.js'
 import { loadContentProject } from '../content-project.js'
 import type { LinkOptionValues } from '../link-options.js'
@@ -416,20 +409,6 @@ function formatReport(
   commands.push(`contentbit doctor ${formatGlobs(globs)}${registryArgs}${linkArgs} --json`)
   lines.push(...formatCommandList(commands))
   return lines.join('\n')
-}
-
-function formatFinding(index: number, finding: DoctorFinding): string[] {
-  const location =
-    finding.line !== undefined && finding.column !== undefined
-      ? `${displayPath(finding.file)}:${finding.line}:${finding.column}`
-      : displayPath(finding.file)
-  const lines = [
-    `  ${index}. ${severityLabel(finding.severity)} ${finding.source} ${finding.code}`,
-    `     ${color('at', 'muted')} ${location}`,
-    `     ${finding.message}`,
-  ]
-  if (finding.hint) lines.push(`     ${color('hint', 'muted')} ${finding.hint}`)
-  return lines
 }
 
 function formatGlobs(globs: string[]): string {

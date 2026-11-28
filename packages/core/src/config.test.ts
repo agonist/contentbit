@@ -15,3 +15,9 @@ test('defineContentConfig normalizes a single content glob', () => {
     links: { resolve: 'same-locale-key' },
   })
 })
+
+test('defineContentConfig accepts a site config without content', () => {
+  expect(defineContentConfig({ site: { build: 'dist', origin: 'https://example.com' } })).toEqual({
+    site: { build: 'dist', origin: 'https://example.com' },
+  })
+})

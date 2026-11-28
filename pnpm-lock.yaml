@@ -11,6 +11,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.31.0
         version: 2.31.0(@types/node@25.9.2)
+      '@contentbit/built-site':
+        specifier: workspace:*
+        version: link:packages/built-site
       '@contentbit/project':
         specifier: workspace:*
         version: link:packages/project
@@ -61,6 +64,9 @@ importers:
 
   packages/built-site:
     dependencies:
+      '@contentbit/core':
+        specifier: workspace:*
+        version: link:../core
       htmlparser2:
         specifier: ^10.1.0
         version: 10.1.0

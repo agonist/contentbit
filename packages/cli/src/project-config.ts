@@ -1,7 +1,14 @@
-import type { ContentbitConfig, ContentbitConfigInput } from '@contentbit/core'
+import { httpOrigin } from '@contentbit/built-site'
+import type {
+  ContentbitConfig,
+  ContentbitConfigInput,
+  ContentbitSiteConfig,
+} from '@contentbit/core'
 import { importFresh } from '@contentbit/project'
 import { existsSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
+
+import { CliError } from './run.js'
 
 const CONFIG_FILES = [
   'contentbit.config.ts',
@@ -31,9 +38,13 @@ export async function loadContentbitConfig(
   if (!mod.default || typeof mod.default !== 'object') {
     throw new Error(`Contentbit config must default-export a config object: ${path}`)
   }
-  const content = normalizeContent(mod.default.content, path)
+  const { content, site } = mod.default
   return {
-    config: { ...mod.default, content },
+    config: {
+      ...mod.default,
+      content: content === undefined ? undefined : normalizeContent(content, path),
+      site: site === undefined ? undefined : normalizeSite(site, path),
+    },
     cwd: dirname(path),
     path,
   }
@@ -78,4 +89,23 @@ function normalizeContent(value: unknown, path: string): string[] {
     )
   }
   return content
+}
+
+function normalizeSite(value: unknown, path: string): ContentbitSiteConfig {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new CliError(2, `Contentbit config "site" must be an object: ${path}`)
+  }
+  const site = value as ContentbitSiteConfig
+  if (site.build !== undefined && (typeof site.build !== 'string' || site.build === '')) {
+    throw new CliError(2, `Contentbit config "site.build" must be a non-empty string: ${path}`)
+  }
+  if (site.origin === undefined) return site
+  const origin = typeof site.origin === 'string' ? httpOrigin(site.origin) : undefined
+  if (!origin) {
+    throw new CliError(
+      2,
+      `Contentbit config "site.origin" must be an absolute http or https URL, not ${JSON.stringify(site.origin)}: ${path}`,
+    )
+  }
+  return { ...site, origin }
 }

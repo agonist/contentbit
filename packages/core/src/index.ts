@@ -1,5 +1,10 @@
 export { VERSION } from './version.js'
-export { defineContentConfig, type ContentbitConfig, type ContentbitConfigInput } from './config.js'
+export {
+  defineContentConfig,
+  type ContentbitConfig,
+  type ContentbitConfigInput,
+  type ContentbitSiteConfig,
+} from './config.js'
 export type { SourcePoint, SourceRange, Severity, Diagnostic } from './diagnostics.js'
 export { formatDiagnostic } from './diagnostics.js'
 export type { DocumentNode, ContentNode, MarkdownNode, BlockNode } from './ast.js'

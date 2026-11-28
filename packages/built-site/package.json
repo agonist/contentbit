@@ -28,6 +28,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@contentbit/core": "workspace:*",
     "htmlparser2": "^10.1.0"
   },
   "devDependencies": {

@@ -8,6 +8,11 @@ import { linkResolverOptions, type LinkOptionValues } from './link-options.js'
 import { loadContentbitConfig } from './project-config.js'
 import { loadSeoConfig, type LoadedSeoConfig } from './seo-config.js'
 
+interface ResolvedSiteConfig {
+  buildPath?: string
+  origin?: string
+}
+
 interface ContentCommandDefaults extends LinkOptionValues {
   cwd?: string
   globs: string[]
@@ -17,10 +22,19 @@ interface ContentCommandDefaults extends LinkOptionValues {
   noSeo?: boolean
   routes?: Record<string, string>
   hostRoutes?: string[]
+  site?: ResolvedSiteConfig
   source?: string
 }
 
-type ContentCommand = 'validate' | 'doctor' | 'studio' | 'links' | 'stats' | 'brief' | 'snapshot'
+type ContentCommand =
+  | 'validate'
+  | 'doctor'
+  | 'studio'
+  | 'links'
+  | 'stats'
+  | 'brief'
+  | 'snapshot'
+  | 'check'
 
 export interface ContentCommandOptions extends LinkOptionValues {
   globs: string[]
@@ -35,6 +49,7 @@ export interface ResolvedContentCommandConfig {
   cwd?: string
   registry?: string
   includeGenericBlocks: boolean
+  site?: ResolvedSiteConfig
   resolveLinkOptions(): LinkResolverOptions
   loadSeo(): Promise<LoadedSeoConfig>
 }
@@ -71,6 +86,7 @@ export async function resolveContentCommandConfig(
     cwd: defaults.cwd,
     registry: resolvePath(startDir, input.registry) ?? defaults.registry,
     includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
+    site: defaults.site,
     resolveLinkOptions: () => ({ ...linkResolverOptions(links), ...routes }),
     loadSeo: () => loadSeoConfig(seo),
   }
@@ -84,6 +100,7 @@ const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   stats: ['content:stats', 'content:check'],
   brief: ['content:brief', 'content:check'],
   snapshot: ['content:snapshot', 'content:check'],
+  check: [],
 }
 
 async function discoverContentCommandDefaults(
@@ -109,12 +126,16 @@ async function discoverContentCommandDefaults(
         defaultLocale: loadedConfig.config.links?.defaultLocale,
         routes: resolveRouteDirs(loadedConfig.cwd, loadedConfig.config.links?.routes),
         hostRoutes: loadedConfig.config.links?.hostRoutes,
+        site: loadedConfig.config.site && {
+          buildPath: resolvePath(loadedConfig.cwd, loadedConfig.config.site.build),
+          origin: loadedConfig.config.site.origin,
+        },
         source: loadedConfig.path,
       }
     : {}
 
   if (explicitGlobs.length > 0) return { ...configDefaults, cwd: undefined, globs: explicitGlobs }
-  if (loadedConfig) return { ...configDefaults, globs: loadedConfig.config.content }
+  if (loadedConfig) return { ...configDefaults, globs: loadedConfig.config.content ?? [] }
 
   const found = await findPackageScript(command, startDir)
   if (!found) return { globs: [] }

@@ -1,4 +1,4 @@
-import type { Diagnostic, Severity } from '@contentbit/core'
+import type { ContentProjectFinding, Diagnostic, Severity } from '@contentbit/core'
 import { isAbsolute, relative } from 'node:path'
 
 type Tone = 'error' | 'warning' | 'info' | 'success' | 'muted'
@@ -50,6 +50,23 @@ export function formatDiagnosticForCli(diagnostic: Diagnostic, file: string): st
   ]
   if (diagnostic.hint) lines.push(`  ${color('hint', 'muted')} ${diagnostic.hint}`)
   return lines.join('\n')
+}
+
+export function formatFinding(
+  index: number,
+  finding: Omit<ContentProjectFinding, 'source'> & { source: string },
+): string[] {
+  const location =
+    finding.line !== undefined && finding.column !== undefined
+      ? `${displayPath(finding.file)}:${finding.line}:${finding.column}`
+      : displayPath(finding.file)
+  const lines = [
+    `  ${index}. ${severityLabel(finding.severity)} ${finding.source} ${finding.code}`,
+    `     ${color('at', 'muted')} ${location}`,
+    `     ${finding.message}`,
+  ]
+  if (finding.hint) lines.push(`     ${color('hint', 'muted')} ${finding.hint}`)
+  return lines
 }
 
 export function displayPath(file: string): string {

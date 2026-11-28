@@ -16,7 +16,7 @@ const dependencyFields = [
   'peerDependencies',
 ]
 const runtimeDependencyFields = ['dependencies', 'optionalDependencies', 'peerDependencies']
-const internalPackages = new Set(['@contentbit/project'])
+const internalPackages = new Set(['@contentbit/built-site', '@contentbit/project'])
 // Block definitions take the project's zod schemas, so these packages must use
 // the project's zod. Their own copy would give TypeScript two incompatible
 // zod types whenever the two copies resolve to different versions.
