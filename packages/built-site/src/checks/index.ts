@@ -17,7 +17,6 @@ const CHECKS: Array<(index: SiteIndex) => SiteFinding[]> = [
   checkLinks,
 ]
 
-/** Every built-page finding, sorted by page path, then code. */
 export function checkSite(site: BuiltSite, options: SiteIndexOptions = {}): SiteFinding[] {
   const index = createSiteIndex(site, options)
   return CHECKS.flatMap((check) => check(index)).sort(

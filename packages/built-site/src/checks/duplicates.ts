@@ -18,7 +18,6 @@ export function checkDuplicates(index: SiteIndex): SiteFinding[] {
   ]
 }
 
-/** A page whose canonical points at another page leaves the duplicate to that page. */
 function isOwnCanonical(index: SiteIndex, page: BuiltPage): boolean {
   const { canonical } = page.facts
   if (!canonical) return true

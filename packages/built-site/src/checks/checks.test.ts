@@ -11,7 +11,6 @@ import {
 
 type PageFacts = Partial<Omit<RenderedPageFacts, 'links'>> & { links?: string[] }
 
-/** A page that passes every check unless the test overrides a fact. */
 function builtPage(path: string, facts: PageFacts = {}): BuiltPage {
   const { links = [], ...rest } = facts
   return {

@@ -2,13 +2,10 @@ import { pagePath, type BuiltPage, type BuiltSite, type PagePath, type Redirect 
 import { httpOrigin } from '../origin.js'
 
 export interface SiteIndexOptions {
-  /** The site's public origin. Absolute URLs on it are internal links. */
   origin?: string
-  /** links.hostRoutes: exact paths the host app serves outside the build. */
   hostRoutes?: string[]
 }
 
-/** What a link points to. anchor: the id the link targets, absent for '#', '#top' and text fragments. */
 export type LinkTarget =
   | { kind: 'external' }
   | { kind: 'page'; page: BuiltPage; anchor?: string }
@@ -19,17 +16,15 @@ export type LinkTarget =
 
 export interface SiteIndex {
   pages: BuiltPage[]
-  /** Normalized with httpOrigin; absent when unknown. */
   origin?: string
   resolveLink(href: string, from: BuiltPage): LinkTarget
   hasId(page: BuiltPage, id: string): boolean
 }
 
-// Without a known origin, only root-relative and relative links resolve onto this reserved host.
 const UNKNOWN_ORIGIN = 'https://site.invalid'
 const BROWSER_RENDERED_TEXT = 50
 
-/** No headings and almost no text in the HTML. A meta refresh page is a redirect, not browser-rendered. */
+/** A meta refresh page is a redirect, not browser-rendered. */
 export function isBrowserRendered({ facts }: BuiltPage): boolean {
   return (
     facts.redirect === undefined &&
@@ -38,7 +33,6 @@ export function isBrowserRendered({ facts }: BuiltPage): boolean {
   )
 }
 
-/** No noindex, no meta refresh, and its content is in the HTML. */
 export function isIndexable(page: BuiltPage): boolean {
   const { facts } = page
   return !facts.robots.noindex && facts.redirect === undefined && !isBrowserRendered(page)
@@ -103,12 +97,10 @@ export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {})
   }
 }
 
-/** '/x/' and '/x' name the same route. */
 function routeKey(path: string): string {
   return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
 }
 
-/** The form links.hostRoutes entries take in @contentbit/core: decoded, without outer slashes. */
 function hostRouteKey(route: string): string {
   return decodeComponent(route).replace(/^\/+|\/+$/g, '')
 }
@@ -124,7 +116,6 @@ function anchorOf(hash: string): string | undefined {
   return id === '' || id.toLowerCase() === 'top' ? undefined : id
 }
 
-/** Matches a path against _redirects rules, with '*' splats and ':placeholder' segments. */
 function redirectMatcher(redirects: Redirect[]): (path: PagePath) => boolean {
   const exact = new Set<string>()
   const patterns: RegExp[] = []
@@ -144,7 +135,6 @@ function redirectPattern(route: string): RegExp {
       segment.startsWith(':') ? '[^/]+' : segment.split('*').map(escapeRegExp).join('.*'),
     )
     .join('/')
-  // A trailing '/*' also matches its parent folder, with or without the slash.
   return new RegExp(`^${source.replace(/\/\.\*$/, '(?:/.*)?')}/?$`)
 }
 

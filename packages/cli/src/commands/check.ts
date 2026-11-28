@@ -52,7 +52,6 @@ const BUILD_COMMANDS: Array<[dependency: string, command: string]> = [
   ['@11ty/eleventy', 'eleventy'],
 ]
 
-// Built pages show what these Markdown checks could only guess at.
 const REPLACED_MARKDOWN_CODES = new Set([
   'CB_H1_MISSING',
   'CB_INTERNAL_URL_UNRESOLVED',
@@ -230,7 +229,6 @@ function formatCheck(check: SiteCheck): string {
   return lines.join('\n')
 }
 
-/** One group per code, errors first, with a few examples each: a large site stays readable. */
 function formatSiteFindings(findings: SiteFinding[]): string[] {
   const groups = new Map<SiteFindingCode, SiteFinding[]>()
   for (const finding of findings) {
