@@ -27,6 +27,9 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "dependencies": {
+    "htmlparser2": "^10.1.0"
+  },
   "devDependencies": {
     "@types/node": "^25.0.9",
     "typescript": "^5.9.3",

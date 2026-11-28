@@ -2,5 +2,11 @@
   "semi": false,
   "singleQuote": true,
   "printWidth": 100,
-  "ignorePatterns": ["site/content/**", "skills/**", "**/*.md", "**/*.mdx"]
+  "ignorePatterns": [
+    "site/content/**",
+    "skills/**",
+    "packages/built-site/fixtures/**",
+    "**/*.md",
+    "**/*.mdx"
+  ]
 }
