@@ -37,8 +37,8 @@ concept earns a name, add it here.
 - **Content project discovery** (`DiscoveredContentProject`) — the portable,
   read-only view that resolves discovered page facts relative to a project root
   and conservatively groups repeated path patterns into likely families and
-  locales. Adoption is its first adapter; Cloud and snapshots can consume the
-  same interface later.
+  locales. Adoption is its first adapter; snapshots can consume the same
+  interface later.
 - **Content project snapshot** (`ContentProjectSnapshot`) — the versioned,
   JSON-safe project read model returned by `inspectContentProject()`. It keeps
   page facts, hashes, statistics, findings, families, locales, and graph data
@@ -53,6 +53,22 @@ concept earns a name, add it here.
   from content directories to public URL patterns, plus the routes the host
   app serves outside content. It gives each page the URL a reader reaches it
   at, so integrity checks internal URLs exactly instead of guessing from slugs.
+
+## Built site
+
+- **Built page** — one URL the site serves, as the HTML a reader or crawler
+  receives for it. It is the unit of site health. A built page has zero or one
+  source document (a Markdown content file), linked through page routes; a
+  site's home and listing pages often have none, and a site without Markdown
+  has only built pages. _Avoid:_ output page, HTML page, route.
+- **Rendered page facts** — what a built page says about itself: title, meta
+  description, canonical, hreflang alternates, robots directives, structured
+  data, headings with their ids, and links. They are the counterpart of page
+  facts, read from the built page instead of from frontmatter. _Avoid:_ HTML
+  facts, output facts.
+- **Template finding** — a finding caused by what a site's layout or shared
+  components render rather than by a source document, reported once with every
+  built page it affects. _Avoid:_ layout error, global finding.
 
 ## CLI
 
