@@ -168,10 +168,14 @@ test('a placeholder matches one segment and a rule on another domain matches not
 })
 
 test('a host route is an exact path, with or without its slashes', () => {
-  const options = { origin: 'https://example.com', hostRoutes: ['/api/health', 'playground/'] }
+  const options = {
+    origin: 'https://example.com',
+    hostRoutes: ['/api/health', 'playground/', './status'],
+  }
   expect(resolve('/api/health', '/', options)).toEqual({ kind: 'host-route' })
   expect(resolve('/api/health/#status', '/', options)).toEqual({ kind: 'host-route' })
   expect(resolve('/playground', '/', options)).toEqual({ kind: 'host-route' })
+  expect(resolve('/status', '/', options)).toEqual({ kind: 'host-route' })
   expect(resolve('/api/health/live', '/', options)).toEqual({
     kind: 'missing',
     path: '/api/health/live',

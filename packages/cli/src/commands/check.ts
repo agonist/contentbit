@@ -52,7 +52,7 @@ const BUILD_COMMANDS: Array<[dependency: string, command: string]> = [
   ['@11ty/eleventy', 'eleventy'],
 ]
 
-const REPLACED_MARKDOWN_CODES = new Set([
+const MARKDOWN_CODES_REPLACED_BY_BUILT_PAGES = new Set([
   'CB_H1_MISSING',
   'CB_INTERNAL_URL_UNRESOLVED',
   'CB_MARKDOWN_ANCHOR_UNRESOLVED',
@@ -107,7 +107,9 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
       site && content
         ? {
             ...content,
-            findings: content.findings.filter(({ code }) => !REPLACED_MARKDOWN_CODES.has(code)),
+            findings: content.findings.filter(
+              ({ code }) => !MARKDOWN_CODES_REPLACED_BY_BUILT_PAGES.has(code),
+            ),
           }
         : content,
   })

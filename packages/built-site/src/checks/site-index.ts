@@ -1,3 +1,5 @@
+import { normalizeRoute } from '@contentbit/core'
+
 import { pagePath, type BuiltPage, type BuiltSite, type PagePath, type Redirect } from '../model.js'
 import { httpOrigin } from '../origin.js'
 
@@ -50,7 +52,7 @@ export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {})
   const ids = new Map(site.pages.map((page) => [page, new Set(page.facts.ids)]))
   const files = new Set(site.files)
   const isRedirected = redirectMatcher(site.redirects)
-  const hostRoutes = new Set((options.hostRoutes ?? []).map(hostRouteKey))
+  const hostRoutes = new Set((options.hostRoutes ?? []).map(normalizeRoute))
   const pageUrls = new Map<BuiltPage, URL>()
 
   const pageUrl = (page: BuiltPage): URL => {
@@ -90,7 +92,7 @@ export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {})
       }
       if (files.has(path.slice(1))) return { kind: 'file', exists: true }
       if (isRedirected(path)) return { kind: 'redirect' }
-      if (hostRoutes.has(hostRouteKey(path))) return { kind: 'host-route' }
+      if (hostRoutes.has(normalizeRoute(path))) return { kind: 'host-route' }
       if (hasFileExtension(path)) return { kind: 'file', exists: false }
       return { kind: 'missing', path }
     },
@@ -99,10 +101,6 @@ export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {})
 
 function routeKey(path: string): string {
   return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
-}
-
-function hostRouteKey(route: string): string {
-  return decodeComponent(route).replace(/^\/+|\/+$/g, '')
 }
 
 function hasFileExtension(path: string): boolean {
@@ -129,13 +127,15 @@ function redirectMatcher(redirects: Redirect[]): (path: PagePath) => boolean {
 }
 
 function redirectPattern(route: string): RegExp {
-  const source = route
+  // A rule ending in '/*' also covers its folder itself: '/docs/*' matches '/docs'.
+  const coversFolder = route.endsWith('/*')
+  const source = (coversFolder ? route.slice(0, -2) : route)
     .split('/')
     .map((segment) =>
       segment.startsWith(':') ? '[^/]+' : segment.split('*').map(escapeRegExp).join('.*'),
     )
     .join('/')
-  return new RegExp(`^${source.replace(/\/\.\*$/, '(?:/.*)?')}/?$`)
+  return new RegExp(`^${source}${coversFolder ? '(?:/.*)?' : ''}/?$`)
 }
 
 function escapeRegExp(text: string): string {

@@ -33,6 +33,7 @@ export {
   type ScanContentProjectOptions,
 } from './project-scan.js'
 export {
+  normalizeRoute,
   scanContentIntegrity,
   type ContentIntegrityFile,
   type ContentIntegrityFinding,

@@ -306,7 +306,8 @@ function slugTarget(
   return bySlug.get(route) ?? bySlug.get(route.slice(route.lastIndexOf('/') + 1))
 }
 
-function normalizeRoute(value: string): string {
+/** A route as `links.routes` and `links.hostRoutes` compare it: decoded, without a leading './' or outer slashes. */
+export function normalizeRoute(value: string): string {
   return decodeUriComponent(value)
     .replace(/^\.\//, '')
     .replace(/^\/+|\/+$/g, '')
