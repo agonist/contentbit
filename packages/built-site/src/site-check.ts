@@ -23,7 +23,7 @@ export interface SiteCheck {
   pages: Array<{ path: PagePath; file?: string; source?: string; facts: RenderedPageFacts }>
   findings: SiteFinding[]
   content?: { files: number; findings: ContentProjectFinding[] }
-  /** The source documents whose file changed after the build was made. */
+  /** The files of the source documents that changed after the build was made. */
   staleSources?: string[]
 }
 

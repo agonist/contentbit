@@ -2,41 +2,29 @@ import { normalizeRoute, type ContentPageFacts } from '@contentbit/core'
 
 import type { BuiltSite, PagePath } from './model.js'
 
-/** A Markdown content file of the site. */
 export interface SourceDocument {
-  /** The absolute path of the file. */
   file: string
   text: string
-  /** The URL path that links.routes gives the document. Absent outside every route. */
   route?: string
   facts: ContentPageFacts
-  /** When the file last changed, in milliseconds since the epoch. */
   modified: number
 }
 
 export type RoutedDocument = SourceDocument & { route: string }
 
 export interface SiteSourceOptions {
-  /** The frontmatter field that marks a draft with true, or the string 'true'. Default 'draft'. */
   draftField?: string
-  /** The frontmatter field with a document's publication date. Default 'date'. */
   dateField?: string
-  /** A document dated after this day is not published yet. */
   now: Date
 }
 
 export interface SiteSources {
-  /** The source document of each built page that has one. */
   pages: ReadonlyMap<PagePath, SourceDocument>
-  /** The published documents whose route no built page has. */
   unbuilt: RoutedDocument[]
-  /** Drafts and documents dated after today, which the site does not publish yet. */
   unpublished: ReadonlySet<SourceDocument>
-  /** The documents whose file changed after the build was made. */
   stale: ReadonlySet<SourceDocument>
 }
 
-/** A built page gets the first document whose route is its path. */
 export function siteSources(
   site: BuiltSite,
   documents: SourceDocument[],
@@ -78,12 +66,10 @@ export function siteSources(
   }
 }
 
-/** A quoted "false" is a string, so truthiness would make it a draft. */
 function isTrue(value: unknown): boolean {
   return value === true || (typeof value === 'string' && value.trim().toLowerCase() === 'true')
 }
 
-/** The day a frontmatter date names, as YYYY-MM-DD: its written day, or the local day it parses to. */
 function dayOf(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined
   const written = /^\s*(\d{4}-\d{2}-\d{2})/.exec(value)?.[1]

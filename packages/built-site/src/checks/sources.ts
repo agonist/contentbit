@@ -80,7 +80,6 @@ function mismatches(page: BuiltPage, document: SourceDocument, stale: boolean): 
   })
 }
 
-/** Templates add a suffix such as ' | Site', and some sites shorten descriptions. */
 function agree(rendered: string, written: string): boolean {
   const a = comparable(rendered)
   const b = comparable(written)

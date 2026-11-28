@@ -286,7 +286,6 @@ function formatSiteFindings(findings: SiteFinding[]): string[] {
     if (group) group.push(finding)
     else groups.set(key, [finding])
   }
-  // A code's findings can come in both severities: a stale build turns some errors into warnings.
   const codes = Object.keys(SITE_FINDING_CODES) as SiteFindingCode[]
   const ordered = (['error', 'warning'] as const).flatMap((severity) =>
     codes.map((code) => ({ severity, code })),
