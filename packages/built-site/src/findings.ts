@@ -33,14 +33,12 @@ export type SiteFindingCode = keyof typeof SITE_FINDING_CODES
 
 export type SiteFindingOrigin =
   | { kind: 'source'; file: string; line: number; column?: number; page: PagePath }
-  /** element is absent when the grouped findings name none, as site checks do. */
   | { kind: 'template'; element?: string; pages: PagePath[] }
   | { kind: 'page'; page: PagePath }
 
 export interface SiteFindingSubject {
-  /** The href, image src, URL or value the finding is about. */
   target?: string
-  /** What on the page has the problem: a link or image as elementKey() names it, or a fixed head subject such as 'title'. */
+  /** What on the page has the problem: a link or image as elementKey() names it, or a fixed subject such as 'title' or 'h1'. */
   element?: string
 }
 
@@ -77,7 +75,6 @@ export function siteFinding(
   }
 }
 
-/** 'nav a.content-toc-link', or 'body img' for an element outside every landmark. */
 export function elementKey({ landmark, selector }: ElementContext): string {
   return `${landmark ?? 'body'} ${selector}`
 }

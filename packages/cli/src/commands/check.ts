@@ -176,7 +176,6 @@ async function loadMarkdown(
   return project.files.length === 0 ? undefined : project
 }
 
-/** Each built page whose URL links.routes gives a Markdown file, with that file. */
 function sourceDocuments(
   site: BuiltSite,
   { scan, linkOptions }: LoadedContentProject,
@@ -308,7 +307,6 @@ function formatSiteFindings(findings: SiteFinding[]): string[] {
   return lines
 }
 
-/** 'nav a.content-toc-link on 127 pages: /a/ (#x), /b/ (#y), /c/ (#z) and 124 more' */
 function formatTemplate(
   { element, pages }: Extract<SiteFindingOrigin, { kind: 'template' }>,
   occurrences: NonNullable<SiteFinding['occurrences']>,
@@ -328,7 +326,6 @@ function formatTemplate(
   return `${subject}on ${plural(pages.length, 'page')}: ${list}`
 }
 
-/** The landmark, the tag and at most two classes: 'footer a.link.text-sm…'. */
 function shortElement(element: string): string {
   const [landmark, selector] = element.split(' ')
   if (selector === undefined) return element

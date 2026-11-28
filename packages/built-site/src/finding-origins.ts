@@ -3,7 +3,6 @@ import { extractFrontmatter, readContentPageFacts } from '@contentbit/core'
 import { siteFinding, type SiteFinding, type SiteFindingCode } from './findings.js'
 import type { PagePath } from './model.js'
 
-/** The Markdown source document of a built page. */
 export interface SourceDocument {
   file: string
   text: string
@@ -20,18 +19,10 @@ const NEVER_GROUPED = new Set<SiteFindingCode>([
   'CB_PAGE_DESCRIPTION_DUPLICATE',
 ])
 
-// Landmarks that a layout renders on every page, unlike the page's own content in main.
 const LAYOUT_LANDMARKS = new Set(['header', 'nav', 'footer', 'aside'])
 
-// What can stand next to a value written in Markdown or frontmatter, so /fr/ is not found inside /fr/blog/.
 const VALUE_EDGE = /[\s"'`()<>[\]{},]/
 
-/**
- * Gives a page finding a source origin when its page's source document
- * writes the problem: at the first place the document writes the finding's
- * target, or at line 1 for a missing title or description that the
- * frontmatter lacks too. Every other finding is returned as it was.
- */
 export function attributeToSources(
   findings: SiteFinding[],
   sources: ReadonlyMap<PagePath, SourceDocument>,
@@ -76,12 +67,6 @@ interface PageFinding {
   page: PagePath
 }
 
-/**
- * Replaces the page findings that share a code and an element on two or
- * more pages with one template finding, at the place of the first. A finding
- * without an element groups by its code alone. Source findings, and the
- * duplicate title and description findings, are returned as they were.
- */
 export function groupTemplateFindings(findings: SiteFinding[]): SiteFinding[] {
   const groups = new Map<string, PageFinding[]>()
   for (const finding of findings) {
@@ -116,7 +101,6 @@ function groupKey({ code, element, target }: SiteFinding): string {
   return `${code} ${element} ${target ?? ''}`
 }
 
-/** A head subject such as `link[rel=canonical]`, an element with a class, or one in a layout landmark. */
 function isLayoutElement(element: string): boolean {
   const space = element.indexOf(' ')
   if (space === -1) return true
