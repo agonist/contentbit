@@ -90,3 +90,19 @@ test('a site check without a build has no pages and says where it looked', () =>
     content: { files: 2, findings: [contentFinding('warning')] },
   })
 })
+
+test('a built page with a source document names its file', () => {
+  const check = createSiteCheck({
+    input: { kind: 'folder', path: '/site/dist' },
+    site,
+    findings: [],
+    sources: new Map([
+      [pagePath('/about/'), { file: '/site/content/about.md', text: '# About\n' }],
+    ]),
+  })
+
+  expect(check.pages.map(({ path, source }) => [path, source])).toEqual([
+    ['/', undefined],
+    ['/about/', '/site/content/about.md'],
+  ])
+})

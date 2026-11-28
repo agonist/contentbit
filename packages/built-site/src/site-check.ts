@@ -1,5 +1,6 @@
 import type { ContentProjectFinding } from '@contentbit/core'
 
+import type { SourceDocument } from './finding-origins.js'
 import type { SiteFinding } from './findings.js'
 import type { BuiltSite, PagePath, RenderedPageFacts } from './model.js'
 
@@ -30,14 +31,19 @@ export function createSiteCheck({
   origin,
   findings,
   content,
+  sources,
 }: {
   input: SiteCheck['input']
   site?: BuiltSite
   origin?: SiteOrigin
   findings: SiteFinding[]
   content?: SiteCheck['content']
+  sources?: ReadonlyMap<PagePath, SourceDocument>
 }): SiteCheck {
-  const pages = site?.pages ?? []
+  const pages = (site?.pages ?? []).map(({ path, file, facts }) => {
+    const source = sources?.get(path)
+    return { path, file, ...(source && { source: source.file }), facts }
+  })
   const severities = [...findings, ...(content?.findings ?? [])].map(({ severity }) => severity)
   return {
     schemaVersion: SITE_CHECK_SCHEMA_VERSION,
