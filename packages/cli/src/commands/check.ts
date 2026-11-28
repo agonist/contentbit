@@ -12,7 +12,7 @@ import {
   httpOrigin,
   inferOrigin,
   readBuildFolder,
-  SITE_FINDING_CODES,
+  DEFAULT_SEVERITY_BY_CODE,
   siteSources,
   type BuiltSite,
   type FindingElement,
@@ -206,8 +206,8 @@ async function sourceDocuments({
     scan.files.map(async ({ path, source, frontmatter }) => {
       const facts = readContentPageFacts(frontmatter, linkOptions)
       const route = pageUrl?.(path, facts)
-      const modified = (await stat(path)).mtimeMs
-      return { file: path, text: source, ...(route !== undefined && { route }), facts, modified }
+      const modifiedMs = (await stat(path)).mtimeMs
+      return { file: path, text: source, ...(route !== undefined && { route }), facts, modifiedMs }
     }),
   )
 }
@@ -286,7 +286,7 @@ function formatSiteFindings(findings: SiteFinding[]): string[] {
     if (group) group.push(finding)
     else groups.set(key, [finding])
   }
-  const codes = Object.keys(SITE_FINDING_CODES) as SiteFindingCode[]
+  const codes = Object.keys(DEFAULT_SEVERITY_BY_CODE) as SiteFindingCode[]
   const ordered = (['error', 'warning'] as const).flatMap((severity) =>
     codes.map((code) => ({ severity, code })),
   )

@@ -113,5 +113,5 @@ export interface BuiltSite {
   robots?: { sitemaps: string[]; disallow: string[] }
   /** From _redirects (Cloudflare Pages and Netlify format); [] when absent. */
   redirects: Redirect[]
-  builtAt?: number
+  builtAtMs?: number
 }

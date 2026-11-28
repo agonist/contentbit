@@ -93,19 +93,19 @@ test('a site check without a build has no pages and says where it looked', () =>
 })
 
 test('a built page with a source document names its file, and a document newer than the build is stale', () => {
-  const document = (name: string, modified: number, route?: string) => ({
+  const document = (name: string, modifiedMs: number, route?: string) => ({
     file: `/site/content/${name}.md`,
     text: `# ${name}\n`,
     ...(route && { route }),
     facts: { frontmatter: {} },
-    modified,
+    modifiedMs,
   })
   const check = createSiteCheck({
     input: { kind: 'folder', path: '/site/dist' },
     site,
     findings: [],
     sources: siteSources(
-      { ...site, builtAt: 1_000 },
+      { ...site, builtAtMs: 1_000 },
       [document('about', 500, '/about'), document('notes', 2_000)],
       { now: new Date() },
     ),

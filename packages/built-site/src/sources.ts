@@ -7,7 +7,7 @@ export interface SourceDocument {
   text: string
   route?: string
   facts: ContentPageFacts
-  modified: number
+  modifiedMs: number
 }
 
 export type RoutedDocument = SourceDocument & { route: string }
@@ -61,7 +61,9 @@ export function siteSources(
     ),
     unpublished,
     stale: new Set(
-      documents.filter(({ modified }) => site.builtAt !== undefined && modified > site.builtAt),
+      documents.filter(
+        ({ modifiedMs }) => site.builtAtMs !== undefined && modifiedMs > site.builtAtMs,
+      ),
     ),
   }
 }

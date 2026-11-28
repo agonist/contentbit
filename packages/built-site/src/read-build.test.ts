@@ -180,7 +180,7 @@ test('the build time is the root index.html time, or the newest page time withou
   const withIndex = await buildFolder({ 'index.html': page('Home'), 'a/index.html': page('A') })
   await touch(withIndex, 'index.html', 1_000)
   await touch(withIndex, 'a/index.html', 3_000)
-  expect((await readBuildFolder(withIndex)).builtAt).toBe(1_000_000)
+  expect((await readBuildFolder(withIndex)).builtAtMs).toBe(1_000_000)
 
   const withoutIndex = await buildFolder({
     'a/index.html': page('A'),
@@ -190,7 +190,7 @@ test('the build time is the root index.html time, or the newest page time withou
   await touch(withoutIndex, 'a/index.html', 2_000)
   await touch(withoutIndex, 'b.html', 1_000)
   await touch(withoutIndex, 'notes.txt', 9_000)
-  expect((await readBuildFolder(withoutIndex)).builtAt).toBe(2_000_000)
+  expect((await readBuildFolder(withoutIndex)).builtAtMs).toBe(2_000_000)
 
-  expect((await readBuildFolder(await buildFolder({ 'notes.txt': '' }))).builtAt).toBeUndefined()
+  expect((await readBuildFolder(await buildFolder({ 'notes.txt': '' }))).builtAtMs).toBeUndefined()
 })

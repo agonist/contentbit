@@ -2,7 +2,7 @@ import type { ElementContext, Landmark, PagePath } from './model.js'
 
 export type SiteFindingSeverity = 'error' | 'warning'
 
-export const SITE_FINDING_CODES = {
+export const DEFAULT_SEVERITY_BY_CODE = {
   CB_PAGE_TITLE_MISSING: 'error',
   CB_PAGE_TITLE_DUPLICATE: 'warning',
   CB_PAGE_DESCRIPTION_MISSING: 'warning',
@@ -29,7 +29,7 @@ export const SITE_FINDING_CODES = {
   CB_SITE_SOURCE_NOT_BUILT: 'error',
 } as const satisfies Record<string, SiteFindingSeverity>
 
-export type SiteFindingCode = keyof typeof SITE_FINDING_CODES
+export type SiteFindingCode = keyof typeof DEFAULT_SEVERITY_BY_CODE
 
 export type SiteFindingOrigin =
   | { kind: 'source'; file: string; line: number; column?: number; page: PagePath }
@@ -64,7 +64,7 @@ export function siteFinding(
   {
     target,
     element,
-    severity = SITE_FINDING_CODES[code],
+    severity = DEFAULT_SEVERITY_BY_CODE[code],
   }: SiteFindingSubject & { severity?: SiteFindingSeverity } = {},
 ): SiteFinding {
   return {

@@ -69,7 +69,7 @@ function mismatches(page: BuiltPage, document: SourceDocument, stale: boolean): 
   return WRITTEN_FACTS.flatMap(({ code, fact, element, label, tag }) => {
     const rendered = page.facts[fact]
     const written = document.facts[fact]
-    if (!rendered || !written || agree(rendered, written)) return []
+    if (!rendered || !written || oneContainsTheOther(rendered, written)) return []
     return siteFinding(
       code,
       { kind: 'page', page: page.path },
@@ -80,7 +80,7 @@ function mismatches(page: BuiltPage, document: SourceDocument, stale: boolean): 
   })
 }
 
-function agree(rendered: string, written: string): boolean {
+function oneContainsTheOther(rendered: string, written: string): boolean {
   const a = comparable(rendered)
   const b = comparable(written)
   return a.includes(b) || b.includes(a)

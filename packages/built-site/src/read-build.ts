@@ -31,7 +31,7 @@ export async function readBuildFolder(root: string): Promise<BuiltSite> {
   const files = found.map(({ file }) => file).sort()
   const pageFiles = found.filter(({ page }) => page).map(({ file }) => file)
   const robots = robotsText === undefined ? undefined : readRobots(robotsText)
-  const [pages, sitemap, builtAt] = await Promise.all([
+  const [pages, sitemap, builtAtMs] = await Promise.all([
     mapConcurrently(pageFiles, READ_CONCURRENCY, async (file): Promise<BuiltPage> => {
       const html = await readFile(join(buildRoot, file), 'utf8')
       return { path: pagePathFromFile(file), file, facts: readRenderedPageFacts(html) }
@@ -48,7 +48,7 @@ export async function readBuildFolder(root: string): Promise<BuiltSite> {
     ...(sitemap && { sitemap }),
     ...(robots && { robots }),
     redirects: redirectsText === undefined ? [] : readRedirects(redirectsText),
-    ...(builtAt !== undefined && { builtAt }),
+    ...(builtAtMs !== undefined && { builtAtMs }),
   }
 }
 

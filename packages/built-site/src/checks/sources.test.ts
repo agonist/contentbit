@@ -41,14 +41,14 @@ function builtSite(pages: BuiltPage[], extra: Partial<BuiltSite> = {}): BuiltSit
   return { root: '/site/dist', pages, files: [], redirects: [], ...extra }
 }
 
-function document(route: string | undefined, text: string, modified = 0): SourceDocument {
+function document(route: string | undefined, text: string, modifiedMs = 0): SourceDocument {
   const name = route?.replace(/^\/|\/$/g, '') || 'index'
   return {
     file: `/site/content/${name}.md`,
     text,
     ...(route !== undefined && { route }),
     facts: readContentPageFacts(extractFrontmatter(text)?.data ?? {}),
-    modified,
+    modifiedMs,
   }
 }
 
@@ -205,7 +205,7 @@ test('site.draftField and site.dateField name the frontmatter fields that hold t
 })
 
 test('a document that changed after the build gets warnings that say to rebuild', () => {
-  const site = builtSite([builtPage('/post/', { title: 'Old title' })], { builtAt: 1_000 })
+  const site = builtSite([builtPage('/post/', { title: 'Old title' })], { builtAtMs: 1_000 })
   const documents = [
     document('/post/', frontmatter({ title: 'New title' }), 2_000),
     document('/new/', frontmatter({ title: 'New post' }), 2_000),
