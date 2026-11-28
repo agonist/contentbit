@@ -27,6 +27,22 @@ export interface SiteIndex {
 
 // Without a known origin, only root-relative and relative links resolve onto this reserved host.
 const UNKNOWN_ORIGIN = 'https://site.invalid'
+const BROWSER_RENDERED_TEXT = 50
+
+/** No headings and almost no text in the HTML. A meta refresh page is a redirect, not browser-rendered. */
+export function isBrowserRendered({ facts }: BuiltPage): boolean {
+  return (
+    facts.redirect === undefined &&
+    facts.headings.length === 0 &&
+    facts.textLength < BROWSER_RENDERED_TEXT
+  )
+}
+
+/** No noindex, no meta refresh, and its content is in the HTML. */
+export function isIndexable(page: BuiltPage): boolean {
+  const { facts } = page
+  return !facts.robots.noindex && facts.redirect === undefined && !isBrowserRendered(page)
+}
 
 export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {}): SiteIndex {
   const origin = options.origin === undefined ? undefined : httpOrigin(options.origin)

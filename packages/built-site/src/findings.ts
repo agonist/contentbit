@@ -43,3 +43,18 @@ export interface SiteFinding {
   hint?: string
   origin: SiteFindingOrigin
 }
+
+export function siteFinding(
+  code: SiteFindingCode,
+  origin: SiteFindingOrigin,
+  message: string,
+  hint?: string,
+): SiteFinding {
+  return {
+    code,
+    severity: SITE_FINDING_CODES[code],
+    message,
+    ...(hint !== undefined && { hint }),
+    origin,
+  }
+}
