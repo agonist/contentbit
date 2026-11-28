@@ -52,6 +52,8 @@ test('a config without content still serves commands given explicit globs', asyn
 test.each([
   ['site: "dist"', 'Contentbit config "site" must be an object'],
   ['site: { build: "" }', 'Contentbit config "site.build" must be a non-empty string'],
+  ['site: { draftField: "" }', 'Contentbit config "site.draftField" must be a non-empty string'],
+  ['site: { dateField: 1 }', 'Contentbit config "site.dateField" must be a non-empty string'],
   [
     'site: { origin: "example.com" }',
     'Contentbit config "site.origin" must be an absolute http or https URL, not "example.com"',

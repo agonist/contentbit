@@ -40,7 +40,9 @@ export function checkSources(index: SiteIndex): SiteFinding[] {
   const findings: SiteFinding[] = []
   for (const page of index.pages) {
     const document = sources.pages.get(page.path)
-    if (document && isIndexable(page)) findings.push(...mismatches(page, document))
+    if (document && !sources.unpublished.has(document) && isIndexable(page)) {
+      findings.push(...mismatches(page, document))
+    }
   }
   for (const document of sources.unbuilt) {
     const target = index.resolveSiteUrl(document.route)
@@ -50,7 +52,7 @@ export function checkSources(index: SiteIndex): SiteFinding[] {
         'CB_SITE_SOURCE_NOT_BUILT',
         { kind: 'source', file: document.file, line: 1, page: target.path },
         `links.routes gives this document the route ${document.route}, which has no built page, redirect or host route.`,
-        'Build the page, or fix links.routes if the site serves the document at another URL.',
+        'Build the page, or fix links.routes if the site serves the document at another URL. check skips drafts and documents dated after today; site.draftField and site.dateField name their frontmatter fields.',
         { target: document.route },
       ),
     )

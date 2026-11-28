@@ -66,6 +66,10 @@ concept earns a name, add it here.
   data, headings with their ids, and links. They are the counterpart of page
   facts, read from the built page instead of from frontmatter. _Avoid:_ HTML
   facts, output facts.
+- **Unpublished document** — a source document that is a draft or is dated
+  after today, read from the frontmatter fields `site.draftField` (default
+  `draft`) and `site.dateField` (default `date`). The site does not publish it
+  yet, so `check` neither expects its built page nor compares it with one.
 - **Template finding** — a finding caused by what a site's layout or shared
   components render rather than by a source document, reported once with every
   built page it affects. _Avoid:_ layout error, global finding.

@@ -9,10 +9,12 @@ import {
   type BuiltPage,
   type BuiltSite,
   type RenderedPageFacts,
+  type SiteSourceOptions,
   type SourceDocument,
 } from '../index.js'
 
 const SOURCE_CODES = /MISMATCH|SOURCE_NOT_BUILT/
+const NOW = new Date(2026, 10, 28, 12)
 
 function builtPage(path: string, facts: Partial<RenderedPageFacts> = {}): BuiltPage {
   return {
@@ -58,8 +60,9 @@ function sourceFindings(
   site: BuiltSite,
   documents: SourceDocument[],
   options: Parameters<typeof checkSite>[1] = {},
+  sourceOptions: Partial<SiteSourceOptions> = {},
 ) {
-  const sources = siteSources(site, documents)
+  const sources = siteSources(site, documents, { now: NOW, ...sourceOptions })
   return attributeToSources(checkSite(site, { ...options, sources }), sources.pages)
     .filter(({ code }) => SOURCE_CODES.test(code))
     .map(({ code, severity, target, element, origin }) => ({
@@ -163,4 +166,36 @@ test('a document whose route has no built page, redirect or host route is an err
       at: '/site/content/blog/new-post.md:1',
     },
   ])
+})
+
+test('a draft or a document dated after today gets no source findings, built or not', () => {
+  const site = builtSite([builtPage('/built-draft/', { title: 'Old title' })])
+  const documents = [
+    document('/built-draft/', frontmatter({ title: 'New title', draft: 'true' })),
+    document('/draft/', frontmatter({ title: 'Draft', draft: 'true' })),
+    document('/tomorrow/', frontmatter({ title: 'Tomorrow', date: '2026-11-29' })),
+    document('/later/', frontmatter({ title: 'Later', date: '"2027-01-05T09:00:00Z"' })),
+    document('/today/', frontmatter({ title: 'Today', date: '2026-11-28' })),
+    document('/not-a-draft/', frontmatter({ title: 'Not a draft', draft: 'false' })),
+  ]
+
+  expect(sourceFindings(site, documents).map(({ code, target }) => [code, target])).toEqual([
+    ['CB_SITE_SOURCE_NOT_BUILT', '/not-a-draft/'],
+    ['CB_SITE_SOURCE_NOT_BUILT', '/today/'],
+  ])
+})
+
+test('site.draftField and site.dateField name the frontmatter fields that hold them', () => {
+  const site = builtSite([builtPage('/')])
+  const documents = [
+    document('/hidden/', frontmatter({ title: 'Hidden', unlisted: 'true', draft: 'false' })),
+    document('/scheduled/', frontmatter({ title: 'Scheduled', publishedOn: 'December 3, 2026' })),
+    document('/dated/', frontmatter({ title: 'Dated', date: '2027-01-01', draft: 'true' })),
+  ]
+
+  expect(
+    sourceFindings(site, documents, {}, { draftField: 'unlisted', dateField: 'publishedOn' }).map(
+      ({ target }) => target,
+    ),
+  ).toEqual(['/dated/'])
 })

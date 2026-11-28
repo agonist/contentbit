@@ -201,16 +201,19 @@ test('with links.routes, a finding that a Markdown source writes points at its f
 })
 
 const routedBlog = {
-  'contentbit.config.mjs': `export default { content: 'content/**/*.md', links: { routes: { 'content/blog': '/blog/{slug}/' } } }`,
+  'contentbit.config.mjs': `export default { content: 'content/**/*.md', links: { routes: { 'content/blog': '/blog/{slug}/' } }, site: { dateField: 'publishedOn' } }`,
   'content/blog/post.md': '---\nslug: post\ntitle: How to proof dough\n---\n\nText.\n',
   'content/blog/new.md': '---\nslug: new\ntitle: A new post\n---\n\nText.\n',
+  'content/blog/draft.md': '---\nslug: draft\ntitle: A draft\ndraft: true\n---\n\nText.\n',
+  'content/blog/later.md':
+    '---\nslug: later\ntitle: Later\npublishedOn: 2999-01-01\n---\n\nText.\n',
   'dist/index.html':
     '<title>Home</title><meta name="description" content="Home."><link rel="canonical" href="https://example.com/"><h1>Home</h1>',
   'dist/blog/post/index.html':
     '<title>Bread basics | Example</title><meta name="description" content="A post."><link rel="canonical" href="https://example.com/blog/post/"><h1>Bread basics</h1>',
 }
 
-test('with links.routes, check compares each source document with its built page and reports one never built', async () => {
+test('with links.routes, check compares each source document with its built page and reports a published one never built', async () => {
   const root = await project(routedBlog)
 
   const { code, out } = await check(root, ['--json'])

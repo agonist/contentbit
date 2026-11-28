@@ -96,8 +96,11 @@ function normalizeSite(value: unknown, path: string): ContentbitSiteConfig {
     throw new CliError(2, `Contentbit config "site" must be an object: ${path}`)
   }
   const site = value as ContentbitSiteConfig
-  if (site.build !== undefined && (typeof site.build !== 'string' || site.build === '')) {
-    throw new CliError(2, `Contentbit config "site.build" must be a non-empty string: ${path}`)
+  for (const field of ['build', 'draftField', 'dateField'] as const) {
+    const fieldValue = site[field]
+    if (fieldValue !== undefined && (typeof fieldValue !== 'string' || fieldValue === '')) {
+      throw new CliError(2, `Contentbit config "site.${field}" must be a non-empty string: ${path}`)
+    }
   }
   if (site.origin === undefined) return site
   const origin = typeof site.origin === 'string' ? httpOrigin(site.origin) : undefined

@@ -107,7 +107,13 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
   }
 
   const origin = resolveOrigin(flagOrigin, config.site?.origin, site)
-  const sources = site && siteSources(site, markdown ? sourceDocuments(markdown) : [])
+  const sources =
+    site &&
+    siteSources(site, markdown ? sourceDocuments(markdown) : [], {
+      draftField: config.site?.draftField,
+      dateField: config.site?.dateField,
+      now: new Date(),
+    })
   const findings =
     site && sources
       ? attributeToSources(

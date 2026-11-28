@@ -97,15 +97,19 @@ test('a built page with a source document names its file', () => {
     input: { kind: 'folder', path: '/site/dist' },
     site,
     findings: [],
-    sources: siteSources(site, [
-      {
-        file: '/site/content/about.md',
-        text: '# About\n',
-        route: '/about',
-        facts: { frontmatter: {} },
-      },
-      { file: '/site/content/notes.md', text: '# Notes\n', facts: { frontmatter: {} } },
-    ]),
+    sources: siteSources(
+      site,
+      [
+        {
+          file: '/site/content/about.md',
+          text: '# About\n',
+          route: '/about',
+          facts: { frontmatter: {} },
+        },
+        { file: '/site/content/notes.md', text: '# Notes\n', facts: { frontmatter: {} } },
+      ],
+      { now: new Date() },
+    ),
   })
 
   expect(check.pages.map(({ path, source }) => [path, source])).toEqual([

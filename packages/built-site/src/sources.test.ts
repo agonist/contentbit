@@ -22,6 +22,8 @@ const site: BuiltSite = {
   redirects: [],
 }
 
+const now = new Date(2026, 10, 28, 12)
+
 const document = (name: string, route?: string): SourceDocument => ({
   file: `/site/content/${name}.md`,
   text: `# ${name}\n`,
@@ -34,7 +36,7 @@ test('a built page gets the document whose route is its path, with or without th
   const post = document('post', '/blog/post')
   const about = document('about', '/about/')
 
-  const { pages, unbuilt } = siteSources(site, [home, post, about])
+  const { pages, unbuilt } = siteSources(site, [home, post, about], { now })
   expect([...pages]).toEqual([
     ['/', home],
     ['/blog/post/', post],
@@ -44,19 +46,19 @@ test('a built page gets the document whose route is its path, with or without th
 })
 
 test('a document whose route no built page has is unbuilt; one without a route is not', () => {
-  const draft = document('draft', '/blog/draft/')
+  const missing = document('missing', '/blog/missing/')
   const snippet = document('snippet')
 
-  const { pages, unbuilt } = siteSources(site, [draft, snippet])
+  const { pages, unbuilt } = siteSources(site, [missing, snippet], { now })
   expect(pages.size).toBe(0)
-  expect(unbuilt).toEqual([draft])
+  expect(unbuilt).toEqual([missing])
 })
 
 test('two documents with the same route give the page the first one, and neither is unbuilt', () => {
   const first = document('post', '/blog/post/')
   const second = document('post-copy', '/blog/post/')
 
-  const { pages, unbuilt } = siteSources(site, [first, second])
+  const { pages, unbuilt } = siteSources(site, [first, second], { now })
   expect(pages.get(pagePath('/blog/post/'))).toBe(first)
   expect(unbuilt).toEqual([])
 })
