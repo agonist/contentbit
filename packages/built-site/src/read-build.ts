@@ -12,12 +12,10 @@ import {
 } from './model.js'
 import { readRenderedPageFacts } from './read-page.js'
 
-/** Folders that hold assets, framework internals or error pages, never built pages. */
 const INTERNAL_FOLDERS = new Set(['_astro', '_next', 'node_modules', '_not-found'])
 const ERROR_PAGES = new Set(['404.html', '500.html', '404/index.html', '500/index.html'])
 const READ_CONCURRENCY = 16
 
-/** Reads a static build folder into a built site: its built pages, sitemap, robots.txt and redirects. */
 export async function readBuildFolder(root: string): Promise<BuiltSite> {
   const buildRoot = resolve(root)
   const [files, robotsText, redirectsText] = await Promise.all([
@@ -44,7 +42,6 @@ export async function readBuildFolder(root: string): Promise<BuiltSite> {
   }
 }
 
-/** Every page file under the root as a posix path, skipping error pages and internal folders. */
 async function findPageFiles(root: string, dir = ''): Promise<string[]> {
   const entries = await readdir(join(root, dir), { withFileTypes: true })
   const found = await Promise.all(
@@ -100,10 +97,6 @@ function readRobots(text: string): NonNullable<BuiltSite['robots']> {
   return { sitemaps: [...sitemaps], disallow: [...disallow] }
 }
 
-/**
- * Starts from the robots.txt sitemaps, else sitemap-index.xml, else sitemap.xml, and follows
- * every sitemap index entry whose file is in the build.
- */
 async function readSitemap(
   root: string,
   robotsSitemaps: string[],
@@ -132,7 +125,6 @@ async function readSitemap(
   return files.length === 0 ? undefined : { files, urls }
 }
 
-/** The build file a sitemap URL points to, by its pathname. */
 function sitemapFile(url: string): string | undefined {
   let path: string
   try {
@@ -174,7 +166,6 @@ function readSitemapXml(xml: string): { sitemaps: string[]; urls: string[] } {
   return { sitemaps, urls }
 }
 
-/** Cloudflare Pages and Netlify `_redirects` lines: `from to [status]`, 301 by default. */
 function readRedirects(text: string): Redirect[] {
   const redirects: Redirect[] = []
   for (const line of text.split(/\r?\n/)) {

@@ -1,7 +1,7 @@
 /** A URL path the site serves: starts with '/', percent-decoded, no query or hash. Directory index pages end in '/'. */
 export type PagePath = string & { readonly __brand: 'PagePath' }
 
-/** Parses a URL path into a page path. Throws a TypeError on a value without a leading '/'. */
+/** Throws a TypeError on a value without a leading '/'. */
 export function pagePath(value: string): PagePath {
   const path = value.replace(/[?#].*$/s, '')
   if (!path.startsWith('/')) {
@@ -29,13 +29,10 @@ function decodeSegment(segment: string): string {
 
 export type Landmark = 'header' | 'nav' | 'main' | 'aside' | 'footer'
 
-/**
- * Where an element sits, so findings can be grouped into template findings.
- * selector: the tag plus its classes in document order, e.g. 'a.content-toc-link'.
- * landmark: the nearest landmark ancestor element, by tag or by its ARIA role.
- */
 export interface ElementContext {
+  /** The tag plus its classes in document order, e.g. 'a.content-toc-link'. */
   selector: string
+  /** The nearest landmark ancestor element, by tag or by its ARIA role. */
   landmark?: Landmark
 }
 
@@ -63,7 +60,6 @@ export interface HreflangAlternate {
 
 export type StructuredDataBlock = { valid: true; types: string[] } | { valid: false; error: string }
 
-/** What a built page says about itself, read from its HTML. */
 export interface RenderedPageFacts {
   /** <html lang> */
   lang?: string
@@ -75,13 +71,13 @@ export interface RenderedPageFacts {
   canonical?: string
   /** From <meta name="robots"> and <meta name="googlebot">. */
   robots: { noindex: boolean; nofollow: boolean }
-  /** The target of <meta http-equiv="refresh" content="0;url=...">. */
+  /** The URL in the first <meta http-equiv="refresh" content>, after its delay. */
   redirect?: string
   /** Each <link rel="alternate" hreflang href>. */
   alternates: HreflangAlternate[]
   /** Each <script type="application/ld+json">. types: every @type in the block, first occurrence first. */
   structuredData: StructuredDataBlock[]
-  /** h1-h6 in document order. text: the decoded visible text. */
+  /** h1-h6 in document order. text: the decoded text content, whitespace collapsed. */
   headings: RenderedHeading[]
   /** Every id attribute on the page, in order, deduplicated. */
   ids: string[]
@@ -93,7 +89,6 @@ export interface RenderedPageFacts {
   textLength: number
 }
 
-/** One URL the site serves, as the HTML a reader or crawler receives for it. */
 export interface BuiltPage {
   path: PagePath
   /** Posix path relative to the build root. */

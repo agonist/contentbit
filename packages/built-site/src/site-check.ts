@@ -3,7 +3,6 @@ import type { PagePath, RenderedPageFacts } from './model.js'
 
 export const SITE_CHECK_SCHEMA_VERSION = 'contentbit.site-check.v1' as const
 
-/** The JSON that `contentbit check --json` writes. */
 export interface SiteCheck {
   schemaVersion: typeof SITE_CHECK_SCHEMA_VERSION
   input: { kind: 'folder'; path: string } | { kind: 'url'; url: string }

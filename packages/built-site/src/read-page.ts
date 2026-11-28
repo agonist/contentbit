@@ -24,7 +24,6 @@ const LANDMARK_ROLES = new Map<string, Landmark>([
   ['complementary', 'aside'],
   ['contentinfo', 'footer'],
 ])
-/** Elements whose text a reader never sees on the page. */
 const HIDDEN_TEXT_TAGS = new Set(['head', 'title', 'script', 'style', 'template', 'noscript'])
 const WHITESPACE = /[\t\n\f\r ]+/
 
@@ -35,14 +34,13 @@ interface Frame {
   svg: boolean
 }
 
-/** Text collected for an open element until it closes. */
 interface Capture {
   depth: number
   parts: string[]
   finish: (text: string) => void
 }
 
-/** Reads what a built page says about itself in one streaming pass. Never throws on malformed HTML. */
+/** Never throws on malformed HTML. */
 export function readRenderedPageFacts(html: string): RenderedPageFacts {
   const facts: RenderedPageFacts = {
     robots: { noindex: false, nofollow: false },
@@ -208,7 +206,6 @@ function readStructuredData(text: string): StructuredDataBlock {
   return { valid: true, types: [...types] }
 }
 
-/** Every @type in a JSON-LD value, a node's own type before the types nested in it. */
 function collectTypes(value: unknown, types: Set<string>) {
   if (typeof value !== 'object' || value === null) return
   if (!Array.isArray(value)) {

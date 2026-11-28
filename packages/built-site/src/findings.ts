@@ -2,7 +2,6 @@ import type { PagePath } from './model.js'
 
 export type SiteFindingSeverity = 'error' | 'warning'
 
-/** Every site finding code with its default severity. */
 export const SITE_FINDING_CODES = {
   CB_PAGE_TITLE_MISSING: 'error',
   CB_PAGE_TITLE_DUPLICATE: 'warning',
@@ -32,7 +31,6 @@ export const SITE_FINDING_CODES = {
 
 export type SiteFindingCode = keyof typeof SITE_FINDING_CODES
 
-/** Where a finding comes from: a line in a source document, a template element on several built pages, or one built page. */
 export type SiteFindingOrigin =
   | { kind: 'source'; file: string; line: number; column?: number; page: PagePath }
   | { kind: 'template'; element: string; pages: PagePath[] }
