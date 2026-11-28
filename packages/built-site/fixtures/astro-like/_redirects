@@ -1,0 +1,6 @@
+# Posts that moved
+/blog/hello-world /blog/first-post/ 301
+/feed /rss.xml 302
+
+/fr/blog/premier-article /fr/blog/first-post/
+/docs/* /blog/:splat 301!

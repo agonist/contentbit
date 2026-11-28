@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://harbor.example/sitemap-index.xml
