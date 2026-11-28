@@ -12,7 +12,6 @@ export interface SiteOrigin {
 
 export interface SiteCheck {
   schemaVersion: typeof SITE_CHECK_SCHEMA_VERSION
-  /** none: no build folder was found; searched lists the folders tried. */
   input:
     | { kind: 'folder'; path: string }
     | { kind: 'url'; url: string }
@@ -22,7 +21,6 @@ export interface SiteCheck {
   summary: { pages: number; errors: number; warnings: number }
   pages: Array<{ path: PagePath; file?: string; source?: string; facts: RenderedPageFacts }>
   findings: SiteFinding[]
-  /** Absent when no Markdown content was checked. */
   content?: { files: number; findings: ContentProjectFinding[] }
 }
 

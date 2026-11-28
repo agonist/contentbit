@@ -3,9 +3,7 @@ import type { LinkResolverOptions } from './links.js'
 export interface ContentbitSiteConfig {
   /** The static build folder, relative to this config file. */
   build?: string
-  /** A running server's URL, such as http://localhost:4321. `check` does not read it yet. */
   url?: string
-  /** The site's public origin, such as https://example.com. */
   origin?: string
 }
 

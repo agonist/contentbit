@@ -44,7 +44,6 @@ export interface ResolvedContentCommandConfig {
   cwd?: string
   registry?: string
   includeGenericBlocks: boolean
-  /** From the Contentbit config, with build resolved against the config file. */
   site?: ContentbitSiteConfig
   resolveLinkOptions(): LinkResolverOptions
   loadSeo(): Promise<LoadedSeoConfig>

@@ -33,7 +33,6 @@ export interface CheckCommandInput extends LinkOptionValues {
   noSeo?: boolean
 }
 
-/** Tried in order under the project root; the first with an index.html at its root is the build. */
 const BUILD_FOLDERS = ['dist/client', 'dist', 'out', 'build', 'public']
 
 const BUILD_COMMANDS: Array<[dependency: string, command: string]> = [
