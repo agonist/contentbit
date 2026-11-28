@@ -1,0 +1,7 @@
+User-Agent: *
+Allow: /
+Disallow: /api/
+Disallow:
+
+User-Agent: GPTBot
+Disallow: /api/ # same as everyone
