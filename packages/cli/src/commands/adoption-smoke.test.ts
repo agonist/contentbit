@@ -8,7 +8,6 @@ import { fakeIo } from '../run.test'
 const root = fileURLToPath(new URL('../../../..', import.meta.url))
 const fixtures = join(root, 'fixtures/real-projects')
 
-/** Run `contentbit check` from a fixture, which reads the fixture's contentbit config. */
 async function checkFixture(name: string, args: string[]) {
   const io = fakeIo()
   const previous = process.cwd()

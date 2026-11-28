@@ -181,7 +181,6 @@ function documentStructureFindings(file: ContentIntegrityFile): ContentIntegrity
   return findings
 }
 
-/** The path of the Markdown file a link names by its relative `.md` or `.mdx` path, or undefined for any other link. */
 function linkedMarkdownFile(url: string, sourcePath: string): string | undefined {
   if (/^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//')) return undefined
   const hash = url.indexOf('#')

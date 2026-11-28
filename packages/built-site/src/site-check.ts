@@ -11,7 +11,6 @@ export interface SiteOrigin {
   source: 'flag' | 'config' | 'canonicals'
 }
 
-/** A Markdown finding, or with source `agents`, an installed agent skill older than the CLI's. */
 export interface ContentFinding extends Omit<ContentProjectFinding, 'source'> {
   source: ContentProjectFinding['source'] | 'agents'
 }

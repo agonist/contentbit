@@ -57,7 +57,6 @@ export interface CheckCommandInput extends LinkOptionValues {
   noSeo?: boolean
 }
 
-/** The flags checked once, before the first run, and the directory the command started in. */
 interface CheckSettings {
   startDir: string
   target?: string
@@ -67,7 +66,6 @@ interface CheckSettings {
 
 interface CheckRun {
   exitCode: number
-  /** The folders the run read: the scanned content folders and the build folder. */
   folders: string[]
 }
 
@@ -191,9 +189,6 @@ async function checkOnce(
   }
 }
 
-/** Rerun the check after a file changes in a folder the last run read. Each run
- * replaces the watchers, so a new content folder or a build folder that the
- * build recreated is watched from the next run on. */
 function watchCheck(rerun: () => Promise<CheckRun>, folders: string[], io: Io): Promise<number> {
   let watchers: FSWatcher[] = []
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -213,7 +208,7 @@ function watchCheck(rerun: () => Promise<CheckRun>, folders: string[], io: Io): 
       )
       return [watcher]
     } catch {
-      return [] // removed since the run read it
+      return []
     }
   }
   const schedule = () => {
@@ -260,7 +255,6 @@ function watchCheck(rerun: () => Promise<CheckRun>, folders: string[], io: Io): 
   })
 }
 
-/** The content folders to watch: the one folder of every file, or the deepest folder they share. */
 function contentFolders(files: string[]): string[] {
   const folders = [...new Set(files.map(dirname))]
   if (folders.length <= 1) return folders

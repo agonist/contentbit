@@ -51,8 +51,6 @@ async function waitFor(condition: () => boolean, timeoutMs = 5_000): Promise<voi
   }
 }
 
-/** Run `check --watch` in `cwd`, make a change once it watches, wait until a
- * rerun's report shows the change, then stop it as Ctrl+C would. */
 async function watchUntil(
   cwd: string,
   change: () => Promise<void>,

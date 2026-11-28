@@ -17,8 +17,6 @@ const SHIPPED_SKILLS = [
   { name: 'contentbit-audit', content: auditSkill },
 ] as const
 
-/** Warn about each Claude Code skill installed in the content files' project
- * whose version differs from the one this CLI ships. */
 export async function skillDriftFindings(files: string[]): Promise<SkillDriftFinding[]> {
   const root = findInstalledSkillRoot(files)
   if (!root) return []

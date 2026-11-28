@@ -32,12 +32,6 @@ export async function loadRegistry(
   return withCliErrors(() => loadProjectRegistry(registryPath, options))
 }
 
-/**
- * The "loaded content project" seam: turns (positional globs, flags) into a
- * ready-to-use project — resolved files, loaded registry, read sources, and the
- * produced content project scan. The single input path shared by the `validate`,
- * `check`, and `stats` read-commands. Throws CliError on input failures.
- */
 export async function loadContentProject(
   input: LoadContentProjectInput,
 ): Promise<LoadedContentProject> {
