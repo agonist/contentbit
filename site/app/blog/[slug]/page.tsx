@@ -18,7 +18,11 @@ export async function generateStaticParams() {
 export async function generateMetadata(props: PageParams): Promise<Metadata> {
   const { slug } = await props.params
   const post = await getPost(slug)
-  return { title: post.title, description: post.description }
+  return {
+    title: post.title,
+    description: post.description,
+    alternates: { canonical: `/blog/${slug}` },
+  }
 }
 
 function formatDate(iso: string): string {

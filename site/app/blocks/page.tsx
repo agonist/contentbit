@@ -7,6 +7,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Blocks in the generic pack',
+  alternates: { canonical: '/blocks' },
   description:
     'Every block in the generic pack: syntax, authoring guidance, and a live rendered example, straight from the registry that validates them.',
 }

@@ -17,6 +17,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Programmatic SEO content infrastructure',
+  alternates: { canonical: '/' },
   description:
     'Define reusable page contracts, give agents a brief for every page, and validate content structure and internal links before publishing.',
 }
