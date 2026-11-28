@@ -1,5 +1,108 @@
 # @contentbit/core
 
+## 1.0.0
+
+### Major Changes
+
+- f8ae48e: Release Contentbit 1.0 under the documented public compatibility contract.
+  Init installs Contentbit packages matching the running CLI, and Studio pins its
+  TanStack dependencies to the tested versions.
+
+  Upgrade all Contentbit packages together. The v1 release candidate guide lists
+  the changes from 0.7.2 and the known limitations.
+
+### Minor Changes
+
+- 4ef5743: Check internal URLs against the routes a site really serves. `links.routes` in
+  `contentbit.config.ts` maps each content directory to a URL pattern such as
+  `/docs/{path}` or `/blog/{slug}`, and `links.hostRoutes` lists pages the host
+  app serves outside content, such as `/playground`. With routes set, Doctor,
+  Studio, and snapshots flag an internal URL only when no page or host route has
+  it, check its `#anchor` against that page, and no longer accept a link because
+  its last segment matches some page's slug. Sites that route pages by file path
+  no longer get a `CB_INTERNAL_URL_UNRESOLVED` warning on every working link.
+
+### Patch Changes
+
+- 3bf64e8: Add provenance-aware page and project discovery for unconfigured Markdown
+  libraries, including portable identities and conservative family/locale
+  grouping in the read-only adoption report, plus a JSON-safe project snapshot
+  interface for remote adapters.
+- aca73ce: Read files with CRLF line endings or a leading UTF-8 byte order mark the same
+  as plain LF files. List and rows blocks no longer fail with `CB_ITEM_SYNTAX` or
+  `CB_ROW_SYNTAX` in Windows checkouts, and a byte order mark no longer hides the
+  frontmatter. Diagnostics keep the line and column an editor shows. Offsets
+  count characters of the text after line endings become LF.
+
+  Frontmatter parsing now follows YAML in three more cases. A dash list may sit at
+  its key's own indentation, as PyYAML writes it. A list item such as
+  `https://example.com/x` stays a string. A `#` after whitespace starts a comment,
+  so `title: "Foo" # draft` reads as `Foo`. Quote a value that must keep a ` #`.
+
+- 512e1d2: Fix false findings and lost pages in parsing, integrity, and SEO checks:
+
+  - A line that starts with inline code such as "`js` here" no longer opens a
+    code fence, and a fence line with an info string no longer closes one.
+  - Heading anchors match the ids renderers emit (github-slugger), so accented
+    anchors and headings with inline code resolve. Heading outline text keeps
+    inline code.
+  - Links to the site root are no longer reported as unresolved routes.
+  - Configured `slugField`, `keyField`, and `localeField` win over the canonical
+    names in page facts, and integrity checks such as the missing H1 read page
+    identity through page facts.
+  - SEO `requiredFrontmatter` treats empty strings and `null` as missing.
+  - SEO pages that share an id are both kept, with a `CB_SEO_PAGE_ID_DUPLICATE`
+    warning, and localized files with a planned page's key replace that plan.
+
+- 287b8e7: Find did-you-mean hints for unresolved links about a hundred times faster.
+  With a broken `linksTo` on every one of 4000 pages, link validation took
+  nearly three minutes and now takes under two seconds. A target that many pages
+  link to is looked up once. Hints are unchanged: each names the same page as
+  before, and unknown block and prop hints use the same search.
+- 09c7364: Build the link index in linear time, and only once per content project scan.
+  Indexing and validating 4000 pages took seconds and now takes milliseconds,
+  including pages linked from every other page and projects with many orphan
+  warnings.
+
+  Stop a malformed frontmatter field from dropping a page out of the link index
+  and reporting every link to it as unresolved. Links now read `title` and
+  `keywords` the way page facts do, so a `keywords` array no longer reports
+  `CB_LINK_SHAPE`. A malformed `linksTo` or `aliases` is still reported, but
+  the page stays a link target. `parseLinkFrontmatter` returns that page in
+  `value` alongside its `errors`.
+
+- 20e31ca: `contentbit links --fix` now rewrites only whole `linksTo` entries that resolve
+  through an alias. It no longer replaces an alias inside a longer slug (`guide`
+  in `setup-guide`), and it no longer retargets an entry that resolves to another
+  page's key. It now fixes files with CRLF line endings and keeps those endings,
+  and the link index it writes describes the fixed files. `aliasReplacementsForPage`
+  returns only the aliases the page's `linksTo` resolves through.
+- 349774a: Avoid guessing content families and locales from absolute machine paths or paths
+  outside the project root. Preserve authored facts and keep sibling-content
+  snapshot facts stable when a checkout moves.
+- a6bd933: Fix v1 edge cases in validation and first-run workflows:
+
+  - Reject invalid props in wrapped strict schemas instead of marking the document valid.
+  - Resolve encoded Markdown links and avoid false broken-link warnings for relative assets.
+  - Generate working Next.js example imports with either app directory layout.
+  - Allow briefs before the first content file exists and honor explicit SEO config overrides.
+  - Load separately installed Studio from the consuming project when using a global or npx CLI.
+  - Resolve project path aliases when previewing copied styled components in Studio.
+  - Keep snapshot paths and path-derived identities portable for content outside the project root.
+
+- 0872923: Fix two gaps in document validation:
+
+  - Validate and enrich known blocks nested inside an unknown block, and check the links inside it, when unknown blocks are only warnings.
+  - Check URL protocols on every link, image, autolink and reference definition the way a CommonMark renderer reads them, so `[x](<javascript:…>)`, `[x]( javascript:…)` and `[r]: javascript:…` are caught, and link syntax inside code is no longer flagged. `CB_URL_PROTOCOL` now points at the link itself instead of the start of the Markdown run.
+
+- 71a48e9: Use the project's zod instead of installing a separate copy. `@contentbit/core`
+  and `@contentbit/blocks` now declare zod `^4.0.0` as a peer dependency. Before,
+  a project whose zod resolved to a different version than Contentbit's own copy
+  got a TypeScript error on every block schema in its registry, such as
+  "missing the following properties from type 'ZodType': validate,
+  validateAsync". Projects created with `contentbit init` already depend on zod.
+  Other projects that define blocks should add zod 4 to their own dependencies.
+
 ## 1.0.0-rc.2
 
 ### Minor Changes

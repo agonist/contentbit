@@ -1,5 +1,39 @@
 # @contentbit/blocks
 
+## 1.0.0
+
+### Major Changes
+
+- f8ae48e: Release Contentbit 1.0 under the documented public compatibility contract.
+  Init installs Contentbit packages matching the running CLI, and Studio pins its
+  TanStack dependencies to the tested versions.
+
+  Upgrade all Contentbit packages together. The v1 release candidate guide lists
+  the changes from 0.7.2 and the known limitations.
+
+### Patch Changes
+
+- 71a48e9: Use the project's zod instead of installing a separate copy. `@contentbit/core`
+  and `@contentbit/blocks` now declare zod `^4.0.0` as a peer dependency. Before,
+  a project whose zod resolved to a different version than Contentbit's own copy
+  got a TypeScript error on every block schema in its registry, such as
+  "missing the following properties from type 'ZodType': validate,
+  validateAsync". Projects created with `contentbit init` already depend on zod.
+  Other projects that define blocks should add zod 4 to their own dependencies.
+- Updated dependencies [3bf64e8]
+- Updated dependencies [aca73ce]
+- Updated dependencies [512e1d2]
+- Updated dependencies [287b8e7]
+- Updated dependencies [09c7364]
+- Updated dependencies [20e31ca]
+- Updated dependencies [4ef5743]
+- Updated dependencies [349774a]
+- Updated dependencies [a6bd933]
+- Updated dependencies [f8ae48e]
+- Updated dependencies [0872923]
+- Updated dependencies [71a48e9]
+  - @contentbit/core@1.0.0
+
 ## 1.0.0-rc.2
 
 ### Patch Changes
