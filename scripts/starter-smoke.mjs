@@ -13,11 +13,9 @@ const dir = join(root, 'starter', starter)
 const expectedSlugs = ['dialing-in-espresso', 'grinder-setting-notes', 'espresso-recipe-log']
 const expectedScripts = {
   check:
-    'pnpm lint && pnpm format:check && pnpm content:check && pnpm content:links && pnpm content:doctor && pnpm typecheck && pnpm build && pnpm smoke',
+    'pnpm lint && pnpm format:check && pnpm content:check && pnpm content:links && pnpm typecheck && pnpm build && pnpm smoke',
   'content:check': 'contentbit validate "content/**/*.md" --registry ./blocks/registry.ts',
   'content:links': 'contentbit links "content/**/*.md"',
-  'content:doctor':
-    'contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --strict-warnings',
   studio: 'contentbit studio "content/**/*.md" --registry ./blocks/registry.ts',
   smoke: `node ../../scripts/starter-smoke.mjs ${starter}`,
 }

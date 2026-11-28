@@ -22,11 +22,11 @@ async function fixture(files: Record<string, string>): Promise<string> {
 }
 
 test('resolveContentFiles reports empty inputs as project load errors', async () => {
-  await expect(resolveContentFiles([], 'doctor')).rejects.toMatchObject({
+  await expect(resolveContentFiles([], 'check')).rejects.toMatchObject({
     exitCode: 2,
-    message: 'doctor: provide at least one file or glob.',
+    message: 'check: provide at least one file or glob.',
   })
-  await expect(resolveContentFiles([], 'doctor')).rejects.toBeInstanceOf(ProjectLoadError)
+  await expect(resolveContentFiles([], 'check')).rejects.toBeInstanceOf(ProjectLoadError)
 })
 
 test('loadContentProject resolves cwd-relative globs into a content project scan', async () => {
@@ -42,7 +42,7 @@ Useful body.
   })
 
   const project = await loadContentProject({
-    cmd: 'doctor',
+    cmd: 'check',
     positionals: ['content/*.md'],
     cwd: dir,
     includeGenericBlocks: true,

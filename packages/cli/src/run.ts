@@ -201,7 +201,7 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
     .option('--origin <url>', "Site origin; defaults to site.origin or the pages' canonicals")
     .option('--strict', 'Exit 1 when warnings are present')
     .option('--strict-seo', 'Exit 1 when SEO warnings are present')
-    .option('--watch', 'Re-run when a scanned content folder or the build folder changes')
+    .option('--watch', 'Re-run when a content or build file changes')
     .option('--json', 'Print stable machine-readable JSON')
     .option('--min-section-words <n>', 'Set the thin-section suggestion threshold')
     .option('--registry <module>', 'Load custom block definitions from this module')

@@ -380,27 +380,18 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
   }
   fresh.scripts ??= {}
   if (!fresh.scripts['content:check']) {
-    fresh.scripts['content:check'] = 'contentbit validate'
+    fresh.scripts['content:check'] = 'contentbit check'
     io.stdout('added script: content:check')
   }
   if (!fresh.scripts['content:links']) {
     fresh.scripts['content:links'] = 'contentbit links'
     io.stdout('added script: content:links')
   }
-  if (!fresh.scripts['content:doctor']) {
-    fresh.scripts['content:doctor'] = 'contentbit doctor'
-    io.stdout('added script: content:doctor')
-  }
   if (!fresh.scripts.studio) {
     fresh.scripts.studio = 'contentbit studio'
     io.stdout('added script: studio')
   }
-  if (
-    !pkg.scripts?.['content:check'] ||
-    !pkg.scripts?.['content:links'] ||
-    !pkg.scripts?.['content:doctor'] ||
-    !pkg.scripts?.studio
-  ) {
+  if (!pkg.scripts?.['content:check'] || !pkg.scripts?.['content:links'] || !pkg.scripts?.studio) {
     await writeFile(pkgPath, `${JSON.stringify(fresh, null, 2)}\n`, 'utf8')
   }
 
@@ -428,8 +419,7 @@ export async function initCommand(input: InitCommandInput, io: Io): Promise<numb
   io.stdout('Done. Next steps:')
   const pm = detectPackageManager(cwd)
   io.stdout(`  1. Browse content locally: ${pm} run studio`)
-  io.stdout(`     Inspect content health: ${pm} run content:doctor`)
-  io.stdout(`     Validate the starter content: ${pm} run content:check`)
+  io.stdout(`     Check the content and the built site: ${pm} run content:check`)
   io.stdout(`     Build the link index: ${pm} run content:links`)
   for (const line of plan.nextSteps) io.stdout(line)
   io.stdout('  Docs: https://contentbit.dev/docs')

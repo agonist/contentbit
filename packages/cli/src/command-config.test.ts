@@ -31,7 +31,7 @@ const contentConfig = `export default {
 }`
 const seoConfig = 'export default { pageTypes: { guide: {} }, pages: {} }'
 
-test.each(['validate', 'doctor', 'studio', 'links', 'stats', 'brief', 'snapshot'] as const)(
+test.each(['validate', 'check', 'studio', 'links', 'stats', 'brief', 'snapshot'] as const)(
   '%s resolves project config from a nested directory ahead of script defaults',
   async (command) => {
     const root = await project({
@@ -67,14 +67,14 @@ test('resolving again reads edited project and SEO config files', async () => {
     'contentbit.config.mjs': "export default { content: ['content/**/*.md'], seo: './seo.mjs' }",
     'seo.mjs': seoConfig,
   })
-  await (await resolveContentCommandConfig('doctor', { globs: [] }, root)).loadSeo()
+  await (await resolveContentCommandConfig('check', { globs: [] }, root)).loadSeo()
 
   await writeFile(
     join(root, 'contentbit.config.mjs'),
     "export default { content: ['docs/**/*.md'], seo: './seo.mjs' }",
   )
   await writeFile(join(root, 'seo.mjs'), 'export default { pageTypes: { faq: {} }, pages: {} }')
-  const config = await resolveContentCommandConfig('doctor', { globs: [] }, root)
+  const config = await resolveContentCommandConfig('check', { globs: [] }, root)
 
   expect(config.globs).toEqual(['docs/**/*.md'])
   expect((await config.loadSeo()).config).toEqual({ pageTypes: { faq: {} }, pages: {} })
@@ -87,7 +87,7 @@ test('explicit globs retain invocation-relative paths while config paths stay pr
     'nested/.keep': '',
   })
   const config = await resolveContentCommandConfig(
-    'doctor',
+    'validate',
     { globs: ['drafts/*.md'], linkResolve: 'global-slug', slugField: 'url' },
     join(root, 'nested'),
   )
@@ -106,7 +106,7 @@ test('explicit globs retain invocation-relative paths while config paths stay pr
   expect((await config.loadSeo()).path).toBe(join(root, 'seo.mjs'))
 
   const overridden = await resolveContentCommandConfig(
-    'doctor',
+    'validate',
     { globs: ['drafts/*.md'], registry: './custom.mjs' },
     join(root, 'nested'),
   )
@@ -123,7 +123,7 @@ test.each([[[]], [['a.md']]])(
       'content/a.md': '# A\n',
     })
     const config = await resolveContentCommandConfig(
-      'doctor',
+      'snapshot',
       { globs, registry: '../blocks/custom.mjs', seoConfig: '../custom-seo.mjs' },
       join(root, 'content'),
     )
@@ -163,14 +163,14 @@ test('script fallback preserves quoted globs, its directory, and explicit flag o
     'seo.mjs': seoConfig,
     'package.json': JSON.stringify({
       scripts: {
-        'content:doctor':
-          'pnpm exec contentbit doctor "articles with spaces/*.md" --registry=blocks.mjs --seo-config seo.mjs --no-generic-blocks --link-resolve same-locale-key --key-field id && echo done',
+        'content:snapshot':
+          'pnpm exec contentbit snapshot "articles with spaces/*.md" --registry=blocks.mjs --seo-config seo.mjs --no-generic-blocks --link-resolve same-locale-key --key-field id && echo done',
         'content:check': 'contentbit validate wrong/*.md',
       },
     }),
   })
   const config = await resolveContentCommandConfig(
-    'doctor',
+    'snapshot',
     { globs: [], registry: 'override.mjs', linkResolve: 'global-slug' },
     join(root, 'nested'),
   )
@@ -204,7 +204,7 @@ test('content:check is the compatibility fallback; explicit globs bypass script 
   })
 })
 
-test.each(['doctor', 'snapshot', 'studio', 'brief'] as const)(
+test.each(['check', 'snapshot', 'studio', 'brief'] as const)(
   '%s centralizes explicit SEO precedence over disabled defaults',
   async (command) => {
     const root = await project({
@@ -233,7 +233,7 @@ test('default SEO discovery stays relative to the selected project', async () =>
     'contentbit.config.mjs': "export default { content: 'content/*.md' }",
     'contentbit.seo.config.ts': seoConfig,
   })
-  const config = await resolveContentCommandConfig('doctor', { globs: [] }, root)
+  const config = await resolveContentCommandConfig('check', { globs: [] }, root)
   expect((await config.loadSeo()).path).toBe(join(root, 'contentbit.seo.config.ts'))
 })
 

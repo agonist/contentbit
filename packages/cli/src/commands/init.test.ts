@@ -55,9 +55,9 @@ test('init scaffolds a react project non-interactively', async () => {
   await expect(readFile(join(dir, 'contentbit-guide.md'), 'utf8')).resolves.toContain(':::callout')
 
   const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
-  expect(pkg.scripts['content:check']).toBe('contentbit validate')
+  expect(pkg.scripts['content:check']).toBe('contentbit check')
   expect(pkg.scripts['content:links']).toBe('contentbit links')
-  expect(pkg.scripts['content:doctor']).toBe('contentbit doctor')
+  expect(pkg.scripts['content:doctor']).toBeUndefined()
   expect(pkg.scripts.studio).toBe('contentbit studio')
   expect(io.out.join('\n')).toContain('Next steps')
 })

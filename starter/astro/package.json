@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "pnpm lint && pnpm format:check && pnpm content:check && pnpm content:links && pnpm content:doctor && pnpm typecheck && pnpm build && pnpm smoke",
+    "check": "pnpm lint && pnpm format:check && pnpm content:check && pnpm content:links && pnpm typecheck && pnpm build && pnpm smoke",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
@@ -15,7 +15,6 @@
     "typecheck": "astro check",
     "content:check": "contentbit validate \"content/**/*.md\" --registry ./blocks/registry.ts",
     "content:links": "contentbit links \"content/**/*.md\"",
-    "content:doctor": "contentbit doctor \"content/**/*.md\" --registry ./blocks/registry.ts --strict-warnings",
     "studio": "contentbit studio \"content/**/*.md\" --registry ./blocks/registry.ts",
     "smoke": "node ../../scripts/starter-smoke.mjs astro"
   },

@@ -146,9 +146,12 @@ async function starter(name) {
       ),
   })
   await install(dir)
-  // Full standalone gates include validation, links, Doctor, types, production
+  // Full standalone gates include validation, links, types, production
   // rendering, and assertions about generated pages and block markup.
   await run(pnpm, ['check'], dir)
+  // The starters install the published CLI, which has no check command, so
+  // the candidate checks their build and Markdown here. It exits 1 on errors.
+  await cli(dir, ['check'])
   await studio(dir, name === 'tanstack' ? ['--styled', '--quote'] : [])
 }
 
@@ -205,8 +208,9 @@ async function nextProject() {
     await registry.close()
   }
   await cli(dir, ['validate'])
-  const doctor = JSON.parse(await cli(dir, ['doctor', '--json', '--strict-seo']))
-  assert.equal(doctor.summary.errors, 0)
+  const check = JSON.parse(await cli(dir, ['check', '--json', '--strict-seo']))
+  assert.equal(check.content.files, 2)
+  assert.equal(check.summary.errors, 0)
   const rendered = await cli(dir, ['render', 'content/example.md'])
   assert(
     rendered.includes('The Analytical Engine weaves algebraic patterns'),

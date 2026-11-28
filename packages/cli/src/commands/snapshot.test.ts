@@ -57,27 +57,19 @@ test('snapshot prints the portable project read model as JSON', async () => {
   expect(JSON.stringify(snapshot)).not.toContain('Private body.')
 })
 
-test.each(['doctor', 'snapshot'])(
-  '%s accepts an explicit SEO config over seo: false',
-  async (command) => {
-    const dir = await fixture({
-      'contentbit.config.mjs': `export default { content: 'content/**/*.md', seo: false }`,
-      'content/page.md': '# Page\n',
-      'seo.mjs': `export default { pageTypes: { article: {} }, pages: { planned: { type: 'article', slug: 'planned' } } }`,
-    })
-    const flags = command === 'doctor' ? ['--json'] : []
-    const enabled = fakeIo()
-    expect(
-      await withCwd(dir, () => run([command, '--seo-config', './seo.mjs', ...flags], enabled)),
-    ).toBe(0)
-    expect(JSON.parse(enabled.out.join('\n')).seo.pages).toBeGreaterThan(0)
+test('snapshot accepts an explicit SEO config over seo: false', async () => {
+  const dir = await fixture({
+    'contentbit.config.mjs': `export default { content: 'content/**/*.md', seo: false }`,
+    'content/page.md': '# Page\n',
+    'seo.mjs': `export default { pageTypes: { article: {} }, pages: { planned: { type: 'article', slug: 'planned' } } }`,
+  })
+  const enabled = fakeIo()
+  expect(await withCwd(dir, () => run(['snapshot', '--seo-config', './seo.mjs'], enabled))).toBe(0)
+  expect(JSON.parse(enabled.out.join('\n')).seo.pages).toBeGreaterThan(0)
 
-    const disabled = fakeIo()
-    expect(
-      await withCwd(dir, () =>
-        run([command, '--seo-config', './seo.mjs', '--no-seo', ...flags], disabled),
-      ),
-    ).toBe(0)
-    expect(JSON.parse(disabled.out.join('\n')).seo).toBeUndefined()
-  },
-)
+  const disabled = fakeIo()
+  expect(
+    await withCwd(dir, () => run(['snapshot', '--seo-config', './seo.mjs', '--no-seo'], disabled)),
+  ).toBe(0)
+  expect(JSON.parse(disabled.out.join('\n')).seo).toBeUndefined()
+})

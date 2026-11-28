@@ -8,35 +8,32 @@ import { fakeIo } from '../run.test'
 const root = fileURLToPath(new URL('../../../..', import.meta.url))
 const fixtures = join(root, 'fixtures/real-projects')
 
-test('doctor passes the Cookwise-style multilingual SEO fixture', async () => {
-  const dir = join(fixtures, 'cookwise-lite')
+/** Run `contentbit check` from a fixture, which reads the fixture's contentbit config. */
+async function checkFixture(name: string, args: string[]) {
   const io = fakeIo()
-
-  expect(
-    await run(
-      [
-        'doctor',
-        join(dir, 'content/**/*.md'),
-        '--seo-config',
-        join(dir, 'contentbit.seo.config.ts'),
-        '--link-resolve',
-        'same-locale-key',
-        '--strict-seo',
-        '--min-section-words',
-        '0',
-        '--json',
-      ],
-      io,
-    ),
-  ).toBe(0)
-
-  const report = JSON.parse(io.out.join('\n')) as {
-    seo: { pages: number; findings: unknown[] }
-    findings: Array<{ source: string; code: string }>
+  const previous = process.cwd()
+  process.chdir(join(fixtures, name))
+  try {
+    return { code: await run(['check', ...args], io), out: io.out.join('\n') }
+  } finally {
+    process.chdir(previous)
   }
-  expect(report.seo.pages).toBe(7)
-  expect(report.seo.findings).toEqual([])
-  expect(report.findings.filter((finding) => finding.source === 'seo')).toEqual([])
+}
+
+test('check passes the Cookwise-style multilingual SEO fixture', async () => {
+  const { code, out } = await checkFixture('cookwise-lite', [
+    '--strict-seo',
+    '--min-section-words',
+    '0',
+    '--json',
+  ])
+  expect(code).toBe(0)
+
+  const report = JSON.parse(out) as {
+    content: { files: number; findings: Array<{ source: string; code: string }> }
+  }
+  expect(report.content.files).toBe(6)
+  expect(report.content.findings.filter((finding) => finding.source === 'seo')).toEqual([])
 })
 
 test('brief reads seoKeywords from existing multilingual pages', async () => {
@@ -100,25 +97,16 @@ test('brief prints planned pages from the Cookwise-style SEO config', async () =
   expect(brief.acceptanceChecks).toContain('Create the Markdown source file for this planned page.')
 })
 
-test('doctor and brief pass the contentbit-site-shaped fixture', async () => {
+test('check and brief pass the contentbit-site-shaped fixture', async () => {
   const dir = join(fixtures, 'contentbit-site-lite')
-  const doctorIo = fakeIo()
   const briefIo = fakeIo()
 
-  expect(
-    await run(
-      [
-        'doctor',
-        join(dir, 'content/**/*.{md,mdx}'),
-        '--seo-config',
-        join(dir, 'contentbit.seo.config.ts'),
-        '--strict-seo',
-        '--min-section-words',
-        '0',
-      ],
-      doctorIo,
-    ),
-  ).toBe(0)
+  const { code } = await checkFixture('contentbit-site-lite', [
+    '--strict-seo',
+    '--min-section-words',
+    '0',
+  ])
+  expect(code).toBe(0)
 
   expect(
     await run(
