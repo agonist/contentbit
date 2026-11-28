@@ -11,8 +11,11 @@ export interface SiteOrigin {
   source: 'flag' | 'config' | 'canonicals'
 }
 
+/** A finding about the coding-agent guidance a project installed, such as an outdated skill. */
+export type AgentGuidanceSource = 'agents'
+
 export interface ContentFinding extends Omit<ContentProjectFinding, 'source'> {
-  source: ContentProjectFinding['source'] | 'agents'
+  source: ContentProjectFinding['source'] | AgentGuidanceSource
 }
 
 export interface SiteCheck {

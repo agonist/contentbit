@@ -3,13 +3,14 @@ import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
+import type { AgentGuidanceSource } from '@contentbit/built-site'
 import type { ContentProjectFinding } from '@contentbit/core'
 
 import auditSkill from './agent-templates/contentbit-audit/SKILL.md?raw'
 import authorSkill from './agent-templates/contentbit-author/SKILL.md?raw'
 
 export interface SkillDriftFinding extends Omit<ContentProjectFinding, 'source'> {
-  source: 'agents'
+  source: AgentGuidanceSource
 }
 
 const SHIPPED_SKILLS = [

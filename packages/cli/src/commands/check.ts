@@ -207,8 +207,9 @@ function watchCheck(rerun: () => Promise<CheckRun>, folders: string[], io: Io): 
         io.stderr(`check: watching ${displayPath(folder)} failed: ${error.message}`),
       )
       return [watcher]
-    } catch {
-      return []
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
+      throw error
     }
   }
   const schedule = () => {
