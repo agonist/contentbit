@@ -150,13 +150,13 @@ test('validate ignores link checks when no file declares a slug', async () => {
   expect(io.err.join('\n')).not.toContain('CB_LINK')
 })
 
-test('validate keeps Doctor-only integrity warnings out of the syntax gate', async () => {
+test('validate keeps the integrity warnings of check out of the syntax gate', async () => {
   const dir = await fixture({
-    'a.md': '---\nslug: a\n---\n\n## This page has no H1\n',
+    'a.md': '---\nslug: a\n---\n\n# A\n\n### Skipped a level\n',
   })
   const io = fakeIo()
   expect(await run(['validate', join(dir, '*.md')], io)).toBe(0)
-  expect(io.err.join('\n')).not.toContain('CB_H1_MISSING')
+  expect(io.err.join('\n')).not.toContain('CB_HEADING_LEVEL_SKIPPED')
 })
 
 test('validate with no globs reuses the nearest package content:check script', async () => {

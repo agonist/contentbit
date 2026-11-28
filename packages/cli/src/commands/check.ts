@@ -79,12 +79,6 @@ const BUILD_COMMANDS: Array<[dependency: string, command: string]> = [
   ['@11ty/eleventy', 'eleventy'],
 ]
 
-const MARKDOWN_CODES_REPLACED_BY_BUILT_PAGES = new Set([
-  'CB_H1_MISSING',
-  'CB_INTERNAL_URL_UNRESOLVED',
-  'CB_MARKDOWN_ANCHOR_UNRESOLVED',
-])
-
 const MAX_EXAMPLES = 5
 const MAX_TEMPLATE_EXAMPLES = 3
 
@@ -173,15 +167,7 @@ async function checkOnce(
     origin,
     sources,
     findings: groupTemplateFindings(findings),
-    content:
-      site && content
-        ? {
-            ...content,
-            findings: content.findings.filter(
-              ({ code }) => !MARKDOWN_CODES_REPLACED_BY_BUILT_PAGES.has(code),
-            ),
-          }
-        : content,
+    content,
   })
   io.stdout(input.json ? JSON.stringify(check, null, 2) : formatCheck(check))
   if (!site) {

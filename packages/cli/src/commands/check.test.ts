@@ -354,27 +354,25 @@ test('the checks use the resolved origin and the links.hostRoutes of the config'
   expect(inferred.findings).toEqual([])
 })
 
-test('with a build, the Markdown checks that guessed at the rendered page are dropped; without one they stay', async () => {
-  const guessed = ['CB_H1_MISSING', 'CB_INTERNAL_URL_UNRESOLVED', 'CB_MARKDOWN_ANCHOR_UNRESOLVED']
+test('the Markdown checks leave the h1, internal URLs and anchors to the built pages, with or without a build', async () => {
   const markdown = {
     'contentbit.config.mjs': `export default { content: 'content/*.md' }`,
     'content/post.md':
       '---\nslug: post\n---\n\nSee [a page](/nowhere), [a section](#nope) and [a file](./gone.md).\n',
   }
-  const codes = (result: { content: { findings: Array<{ code: string }> } }) =>
-    result.content.findings.map(({ code }) => code)
+  type Result = { content: { findings: Array<{ source: string; code: string }> } }
+  const codes = (result: Result, source?: string) =>
+    result.content.findings
+      .filter((finding) => source === undefined || finding.source === source)
+      .map(({ code }) => code)
 
   const markdownOnly = JSON.parse((await check(await project(markdown), ['--json'])).out)
-  expect(codes(markdownOnly)).toEqual(
-    expect.arrayContaining([...guessed, 'CB_MARKDOWN_LINK_UNRESOLVED']),
-  )
+  expect(codes(markdownOnly, 'integrity')).toEqual(['CB_MARKDOWN_LINK_UNRESOLVED'])
 
   const built = await project({ ...markdown, 'dist/index.html': page('https://example.com/') })
   const withBuild = JSON.parse((await check(built, ['--json'])).out)
   expect(withBuild.findings).toEqual([])
-  expect(withBuild.content.files).toBe(1)
-  expect(codes(withBuild)).toEqual(codes(markdownOnly).filter((code) => !guessed.includes(code)))
-  expect(withBuild.summary.warnings).toBe(markdownOnly.summary.warnings - guessed.length)
+  expect(codes(withBuild)).toEqual(codes(markdownOnly))
 })
 
 test('--origin wins over site.origin, which wins over the canonicals', async () => {
@@ -519,11 +517,6 @@ test('without a build, the Markdown checks run alone and a notice names the buil
     pages: [],
     content: { files: 2 },
   })
-  const doctor = fakeIo()
-  const previous = process.cwd()
-  process.chdir(root)
-  await run(['doctor', '--json'], doctor).finally(() => process.chdir(previous))
-  expect(result.content.findings).toEqual(JSON.parse(doctor.out.join('\n')).findings)
 })
 
 test.each([

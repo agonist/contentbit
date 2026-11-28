@@ -28,15 +28,7 @@ interface ContentCommandDefaults extends LinkOptionValues {
   source?: string
 }
 
-type ContentCommand =
-  | 'validate'
-  | 'doctor'
-  | 'studio'
-  | 'links'
-  | 'stats'
-  | 'brief'
-  | 'snapshot'
-  | 'check'
+type ContentCommand = 'validate' | 'studio' | 'links' | 'stats' | 'brief' | 'snapshot' | 'check'
 
 export interface ContentCommandOptions extends LinkOptionValues {
   globs: string[]
@@ -96,7 +88,6 @@ export async function resolveContentCommandConfig(
 
 const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   validate: ['content:check', 'content:validate'],
-  doctor: ['content:doctor', 'content:check'],
   studio: ['studio', 'content:studio', 'content:check'],
   links: ['content:links', 'content:check'],
   stats: ['content:stats', 'content:check'],

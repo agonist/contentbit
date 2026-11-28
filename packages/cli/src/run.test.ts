@@ -24,6 +24,17 @@ test('no command prints usage and exits 2', async () => {
   expect(io.err.join('\n')).toContain('links         build or fix the internal link index')
 })
 
+test('doctor exits 2 and names check, whatever flags it gets', async () => {
+  for (const argv of [['doctor'], ['doctor', 'content/**/*.md', '--json', '--strict-seo']]) {
+    const io = fakeIo()
+    expect(await run(argv, io)).toBe(2)
+    expect(io.out).toEqual([])
+    expect(io.err).toEqual([
+      'contentbit doctor is now contentbit check, and contentbit check --json replaces contentbit doctor --json.',
+    ])
+  }
+})
+
 test('unknown command prints usage and exits 2', async () => {
   const io = fakeIo()
   expect(await run(['frobnicate'], io)).toBe(2)

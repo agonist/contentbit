@@ -28,7 +28,7 @@ async function withCwd<T>(cwd: string, fn: () => Promise<T>): Promise<T> {
 
 const siteOnlyConfig = `export default { site: { build: 'dist', origin: 'https://example.com' } }`
 
-test.each(['validate', 'doctor', 'links', 'stats', 'studio'])(
+test.each(['validate', 'links', 'stats', 'studio'])(
   '%s still asks for files when the config has no content and no globs are passed',
   async (command) => {
     const root = await project({ 'contentbit.config.mjs': siteOnlyConfig })
