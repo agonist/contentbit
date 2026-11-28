@@ -32,6 +32,7 @@ Usage:
 Commands:
   init          scaffold Content Blocks into a project
   adopt         inspect an existing Markdown library without changing it
+  check         check site health on built pages and Markdown
   validate      check Markdown blocks and internal links
   brief         print an agent-ready SEO brief
   doctor        inspect content health and repair suggestions
@@ -50,6 +51,7 @@ Setup:
   agents [--claude] [--check|--dry-run] [--no-agents-md]
 
 Common:
+  check [folder] [--origin <url>] [--strict] [--json] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
   validate [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
   brief <key-or-slug> [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--json]
   doctor [globs...] [--watch] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
@@ -191,6 +193,39 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
         ),
       )
     })
+
+  const check = program
+    .command('check')
+    .description('check site health on built pages and Markdown')
+    .argument('[folder]', 'Build folder; defaults to site.build or a detected build folder')
+    .option('--origin <url>', "Site origin; defaults to site.origin or the pages' canonicals")
+    .option('--strict', 'Exit 1 when warnings are present')
+    .option('--json', 'Print stable machine-readable JSON')
+    .option('--registry <module>', 'Load custom block definitions from this module')
+    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
+    .option('--seo-config <module>', 'Load SEO contracts from this module')
+    .option('--no-seo', 'Disable SEO config discovery and findings')
+  addLinkOptions(check)
+  check.action(async (target: string | undefined, rawOptions: Command | OptionValues) => {
+    const options = optionsFrom(rawOptions)
+    const { checkCommand } = await import('./commands/check.js')
+    setExitCode(
+      await checkCommand(
+        {
+          target,
+          origin: options.origin,
+          strict: Boolean(options.strict),
+          json: Boolean(options.json),
+          registry: options.registry,
+          noGenericBlocks: options.genericBlocks === false,
+          seoConfig: options.seoConfig,
+          noSeo: options.seo === false ? true : undefined,
+          ...linkOptionsFrom(options),
+        },
+        io,
+      ),
+    )
+  })
 
   const validate = program
     .command('validate')

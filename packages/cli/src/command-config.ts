@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 
-import type { LinkResolverOptions } from '@contentbit/core'
+import type { ContentbitSiteConfig, LinkResolverOptions } from '@contentbit/core'
 
 import { linkResolverOptions, type LinkOptionValues } from './link-options.js'
 import { loadContentbitConfig } from './project-config.js'
@@ -17,10 +17,19 @@ interface ContentCommandDefaults extends LinkOptionValues {
   noSeo?: boolean
   routes?: Record<string, string>
   hostRoutes?: string[]
+  site?: ContentbitSiteConfig
   source?: string
 }
 
-type ContentCommand = 'validate' | 'doctor' | 'studio' | 'links' | 'stats' | 'brief' | 'snapshot'
+type ContentCommand =
+  | 'validate'
+  | 'doctor'
+  | 'studio'
+  | 'links'
+  | 'stats'
+  | 'brief'
+  | 'snapshot'
+  | 'check'
 
 export interface ContentCommandOptions extends LinkOptionValues {
   globs: string[]
@@ -35,6 +44,8 @@ export interface ResolvedContentCommandConfig {
   cwd?: string
   registry?: string
   includeGenericBlocks: boolean
+  /** From the Contentbit config, with build resolved against the config file. */
+  site?: ContentbitSiteConfig
   resolveLinkOptions(): LinkResolverOptions
   loadSeo(): Promise<LoadedSeoConfig>
 }
@@ -71,6 +82,7 @@ export async function resolveContentCommandConfig(
     cwd: defaults.cwd,
     registry: resolvePath(startDir, input.registry) ?? defaults.registry,
     includeGenericBlocks: !(input.noGenericBlocks || defaults.noGenericBlocks),
+    site: defaults.site,
     resolveLinkOptions: () => ({ ...linkResolverOptions(links), ...routes }),
     loadSeo: () => loadSeoConfig(seo),
   }
@@ -84,6 +96,7 @@ const SCRIPT_CANDIDATES: Record<ContentCommand, string[]> = {
   stats: ['content:stats', 'content:check'],
   brief: ['content:brief', 'content:check'],
   snapshot: ['content:snapshot', 'content:check'],
+  check: [],
 }
 
 async function discoverContentCommandDefaults(
@@ -109,6 +122,10 @@ async function discoverContentCommandDefaults(
         defaultLocale: loadedConfig.config.links?.defaultLocale,
         routes: resolveRouteDirs(loadedConfig.cwd, loadedConfig.config.links?.routes),
         hostRoutes: loadedConfig.config.links?.hostRoutes,
+        site: loadedConfig.config.site && {
+          ...loadedConfig.config.site,
+          build: resolvePath(loadedConfig.cwd, loadedConfig.config.site.build),
+        },
         source: loadedConfig.path,
       }
     : {}

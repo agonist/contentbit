@@ -64,6 +64,9 @@ importers:
 
   packages/built-site:
     dependencies:
+      '@contentbit/core':
+        specifier: workspace:*
+        version: link:../core
       htmlparser2:
         specifier: ^10.1.0
         version: 10.1.0
