@@ -11,6 +11,11 @@ export interface SiteOrigin {
   source: 'flag' | 'config' | 'canonicals'
 }
 
+/** A Markdown finding, or with source `agents`, an installed agent skill older than the CLI's. */
+export interface ContentFinding extends Omit<ContentProjectFinding, 'source'> {
+  source: ContentProjectFinding['source'] | 'agents'
+}
+
 export interface SiteCheck {
   schemaVersion: typeof SITE_CHECK_SCHEMA_VERSION
   input:
@@ -22,7 +27,7 @@ export interface SiteCheck {
   summary: { pages: number; errors: number; warnings: number }
   pages: Array<{ path: PagePath; file?: string; source?: string; facts: RenderedPageFacts }>
   findings: SiteFinding[]
-  content?: { files: number; findings: ContentProjectFinding[] }
+  content?: { files: number; findings: ContentFinding[] }
   /** The files of the source documents that changed after the build was made. */
   staleSources?: string[]
 }

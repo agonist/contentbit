@@ -1,6 +1,6 @@
-import { existsSync } from 'node:fs'
+import { existsSync, watch, type FSWatcher } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve, sep } from 'node:path'
 
 import { contentPageUrlResolver, readContentPageFacts } from '@contentbit/core'
 import {
@@ -41,16 +41,34 @@ import {
 } from '../command-config.js'
 import { loadContentProject, type LoadedContentProject } from '../content-project.js'
 import type { LinkOptionValues } from '../link-options.js'
+import { skillDriftFindings } from './skill-drift.js'
 
 export interface CheckCommandInput extends LinkOptionValues {
   target?: string
   json?: boolean
   strict?: boolean
+  strictSeo?: boolean
+  watch?: boolean
+  minSectionWords?: string
   origin?: string
   registry?: string
   noGenericBlocks?: boolean
   seoConfig?: string
   noSeo?: boolean
+}
+
+/** The flags checked once, before the first run, and the directory the command started in. */
+interface CheckSettings {
+  startDir: string
+  target?: string
+  origin?: string
+  minSectionWords?: number
+}
+
+interface CheckRun {
+  exitCode: number
+  /** The folders the run read: the scanned content folders and the build folder. */
+  folders: string[]
 }
 
 const BUILD_FOLDERS = ['dist/client', 'dist', 'out', 'build', 'public']
@@ -83,21 +101,45 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
       `check: ${input.target} is a URL. check reads a build folder for now; checking a running server comes later.`,
     )
   }
-  const flagOrigin = input.origin === undefined ? undefined : parseFlagOrigin(input.origin)
-  const config = await resolveContentCommandConfig('check', { ...input, globs: [] })
-  const root = config.cwd ?? process.cwd()
+  if (input.watch && input.json) {
+    throw new CliError(2, 'check: --watch cannot be combined with --json.')
+  }
+  const settings: CheckSettings = {
+    startDir: process.cwd(),
+    target: input.target === undefined ? undefined : resolve(input.target),
+    origin: input.origin === undefined ? undefined : parseFlagOrigin(input.origin),
+    minSectionWords: parseMinSectionWords(input.minSectionWords),
+  }
+  const first = await checkOnce(input, settings, io)
+  if (!input.watch) return first.exitCode
+  return watchCheck(() => checkOnce(input, settings, io), first.folders, io)
+}
+
+async function checkOnce(
+  input: CheckCommandInput,
+  settings: CheckSettings,
+  io: Io,
+): Promise<CheckRun> {
+  const config = await resolveContentCommandConfig(
+    'check',
+    { ...input, globs: [] },
+    settings.startDir,
+  )
+  const root = config.cwd ?? settings.startDir
   const searched = BUILD_FOLDERS.map((folder) => join(root, folder))
   const buildPath =
-    input.target !== undefined
-      ? resolve(input.target)
-      : (config.site?.buildPath ??
-        searched.find((folder) => existsSync(join(folder, 'index.html'))))
+    settings.target ??
+    config.site?.buildPath ??
+    searched.find((folder) => existsSync(join(folder, 'index.html')))
 
   const [site, markdown] = await Promise.all([
     buildPath === undefined ? undefined : readBuild(buildPath),
-    loadMarkdown(config),
+    loadMarkdown(config, settings.minSectionWords),
   ])
-  const content = markdown && { files: markdown.files.length, findings: markdown.scan.findings }
+  const content = markdown && {
+    files: markdown.files.length,
+    findings: [...markdown.scan.findings, ...(await skillDriftFindings(markdown.files))],
+  }
   if (!site && !content) {
     const folders = searched.map(displayPath)
     throw new CliError(
@@ -106,7 +148,7 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
     )
   }
 
-  const origin = resolveOrigin(flagOrigin, config.site?.origin, site)
+  const origin = resolveOrigin(settings.origin, config.site?.origin, site)
   const sources =
     site &&
     siteSources(site, markdown ? await sourceDocuments(markdown) : [], {
@@ -153,7 +195,104 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
   }
 
   const { errors, warnings } = check.summary
-  return errors > 0 || (input.strict && warnings > 0) ? 1 : 0
+  const seoWarnings = check.content?.findings.some(
+    ({ source, severity }) => source === 'seo' && severity === 'warning',
+  )
+  const failed = errors > 0 || (input.strict && warnings > 0) || (input.strictSeo && seoWarnings)
+  return {
+    exitCode: failed ? 1 : 0,
+    folders: [...contentFolders(markdown?.files ?? []), ...(site ? [site.root] : [])],
+  }
+}
+
+/** Rerun the check after a file changes in a folder the last run read. Each run
+ * replaces the watchers, so a new content folder or a build folder that the
+ * build recreated is watched from the next run on. */
+function watchCheck(rerun: () => Promise<CheckRun>, folders: string[], io: Io): Promise<number> {
+  let watchers: FSWatcher[] = []
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let running = false
+  let changedWhileRunning = false
+  let stopped = false
+
+  const watchFolders = (next: string[]) => {
+    for (const watcher of watchers) watcher.close()
+    watchers = stopped ? [] : next.flatMap((folder) => watchFolder(folder))
+  }
+  const watchFolder = (folder: string): FSWatcher[] => {
+    try {
+      const watcher = watch(folder, { recursive: true }, schedule)
+      watcher.on('error', (error) =>
+        io.stderr(`check: watching ${displayPath(folder)} failed: ${error.message}`),
+      )
+      return [watcher]
+    } catch {
+      return [] // removed since the run read it
+    }
+  }
+  const schedule = () => {
+    clearTimeout(timer)
+    timer = setTimeout(runAgain, 100)
+  }
+  const runAgain = async () => {
+    if (running) {
+      changedWhileRunning = true
+      return
+    }
+    running = true
+    try {
+      watchFolders((await rerun()).folders)
+    } catch (error) {
+      io.stderr(
+        error instanceof CliError
+          ? error.message
+          : `check: ${error instanceof Error ? error.message : String(error)}`,
+      )
+    }
+    running = false
+    if (stopped) return
+    io.stdout('\nWatching for changes…')
+    if (changedWhileRunning) {
+      changedWhileRunning = false
+      schedule()
+    }
+  }
+
+  watchFolders(folders)
+  io.stdout('\nWatching for changes… Press Ctrl+C to stop.')
+  return new Promise((resolve) => {
+    const stop = () => {
+      stopped = true
+      clearTimeout(timer)
+      watchFolders([])
+      process.off('SIGINT', stop)
+      process.off('SIGTERM', stop)
+      resolve(0)
+    }
+    process.once('SIGINT', stop)
+    process.once('SIGTERM', stop)
+  })
+}
+
+/** The content folders to watch: the one folder of every file, or the deepest folder they share. */
+function contentFolders(files: string[]): string[] {
+  const folders = [...new Set(files.map(dirname))]
+  if (folders.length <= 1) return folders
+  const [first, ...rest] = folders.map((folder) => folder.split(sep))
+  const shared: string[] = []
+  for (const [index, part] of first.entries()) {
+    if (rest.some((parts) => parts[index] !== part)) break
+    shared.push(part)
+  }
+  return [shared.join(sep) || sep]
+}
+
+function parseMinSectionWords(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined
+  if (!/^\d+$/.test(value)) {
+    throw new CliError(2, 'check: --min-section-words must be a non-negative integer.')
+  }
+  return Number(value)
 }
 
 function parseFlagOrigin(value: string): string {
@@ -181,6 +320,7 @@ async function readBuild(path: string): Promise<BuiltSite> {
 
 async function loadMarkdown(
   config: ResolvedContentCommandConfig,
+  minSectionWords: number | undefined,
 ): Promise<LoadedContentProject | undefined> {
   if (config.globs.length === 0) return undefined
   const seoConfig = await config.loadSeo()
@@ -191,7 +331,7 @@ async function loadMarkdown(
     registry: config.registry,
     includeGenericBlocks: config.includeGenericBlocks,
     linkOptions: config.resolveLinkOptions(),
-    scan: { seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
+    scan: { minSectionWords, seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
     allowEmpty: true,
   })
   return project.files.length === 0 ? undefined : project

@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, realpath, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
 
 import { run } from '../run.js'
@@ -38,6 +38,44 @@ const page = (canonical?: string, body = '<h1>Page</h1>') =>
 
 const unknownBlock = ':::nope\nText\n:::\n'
 const unmatchedClose = 'Prose.\n\n:::\n'
+
+const coreUrl = pathToFileURL(
+  fileURLToPath(new URL('../../../core/dist/index.js', import.meta.url)),
+).href
+
+async function waitFor(condition: () => boolean, timeoutMs = 5_000): Promise<void> {
+  const started = Date.now()
+  while (!condition()) {
+    if (Date.now() - started > timeoutMs) throw new Error('Timed out waiting for a check rerun.')
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+}
+
+/** Run `check --watch` in `cwd`, make a change once it watches, wait until a
+ * rerun's report shows the change, then stop it as Ctrl+C would. */
+async function watchUntil(
+  cwd: string,
+  change: () => Promise<void>,
+  rerun: (report: string) => boolean,
+): Promise<{ code: number; reports: string[] }> {
+  const io = fakeIo()
+  const reports = () => io.out.filter((line) => line.startsWith('contentbit check'))
+  const previous = process.cwd()
+  process.chdir(cwd)
+  try {
+    const watching = run(['check', '--watch'], io)
+    try {
+      await waitFor(() => io.out.some((line) => line.includes('Press Ctrl+C to stop.')))
+      await change()
+      await waitFor(() => reports().slice(1).some(rerun))
+    } finally {
+      process.emit('SIGINT')
+    }
+    return { code: await watching, reports: reports() }
+  } finally {
+    process.chdir(previous)
+  }
+}
 
 test('--json prints one site check with every built page and its findings, and nothing else', async () => {
   const { code, out, err } = await check(await project(), [fixture('astro-like'), '--json'])
@@ -525,6 +563,128 @@ test('warnings exit 0 unless --strict; errors exit 1', async () => {
 
   await writeFile(join(root, 'content/bad.md'), unknownBlock)
   expect((await check(root)).code).toBe(1)
+})
+
+test('--strict-seo fails on SEO warnings, which exit 0 without it, and --no-seo turns them off', async () => {
+  const root = await project({
+    'contentbit.config.mjs': `export default { content: 'content/*.md', seo: './seo.mjs' }`,
+    'seo.mjs': `export default {
+      pageTypes: {
+        alternative: { requiredSections: [{ id: 'alternatives', headings: ['Best alternatives'] }] },
+      },
+    }`,
+    'content/page.md': '---\nslug: page\ntype: alternative\n---\n\n# Ahrefs alternatives\n',
+  })
+  const seo = (out: string) =>
+    JSON.parse(out).content.findings.filter(({ source }: { source: string }) => source === 'seo')
+
+  const loose = await check(root, ['--json'])
+  expect(loose.code).toBe(0)
+  expect(seo(loose.out)).toMatchObject([{ severity: 'warning', code: 'CB_SEO_SECTION_MISSING' }])
+  expect((await check(root, ['--strict-seo'])).code).toBe(1)
+
+  const off = await check(root, ['--json', '--strict-seo', '--no-seo'])
+  expect(off.code).toBe(0)
+  expect(seo(off.out)).toEqual([])
+})
+
+test('--min-section-words sets the thin-section threshold and must be a whole number', async () => {
+  const root = await project({
+    'contentbit.config.mjs': `export default { content: 'content/*.md' }`,
+    'content/post.md': '## Deploy\n\nShip it on Fridays only.\n',
+  })
+  const thin = async (args: string[]) =>
+    JSON.parse((await check(root, ['--json', ...args])).out).content.findings.filter(
+      ({ code }: { code: string }) => code === 'CB_THIN_SECTION',
+    )
+
+  expect(await thin([])).toMatchObject([{ severity: 'info', line: 1 }])
+  expect(await thin(['--min-section-words', '3'])).toEqual([])
+
+  const invalid = await check(root, ['--min-section-words', 'many'])
+  expect(invalid.code).toBe(2)
+  expect(invalid.err).toBe('check: --min-section-words must be a non-negative integer.')
+})
+
+test('a Claude Code skill older than the one the CLI ships is a warning', async () => {
+  const root = await project({
+    'package.json': '{"name":"docs"}\n',
+    'contentbit.config.mjs': `export default { content: '*.md' }`,
+    'post.md': 'Plain prose with enough shape to be valid.\n',
+    '.claude/skills/contentbit-author/SKILL.md': '---\nname: contentbit-author\nversion: 1\n---\n',
+  })
+
+  const { code, out } = await check(root)
+  expect(code).toBe(0)
+  expect(out).toContain('warning agents CB_SKILL_DRIFT')
+  expect(out).toContain('contentbit-author skill is stale')
+  expect(out).toContain('Re-run contentbit agents')
+  expect((await check(root, ['--strict'])).code).toBe(1)
+})
+
+test('--watch cannot be combined with --json', async () => {
+  const { code, out, err } = await check(await project(), ['--watch', '--json'])
+
+  expect(code).toBe(2)
+  expect(out).toBe('')
+  expect(err).toBe('check: --watch cannot be combined with --json.')
+})
+
+test('--watch reruns after a content file appears in a new nested folder, and Ctrl+C stops it', async () => {
+  const root = await project({
+    'contentbit.config.mjs': `export default { content: 'content/**/*.md' }`,
+    'content/current.md': '# Current\n',
+  })
+
+  const { code, reports } = await watchUntil(
+    root,
+    async () => {
+      await mkdir(join(root, 'content/new-section'))
+      await writeFile(join(root, 'content/new-section/new.md'), '# New\n')
+    },
+    (report) => /Markdown\s+2 files/.test(report),
+  )
+  expect(code).toBe(0)
+  expect(reports[0]).toMatch(/Markdown\s+1 file\b/)
+})
+
+test('--watch reruns after a page in the build folder changes', async () => {
+  const root = await project({ 'dist/index.html': page('https://example.com/') })
+
+  const { reports } = await watchUntil(
+    root,
+    () =>
+      writeFile(
+        join(root, 'dist/index.html'),
+        page('https://example.com/', '<h1>Home</h1><a href="/gone/">Gone</a>'),
+      ),
+    (report) => report.includes('error CB_LINK_PAGE_MISSING'),
+  )
+  expect(reports[0]).not.toContain('Built-page findings')
+})
+
+test('--watch reruns with an edited registry', async () => {
+  const root = await project({
+    'contentbit.config.mjs': `export default { content: 'content/*.md', registry: './blocks/registry.mjs' }`,
+    'content/post.md': ':::shout\nHEY\n:::\n',
+    'blocks/registry.mjs': 'export default []\n',
+  })
+
+  const { reports } = await watchUntil(
+    root,
+    async () => {
+      await writeFile(
+        join(root, 'blocks/registry.mjs'),
+        `import { defineBlock, markdownBody } from "${coreUrl}";
+export default [defineBlock({ name: "shout", description: "Shouts.", content: markdownBody() })];
+`,
+      )
+      await writeFile(join(root, 'content/post.md'), ':::shout\nHEY THERE\n:::\n')
+    },
+    (report) => /Errors\s+0/.test(report),
+  )
+  expect(reports[0]).toContain('CB_UNKNOWN_BLOCK')
+  expect(reports.at(-1)).not.toContain('CB_UNKNOWN_BLOCK')
 })
 
 test('nothing to check is an input error', async () => {
