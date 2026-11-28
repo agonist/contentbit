@@ -12,20 +12,23 @@ export interface SourceDocument {
   facts: ContentPageFacts
 }
 
+export type RoutedDocument = SourceDocument & { route: string }
+
 export interface SiteSources {
   /** The source document of each built page that has one. */
   pages: ReadonlyMap<PagePath, SourceDocument>
   /** The documents whose route no built page has. */
-  unbuilt: SourceDocument[]
+  unbuilt: RoutedDocument[]
 }
 
 /** A built page gets the first document whose route is its path. */
 export function siteSources(site: BuiltSite, documents: SourceDocument[]): SiteSources {
-  const routed = documents.flatMap((document) =>
-    document.route === undefined ? [] : [{ document, route: normalizeRoute(document.route) }],
+  const routed = documents.filter(
+    (document): document is RoutedDocument => document.route !== undefined,
   )
   const byRoute = new Map<string, SourceDocument>()
-  for (const { document, route } of routed) {
+  for (const document of routed) {
+    const route = normalizeRoute(document.route)
     if (!byRoute.has(route)) byRoute.set(route, document)
   }
   const pages = new Map<PagePath, SourceDocument>()
@@ -37,8 +40,5 @@ export function siteSources(site: BuiltSite, documents: SourceDocument[]): SiteS
     pages.set(path, document)
     built.add(route)
   }
-  return {
-    pages,
-    unbuilt: routed.filter(({ route }) => !built.has(route)).map(({ document }) => document),
-  }
+  return { pages, unbuilt: routed.filter(({ route }) => !built.has(normalizeRoute(route))) }
 }

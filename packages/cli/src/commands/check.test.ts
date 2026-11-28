@@ -200,6 +200,61 @@ test('with links.routes, a finding that a Markdown source writes points at its f
   )
 })
 
+const routedBlog = {
+  'contentbit.config.mjs': `export default { content: 'content/**/*.md', links: { routes: { 'content/blog': '/blog/{slug}/' } } }`,
+  'content/blog/post.md': '---\nslug: post\ntitle: How to proof dough\n---\n\nText.\n',
+  'content/blog/new.md': '---\nslug: new\ntitle: A new post\n---\n\nText.\n',
+  'dist/index.html':
+    '<title>Home</title><meta name="description" content="Home."><link rel="canonical" href="https://example.com/"><h1>Home</h1>',
+  'dist/blog/post/index.html':
+    '<title>Bread basics | Example</title><meta name="description" content="A post."><link rel="canonical" href="https://example.com/blog/post/"><h1>Bread basics</h1>',
+}
+
+test('with links.routes, check compares each source document with its built page and reports one never built', async () => {
+  const root = await project(routedBlog)
+
+  const { code, out } = await check(root, ['--json'])
+  expect(code).toBe(1)
+  expect(JSON.parse(out).findings).toEqual([
+    {
+      code: 'CB_SITE_SOURCE_NOT_BUILT',
+      severity: 'error',
+      message:
+        'links.routes gives this document the route /blog/new/, which has no built page, redirect or host route.',
+      hint: expect.any(String),
+      target: '/blog/new/',
+      origin: {
+        kind: 'source',
+        file: join(root, 'content/blog/new.md'),
+        line: 1,
+        page: '/blog/new/',
+      },
+    },
+    {
+      code: 'CB_PAGE_TITLE_MISMATCH',
+      severity: 'warning',
+      message:
+        'The page\'s title "Bread basics | Example" does not contain the title "How to proof dough" from its source document.',
+      hint: expect.any(String),
+      target: 'How to proof dough',
+      element: 'title',
+      origin: {
+        kind: 'source',
+        file: join(root, 'content/blog/post.md'),
+        line: 3,
+        column: 8,
+        page: '/blog/post/',
+      },
+    },
+  ])
+
+  const report = (await check(root)).out
+  expect(report).toContain('error CB_SITE_SOURCE_NOT_BUILT  1 finding on 1 page')
+  expect(report).toContain('     content/blog/new.md:1  links.routes gives this document')
+  expect(report).toContain('warning CB_PAGE_TITLE_MISMATCH  1 finding on 1 page')
+  expect(report).toContain('     content/blog/post.md:3:8  The page\'s title "Bread basics')
+})
+
 test('a site without built-page findings prints no built-page section', async () => {
   const root = await project({ 'dist/index.html': page('https://example.com/') })
 

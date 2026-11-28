@@ -114,6 +114,7 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
           checkSite(site, {
             origin: origin?.url,
             hostRoutes: config.resolveLinkOptions().hostRoutes,
+            sources,
           }),
           sources.pages,
         )

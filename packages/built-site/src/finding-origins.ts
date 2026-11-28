@@ -13,6 +13,12 @@ const FRONTMATTER_FACTS: Partial<Record<SiteFindingCode, 'title' | 'description'
   CB_PAGE_DESCRIPTION_MISSING: 'description',
 }
 
+// The frontmatter writes the target of these findings, even where its YAML escapes or folds it.
+const WRITTEN_IN_FRONTMATTER = new Set<SiteFindingCode>([
+  'CB_PAGE_TITLE_MISMATCH',
+  'CB_PAGE_DESCRIPTION_MISMATCH',
+])
+
 // Each of these findings is already about several pages.
 const NEVER_GROUPED = new Set<SiteFindingCode>([
   'CB_PAGE_TITLE_DUPLICATE',
@@ -44,7 +50,7 @@ function sourceLocation(
   const fact = FRONTMATTER_FACTS[code]
   if (fact) return facts[fact] ? undefined : { line: 1 }
   const index = target ? indexOfWholeValue(text, target) : -1
-  if (index === -1) return undefined
+  if (index === -1) return WRITTEN_IN_FRONTMATTER.has(code) ? { line: 1 } : undefined
   const before = text.slice(0, index)
   return { line: before.split('\n').length, column: index - before.lastIndexOf('\n') }
 }
