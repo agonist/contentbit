@@ -19,7 +19,9 @@ export type LinkTarget =
 export interface SiteIndex {
   pages: BuiltPage[]
   origin?: string
+  sitemap?: string[]
   resolveLink(href: string, from: BuiltPage): LinkTarget
+  resolveSiteUrl(url: string): LinkTarget
   hasId(page: BuiltPage, id: string): boolean
 }
 
@@ -38,6 +40,13 @@ export function isBrowserRendered({ facts }: BuiltPage): boolean {
 export function isIndexable(page: BuiltPage): boolean {
   const { facts } = page
   return !facts.robots.noindex && facts.redirect === undefined && !isBrowserRendered(page)
+}
+
+export function isOwnCanonical(index: SiteIndex, page: BuiltPage): boolean {
+  const { canonical } = page.facts
+  if (!canonical) return true
+  const target = index.resolveLink(canonical, page)
+  return target.kind === 'page' && target.page === page
 }
 
 export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {}): SiteIndex {
@@ -74,28 +83,32 @@ export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {})
   return {
     pages: site.pages,
     ...(origin && { origin }),
+    ...(site.sitemap && { sitemap: site.sitemap.urls }),
     hasId: (page, id) => ids.get(page)?.has(id) ?? false,
-    resolveLink(href, from) {
-      let url: URL
-      try {
-        url = new URL(href, pageUrl(from))
-      } catch {
-        return { kind: 'external' }
-      }
-      if (url.origin !== base) return { kind: 'external' }
+    resolveLink: (href, from) => resolve(href, pageUrl(from)),
+    resolveSiteUrl: (url) => resolve(url, base),
+  }
 
-      const path = pagePath(url.pathname)
-      const page = findPage(path)
-      if (page) {
-        const anchor = anchorOf(url.hash)
-        return anchor === undefined ? { kind: 'page', page } : { kind: 'page', page, anchor }
-      }
-      if (files.has(path.slice(1))) return { kind: 'file', exists: true }
-      if (isRedirected(path)) return { kind: 'redirect' }
-      if (hostRoutes.has(normalizeRoute(path))) return { kind: 'host-route' }
-      if (hasFileExtension(path)) return { kind: 'file', exists: false }
-      return { kind: 'missing', path }
-    },
+  function resolve(href: string, against: URL | string): LinkTarget {
+    let url: URL
+    try {
+      url = new URL(href, against)
+    } catch {
+      return { kind: 'external' }
+    }
+    if (url.origin !== base) return { kind: 'external' }
+
+    const path = pagePath(url.pathname)
+    const page = findPage(path)
+    if (page) {
+      const anchor = anchorOf(url.hash)
+      return anchor === undefined ? { kind: 'page', page } : { kind: 'page', page, anchor }
+    }
+    if (files.has(path.slice(1))) return { kind: 'file', exists: true }
+    if (isRedirected(path)) return { kind: 'redirect' }
+    if (hostRoutes.has(normalizeRoute(path))) return { kind: 'host-route' }
+    if (hasFileExtension(path)) return { kind: 'file', exists: false }
+    return { kind: 'missing', path }
   }
 }
 

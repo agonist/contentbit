@@ -2,10 +2,12 @@ import type { SiteFinding } from '../findings.js'
 import type { BuiltSite } from '../model.js'
 import { checkDuplicates } from './duplicates.js'
 import { checkHeadings } from './headings.js'
+import { checkHreflang } from './hreflang.js'
 import { checkImages } from './images.js'
 import { checkLinks } from './links.js'
 import { checkMetadata } from './metadata.js'
 import { checkRendering } from './rendering.js'
+import { checkSitemap } from './sitemap.js'
 import { createSiteIndex, type SiteIndex, type SiteIndexOptions } from './site-index.js'
 
 const CHECKS: Array<(index: SiteIndex) => SiteFinding[]> = [
@@ -15,6 +17,8 @@ const CHECKS: Array<(index: SiteIndex) => SiteFinding[]> = [
   checkHeadings,
   checkImages,
   checkLinks,
+  checkHreflang,
+  checkSitemap,
 ]
 
 export function checkSite(site: BuiltSite, options: SiteIndexOptions = {}): SiteFinding[] {
