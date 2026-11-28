@@ -2,11 +2,16 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 
-import type { ContentbitSiteConfig, LinkResolverOptions } from '@contentbit/core'
+import type { LinkResolverOptions } from '@contentbit/core'
 
 import { linkResolverOptions, type LinkOptionValues } from './link-options.js'
 import { loadContentbitConfig } from './project-config.js'
 import { loadSeoConfig, type LoadedSeoConfig } from './seo-config.js'
+
+interface ResolvedSiteConfig {
+  buildPath?: string
+  origin?: string
+}
 
 interface ContentCommandDefaults extends LinkOptionValues {
   cwd?: string
@@ -17,7 +22,7 @@ interface ContentCommandDefaults extends LinkOptionValues {
   noSeo?: boolean
   routes?: Record<string, string>
   hostRoutes?: string[]
-  site?: ContentbitSiteConfig
+  site?: ResolvedSiteConfig
   source?: string
 }
 
@@ -44,7 +49,7 @@ export interface ResolvedContentCommandConfig {
   cwd?: string
   registry?: string
   includeGenericBlocks: boolean
-  site?: ContentbitSiteConfig
+  site?: ResolvedSiteConfig
   resolveLinkOptions(): LinkResolverOptions
   loadSeo(): Promise<LoadedSeoConfig>
 }
@@ -122,8 +127,8 @@ async function discoverContentCommandDefaults(
         routes: resolveRouteDirs(loadedConfig.cwd, loadedConfig.config.links?.routes),
         hostRoutes: loadedConfig.config.links?.hostRoutes,
         site: loadedConfig.config.site && {
-          ...loadedConfig.config.site,
-          build: resolvePath(loadedConfig.cwd, loadedConfig.config.site.build),
+          buildPath: resolvePath(loadedConfig.cwd, loadedConfig.config.site.build),
+          origin: loadedConfig.config.site.origin,
         },
         source: loadedConfig.path,
       }

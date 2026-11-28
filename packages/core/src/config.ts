@@ -3,7 +3,6 @@ import type { LinkResolverOptions } from './links.js'
 export interface ContentbitSiteConfig {
   /** The static build folder, relative to this config file. */
   build?: string
-  url?: string
   origin?: string
 }
 

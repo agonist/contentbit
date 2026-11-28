@@ -61,7 +61,8 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
   const buildPath =
     input.target !== undefined
       ? resolve(input.target)
-      : (config.site?.build ?? searched.find((folder) => existsSync(join(folder, 'index.html'))))
+      : (config.site?.buildPath ??
+        searched.find((folder) => existsSync(join(folder, 'index.html'))))
 
   const [site, content] = await Promise.all([
     buildPath === undefined ? undefined : readBuild(buildPath),
