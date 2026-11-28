@@ -47,10 +47,10 @@ Contentbit now knows which files to scan, which block registry to load, and
 where the SEO contracts live. The commands in the rest of this guide do not
 need repeated glob, registry, or SEO config flags.
 
-Run a first scan to confirm the project loads:
+Run a first check to confirm the project loads:
 
 ```bash
-contentbit doctor
+contentbit check
 ```
 
 It is normal to see SEO findings at this point. The next steps define what the
@@ -148,7 +148,7 @@ instruction is enough:
 ```text
 Write the planned glossary/recipe-import page from this Contentbit brief.
 Preserve the target facts, include every required section, satisfy the required
-links, and run contentbit doctor before you finish.
+links, and run contentbit check before you finish.
 ```
 
 The brief defines the page structure. The live registry explains the syntax for
@@ -182,13 +182,14 @@ the file does not override.
 
 ## 6. Run the publishing gate
 
-Run Doctor after the draft exists:
+Build the site and run `check` after the draft exists:
 
 ```bash
-contentbit doctor
+contentbit check
 ```
 
-The report combines normal content health checks with the SEO contract. It can
+The report combines the built-page checks and the normal content health checks
+with the SEO contract. It can
 flag:
 
 - missing required frontmatter
@@ -201,7 +202,7 @@ flag:
 Fix required findings, then run the strict gate:
 
 ```bash
-contentbit doctor --strict-seo
+contentbit check --strict-seo
 ```
 
 The command exits with a failure when required SEO findings remain, so the same
@@ -215,14 +216,14 @@ the project settings:
 ```json
 {
   "scripts": {
-    "content:doctor": "contentbit doctor --strict-seo",
+    "content:check": "contentbit check --strict-seo",
     "studio": "contentbit studio"
   }
 }
 ```
 
-Run `content:doctor` in the same CI job that builds the site. A page that no
-longer satisfies its family contract will fail before publishing.
+Run `content:check` in the same CI job, after the step that builds the site. A
+page that no longer satisfies its family contract will fail before publishing.
 
 ## Multilingual page families
 
@@ -275,6 +276,6 @@ is absent.
 
 - [SEO briefs and contracts](/docs/guides/seo-briefs) for the full config reference.
 - [Content Studio](/docs/guides/studio) for the local review interface.
-- [Content doctor](/docs/guides/doctor) for findings and exit behavior.
+- [Check a site](/docs/guides/check) for findings and exit behavior.
 - [Internal linking](/docs/guides/internal-linking) for aliases, backlinks, and resolver modes.
 - [LLM-agent integration](/docs/guides/agents) for project-local agent instructions.

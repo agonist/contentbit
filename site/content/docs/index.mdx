@@ -67,7 +67,6 @@ and wires a working content project. Add `-y` to accept the detected defaults.
     { text: 'created: content/related.md' },
     { text: 'created: app/example/page.tsx' },
     { text: 'added script: content:check' },
-    { text: 'added script: content:doctor' },
     { text: 'added script: studio' },
     { text: 'created: contentbit-guide.md' },
     { text: 'created: AGENTS.md', delay: 350 },
@@ -197,8 +196,8 @@ You can also give the brief to an agent instead of writing the file manually:
 
 ```text
 Write the planned safer-content-workflows page from its Contentbit brief.
-Preserve the target facts, satisfy every acceptance check, and run Contentbit
-Doctor before you finish.
+Preserve the target facts, satisfy every acceptance check, and run contentbit
+check before you finish.
 ```
 
 The installed agent instructions teach supported tools to fetch the live block
@@ -209,11 +208,13 @@ guide and repair diagnostics without copied schemas in the prompt.
 Check the new page against its family contract:
 
 ```bash
-contentbit doctor content/getting-started/safer-content-workflows.md --strict-seo
+contentbit check --strict-seo
 ```
 
-Doctor checks the page contract, frontmatter, headings, structured blocks, and
-general content health in one pass. `--strict-seo` returns a failing exit code
+`check` reads every file the config lists, so the report covers the new page
+too. It checks the page contract, frontmatter, headings, structured blocks, and
+general content health in one pass. Until you build the app, it prints a notice
+that only the Markdown checks ran. `--strict-seo` returns a failing exit code
 when a required SEO finding remains.
 
 Try changing `## Outcomes` to `## Results` and run the command again. The report
@@ -241,8 +242,8 @@ You now have the complete loop: plan, brief, write, inspect, and enforce.
 
 The tutorial used one small page family and one targeted file. In a real
 content library, the next step is to classify existing folders with
-`pageDefaults`, add planned pages, and run Doctor over the full configured
-content set.
+`pageDefaults`, add planned pages, build the site, and run `check` over the
+built pages and the full configured content set.
 
 Continue with:
 
@@ -252,4 +253,4 @@ Continue with:
 - [Production Astro template](/docs/guides/production-astro) when you want a complete multilingual reference implementation instead of wiring the host application yourself.
 - [LLM-agent integration](/docs/guides/agents) for the automated writing and repair loop.
 - [Render documents](/docs/guides/renderers) to publish validated content in React, Astro, or Markdown.
-- [Content Studio](/docs/guides/studio) and [Content doctor](/docs/guides/doctor) for deeper review and audit options.
+- [Content Studio](/docs/guides/studio) and [Check a site](/docs/guides/check) for deeper review and audit options.

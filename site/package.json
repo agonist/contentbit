@@ -10,7 +10,7 @@
     "prebuild": "node scripts/copy-registry.mjs && node scripts/gen-reference.mjs && node scripts/gen-llms.mjs",
     "build": "next build",
     "start": "next start",
-    "content:doctor": "contentbit doctor",
+    "content:check": "contentbit check",
     "content:brief": "contentbit brief",
     "studio": "contentbit studio"
   },

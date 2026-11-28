@@ -9,7 +9,7 @@ import { InstallTabs } from '@/components/install-tabs'
 import { LandingFooter } from '@/components/landing-footer'
 import { PublishDemo } from '@/components/publish-demo'
 import { SectionHeading } from '@/components/section-heading'
-import { SeoDoctorDemo } from '@/components/seo-doctor-demo'
+import { SeoCheckDemo } from '@/components/seo-check-demo'
 import { SeoWorkflowDemo } from '@/components/seo-workflow-demo'
 import { SiteHeader } from '@/components/site-header'
 import { ArrowRight, Blocks, Check, FileStack, ShieldCheck, Sparkles } from 'lucide-react'
@@ -152,7 +152,7 @@ export default function Home() {
                 </h3>
                 <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                   Use the separate multilingual Astro template with routes, metadata, structured
-                  data, feeds, social images, Studio, Doctor, and CI already connected.
+                  data, feeds, social images, Studio, Contentbit checks, and CI already connected.
                 </p>
                 <code className="bg-muted mt-5 block overflow-x-auto px-3 py-2.5 font-mono text-[11px]">
                   github.com/agonist/astro-speedrun-seo
@@ -232,7 +232,7 @@ export default function Home() {
                     },
                     {
                       kind: 'command',
-                      command: 'contentbit doctor --strict-seo',
+                      command: 'contentbit check --strict-seo',
                       exitCode: 1,
                       output:
                         'CB_SEO_LINK_REQUIRED content/alternatives/semrush.md\nmissing required link: seo-tools-comparison',
@@ -243,7 +243,7 @@ export default function Home() {
                     },
                     {
                       kind: 'command',
-                      command: 'contentbit doctor --strict-seo',
+                      command: 'contentbit check --strict-seo',
                       exitCode: 0,
                       output: '32 pages · 0 errors · 0 required SEO findings',
                     },
@@ -261,7 +261,7 @@ export default function Home() {
                 index="03"
                 eyebrow="The quality gate"
                 title="Catch content drift before your users do"
-                body="A page can be valid Markdown and still fail the program. Doctor turns your page-family contract, block schemas, and link graph into one ranked repair plan."
+                body="A page can be valid Markdown and still fail the program. contentbit check reads your page-family contract, block schemas, link graph, and built pages, and reports what to fix."
               />
               <ul className="mt-6 space-y-3 text-sm">
                 {[
@@ -278,7 +278,7 @@ export default function Home() {
             </div>
             <div className="reveal-on-scroll">
               <Frame>
-                <SeoDoctorDemo />
+                <SeoCheckDemo />
               </Frame>
             </div>
           </div>

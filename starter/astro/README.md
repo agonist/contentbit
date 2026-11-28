@@ -10,7 +10,6 @@ instructions.
 pnpm install
 pnpm run content:check
 pnpm run content:links
-pnpm run content:doctor
 pnpm run studio
 ```
 

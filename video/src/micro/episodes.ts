@@ -1,7 +1,7 @@
 export const MICRO_EPISODE_IDS = [
   'ControlLayer',
   'BriefBeforeDraft',
-  'DoctorRepair',
+  'CheckRepair',
   'LinkGraph',
   'AdoptDryRun',
   'OneContract',
@@ -38,8 +38,8 @@ export const MICRO_EPISODES: Record<MicroEpisodeId, MicroEpisode> = {
     payoff: 'A prompt asks. A contract defines done.',
     durationInFrames: 330,
   },
-  DoctorRepair: {
-    id: 'DoctorRepair',
+  CheckRepair: {
+    id: 'CheckRepair',
     index: '03',
     eyebrow: 'CONTENT QA, IN CI',
     hook: 'It looks right.',

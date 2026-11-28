@@ -1,13 +1,13 @@
 import { Check, CircleAlert, Link2, ShieldCheck } from 'lucide-react'
 
-export function SeoDoctorDemo() {
+export function SeoCheckDemo() {
   return (
     <div className="bg-card overflow-hidden border shadow-sm">
       <div className="text-muted-foreground flex h-10 items-center gap-1.5 border-b px-4 font-mono text-[11px]">
         <span className="size-1.5 rounded-full bg-red-400/80" />
         <span className="size-1.5 rounded-full bg-amber-400/80" />
         <span className="size-1.5 rounded-full bg-emerald-400/80" />
-        <span className="ml-2">$ contentbit doctor --strict-seo</span>
+        <span className="ml-2">$ contentbit check --strict-seo</span>
         <span className="text-destructive ml-auto">exit 1</span>
       </div>
       <div className="grid md:grid-cols-[1.45fr_1fr]">
@@ -31,7 +31,7 @@ export function SeoDoctorDemo() {
             </p>
           </div>
           <div className="border-t pt-4">
-            <p className="text-muted-foreground">repair plan</p>
+            <p className="text-muted-foreground">findings</p>
             <p className="mt-1.5">2 required fixes · 1 suggestion</p>
           </div>
         </div>

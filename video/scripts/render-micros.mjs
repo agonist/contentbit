@@ -5,7 +5,7 @@ import { join } from 'node:path'
 const compositions = [
   'MicroControlLayer',
   'MicroBriefBeforeDraft',
-  'MicroDoctorRepair',
+  'MicroCheckRepair',
   'MicroLinkGraph',
   'MicroAdoptDryRun',
   'MicroOneContract',

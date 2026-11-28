@@ -98,8 +98,9 @@ test('no files matched exits 2', async () => {
   expect(await run(['stats', join(dir, '*.md')], fakeIo())).toBe(2)
 })
 
-test('validation counts match doctor for the same files (one validation path)', async () => {
+test('validation counts match check for the same files (one validation path)', async () => {
   const dir = await fixture({
+    'contentbit.config.mjs': `export default { content: '*.md' }`,
     'bad.md': ':::comparison\n- only | two\n:::\n',
     'good.md': ':::callout{type="tip"}\nWeigh your flour.\n:::\n',
   })
@@ -117,12 +118,14 @@ test('validation counts match doctor for the same files (one validation path)', 
     { errors: 0, warnings: 0 },
   )
 
-  const doctorIo = fakeIo()
-  await run(['doctor', join(dir, '*.md'), '--json'], doctorIo)
-  const doctorReport = JSON.parse(doctorIo.out.join('\n')) as {
+  const checkIo = fakeIo()
+  const previous = process.cwd()
+  process.chdir(dir)
+  await run(['check', '--json'], checkIo).finally(() => process.chdir(previous))
+  const checkReport = JSON.parse(checkIo.out.join('\n')) as {
     summary: { errors: number; warnings: number }
   }
 
-  expect(statsTotals.errors).toBe(doctorReport.summary.errors)
-  expect(statsTotals.warnings).toBe(doctorReport.summary.warnings)
+  expect(statsTotals.errors).toBe(checkReport.summary.errors)
+  expect(statsTotals.warnings).toBe(checkReport.summary.warnings)
 })

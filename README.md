@@ -34,7 +34,7 @@ portable Markdown and renders in React, Astro, or plain Markdown.
 - **Model page families** with required frontmatter, sections, blocks, and links.
 - **Brief every page** before its Markdown file exists.
 - **Give agents live rules** from the same contracts and block registry the CLI checks.
-- **Enforce quality** with ranked Doctor findings and strict CI exit codes.
+- **Check the built site** and its Markdown with one command and strict CI exit codes.
 - **Publish anywhere** through React, Astro, or plain Markdown adapters.
 
 ## Quick Start
@@ -53,7 +53,7 @@ Plan a page, give the brief to a writer or agent, and run the publishing gate:
 
 ```bash
 contentbit brief <key-or-slug>       # agent-ready writing contract
-contentbit doctor --strict-seo       # content, structure, and link gate
+contentbit check --strict-seo        # built pages, content, structure, and link gate
 pnpm run studio                      # preview briefs, pages, links, and findings
 ```
 
@@ -108,8 +108,8 @@ export default defineSeoConfig({
 })
 ```
 
-The page can be briefed before it exists. Once written, Doctor checks the live
-file against the plan and reports exactly what needs repair.
+The page can be briefed before it exists. Once written, `contentbit check`
+checks the live file against the plan and reports exactly what needs repair.
 
 ## Structured Markdown underneath
 
@@ -143,7 +143,7 @@ After `init --seo`, your agent has a short, repeatable writing loop:
 2. Run `contentbit brief <key-or-slug>` for the target page contract.
 3. Run `contentbit instructions --audience llm` for the live block guide.
 4. Write plain Markdown, using blocks only when the guide says they fit.
-5. Run `contentbit doctor --strict-seo` and repair findings until it exits 0.
+5. Run `contentbit check --strict-seo` and repair findings until it exits 0.
 
 Refresh or add the integration at any time:
 
@@ -166,8 +166,7 @@ custom blocks are picked up automatically. See the
 | `contentbit-guide.md` | Generated authoring rules for LLMs                                 |
 | `AGENTS.md`           | Compact instructions for Codex, Cursor, Copilot, and other agents  |
 | `.claude/skills/*`    | Claude Code author/audit skills when `.claude` is present          |
-| `content:check`       | Validates content with the right glob and registry                 |
-| `content:doctor`      | Ranks validation, link, thin-section, and image-alt issues         |
+| `content:check`       | Checks the built pages and the content with `contentbit check`     |
 | `contentbit brief`    | Prints an agent-ready SEO brief for an existing or planned page    |
 | `contentbit snapshot` | Prints a portable, JSON-safe project read model for remote adapters |
 | `studio`              | Read-only browser for previews, stats, links, keywords, and health |
@@ -213,14 +212,14 @@ Read the [internal linking guide](https://contentbit.dev/docs/guides/internal-li
 
 Create `contentbit.seo.config.ts` with reusable page-type contracts and planned
 pages, or let `contentbit init --seo` scaffold a starter. When that file exists,
-`contentbit doctor` folds SEO contract findings into the normal repair plan,
+`contentbit check` reports SEO contract findings with the other findings,
 Studio shows a read-only Brief view for each planned or existing page, and
 `contentbit brief <key-or-slug>` prints the structure, links, required blocks,
 and acceptance checks an agent should satisfy before publishing. See the
 [programmatic SEO workflow](https://contentbit.dev/docs/guides/programmatic-seo).
 
 Without an agent, the same loop is ordinary CLI-assisted writing: print the
-brief, write the Markdown, run Doctor, inspect the page in Studio, and publish.
+brief, write the Markdown, run `check`, inspect the page in Studio, and publish.
 
 ## Packages
 
@@ -231,7 +230,7 @@ brief, write the Markdown, run Doctor, inspect the page in Studio, and publish.
 | [`@contentbit/react`](https://www.npmjs.com/package/@contentbit/react)          | React renderer                                                 |
 | [`@contentbit/astro`](https://www.npmjs.com/package/@contentbit/astro)          | Astro renderer                                                 |
 | [`@contentbit/studio`](https://www.npmjs.com/package/@contentbit/studio)        | Local read-only content studio                                 |
-| [`contentbit`](https://www.npmjs.com/package/contentbit)                        | CLI: init, validate, doctor, studio, stats, links, render       |
+| [`contentbit`](https://www.npmjs.com/package/contentbit)                        | CLI: init, check, validate, studio, stats, links, render        |
 
 ## Explore
 

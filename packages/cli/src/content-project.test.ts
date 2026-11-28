@@ -24,9 +24,9 @@ test('resolveContentFiles throws CliError exit 2 with no positionals', async () 
 
 test('resolveContentFiles throws CliError exit 2 when nothing matches', async () => {
   const dir = await fixture({})
-  await expect(resolveContentFiles([join(dir, '*.md')], 'doctor')).rejects.toMatchObject({
+  await expect(resolveContentFiles([join(dir, '*.md')], 'check')).rejects.toMatchObject({
     exitCode: 2,
-    message: `doctor: no files matched ${join(dir, '*.md')}`,
+    message: `check: no files matched ${join(dir, '*.md')}`,
   })
 })
 
@@ -71,7 +71,7 @@ test('loadContentProject passes scan options through (includeStatsFindings)', as
   // a heading with very few words yields a CB_THIN_SECTION stats finding when enabled
   const dir = await fixture({ 'thin.md': '# Intro\n\ntiny.\n' })
   const withStats = await loadContentProject({
-    cmd: 'doctor',
+    cmd: 'check',
     positionals: [join(dir, '*.md')],
     includeGenericBlocks: true,
     linkOptions: {},

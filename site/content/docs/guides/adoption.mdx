@@ -36,16 +36,16 @@ and block requirements with the people who own the content.
 
 ## Review the integrity report
 
-Adoption uses the same scan as Doctor and Studio. Before accepting the config
-proposal, review duplicate titles and descriptions, missing or multiple H1s,
-heading-level jumps, local route or Markdown links that do not resolve, and
-locale/key coverage findings.
+Adoption uses the same scan as `check` and Studio. Before accepting the config
+proposal, review duplicate titles and descriptions, multiple H1s, heading-level
+jumps, relative Markdown links that do not resolve, and locale and key
+coverage findings.
 
 After you create and adapt the proposed config, run the normal daily loop:
 
 ```bash
-contentbit doctor --watch
+contentbit check --watch
 ```
 
-The watch session reruns Doctor after changes in the directories that supplied
-the initial scan. Use ordinary `contentbit doctor --strict-warnings` in CI.
+The watch session reruns `check` after a change in a scanned content folder or
+in the build folder. In CI, run `contentbit check --strict` after the build.

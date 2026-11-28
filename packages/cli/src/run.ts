@@ -35,7 +35,6 @@ Commands:
   check         check site health on built pages and Markdown
   validate      check Markdown blocks and internal links
   brief         print an agent-ready SEO brief
-  doctor        inspect content health and repair suggestions
   studio        browse content locally
   snapshot      print a portable project snapshot as JSON
   stats         print document stats as JSON
@@ -51,10 +50,9 @@ Setup:
   agents [--claude] [--check|--dry-run] [--no-agents-md]
 
 Common:
-  check [folder] [--origin <url>] [--strict] [--json] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
+  check [folder] [--origin <url>] [--watch] [--strict] [--strict-seo] [--json] [--min-section-words <n>] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
   validate [globs...] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--link-resolve <mode>]
   brief <key-or-slug> [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--json]
-  doctor [globs...] [--watch] [--registry <module.ts>] [--no-generic-blocks] [--strict-warnings] [--strict-seo] [--seo-config <module.ts>] [--no-seo] [--json] [--min-section-words <n>] [--link-resolve <mode>]
   studio [globs...] [--registry <module.ts>] [--port <n>] [--host <host>] [--no-open] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--link-resolve <mode>]
   snapshot [globs...] [--registry <module.ts>] [--no-generic-blocks] [--seo-config <module.ts>] [--no-seo] [--revision <id>] [--link-resolve <mode>]
   stats <globs...> [--registry <module.ts>] [--no-generic-blocks] [--no-validate]
@@ -63,10 +61,17 @@ Common:
   docs [--registry <module.ts>] [--no-generic-blocks] [--out <file>]
   links [globs...] [--fix] [--out <file>] [--link-resolve <mode>]`
 
+const DOCTOR_REMOVED =
+  'contentbit doctor is now contentbit check, and contentbit check --json replaces contentbit doctor --json.'
+
 export async function run(argv: string[], io: Io): Promise<number> {
   const name = argv[0]
   if (!name) {
     io.stderr(USAGE)
+    return 2
+  }
+  if (name === 'doctor') {
+    io.stderr(DOCTOR_REMOVED)
     return 2
   }
   let exitCode = 0
@@ -200,7 +205,10 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
     .argument('[folder]', 'Build folder; defaults to site.build or a detected build folder')
     .option('--origin <url>', "Site origin; defaults to site.origin or the pages' canonicals")
     .option('--strict', 'Exit 1 when warnings are present')
+    .option('--strict-seo', 'Exit 1 when SEO warnings are present')
+    .option('--watch', 'Re-run when a content or build file changes')
     .option('--json', 'Print stable machine-readable JSON')
+    .option('--min-section-words <n>', 'Set the thin-section suggestion threshold')
     .option('--registry <module>', 'Load custom block definitions from this module')
     .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
     .option('--seo-config <module>', 'Load SEO contracts from this module')
@@ -215,7 +223,10 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           target,
           origin: options.origin,
           strict: Boolean(options.strict),
+          strictSeo: Boolean(options.strictSeo),
+          watch: Boolean(options.watch),
           json: Boolean(options.json),
+          minSectionWords: options.minSectionWords,
           registry: options.registry,
           noGenericBlocks: options.genericBlocks === false,
           seoConfig: options.seoConfig,
@@ -245,43 +256,6 @@ function createProgram(io: Io, setExitCode: SetExitCode): Command {
           registry: options.registry,
           noGenericBlocks: options.genericBlocks === false,
           strictWarnings: Boolean(options.strictWarnings),
-          ...linkOptionsFrom(options),
-        },
-        io,
-      ),
-    )
-  })
-
-  const doctor = program
-    .command('doctor')
-    .description('inspect content health and repair suggestions')
-    .argument('[globs...]', 'Content files or quoted globs; defaults to project config')
-    .option('--registry <module>', 'Load custom block definitions from this module')
-    .option('--no-generic-blocks', 'Do not include the built-in generic block pack')
-    .option('--strict-warnings', 'Exit 1 when validation warnings are present')
-    .option('--strict-seo', 'Treat required SEO findings as errors')
-    .option('--watch', 'Re-run when a scanned content directory changes')
-    .option('--json', 'Print stable machine-readable JSON')
-    .option('--min-section-words <n>', 'Set the thin-section suggestion threshold')
-    .option('--seo-config <module>', 'Load SEO contracts from this module')
-    .option('--no-seo', 'Disable SEO config discovery and findings')
-  addLinkOptions(doctor)
-  doctor.action(async (globs: string[], rawOptions: Command | OptionValues) => {
-    const options = optionsFrom(rawOptions)
-    const { doctorCommand } = await import('./commands/doctor.js')
-    setExitCode(
-      await doctorCommand(
-        {
-          globs,
-          registry: options.registry,
-          noGenericBlocks: options.genericBlocks === false,
-          strictWarnings: Boolean(options.strictWarnings),
-          strictSeo: Boolean(options.strictSeo),
-          watch: Boolean(options.watch),
-          json: Boolean(options.json),
-          minSectionWords: options.minSectionWords,
-          seoConfig: options.seoConfig,
-          noSeo: options.seo === false ? true : undefined,
           ...linkOptionsFrom(options),
         },
         io,

@@ -381,13 +381,13 @@ test('relative path config entries merge with absolute scanned file paths', () =
   const scan = scanContentProject(
     [
       {
-        path: '/repo/site/content/docs/guides/doctor.mdx',
+        path: '/repo/site/content/docs/guides/check.mdx',
         source: `---
-title: Content doctor
+title: Check a site
 description: Repair plan.
 ---
 
-# Content doctor
+# Check a site
 
 ## Overview
 
@@ -405,12 +405,12 @@ Useful overview text.
           },
         },
         pages: {
-          'content/docs/guides/doctor.mdx': {
+          'content/docs/guides/check.mdx': {
             type: 'guide',
-            key: 'doctor',
-            slug: 'docs/guides/doctor',
+            key: 'check',
+            slug: 'docs/guides/check',
             intent: 'informational',
-            keywords: { primary: 'contentbit doctor' },
+            keywords: { primary: 'contentbit check' },
           },
         },
       }),
@@ -419,12 +419,12 @@ Useful overview text.
 
   expect(scan.seo?.pages).toHaveLength(1)
   expect(scan.seo?.pages[0]).toMatchObject({
-    id: 'doctor',
+    id: 'check',
     source: 'existing',
-    key: 'doctor',
-    slug: 'docs/guides/doctor',
+    key: 'check',
+    slug: 'docs/guides/check',
     type: 'guide',
-    title: 'Content doctor',
+    title: 'Check a site',
   })
   expect(scan.seo?.findings).toEqual([])
 })

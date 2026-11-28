@@ -32,8 +32,8 @@ win in a monorepo.
 With a config present, daily commands need no repeated project flags:
 
 ```bash
+contentbit check
 contentbit validate
-contentbit doctor
 contentbit studio
 contentbit stats
 contentbit links
@@ -61,7 +61,7 @@ nearest config.
 Use an explicit option only for a one-off override. For example:
 
 ```bash
-contentbit doctor "drafts/**/*.md" --no-seo
+contentbit validate "drafts/**/*.md" --no-generic-blocks
 ```
 
 `@contentbit/studio` is installed separately from the base CLI so validation

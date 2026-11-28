@@ -62,7 +62,7 @@ export interface ScanContentProjectOptions {
   linkOptions?: LinkResolverOptions
   minSectionWords?: number
   includeStatsFindings?: boolean
-  /** Include cross-document page-quality findings. Defaults to true for Doctor and Studio. */
+  /** Include cross-document page-quality findings. Defaults to true. */
   includeIntegrityFindings?: boolean
   seoConfig?: unknown
   seoConfigPath?: string

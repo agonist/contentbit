@@ -24,6 +24,17 @@ test('no command prints usage and exits 2', async () => {
   expect(io.err.join('\n')).toContain('links         build or fix the internal link index')
 })
 
+test('doctor exits 2 and names check, whatever flags it gets', async () => {
+  for (const argv of [['doctor'], ['doctor', 'content/**/*.md', '--json', '--strict-seo']]) {
+    const io = fakeIo()
+    expect(await run(argv, io)).toBe(2)
+    expect(io.out).toEqual([])
+    expect(io.err).toEqual([
+      'contentbit doctor is now contentbit check, and contentbit check --json replaces contentbit doctor --json.',
+    ])
+  }
+})
+
 test('unknown command prints usage and exits 2', async () => {
   const io = fakeIo()
   expect(await run(['frobnicate'], io)).toBe(2)
@@ -77,14 +88,14 @@ test('an unrecognized flag exits 1 with a clean error', async () => {
 
 test('subcommand help explains options without requiring the website', async () => {
   const io = fakeIo()
-  expect(await run(['doctor', '--help'], io)).toBe(0)
+  expect(await run(['check', '--help'], io)).toBe(0)
   const help = io.out.join('\n')
   expect(help).toContain('--registry <module>')
   expect(help).toContain('Load custom block definitions')
   expect(help).toContain('--strict-seo')
-  expect(help).toContain('Treat required SEO findings as errors')
+  expect(help).toContain('Exit 1 when SEO warnings are present')
   expect(help).toContain('--watch')
-  expect(help).toContain('Re-run when a scanned content directory changes')
+  expect(help).toContain('Re-run when a content or build file changes')
 })
 
 test('enumerated options reject unknown values', async () => {

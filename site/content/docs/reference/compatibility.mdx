@@ -51,13 +51,30 @@ New findings can affect strict CI policies. Keep exact package versions in your
 lockfile and review findings when upgrading. Install Contentbit packages at the
 same release version.
 
+## Changes in 2.0
+
+2.0 is a major release under this policy:
+
+- `contentbit check` replaces `contentbit doctor`, which now exits 2 and names
+  `check`. `doctor --strict-warnings` becomes `check --strict`, and
+  `check --json` prints a `contentbit.site-check.v1` report.
+- `@contentbit/core` no longer reports the Markdown diagnostics
+  `CB_H1_MISSING`, `CB_INTERNAL_URL_UNRESOLVED`, and
+  `CB_MARKDOWN_ANCHOR_UNRESOLVED`. `check` reports these problems from the
+  built pages as `CB_PAGE_H1_MISSING`, `CB_LINK_PAGE_MISSING`, and
+  `CB_LINK_ANCHOR_MISSING`.
+- `content` is optional in the Contentbit config, which gains a `site` section.
+
+The [v2 upgrade notes](/docs/maintainers/v2-upgrade) explain the migration.
+
 ## Configuration
 
 [Contentbit config](/docs/guides/project-config) is the shared source for content
-globs, registry location, generic-block policy, link resolution, and SEO settings.
-Explicit command flags override the corresponding project defaults. Package
-scripts supply compatibility defaults when no Contentbit config or explicit
-content globs are selected.
+globs, registry location, generic-block policy, link resolution, SEO settings,
+and the site's build folder and origin. Explicit command flags override the
+corresponding project defaults. Package scripts supply compatibility defaults
+when no Contentbit config or explicit content globs are selected. `check` reads
+content globs only from the config.
 
 Path rules are part of the contract:
 
@@ -87,6 +104,7 @@ These outputs carry an explicit format identifier:
 
 | Output | `schemaVersion` |
 | --- | --- |
+| `contentbit check --json` | `contentbit.site-check.v1` |
 | `contentbit snapshot` | `contentbit.project-snapshot.v1` |
 | `contentbit adopt --json` | `contentbit.adoption.v1` |
 | `contentbit brief <target> --json` | `contentbit.seo.brief.v1` |
@@ -97,8 +115,8 @@ diagnostic codes. An incompatible format requires a new identifier and a major
 package release unless the new format is separately opt-in and the old one
 remains available.
 
-Doctor's `--json`, Stats, and the serialized link index do not currently have a
-`schemaVersion` field. Their documented fields still follow package semantic
+Stats and the serialized link index do not currently have a `schemaVersion`
+field. Their documented fields still follow package semantic
 versioning. Stats returns an object for one file and an array for multiple files;
 do not assume one shape for both cases. See the [CLI reference](/docs/reference/cli)
 for command-specific outputs and exit behavior.
@@ -135,8 +153,8 @@ consumers to use pnpm.
 Before publishing, `pnpm check` builds and tests the workspace, checks packed
 manifests, verifies the standalone starters, and installs newly packed artifacts
 into isolated Astro, TanStack, and Next consumers. The packed gate verifies
-validation, rendering, Next initialization, and installed Studio dashboard and
-preview responses. It uses tarballs for direct and transitive Contentbit
+validation, `check` on the starters' builds, rendering, Next initialization,
+and installed Studio dashboard and preview responses. It uses tarballs for direct and transitive Contentbit
 dependencies, so a workspace link cannot hide a missing published file.
 
 See the [release checklist](/docs/maintainers/release-checklist) for commands and

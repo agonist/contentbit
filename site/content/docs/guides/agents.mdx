@@ -69,9 +69,9 @@ This manages:
   `--claude` when it doesn't), two skills land in `.claude/skills/`:
   - `contentbit-author`: the writing loop: fetch the authoring guide, write,
     validate, fix diagnostics until exit 0.
-  - `contentbit-audit`: the health check: run `doctor` across content, flag
-    validation issues, internal-link problems, thin sections, block-less long
-    documents, and missing image alt text, in that order.
+  - `contentbit-audit`: the health check: run `check` across the site, flag
+    validation issues, built-page and internal-link problems, thin sections,
+    block-less long documents, and missing image alt text, in that order.
 
 Pass `--no-agents-md` to manage only the skills.
 Run `contentbit agents --check` to see what would be created, refreshed, or
@@ -108,7 +108,7 @@ contentbit brief <key-or-slug> --json
 
 The brief is the structure contract: target facts, intent, keywords, required
 sections, required blocks, required links, related pages, and acceptance checks.
-After the edit, run `doctor --strict-seo` over the same glob.
+After the edit, run `check --strict-seo`.
 
 Generated instructions document every block prop, enum value, default, and
 description. That is why the agent can follow a "never guess props" rule. For
@@ -116,12 +116,12 @@ the model behind this, see [LLM authoring](/docs/concepts/llm-authoring).
 
 ## Use the audit loop
 
-The audit skill starts with `doctor`, which prints a ranked repair plan and can
-also emit JSON:
+The audit skill starts with `check`, which prints the built-page and Markdown
+findings and can also emit JSON:
 
 ```bash
-contentbit doctor
-contentbit doctor --json
+contentbit check
+contentbit check --json
 ```
 
 Use `stats` when you need raw per-document metrics:
@@ -132,8 +132,8 @@ contentbit stats
 
 Each stats entry carries a heading outline with per-section word counts, block
 usage by name, link domains, and a validation summary. Full field reference and
-recipes: [Document stats & auditing](/docs/guides/stats). Doctor behavior:
-[Content doctor](/docs/guides/doctor).
+recipes: [Document stats & auditing](/docs/guides/stats). Check behavior:
+[Check a site](/docs/guides/check).
 
 For a human review pass over the same content set, open the read-only Studio:
 
@@ -142,7 +142,7 @@ pnpm studio
 ```
 
 Studio is for browsing previews, links, backlinks, keywords, and findings.
-Agents should keep using `doctor --json` and `stats` when they need stable data.
+Agents should keep using `check --json` and `stats` when they need stable data.
 
 For internal-link health, use the graph command next to stats:
 
@@ -175,7 +175,7 @@ internal-link frontmatter, run `contentbit links` and choose
 (`file:line:col severity CODE message`, with `hint:` lines) until it exits 0.
 ```
 
-For data-informed writing, feed `contentbit doctor --json` or `contentbit stats`
+For data-informed writing, feed `contentbit check --json` or `contentbit stats`
 output in as well — for example, have the skill check sibling documents'
 outlines and block usage so new content matches the structure of what already
 works.

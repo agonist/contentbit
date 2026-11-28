@@ -157,12 +157,12 @@ function BriefDemo() {
   )
 }
 
-function DoctorDemo() {
+function CheckDemo() {
   const frame = useCurrentFrame()
   const fixed = frame >= 154
   const pulse = spring({ frame: frame - 176, fps: 30, config: { damping: 14, stiffness: 150 } })
   return (
-    <MicroPanel title="article.md ↔ contentbit doctor">
+    <MicroPanel title="article.md ↔ contentbit check">
       <div style={{ display: 'grid', gridTemplateColumns: '0.9fr 1.25fr', gap: 28 }}>
         <div
           style={{
@@ -378,8 +378,8 @@ function Demo({ episodeId }: MicroVideoProps) {
       return <ControlLayerDemo />
     case 'BriefBeforeDraft':
       return <BriefDemo />
-    case 'DoctorRepair':
-      return <DoctorDemo />
+    case 'CheckRepair':
+      return <CheckDemo />
     case 'LinkGraph':
       return <LinkGraphDemo />
     case 'AdoptDryRun':
@@ -397,7 +397,7 @@ export function MicroVideo({ episodeId }: MicroVideoProps) {
   const demo = appear(frame, 46, 14)
   const payoff = appear(frame, 230, 14)
   const brand = appear(frame, 278, 12)
-  const accentColor = episodeId === 'DoctorRepair' || episodeId === 'LinkGraph' ? C.red : C.emerald
+  const accentColor = episodeId === 'CheckRepair' || episodeId === 'LinkGraph' ? C.red : C.emerald
 
   return (
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden' }}>

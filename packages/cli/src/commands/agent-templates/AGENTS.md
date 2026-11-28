@@ -33,11 +33,12 @@ When writing or editing content:
 
 When auditing content health:
 
-- `contentbit doctor` prints a ranked,
-  read-only repair plan: validation issues, link issues, thin sections,
-  block-less long documents, and missing image alt text.
-- `contentbit doctor --json` prints the
-  same findings as structured JSON for agents and CI.
+- `contentbit check` prints a read-only report on the pages in the site's
+  build folder and on the Markdown content: validation issues, link issues,
+  thin sections, block-less long documents, and missing image alt text.
+  Build the site first. Without a build folder, only the Markdown checks run.
+- `contentbit check --json` prints the
+  same findings as one JSON report for agents and CI.
 - `contentbit stats` prints raw JSON
   stats: outline word counts, block usage, link domains, and validation
   error/warning counts.

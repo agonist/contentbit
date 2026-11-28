@@ -3,8 +3,8 @@ title: Document stats & auditing
 description: analyzeDocument and contentbit stats — outlines, block usage, link domains, and validation summaries as JSON.
 ---
 
-`contentbit doctor` is the ranked audit command: validation, links, and content
-health in one repair plan. `contentbit stats` is the raw read tool next to it:
+`contentbit check` is the audit command: built pages, validation, links, and
+content health in one report. `contentbit stats` is the raw read tool next to it:
 it analyzes documents and prints JSON to stdout, always exiting 0 — even when
 documents have validation errors. Use stats when you need measurements to feed a
 custom report, dashboard, or LLM prompt.
@@ -114,8 +114,8 @@ The live demo above is exactly this — `analyzeDocument` plus
 ## Auditing with an LLM agent
 
 The `contentbit-audit` skill installed by [`contentbit agents`](/docs/guides/agents)
-starts with [`contentbit doctor`](/docs/guides/doctor) for a ranked report, then
-uses stats when raw metrics are useful. Doctor's priority order is worth
+starts with [`contentbit check`](/docs/guides/check) for a report, then uses
+stats when raw metrics are useful. The skill's priority order is worth
 stealing for your own tooling:
 
 1. **Validation errors and warnings** — broken content ships broken pages.

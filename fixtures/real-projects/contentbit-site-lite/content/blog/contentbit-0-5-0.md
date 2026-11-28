@@ -7,20 +7,20 @@ keywords:
   primary: contentbit SEO contracts
   secondary:
     - contentbit studio
-    - content doctor
+    - contentbit check
 linksTo:
   - docs/guides/seo-briefs
-  - docs/guides/doctor
+  - docs/guides/check
 ---
 
 # Contentbit 0.5.0
 
 ## Overview
 
-This release keeps Studio, Doctor, and Brief on the same project scan. The
+This release keeps Studio, check, and Brief on the same project scan. The
 result is a smaller authoring loop: configure contracts once, inspect the
 content in Studio, print an agent-ready brief, then enforce the same rules with
-doctor in CI.
+check in CI.
 
 :::callout{type="note" title="Adoption path"}
 The docs site fixture exists so SEO workflows can be tested against docs and

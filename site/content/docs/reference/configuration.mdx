@@ -3,8 +3,8 @@ title: Configuration reference
 description: Fields, defaults, discovery, paths, and command overrides for contentbit.config.*.
 ---
 
-`contentbit.config.*` is the shared project interface used by validation,
-Doctor, Studio, links, briefs, generated instructions, and agent guidance.
+`contentbit.config.*` is the shared project interface used by `check`,
+validation, Studio, links, briefs, generated instructions, and agent guidance.
 
 ```ts
 import { defineContentConfig } from '@contentbit/core'
@@ -21,6 +21,10 @@ export default defineContentConfig({
     defaultLocale: 'en',
   },
   seo: './contentbit.seo.config.ts',
+  site: {
+    build: 'dist',
+    origin: 'https://example.com',
+  },
 })
 ```
 
@@ -36,11 +40,28 @@ configuration file, not the shell's current directory.
 
 | Field | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `content` | `string \| string[]` | Required | One or more Markdown or MDX files/globs. `defineContentConfig` normalizes a string to an array. |
+| `content` | `string \| string[]` | None | One or more Markdown or MDX files/globs. `defineContentConfig` normalizes a string to an array. A site without Markdown can leave it out. |
 | `registry` | `string` | None | Module that default-exports custom block definitions. |
 | `genericBlocks` | `boolean` | `true` | Include the built-in generic block pack before the custom registry. |
 | `links` | `LinkResolverOptions` | Global slug resolution | Shared page identity and locale fields for the internal-link graph. |
 | `seo` | `string \| false` | Automatic SEO config discovery | Path to an SEO contract module, or `false` to disable discovery. |
+| `site` | `ContentbitSiteConfig` | None | The build folder and public origin that `contentbit check` reads. See [Site fields](#site-fields). |
+
+Commands that read Markdown, such as `validate`, `links`, and `studio`, need
+`content` or explicit globs. `contentbit check` reads Markdown only from
+`content`, and checks the built pages without it.
+
+## Site fields
+
+| Field | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `build` | `string` | The first of `dist/client`, `dist`, `out`, `build`, and `public` that has an `index.html` | The static build folder, relative to the config file. |
+| `origin` | `string` | The origin most canonical URLs use | The site's public origin, such as `https://example.com`. It must be an absolute `http` or `https` URL. Only its origin is kept. |
+| `draftField` | `string` | `draft` | Frontmatter field that marks a document as a draft when it is `true`. |
+| `dateField` | `string` | `date` | Frontmatter field with a document's publication date. |
+
+`check` neither expects a built page for a draft or a document dated after
+today, nor compares one with its source document.
 
 ## Link resolver fields
 
@@ -61,11 +82,17 @@ must continue to resolve.
 
 ## Page routes
 
-Doctor, Studio, and snapshots check each internal URL in a Markdown link, such
-as `[Doctor](/docs/guides/doctor)`, against the scanned pages. Without
-`routes`, a URL matches a page whose `slug` or `key` equals the URL or its
-last segment. Describe your routes when the host app serves pages at other
-URLs, for example by file path:
+`routes` gives each Markdown document the URL of its built page, and
+`hostRoutes` lists the paths the host app serves outside the content.
+`contentbit check` uses them to:
+
+- point a built-page finding at the line of the source document that wrote it,
+- compare each page's title and meta description with the document's
+  frontmatter,
+- report a published document whose route has no built page, and
+- accept a link to a host route that the build folder does not contain.
+
+Describe the routes your host app serves, for example by file path:
 
 ```ts
 export default defineContentConfig({
@@ -91,12 +118,13 @@ the deepest directory that holds it. Patterns can use these placeholders:
 | `{locale}` | The page's locale, read through `localeField`, or `defaultLocale`. |
 
 A page outside every route directory, or one missing a fact its pattern needs,
-has no URL. With `routes` set, an internal URL must equal a page URL or a
-`hostRoutes` entry, ignoring a trailing slash; the slug and key fallback no
-longer applies. A `#anchor` must match a heading on the page. Relative URLs
-such as `./other` are not checked, because where they lead depends on the
-linking page's URL; relative `.md` and `.mdx` paths still are. `hostRoutes`
-entries are exact routes, and they apply with or without `routes`.
+has no URL. A route and a `hostRoutes` entry match a built page path while
+ignoring a trailing slash. `hostRoutes` entries are exact routes, and they
+apply with or without `routes`.
+
+Links in Markdown to internal URLs and `#anchor`s are checked on the built
+pages, where the rendered ids and URLs are known. The Markdown checks still
+report a relative `.md` or `.mdx` link to a file that does not exist.
 
 ## Command overrides
 

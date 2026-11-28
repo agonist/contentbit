@@ -11,16 +11,13 @@ Fast path:
 # scaffold packages, starter content, registry, renderer, scripts, and LLM-agent files
 pnpm dlx contentbit@latest init
 
-# run the generated validate script, including your custom registry
+# check the built pages, validation, links, and content-quality suggestions together
 pnpm run content:check
 
 # open the local read-only Studio dashboard
 pnpm run studio
 
-# inspect validation, links, and content-quality suggestions together
-pnpm run content:doctor
-
-# optionally scaffold SEO contracts for brief + doctor checks
+# optionally scaffold SEO contracts for brief + check
 contentbit init --seo
 
 # refresh AGENTS.md and Claude Code skills for LLM agents
@@ -37,8 +34,8 @@ Everyday commands:
 
 ```bash
 # contentbit.config.ts supplies the content glob, registry, links, and SEO config
+contentbit check
 contentbit validate
-contentbit doctor
 contentbit studio
 contentbit stats
 contentbit links
@@ -49,12 +46,13 @@ contentbit instructions --audience llm
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts
 contentbit validate "content/**/*.md" --registry ./blocks/registry.ts --no-generic-blocks
 
-# ranked repair plan: validation, links, thin sections, block-less long docs,
-# and missing image alt text; add --json for agents/CI
-contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts
-contentbit doctor "content/**/*.md" --registry ./blocks/registry.ts --no-generic-blocks
-contentbit doctor "content/**/*.md" --seo-config ./contentbit.seo.config.ts --strict-seo
-contentbit doctor "content/**/*.md" --no-seo
+# built pages plus validation, links, thin sections, block-less long docs,
+# and missing image alt text; reads the build folder and the configured content;
+# add --json for agents/CI
+contentbit check
+contentbit check dist --strict
+contentbit check --seo-config ./contentbit.seo.config.ts --strict-seo
+contentbit check --no-seo
 
 # agent-ready SEO structure brief for an existing or planned page
 contentbit brief ahrefs-alternatives "content/**/*.md"
@@ -83,10 +81,10 @@ contentbit render article.md
 Point `--registry ./blocks/registry.ts` at a module to add custom blocks.
 Pass `--no-generic-blocks` when that registry owns the full block set, including
 names that overlap the generic pack.
-Add `contentbit.seo.config.ts` with `defineSeoConfig(...)` to let `doctor`
+Add `contentbit.seo.config.ts` with `defineSeoConfig(...)` to let `check`
 include SEO contract findings and `contentbit brief <key-or-slug>` print an
-agent-ready page brief. Use `--no-seo` to keep `doctor` to validation, links,
-and stats only.
+agent-ready page brief. Use `--no-seo` to keep `check` to the built pages,
+validation, links, and stats.
 LLM agents should read the same registry with `contentbit instructions`, write
 plain Markdown with registered blocks, then run `contentbit validate` until it
 exits 0.

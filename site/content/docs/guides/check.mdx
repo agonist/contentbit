@@ -1,0 +1,219 @@
+---
+title: Check a site
+description: Check the built pages and the Markdown content of a site with one command, in a terminal or in CI.
+---
+
+`contentbit check` reads the HTML your build wrote and the Markdown your config
+lists, and reports what to fix. It is read-only. It never edits files and does
+not write the link index.
+
+Build the site, then run it from the project:
+
+```bash
+contentbit check
+```
+
+`check` reads the first of `dist/client`, `dist`, `out`, `build`, and `public`
+that has an `index.html`. Pass another folder to check it instead:
+
+```bash
+contentbit check site/out
+```
+
+When `contentbit.config.ts` lists `content`, `check` also runs the Markdown
+checks on those files. A site without Markdown needs no `content`, and a site
+without a build gets the Markdown checks alone.
+
+## Set the build folder and the origin
+
+Name the build folder and the public origin in the config when detection does
+not find them:
+
+```ts
+import { defineContentConfig } from '@contentbit/core'
+
+export default defineContentConfig({
+  content: 'content/**/*.md',
+  site: {
+    build: 'apps/web/dist',
+    origin: 'https://example.com',
+  },
+})
+```
+
+`site.build` is relative to the config file. The origin comes from
+`--origin` first, then `site.origin`, then the origin that most of the pages'
+canonical URLs use. The report says which one it used. Without an origin,
+`check` skips the checks that need one, such as the sitemap URLs.
+
+## Connect Markdown to its built pages
+
+Add [`links.routes`](/docs/reference/configuration#page-routes) so `check` knows
+which built page each Markdown document becomes:
+
+```ts
+export default defineContentConfig({
+  content: 'content/**/*.md',
+  links: {
+    routes: { 'content/blog': '/blog/{slug}/' },
+    hostRoutes: ['/pricing'],
+  },
+})
+```
+
+With routes, a finding that a document causes points at its line, such as the
+href of a broken link. `check` also warns when a page's title or meta
+description does not contain the document's frontmatter `title` or
+`description`, and reports a published document with no built page as an
+error. Drafts and documents dated after today are left out. `site.draftField`
+and `site.dateField` name the frontmatter fields, `draft` and `date` by
+default. List in `hostRoutes` the paths your host serves outside the build.
+
+## Read the report
+
+```text
+contentbit check
+
+  Build     dist, 3 pages
+  Origin    https://example.com (from site.origin)
+  Markdown  2 files
+
+Built-page findings
+  error CB_LINK_ANCHOR_MISSING  nav a.toc-link on 3 pages: / (#overview), /blog/proofing/ (#overview) and /blog/shaping/ (#overview)
+  error CB_LINK_ANCHOR_MISSING  1 finding on 1 page
+     hint Point the link at an id the page has, or give the element it means that id.
+     content/blog/proofing.md:11:140  The link /blog/shaping/#pre-shape points to an id that /blog/shaping/ does not have.
+  warning CB_PAGE_TITLE_MISMATCH  1 finding on 1 page
+     hint Render the frontmatter title in the <title>, or change the frontmatter to the title the page shows.
+     content/blog/shaping.md:3:8  The page's title "Shaping | Bakery" does not contain the title "Shaping a loaf" from its source document.
+
+Markdown findings
+  1. info stats CB_THIN_SECTION
+     at content/blog/shaping.md:13:1
+     section "Deploy" has 2 words
+     hint Add detail or merge it with a nearby section. Threshold: 25 words.
+
+  Errors    2
+  Warnings  1
+```
+
+Built-page findings come first, grouped by code with errors before warnings.
+Each group prints up to five examples. `--json` lists every finding.
+
+The first line is a template finding. The same `nav a.toc-link` element breaks
+on every page, so the fix belongs in the layout, and `check` reports it once
+with the number of pages and three examples. A template finding counts as one
+error or warning.
+
+The built pages show the title, canonical URL, headings, ids, and links that
+a reader and a crawler receive. `check` reports pages that render their
+content only in the browser, missing or duplicate titles and descriptions,
+canonical URLs that point elsewhere, h1 problems, images without alt text,
+invalid JSON-LD, links to missing pages, ids and files, hreflang alternates
+without a link back, and sitemap URLs that match no page.
+
+Markdown findings come from the source files: block validation, frontmatter
+links, thin sections, long documents without blocks, missing image alt text,
+duplicate titles and descriptions, heading-level jumps, relative `.md` links
+to missing files, multilingual keys, SEO contracts when
+`contentbit.seo.config.ts` exists, and installed agent skills older than the
+CLI's. Use `--min-section-words <n>` to change the thin-section threshold of
+25 words.
+
+## Notices
+
+`check` writes a notice to stderr in two cases:
+
+- No build folder was found. Only the Markdown checks ran, and the notice names
+  the build command when `package.json` shows Astro, Next.js, or Eleventy.
+- Markdown files changed after the build. The notice gives their number and
+  asks you to rebuild. Their findings against the built pages become warnings,
+  since a rebuild may clear them.
+
+## Watch while editing
+
+```bash
+contentbit check --watch
+```
+
+`check` prints the first report, then runs again after a file changes in a
+scanned content folder or in the build folder. Each run reads the registry,
+`contentbit.config.ts`, and the SEO config again. Watch mode is for local
+feedback. In CI, run `check` without it.
+
+## JSON for agents and CI
+
+```bash
+contentbit check --json
+```
+
+`--json` prints one `contentbit.site-check.v1` report and nothing else. For
+the site above, without its `pages` array and with one finding of each kind:
+
+```json
+{
+  "schemaVersion": "contentbit.site-check.v1",
+  "input": { "kind": "folder", "path": "/repo/dist" },
+  "origin": { "url": "https://example.com", "source": "config" },
+  "summary": { "pages": 3, "errors": 2, "warnings": 1 },
+  "findings": [
+    {
+      "code": "CB_PAGE_TITLE_MISMATCH",
+      "severity": "warning",
+      "message": "The page's title \"Shaping | Bakery\" does not contain the title \"Shaping a loaf\" from its source document.",
+      "hint": "Render the frontmatter title in the <title>, or change the frontmatter to the title the page shows.",
+      "target": "Shaping a loaf",
+      "element": "title",
+      "origin": {
+        "kind": "source",
+        "file": "/repo/content/blog/shaping.md",
+        "line": 3,
+        "column": 8,
+        "page": "/blog/shaping/"
+      }
+    }
+  ],
+  "content": {
+    "files": 2,
+    "findings": [
+      {
+        "severity": "info",
+        "source": "stats",
+        "code": "CB_THIN_SECTION",
+        "file": "/repo/content/blog/shaping.md",
+        "line": 13,
+        "column": 1,
+        "message": "section \"Deploy\" has 2 words",
+        "hint": "Add detail or merge it with a nearby section. Threshold: 25 words."
+      }
+    ]
+  }
+}
+```
+
+`findings` holds the built-page findings. A finding's `origin` is `page` with
+the page path, `source` with the document's `file` and `line`, or `template`
+with every page it affects and an `occurrences` entry for each.
+`content.findings` holds the Markdown findings, and `content` is absent when no
+Markdown was read. `pages` lists every built page with its `path`, its `file`
+in the build, its `source` document when routes give it one, and the rendered
+page `facts`. `staleSources` lists the Markdown files that changed after the
+build. Without a build, `input` has `kind` `none` and the folders `check`
+searched, and `pages` is empty.
+
+## Exit codes
+
+- `0` when there are no errors.
+- `1` when there are errors, when `--strict` is passed and there are warnings,
+  or when `--strict-seo` is passed and there are SEO warnings.
+- `2` when there is nothing to check, the build folder does not exist, the
+  target is a URL, or an option value is invalid.
+
+## How it fits
+
+Run `check` to decide what to fix first and as the CI gate after the build.
+Use `validate` when you only need the blocking syntax and schema gate. Use
+`links` to write the link index or heal alias references, and `stats` for raw
+per-document metrics. Use [Programmatic SEO workflows](/docs/guides/programmatic-seo)
+to plan pages with briefs and enforce SEO contracts in CI. For the full option
+list, see the [CLI reference](/docs/reference/cli).

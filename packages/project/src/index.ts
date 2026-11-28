@@ -96,7 +96,7 @@ export async function loadRegistry(
 
 /** Import a project module (registry, Contentbit config, SEO config) as it is
  * on disk now. Node caches ES modules by URL for the life of the process, so
- * Studio and `doctor --watch` would otherwise keep the first copy. The URL
+ * Studio and `check --watch` would otherwise keep the first copy. The URL
  * carries a hash of the file's contents: an unchanged file reuses Node's cached
  * module, and each distinct version is evaluated once. Node never evicts a
  * module, so memory grows by one module per version saved during a session,
