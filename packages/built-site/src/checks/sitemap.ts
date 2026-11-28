@@ -16,7 +16,7 @@ export function checkSitemap(index: SiteIndex): SiteFinding[] {
       continue
     }
     const page = pagePath(url.pathname)
-    const target = index.resolveLink(loc)
+    const target = index.resolveSiteUrl(loc)
     if (target.kind === 'page') {
       listed.add(target.page)
       if (target.page.facts.robots.noindex) {
