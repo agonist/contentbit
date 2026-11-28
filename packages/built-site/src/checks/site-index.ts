@@ -19,9 +19,7 @@ export type LinkTarget =
 export interface SiteIndex {
   pages: BuiltPage[]
   origin?: string
-  /** The sitemap's URLs; absent when the build has no sitemap. */
   sitemap?: string[]
-  /** Without from, href resolves against the site origin. */
   resolveLink(href: string, from?: BuiltPage): LinkTarget
   hasId(page: BuiltPage, id: string): boolean
 }
