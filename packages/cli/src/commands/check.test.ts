@@ -84,7 +84,7 @@ test('the report names the build, its page count and where the origin came from'
   expect(code).toBe(1)
   expect(out).toContain(`${fixture('next-like')}, 2 pages`)
   expect(out).toMatch(/Origin\s+https:\/\/ledger\.example \(inferred from canonicals\)/)
-  expect(out).toMatch(/Errors\s+1/)
+  expect(out).toMatch(/Errors\s+2/)
   expect(out).toMatch(/Warnings\s+1/)
   expect(out).not.toContain('Markdown')
 })

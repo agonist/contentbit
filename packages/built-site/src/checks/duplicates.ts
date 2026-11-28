@@ -1,7 +1,7 @@
 import { siteFinding, type SiteFinding, type SiteFindingCode } from '../findings.js'
 import type { BuiltPage } from '../model.js'
 import { listOf } from './list.js'
-import { isIndexable, type SiteIndex } from './site-index.js'
+import { isIndexable, isOwnCanonical, type SiteIndex } from './site-index.js'
 
 const MAX_OTHERS = 3
 
@@ -16,13 +16,6 @@ export function checkDuplicates(index: SiteIndex): SiteFinding[] {
       (page) => page.facts.description,
     ),
   ]
-}
-
-function isOwnCanonical(index: SiteIndex, page: BuiltPage): boolean {
-  const { canonical } = page.facts
-  if (!canonical) return true
-  const target = index.resolveLink(canonical, page)
-  return target.kind === 'page' && target.page === page
 }
 
 function duplicates(

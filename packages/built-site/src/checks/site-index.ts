@@ -19,7 +19,10 @@ export type LinkTarget =
 export interface SiteIndex {
   pages: BuiltPage[]
   origin?: string
-  resolveLink(href: string, from: BuiltPage): LinkTarget
+  /** The sitemap's URLs; absent when the build has no sitemap. */
+  sitemap?: string[]
+  /** Without from, href resolves against the site origin. */
+  resolveLink(href: string, from?: BuiltPage): LinkTarget
   hasId(page: BuiltPage, id: string): boolean
 }
 
@@ -38,6 +41,13 @@ export function isBrowserRendered({ facts }: BuiltPage): boolean {
 export function isIndexable(page: BuiltPage): boolean {
   const { facts } = page
   return !facts.robots.noindex && facts.redirect === undefined && !isBrowserRendered(page)
+}
+
+export function isOwnCanonical(index: SiteIndex, page: BuiltPage): boolean {
+  const { canonical } = page.facts
+  if (!canonical) return true
+  const target = index.resolveLink(canonical, page)
+  return target.kind === 'page' && target.page === page
 }
 
 export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {}): SiteIndex {
@@ -74,11 +84,12 @@ export function createSiteIndex(site: BuiltSite, options: SiteIndexOptions = {})
   return {
     pages: site.pages,
     ...(origin && { origin }),
+    ...(site.sitemap && { sitemap: site.sitemap.urls }),
     hasId: (page, id) => ids.get(page)?.has(id) ?? false,
     resolveLink(href, from) {
       let url: URL
       try {
-        url = new URL(href, pageUrl(from))
+        url = new URL(href, from ? pageUrl(from) : base)
       } catch {
         return { kind: 'external' }
       }

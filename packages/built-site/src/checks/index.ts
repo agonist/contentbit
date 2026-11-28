@@ -7,6 +7,7 @@ import { checkImages } from './images.js'
 import { checkLinks } from './links.js'
 import { checkMetadata } from './metadata.js'
 import { checkRendering } from './rendering.js'
+import { checkSitemap } from './sitemap.js'
 import { createSiteIndex, type SiteIndex, type SiteIndexOptions } from './site-index.js'
 
 const CHECKS: Array<(index: SiteIndex) => SiteFinding[]> = [
@@ -17,6 +18,7 @@ const CHECKS: Array<(index: SiteIndex) => SiteFinding[]> = [
   checkImages,
   checkLinks,
   checkHreflang,
+  checkSitemap,
 ]
 
 export function checkSite(site: BuiltSite, options: SiteIndexOptions = {}): SiteFinding[] {

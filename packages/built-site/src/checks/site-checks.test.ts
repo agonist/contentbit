@@ -130,3 +130,106 @@ test('a page with two or more alternates and no x-default is reported; one alter
     },
   ])
 })
+
+const noindex = { robots: { noindex: true, nofollow: false } }
+
+function sitemap(...paths: string[]): Partial<BuiltSite> {
+  return {
+    sitemap: {
+      files: ['sitemap.xml'],
+      urls: paths.map((path) => (path.startsWith('http') ? path : `${ORIGIN}${path}`)),
+    },
+  }
+}
+
+test('a sitemap that lists every indexable page, with or without its trailing slash, has no site findings', () => {
+  const site = builtSite(
+    [
+      builtPage('/'),
+      builtPage('/blog/'),
+      builtPage('/docs/guide'),
+      builtPage('/old/', { redirect: '/blog/' }),
+    ],
+    {
+      ...sitemap('/', '/blog', '/docs/guide/', '/moved', '/guide.pdf'),
+      files: ['index.html', 'blog/index.html', 'docs/guide.html', 'old/index.html', 'guide.pdf'],
+      redirects: [{ from: '/moved', to: '/blog/', status: 301 }],
+    },
+  )
+
+  expect(siteFindings(site)).toEqual([])
+})
+
+test('a sitemap URL that resolves to no built page or file is an error on that URL path, once', () => {
+  const site = builtSite([builtPage('/')], sitemap('/', '/gone/', '/gone/', '/menu.pdf'))
+
+  expect(siteFindings(site)).toEqual([
+    {
+      code: 'CB_SITE_SITEMAP_URL_NOT_BUILT',
+      severity: 'error',
+      page: '/gone/',
+      message: `The sitemap lists ${ORIGIN}/gone/, which resolves to no built page.`,
+    },
+    {
+      code: 'CB_SITE_SITEMAP_URL_NOT_BUILT',
+      severity: 'error',
+      page: '/menu.pdf',
+      message: `The sitemap lists ${ORIGIN}/menu.pdf, which resolves to no built page.`,
+    },
+  ])
+})
+
+test('a sitemap URL on another origin is an error that names that origin', () => {
+  const site = builtSite([builtPage('/')], sitemap('/', 'https://www.example.com/'))
+
+  expect(siteFindings(site)).toEqual([
+    {
+      code: 'CB_SITE_SITEMAP_URL_NOT_BUILT',
+      severity: 'error',
+      page: '/',
+      message: `The sitemap lists https://www.example.com/, on https://www.example.com instead of the site origin ${ORIGIN}.`,
+    },
+  ])
+})
+
+test('a sitemap URL that resolves to a noindex page is reported on that page', () => {
+  const site = builtSite([builtPage('/'), builtPage('/drafts/', noindex)], sitemap('/', '/drafts'))
+
+  expect(siteFindings(site)).toEqual([
+    {
+      code: 'CB_SITE_SITEMAP_NOINDEX',
+      severity: 'warning',
+      page: '/drafts/',
+      message: `The sitemap lists ${ORIGIN}/drafts, a page marked noindex.`,
+    },
+  ])
+})
+
+test('an indexable page missing from the sitemap is reported; noindex and canonical-elsewhere pages are not expected', () => {
+  const site = builtSite(
+    [
+      builtPage('/'),
+      builtPage('/about/'),
+      builtPage('/private/', noindex),
+      builtPage('/print/', { canonical: `${ORIGIN}/` }),
+    ],
+    sitemap('/'),
+  )
+
+  expect(siteFindings(site)).toEqual([
+    {
+      code: 'CB_SITE_SITEMAP_PAGE_MISSING',
+      severity: 'warning',
+      page: '/about/',
+      message: 'This indexable page is not in the sitemap.',
+    },
+  ])
+})
+
+test('without a known origin or without a sitemap, the sitemap checks report nothing', () => {
+  const pages = [builtPage('/'), builtPage('/about/'), builtPage('/drafts/', noindex)]
+  const listed = sitemap('/gone/', '/drafts/', 'https://elsewhere.example/')
+
+  expect(siteFindings(builtSite(pages, listed), {})).toEqual([])
+  expect(siteFindings(builtSite(pages))).toEqual([])
+})
