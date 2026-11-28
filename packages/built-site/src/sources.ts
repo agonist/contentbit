@@ -17,7 +17,7 @@ export interface SourceDocument {
 export type RoutedDocument = SourceDocument & { route: string }
 
 export interface SiteSourceOptions {
-  /** The frontmatter field whose truthy value makes a document a draft. Default 'draft'. */
+  /** The frontmatter field that marks a draft with true, or the string 'true'. Default 'draft'. */
   draftField?: string
   /** The frontmatter field with a document's publication date. Default 'date'. */
   dateField?: string
@@ -46,7 +46,7 @@ export function siteSources(
   const unpublished = new Set(
     documents.filter(({ facts: { frontmatter } }) => {
       const date = dayOf(frontmatter[dateField])
-      return Boolean(frontmatter[draftField]) || (date !== undefined && date > today)
+      return isTrue(frontmatter[draftField]) || (date !== undefined && date > today)
     }),
   )
   const routed = documents.filter(
@@ -76,6 +76,11 @@ export function siteSources(
       documents.filter(({ modified }) => site.builtAt !== undefined && modified > site.builtAt),
     ),
   }
+}
+
+/** A quoted "false" is a string, so truthiness would make it a draft. */
+function isTrue(value: unknown): boolean {
+  return value === true || (typeof value === 'string' && value.trim().toLowerCase() === 'true')
 }
 
 /** The day a frontmatter date names, as YYYY-MM-DD: its written day, or the local day it parses to. */

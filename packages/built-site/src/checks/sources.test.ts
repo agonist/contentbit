@@ -178,10 +178,13 @@ test('a draft or a document dated after today gets no source findings, built or 
     document('/later/', frontmatter({ title: 'Later', date: '"2027-01-05T09:00:00Z"' })),
     document('/today/', frontmatter({ title: 'Today', date: '2026-11-28' })),
     document('/not-a-draft/', frontmatter({ title: 'Not a draft', draft: 'false' })),
+    document('/quoted-false/', frontmatter({ title: 'Quoted false', draft: '"false"' })),
+    document('/quoted-true/', frontmatter({ title: 'Quoted true', draft: '"True"' })),
   ]
 
   expect(sourceFindings(site, documents).map(({ code, target }) => [code, target])).toEqual([
     ['CB_SITE_SOURCE_NOT_BUILT', '/not-a-draft/'],
+    ['CB_SITE_SOURCE_NOT_BUILT', '/quoted-false/'],
     ['CB_SITE_SOURCE_NOT_BUILT', '/today/'],
   ])
 })
