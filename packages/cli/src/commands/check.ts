@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
-import { contentPageUrlResolver, normalizeRoute, readContentPageFacts } from '@contentbit/core'
+import { contentPageUrlResolver, readContentPageFacts } from '@contentbit/core'
 import {
   attributeToSources,
   checkSite,
@@ -13,6 +13,7 @@ import {
   inferOrigin,
   readBuildFolder,
   SITE_FINDING_CODES,
+  siteSources,
   type BuiltSite,
   type FindingElement,
   type PagePath,
@@ -106,16 +107,23 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
   }
 
   const origin = resolveOrigin(flagOrigin, config.site?.origin, site)
-  const sources = site && markdown ? sourceDocuments(site, markdown) : new Map()
-  const findings = site
-    ? checkSite(site, { origin: origin?.url, hostRoutes: config.resolveLinkOptions().hostRoutes })
-    : []
+  const sources = site && siteSources(site, markdown ? sourceDocuments(markdown) : [])
+  const findings =
+    site && sources
+      ? attributeToSources(
+          checkSite(site, {
+            origin: origin?.url,
+            hostRoutes: config.resolveLinkOptions().hostRoutes,
+          }),
+          sources.pages,
+        )
+      : []
   const check = createSiteCheck({
     input: site ? { kind: 'folder', path: site.root } : { kind: 'none', searched },
     site,
     origin,
     sources,
-    findings: groupTemplateFindings(attributeToSources(findings, sources)),
+    findings: groupTemplateFindings(findings),
     content:
       site && content
         ? {
@@ -178,24 +186,13 @@ async function loadMarkdown(
   return project.files.length === 0 ? undefined : project
 }
 
-function sourceDocuments(
-  site: BuiltSite,
-  { scan, linkOptions }: LoadedContentProject,
-): Map<PagePath, SourceDocument> {
-  const sources = new Map<PagePath, SourceDocument>()
+function sourceDocuments({ scan, linkOptions }: LoadedContentProject): SourceDocument[] {
   const pageUrl = contentPageUrlResolver(linkOptions)
-  if (!pageUrl) return sources
-  const byRoute = new Map<string, SourceDocument>()
-  for (const { path, source, frontmatter } of scan.files) {
-    const url = pageUrl(path, readContentPageFacts(frontmatter, linkOptions))
-    const route = url === undefined ? undefined : normalizeRoute(url)
-    if (route !== undefined && !byRoute.has(route)) byRoute.set(route, { file: path, text: source })
-  }
-  for (const { path } of site.pages) {
-    const source = byRoute.get(normalizeRoute(path))
-    if (source) sources.set(path, source)
-  }
-  return sources
+  return scan.files.map(({ path, source, frontmatter }) => {
+    const facts = readContentPageFacts(frontmatter, linkOptions)
+    const route = pageUrl?.(path, facts)
+    return { file: path, text: source, ...(route !== undefined && { route }), facts }
+  })
 }
 
 function resolveOrigin(

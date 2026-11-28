@@ -1,3 +1,4 @@
+import { extractFrontmatter, readContentPageFacts } from '@contentbit/core'
 import { expect, test } from 'vitest'
 
 import {
@@ -49,7 +50,12 @@ function sources(documents: Record<string, string>): Map<PagePath, SourceDocumen
   return new Map(
     Object.entries(documents).map(([path, text]) => [
       pagePath(path),
-      { file: `/site/content${path.slice(0, -1)}.md`, text },
+      {
+        file: `/site/content${path.slice(0, -1)}.md`,
+        text,
+        route: path,
+        facts: readContentPageFacts(extractFrontmatter(text)?.data ?? {}),
+      },
     ]),
   )
 }

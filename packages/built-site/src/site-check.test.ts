@@ -4,6 +4,7 @@ import { expect, test } from 'vitest'
 import {
   createSiteCheck,
   pagePath,
+  siteSources,
   type BuiltSite,
   type RenderedPageFacts,
   type SiteFinding,
@@ -96,8 +97,14 @@ test('a built page with a source document names its file', () => {
     input: { kind: 'folder', path: '/site/dist' },
     site,
     findings: [],
-    sources: new Map([
-      [pagePath('/about/'), { file: '/site/content/about.md', text: '# About\n' }],
+    sources: siteSources(site, [
+      {
+        file: '/site/content/about.md',
+        text: '# About\n',
+        route: '/about',
+        facts: { frontmatter: {} },
+      },
+      { file: '/site/content/notes.md', text: '# Notes\n', facts: { frontmatter: {} } },
     ]),
   })
 

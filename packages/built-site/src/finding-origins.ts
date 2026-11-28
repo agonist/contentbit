@@ -1,5 +1,3 @@
-import { extractFrontmatter, readContentPageFacts } from '@contentbit/core'
-
 import {
   elementParts,
   siteFinding,
@@ -8,11 +6,7 @@ import {
   type SiteFindingCode,
 } from './findings.js'
 import type { PagePath } from './model.js'
-
-export interface SourceDocument {
-  file: string
-  text: string
-}
+import type { SourceDocument } from './sources.js'
 
 const FRONTMATTER_FACTS: Partial<Record<SiteFindingCode, 'title' | 'description'>> = {
   CB_PAGE_TITLE_MISSING: 'title',
@@ -45,14 +39,10 @@ export function attributeToSources(
 
 function sourceLocation(
   { code, target }: SiteFinding,
-  { text }: SourceDocument,
+  { text, facts }: SourceDocument,
 ): { line: number; column?: number } | undefined {
   const fact = FRONTMATTER_FACTS[code]
-  if (fact) {
-    return readContentPageFacts(extractFrontmatter(text)?.data ?? {})[fact]
-      ? undefined
-      : { line: 1 }
-  }
+  if (fact) return facts[fact] ? undefined : { line: 1 }
   const index = target ? indexOfWholeValue(text, target) : -1
   if (index === -1) return undefined
   const before = text.slice(0, index)
