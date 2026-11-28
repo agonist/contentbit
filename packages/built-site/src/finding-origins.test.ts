@@ -55,6 +55,7 @@ function sources(documents: Record<string, string>): Map<PagePath, SourceDocumen
         text,
         route: path,
         facts: readContentPageFacts(extractFrontmatter(text)?.data ?? {}),
+        modified: 0,
       },
     ]),
   )

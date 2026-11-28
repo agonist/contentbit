@@ -23,6 +23,8 @@ export interface SiteCheck {
   pages: Array<{ path: PagePath; file?: string; source?: string; facts: RenderedPageFacts }>
   findings: SiteFinding[]
   content?: { files: number; findings: ContentProjectFinding[] }
+  /** The source documents whose file changed after the build was made. */
+  staleSources?: string[]
 }
 
 export function createSiteCheck({
@@ -45,6 +47,7 @@ export function createSiteCheck({
     return { path, file, ...(source && { source: source.file }), facts }
   })
   const severities = [...findings, ...(content?.findings ?? [])].map(({ severity }) => severity)
+  const staleSources = [...(sources?.stale ?? [])].map(({ file }) => file)
   return {
     schemaVersion: SITE_CHECK_SCHEMA_VERSION,
     input,
@@ -57,5 +60,6 @@ export function createSiteCheck({
     pages,
     findings,
     content,
+    ...(staleSources.length > 0 && { staleSources }),
   }
 }

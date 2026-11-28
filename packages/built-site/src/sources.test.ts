@@ -29,6 +29,7 @@ const document = (name: string, route?: string): SourceDocument => ({
   text: `# ${name}\n`,
   ...(route !== undefined && { route }),
   facts: { frontmatter: {} },
+  modified: 0,
 })
 
 test('a built page gets the document whose route is its path, with or without the slashes', () => {

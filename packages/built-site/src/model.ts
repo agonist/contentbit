@@ -113,4 +113,6 @@ export interface BuiltSite {
   robots?: { sitemaps: string[]; disallow: string[] }
   /** From _redirects (Cloudflare Pages and Netlify format); [] when absent. */
   redirects: Redirect[]
+  /** When the build was made, in milliseconds since the epoch: the modification time of the root index.html, or of the newest page without one. Absent without pages. */
+  builtAt?: number
 }

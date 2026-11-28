@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, realpath, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -256,6 +256,34 @@ test('with links.routes, check compares each source document with its built page
   expect(report).toContain('     content/blog/new.md:1  links.routes gives this document')
   expect(report).toContain('warning CB_PAGE_TITLE_MISMATCH  1 finding on 1 page')
   expect(report).toContain('     content/blog/post.md:3:8  The page\'s title "Bread basics')
+})
+
+test('a Markdown file newer than the build gives a notice, and its source findings become warnings', async () => {
+  const root = await project(routedBlog)
+  const age = (seconds: number, ...files: string[]) =>
+    Promise.all(files.map((file) => utimes(join(root, file), seconds, seconds)))
+  await age(1_000, 'dist/index.html', 'dist/blog/post/index.html')
+  await age(500, 'content/blog/post.md', 'content/blog/draft.md', 'content/blog/later.md')
+  await age(2_000, 'content/blog/new.md')
+
+  const { code, out, err } = await check(root, ['--json'])
+  expect(code).toBe(0)
+  expect(err).toBe(
+    "check: 1 Markdown file changed after the build in dist, so its pages may not show them yet. Rebuild the site with your site's build command and check again.",
+  )
+  const result = JSON.parse(out)
+  expect(result.staleSources).toEqual([join(root, 'content/blog/new.md')])
+  expect(result.summary.errors).toBe(0)
+  expect(result.findings[0]).toMatchObject({
+    code: 'CB_SITE_SOURCE_NOT_BUILT',
+    severity: 'warning',
+    message: expect.stringContaining('The document changed after the build'),
+  })
+
+  const report = await check(root)
+  expect(report.out).toContain('warning CB_SITE_SOURCE_NOT_BUILT  1 finding on 1 page')
+  expect(report.out).not.toContain('error CB_SITE_SOURCE_NOT_BUILT')
+  expect(report.err).toBe(err)
 })
 
 test('a site without built-page findings prints no built-page section', async () => {

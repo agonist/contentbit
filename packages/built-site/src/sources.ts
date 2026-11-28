@@ -10,6 +10,8 @@ export interface SourceDocument {
   /** The URL path that links.routes gives the document. Absent outside every route. */
   route?: string
   facts: ContentPageFacts
+  /** When the file last changed, in milliseconds since the epoch. */
+  modified: number
 }
 
 export type RoutedDocument = SourceDocument & { route: string }
@@ -30,6 +32,8 @@ export interface SiteSources {
   unbuilt: RoutedDocument[]
   /** Drafts and documents dated after today, which the site does not publish yet. */
   unpublished: ReadonlySet<SourceDocument>
+  /** The documents whose file changed after the build was made. */
+  stale: ReadonlySet<SourceDocument>
 }
 
 /** A built page gets the first document whose route is its path. */
@@ -68,6 +72,9 @@ export function siteSources(
       (document) => !built.has(normalizeRoute(document.route)) && !unpublished.has(document),
     ),
     unpublished,
+    stale: new Set(
+      documents.filter(({ modified }) => site.builtAt !== undefined && modified > site.builtAt),
+    ),
   }
 }
 

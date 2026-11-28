@@ -61,11 +61,15 @@ export function siteFinding(
   origin: SiteFindingOrigin,
   message: string,
   hint?: string,
-  { target, element }: SiteFindingSubject = {},
+  {
+    target,
+    element,
+    severity = SITE_FINDING_CODES[code],
+  }: SiteFindingSubject & { severity?: SiteFindingSeverity } = {},
 ): SiteFinding {
   return {
     code,
-    severity: SITE_FINDING_CODES[code],
+    severity,
     message,
     ...(hint !== undefined && { hint }),
     ...(target !== undefined && { target }),

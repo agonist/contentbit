@@ -41,13 +41,14 @@ function builtSite(pages: BuiltPage[], extra: Partial<BuiltSite> = {}): BuiltSit
   return { root: '/site/dist', pages, files: [], redirects: [], ...extra }
 }
 
-function document(route: string | undefined, text: string): SourceDocument {
+function document(route: string | undefined, text: string, modified = 0): SourceDocument {
   const name = route?.replace(/^\/|\/$/g, '') || 'index'
   return {
     file: `/site/content/${name}.md`,
     text,
     ...(route !== undefined && { route }),
     facts: readContentPageFacts(extractFrontmatter(text)?.data ?? {}),
+    modified,
   }
 }
 
@@ -198,4 +199,31 @@ test('site.draftField and site.dateField name the frontmatter fields that hold t
       ({ target }) => target,
     ),
   ).toEqual(['/dated/'])
+})
+
+test('a document that changed after the build gets warnings that say to rebuild', () => {
+  const site = builtSite([builtPage('/post/', { title: 'Old title' })], { builtAt: 1_000 })
+  const documents = [
+    document('/post/', frontmatter({ title: 'New title' }), 2_000),
+    document('/new/', frontmatter({ title: 'New post' }), 2_000),
+    document('/old/', frontmatter({ title: 'Old post' }), 500),
+  ]
+  const sources = siteSources(site, documents, { now: NOW })
+
+  expect(
+    checkSite(site, { sources })
+      .filter(({ code }) => SOURCE_CODES.test(code))
+      .map(({ code, severity, target, message }) => ({
+        code,
+        severity,
+        target,
+        rebuild: message.endsWith(
+          'The document changed after the build, so rebuild the site and check again.',
+        ),
+      })),
+  ).toEqual([
+    { code: 'CB_SITE_SOURCE_NOT_BUILT', severity: 'warning', target: '/new/', rebuild: true },
+    { code: 'CB_SITE_SOURCE_NOT_BUILT', severity: 'error', target: '/old/', rebuild: false },
+    { code: 'CB_PAGE_TITLE_MISMATCH', severity: 'warning', target: 'New title', rebuild: true },
+  ])
 })
