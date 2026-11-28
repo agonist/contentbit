@@ -12,7 +12,7 @@ import {
 } from './model.js'
 import { readRenderedPageFacts } from './read-page.js'
 
-const INTERNAL_FOLDERS = new Set(['_astro', '_next', 'node_modules', '_not-found'])
+const SKIPPED_FOLDERS = new Set(['_astro', '_next', 'node_modules', '_not-found'])
 const ERROR_PAGES = new Set(['404.html', '500.html', '404/index.html', '500/index.html'])
 const READ_CONCURRENCY = 16
 
@@ -48,7 +48,7 @@ async function findPageFiles(root: string, dir = ''): Promise<string[]> {
     entries.map(async (entry) => {
       const file = dir === '' ? entry.name : `${dir}/${entry.name}`
       if (entry.isDirectory()) {
-        const skip = entry.name.startsWith('.') || INTERNAL_FOLDERS.has(entry.name)
+        const skip = entry.name.startsWith('.') || SKIPPED_FOLDERS.has(entry.name)
         return skip ? [] : findPageFiles(root, file)
       }
       const isPage = entry.isFile() && entry.name.endsWith('.html') && !ERROR_PAGES.has(file)
