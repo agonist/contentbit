@@ -1,6 +1,13 @@
-import { siteFinding, type SiteFinding, type SiteFindingOrigin } from '../findings.js'
+import {
+  siteFinding,
+  type SiteFinding,
+  type SiteFindingOrigin,
+  type SiteFindingSubject,
+} from '../findings.js'
 import { httpOrigin } from '../origin.js'
 import { isIndexable, type SiteIndex } from './site-index.js'
+
+const canonicalSubject: SiteFindingSubject = { element: 'link[rel=canonical]' }
 
 export function checkMetadata(index: SiteIndex): SiteFinding[] {
   const findings: SiteFinding[] = []
@@ -16,6 +23,7 @@ export function checkMetadata(index: SiteIndex): SiteFinding[] {
           origin,
           `JSON-LD block ${position + 1} is invalid: ${block.error.replace(/\.$/, '')}.`,
           'Fix the JSON in the <script type="application/ld+json"> block; search engines skip a block they cannot parse.',
+          { element: 'script[type=application/ld+json]' },
         ),
       )
     })
@@ -28,6 +36,7 @@ export function checkMetadata(index: SiteIndex): SiteFinding[] {
           origin,
           'The page has no title.',
           'Add a <title> that says what the page is about.',
+          { element: 'title' },
         ),
       )
     }
@@ -38,6 +47,7 @@ export function checkMetadata(index: SiteIndex): SiteFinding[] {
           origin,
           'The page has no meta description.',
           'Add a <meta name="description"> that sums up the page in a sentence or two.',
+          { element: 'meta[name=description]' },
         ),
       )
     }
@@ -48,6 +58,7 @@ export function checkMetadata(index: SiteIndex): SiteFinding[] {
           origin,
           'The page has no canonical URL.',
           'Add a <link rel="canonical"> with the URL of the page itself.',
+          canonicalSubject,
         ),
       )
       continue
@@ -61,6 +72,7 @@ export function checkMetadata(index: SiteIndex): SiteFinding[] {
           origin,
           `The canonical URL ${canonical} is on ${canonicalOrigin}, not on the site origin ${index.origin}.`,
           `Use the site origin in canonical URLs. If ${index.origin} is the wrong origin, pass --origin or set site.origin.`,
+          { ...canonicalSubject, target: canonical },
         ),
       )
     }
@@ -72,6 +84,7 @@ export function checkMetadata(index: SiteIndex): SiteFinding[] {
           origin,
           `The canonical URL points to ${target.page.path}, so search engines index that page instead of this one.`,
           'Point the canonical URL at the page itself, unless the page is a copy of the other one.',
+          { ...canonicalSubject, target: canonical },
         ),
       )
     }

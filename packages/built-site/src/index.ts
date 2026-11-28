@@ -1,4 +1,5 @@
 export { checkSite } from './checks/index.js'
+export * from './finding-origins.js'
 export * from './findings.js'
 export * from './model.js'
 export * from './origin.js'

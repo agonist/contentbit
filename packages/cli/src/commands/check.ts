@@ -2,18 +2,26 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
+import { contentPageUrlResolver, normalizeRoute, readContentPageFacts } from '@contentbit/core'
 import {
+  attributeToSources,
   checkSite,
   createSiteCheck,
+  elementParts,
+  groupTemplateFindings,
   httpOrigin,
   inferOrigin,
   readBuildFolder,
   SITE_FINDING_CODES,
   type BuiltSite,
+  type FindingElement,
+  type PagePath,
   type SiteCheck,
   type SiteFinding,
   type SiteFindingCode,
+  type SiteFindingOrigin,
   type SiteOrigin,
+  type SourceDocument,
 } from '@contentbit/built-site'
 
 import { CliError, type Io } from '../run.js'
@@ -30,7 +38,7 @@ import {
   resolveContentCommandConfig,
   type ResolvedContentCommandConfig,
 } from '../command-config.js'
-import { loadContentProject } from '../content-project.js'
+import { loadContentProject, type LoadedContentProject } from '../content-project.js'
 import type { LinkOptionValues } from '../link-options.js'
 
 export interface CheckCommandInput extends LinkOptionValues {
@@ -59,6 +67,7 @@ const MARKDOWN_CODES_REPLACED_BY_BUILT_PAGES = new Set([
 ])
 
 const MAX_EXAMPLES = 5
+const MAX_TEMPLATE_EXAMPLES = 3
 
 const ORIGIN_SOURCES: Record<SiteOrigin['source'], string> = {
   flag: 'from --origin',
@@ -83,10 +92,11 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
       : (config.site?.buildPath ??
         searched.find((folder) => existsSync(join(folder, 'index.html'))))
 
-  const [site, content] = await Promise.all([
+  const [site, markdown] = await Promise.all([
     buildPath === undefined ? undefined : readBuild(buildPath),
-    checkMarkdown(config),
+    loadMarkdown(config),
   ])
+  const content = markdown && { files: markdown.files.length, findings: markdown.scan.findings }
   if (!site && !content) {
     const folders = searched.map(displayPath)
     throw new CliError(
@@ -96,13 +106,16 @@ export async function checkCommand(input: CheckCommandInput, io: Io): Promise<nu
   }
 
   const origin = resolveOrigin(flagOrigin, config.site?.origin, site)
+  const sources = site && markdown ? sourceDocuments(site, markdown) : new Map()
+  const findings = site
+    ? checkSite(site, { origin: origin?.url, hostRoutes: config.resolveLinkOptions().hostRoutes })
+    : []
   const check = createSiteCheck({
     input: site ? { kind: 'folder', path: site.root } : { kind: 'none', searched },
     site,
     origin,
-    findings: site
-      ? checkSite(site, { origin: origin?.url, hostRoutes: config.resolveLinkOptions().hostRoutes })
-      : [],
+    sources,
+    findings: groupTemplateFindings(attributeToSources(findings, sources)),
     content:
       site && content
         ? {
@@ -147,12 +160,12 @@ async function readBuild(path: string): Promise<BuiltSite> {
   }
 }
 
-async function checkMarkdown(
+async function loadMarkdown(
   config: ResolvedContentCommandConfig,
-): Promise<SiteCheck['content'] | undefined> {
+): Promise<LoadedContentProject | undefined> {
   if (config.globs.length === 0) return undefined
   const seoConfig = await config.loadSeo()
-  const { files, scan } = await loadContentProject({
+  const project = await loadContentProject({
     cmd: 'check',
     positionals: config.globs,
     cwd: config.cwd,
@@ -162,7 +175,27 @@ async function checkMarkdown(
     scan: { seoConfig: seoConfig.config, seoConfigPath: seoConfig.path },
     allowEmpty: true,
   })
-  return files.length === 0 ? undefined : { files: files.length, findings: scan.findings }
+  return project.files.length === 0 ? undefined : project
+}
+
+function sourceDocuments(
+  site: BuiltSite,
+  { scan, linkOptions }: LoadedContentProject,
+): Map<PagePath, SourceDocument> {
+  const sources = new Map<PagePath, SourceDocument>()
+  const pageUrl = contentPageUrlResolver(linkOptions)
+  if (!pageUrl) return sources
+  const byRoute = new Map<string, SourceDocument>()
+  for (const { path, source, frontmatter } of scan.files) {
+    const url = pageUrl(path, readContentPageFacts(frontmatter, linkOptions))
+    const route = url === undefined ? undefined : normalizeRoute(url)
+    if (route !== undefined && !byRoute.has(route)) byRoute.set(route, { file: path, text: source })
+  }
+  for (const { path } of site.pages) {
+    const source = byRoute.get(normalizeRoute(path))
+    if (source) sources.set(path, source)
+  }
+  return sources
 }
 
 function resolveOrigin(
@@ -246,29 +279,68 @@ function formatSiteFindings(findings: SiteFinding[]): string[] {
 
   const lines: string[] = []
   for (const code of ordered) {
-    const group = groups.get(code)
-    if (!group) continue
-    const pages = new Set(
-      group.flatMap(({ origin }) => (origin.kind === 'template' ? origin.pages : [origin.page])),
-    )
-    lines.push(
-      `  ${severityLabel(SITE_FINDING_CODES[code])} ${code}  ${plural(group.length, 'finding')} on ${plural(pages.size, 'page')}`,
-    )
-    const { hint } = group[0]
-    if (hint && group.every((finding) => finding.hint === hint)) {
+    const label = `${severityLabel(SITE_FINDING_CODES[code])} ${code}`
+    const located: Array<{ place: string; page: PagePath; finding: SiteFinding }> = []
+    for (const finding of groups.get(code) ?? []) {
+      const { origin } = finding
+      if (origin.kind === 'template') {
+        lines.push(`  ${label}  ${formatTemplate(origin, finding.occurrences ?? [])}`)
+      } else {
+        located.push({ place: formatPlace(origin), page: origin.page, finding })
+      }
+    }
+    if (located.length === 0) continue
+
+    const pages = new Set(located.map(({ page }) => page))
+    lines.push(`  ${label}  ${plural(located.length, 'finding')} on ${plural(pages.size, 'page')}`)
+    const { hint } = located[0].finding
+    if (hint && located.every(({ finding }) => finding.hint === hint)) {
       lines.push(`     ${color('hint', 'muted')} ${hint}`)
     }
-    for (const { origin, message } of group.slice(0, MAX_EXAMPLES)) {
-      const place = origin.kind === 'template' ? origin.element : origin.page
-      lines.push(`     ${color(place, 'muted')}  ${message}`)
+    for (const { place, finding } of located.slice(0, MAX_EXAMPLES)) {
+      lines.push(`     ${color(place, 'muted')}  ${finding.message}`)
     }
-    if (group.length > MAX_EXAMPLES) {
+    if (located.length > MAX_EXAMPLES) {
       lines.push(
-        `     ${color(`and ${group.length - MAX_EXAMPLES} more, listed by contentbit check --json`, 'muted')}`,
+        `     ${color(`and ${located.length - MAX_EXAMPLES} more, listed by contentbit check --json`, 'muted')}`,
       )
     }
   }
   return lines
+}
+
+function formatTemplate(
+  { element, pages }: Extract<SiteFindingOrigin, { kind: 'template' }>,
+  occurrences: NonNullable<SiteFinding['occurrences']>,
+): string {
+  const examples = pages.slice(0, MAX_TEMPLATE_EXAMPLES).map((page) => {
+    const target = occurrences.find((occurrence) => occurrence.page === page)?.target
+    return target === undefined ? page : `${page} (${target})`
+  })
+  if (pages.length > MAX_TEMPLATE_EXAMPLES) {
+    examples.push(`${pages.length - MAX_TEMPLATE_EXAMPLES} more`)
+  }
+  const list =
+    examples.length < 2
+      ? examples.join('')
+      : `${examples.slice(0, -1).join(', ')} and ${examples.at(-1)}`
+  const subject = element === undefined ? '' : `${shortElement(element)} `
+  return `${subject}on ${plural(pages.length, 'page')}: ${list}`
+}
+
+function shortElement(element: FindingElement): string {
+  const parts = elementParts(element)
+  if (!parts) return element
+  const { landmark, selector } = parts
+  const [tag, ...classes] = selector.split('.')
+  const shown = [tag, ...classes.slice(0, 2)].join('.')
+  return `${landmark} ${shown}${classes.length > 2 ? '…' : ''}`
+}
+
+function formatPlace(origin: Exclude<SiteFindingOrigin, { kind: 'template' }>): string {
+  if (origin.kind === 'page') return origin.page
+  const column = origin.column === undefined ? '' : `:${origin.column}`
+  return `${displayPath(origin.file)}:${origin.line}${column}`
 }
 
 function plural(count: number, noun: string): string {

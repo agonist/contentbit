@@ -1,9 +1,18 @@
-import { siteFinding, type SiteFinding, type SiteFindingCode } from '../findings.js'
+import {
+  siteFinding,
+  type FixedSubject,
+  type SiteFinding,
+  type SiteFindingCode,
+} from '../findings.js'
 import type { BuiltPage } from '../model.js'
 import { listOf } from './list.js'
 import { isIndexable, isOwnCanonical, type SiteIndex } from './site-index.js'
 
 const MAX_OTHERS = 3
+const ELEMENTS = {
+  title: 'title',
+  description: 'meta[name=description]',
+} as const satisfies Record<string, FixedSubject>
 
 export function checkDuplicates(index: SiteIndex): SiteFinding[] {
   const pages = index.pages.filter((page) => isIndexable(page) && isOwnCanonical(index, page))
@@ -21,7 +30,7 @@ export function checkDuplicates(index: SiteIndex): SiteFinding[] {
 function duplicates(
   pages: BuiltPage[],
   code: SiteFindingCode,
-  label: 'title' | 'description',
+  label: keyof typeof ELEMENTS,
   valueOf: (page: BuiltPage) => string | undefined,
 ): SiteFinding[] {
   const groups = new Map<string, BuiltPage[]>()
@@ -45,6 +54,7 @@ function duplicates(
           { kind: 'page', page: page.path },
           `${group.length} pages share the ${label} "${valueOf(page)}": ${listOf(['this one', ...others], MAX_OTHERS + 1)}.`,
           `Give each page its own ${label}, one that says what sets the page apart.`,
+          { target: valueOf(page), element: ELEMENTS[label] },
         ),
       )
     }

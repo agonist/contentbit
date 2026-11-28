@@ -1,24 +1,29 @@
-import { siteFinding, type SiteFinding } from '../findings.js'
-import { listOf } from './list.js'
+import { elementKey, siteFinding, type ElementKey, type SiteFinding } from '../findings.js'
 import { isBrowserRendered, type SiteIndex } from './site-index.js'
 
 export function checkImages(index: SiteIndex): SiteFinding[] {
   const findings: SiteFinding[] = []
   for (const page of index.pages) {
     if (isBrowserRendered(page)) continue
-    const sources = new Set(
-      page.facts.images.filter(({ alt }) => alt === undefined).map(({ src }) => src ?? ''),
-    )
-    if (sources.size === 0) continue
-    const names = [...sources].map((src) => src || 'an image without src')
-    findings.push(
-      siteFinding(
-        'CB_PAGE_IMAGE_ALT_MISSING',
-        { kind: 'page', page: page.path },
-        `${sources.size === 1 ? '1 image has' : `${sources.size} images have`} no alt attribute: ${listOf(names, 3)}.`,
-        'Add alt text that describes each image, or alt="" to an image that is only decoration.',
-      ),
-    )
+    const images = new Map<string, { src?: string; element: ElementKey }>()
+    for (const image of page.facts.images) {
+      if (image.alt !== undefined) continue
+      const element = elementKey(image)
+      images.set(`${element} ${image.src ?? ''}`, { src: image.src, element })
+    }
+    for (const { src, element } of images.values()) {
+      findings.push(
+        siteFinding(
+          'CB_PAGE_IMAGE_ALT_MISSING',
+          { kind: 'page', page: page.path },
+          src
+            ? `The image ${src} has no alt attribute.`
+            : 'An image without a src has no alt attribute.',
+          'Add alt text that describes the image, or alt="" if it is only decoration.',
+          { target: src || undefined, element },
+        ),
+      )
+    }
   }
   return findings
 }

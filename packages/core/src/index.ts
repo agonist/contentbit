@@ -38,6 +38,7 @@ export {
   type ContentIntegrityFile,
   type ContentIntegrityFinding,
 } from './content-integrity.js'
+export { contentPageUrlResolver } from './page-routes.js'
 export {
   contentPageIdentity,
   keywordsValue,

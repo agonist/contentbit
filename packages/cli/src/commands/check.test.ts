@@ -57,13 +57,17 @@ test('--json prints one site check with every built page and its findings, and n
       severity: 'error',
       message: 'The link #what-doesnt-work points to an id that this page does not have.',
       hint: expect.any(String),
+      target: '#what-doesnt-work',
+      element: 'nav a.toc-link',
       origin: { kind: 'page', page: '/blog/first-post/' },
     },
     {
       code: 'CB_PAGE_IMAGE_ALT_MISSING',
       severity: 'warning',
-      message: '1 image has no alt attribute: /_astro/build-times.B7cq2Lp1.webp.',
+      message: 'The image /_astro/build-times.B7cq2Lp1.webp has no alt attribute.',
       hint: expect.any(String),
+      target: '/_astro/build-times.B7cq2Lp1.webp',
+      element: 'main img.figure-image',
       origin: { kind: 'page', page: '/blog/first-post/' },
     },
     {
@@ -71,6 +75,8 @@ test('--json prints one site check with every built page and its findings, and n
       severity: 'error',
       message: 'The link /fr/ points to no built page, redirect or host route.',
       hint: expect.any(String),
+      target: '/fr/',
+      element: 'nav a.brand',
       origin: { kind: 'page', page: '/fr/blog/first-post/' },
     },
   ])
@@ -92,8 +98,8 @@ test('the report names the build, its page count and where the origin came from'
 test('the report groups built-page findings by code, errors first, with five examples each', async () => {
   const links = Array.from({ length: 7 }, (_, n) => `<a href="/gone-${n}/">Gone</a>`).join('')
   const root = await project({
-    'dist/index.html': `<title>Home</title><meta name="description" content="Home."><link rel="canonical" href="https://example.com/"><h1>Home</h1>${links}`,
-    'dist/a/index.html': `<title>A</title><meta name="description" content="A."><h1>A</h1><a href="/gone-0/">Gone</a>`,
+    'dist/index.html': `<title>Home</title><meta name="description" content="Home."><link rel="canonical" href="https://example.com/"><h1>Home</h1><main>${links}</main>`,
+    'dist/a/index.html': `<title>A</title><meta name="description" content="A."><h1>A</h1><footer><a href="/gone-0/">Gone</a></footer>`,
   })
 
   const { code, out } = await check(root)
@@ -119,6 +125,79 @@ test('the report groups built-page findings by code, errors first, with five exa
   )
   expect(out).toMatch(/Errors\s+8/)
   expect(out).toMatch(/Warnings\s+1/)
+})
+
+test('a template finding prints on one line: its element, page count and three example pages', async () => {
+  const toc = (n: number) =>
+    `<nav><a class="toc-link level-2 active" href="#gone-${n}">Gone</a></nav>`
+  const pages = ['', 'a/', 'b/', 'c/', 'd/']
+  const root = await project(
+    Object.fromEntries(
+      pages.map((path, n) => [
+        `dist/${path}index.html`,
+        `<title>Page ${n}</title><meta name="description" content="Page ${n}."><h1>Page</h1>${toc(n)}`,
+      ]),
+    ),
+  )
+
+  const { code, out } = await check(root)
+  expect(code).toBe(1)
+  const report = out.slice(out.indexOf('Built-page findings'), out.indexOf('  Errors'))
+  expect(report).toBe(
+    [
+      'Built-page findings',
+      '  error CB_LINK_ANCHOR_MISSING  nav a.toc-link.level-2… on 5 pages: / (#gone-0), /a/ (#gone-1), /b/ (#gone-2) and 2 more',
+      '  warning CB_PAGE_CANONICAL_MISSING  link[rel=canonical] on 5 pages: /, /a/, /b/ and 2 more',
+      '',
+      '',
+    ].join('\n'),
+  )
+  expect(out).toMatch(/Errors\s+1/)
+  expect(out).toMatch(/Warnings\s+1/)
+
+  const { findings } = JSON.parse((await check(root, ['--json'])).out)
+  expect(findings[0]).toMatchObject({
+    code: 'CB_LINK_ANCHOR_MISSING',
+    element: 'nav a.toc-link.level-2.active',
+    origin: { kind: 'template', pages: ['/', '/a/', '/b/', '/c/', '/d/'] },
+  })
+  expect(findings[0].occurrences).toHaveLength(5)
+})
+
+test('with links.routes, a finding that a Markdown source writes points at its file and line', async () => {
+  const root = await project({
+    'contentbit.config.mjs': `export default { content: 'content/**/*.md', links: { routes: { 'content/blog': '/blog/{slug}' } } }`,
+    'content/blog/post.md': '---\nslug: post\ntitle: Post\n---\n\nRead [the guide](/guide/).\n',
+    'dist/index.html':
+      '<title>Home</title><meta name="description" content="Home."><link rel="canonical" href="https://example.com/"><h1>Home</h1>',
+    'dist/blog/post/index.html':
+      '<title>Post</title><meta name="description" content="A post."><link rel="canonical" href="https://example.com/blog/post/"><h1>Post</h1><main><a href="/guide/">the guide</a></main>',
+  })
+  const file = join(root, 'content/blog/post.md')
+
+  const result = JSON.parse((await check(root, ['--json'])).out)
+  expect(
+    result.pages.map(({ path, source }: { path: string; source?: string }) => [path, source]),
+  ).toEqual([
+    ['/', undefined],
+    ['/blog/post/', file],
+  ])
+  expect(result.findings).toEqual([
+    {
+      code: 'CB_LINK_PAGE_MISSING',
+      severity: 'error',
+      message: 'The link /guide/ points to no built page, redirect or host route.',
+      hint: expect.any(String),
+      target: '/guide/',
+      element: 'main a',
+      origin: { kind: 'source', file, line: 6, column: 18, page: '/blog/post/' },
+    },
+  ])
+
+  const { out } = await check(root)
+  expect(out).toContain(
+    '     content/blog/post.md:6:18  The link /guide/ points to no built page, redirect or host route.',
+  )
 })
 
 test('a site without built-page findings prints no built-page section', async () => {
