@@ -114,7 +114,7 @@ async function discoverContentCommandDefaults(
     : {}
 
   if (explicitGlobs.length > 0) return { ...configDefaults, cwd: undefined, globs: explicitGlobs }
-  if (loadedConfig) return { ...configDefaults, globs: loadedConfig.config.content }
+  if (loadedConfig) return { ...configDefaults, globs: loadedConfig.config.content ?? [] }
 
   const found = await findPackageScript(command, startDir)
   if (!found) return { globs: [] }
