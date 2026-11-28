@@ -57,13 +57,17 @@ test('--json prints one site check with every built page and its findings, and n
       severity: 'error',
       message: 'The link #what-doesnt-work points to an id that this page does not have.',
       hint: expect.any(String),
+      target: '#what-doesnt-work',
+      element: 'nav a.toc-link',
       origin: { kind: 'page', page: '/blog/first-post/' },
     },
     {
       code: 'CB_PAGE_IMAGE_ALT_MISSING',
       severity: 'warning',
-      message: '1 image has no alt attribute: /_astro/build-times.B7cq2Lp1.webp.',
+      message: 'The image /_astro/build-times.B7cq2Lp1.webp has no alt attribute.',
       hint: expect.any(String),
+      target: '/_astro/build-times.B7cq2Lp1.webp',
+      element: 'main img.figure-image',
       origin: { kind: 'page', page: '/blog/first-post/' },
     },
     {
@@ -71,6 +75,8 @@ test('--json prints one site check with every built page and its findings, and n
       severity: 'error',
       message: 'The link /fr/ points to no built page, redirect or host route.',
       hint: expect.any(String),
+      target: '/fr/',
+      element: 'nav a.brand',
       origin: { kind: 'page', page: '/fr/blog/first-post/' },
     },
   ])

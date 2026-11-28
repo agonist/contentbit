@@ -5,11 +5,14 @@ import {
   pagePath,
   type BuiltPage,
   type BuiltSite,
+  type Landmark,
   type RenderedLink,
   type RenderedPageFacts,
 } from '../index.js'
 
-type PageFacts = Partial<Omit<RenderedPageFacts, 'links'>> & { links?: string[] }
+type PageFacts = Partial<Omit<RenderedPageFacts, 'links'>> & {
+  links?: Array<string | RenderedLink>
+}
 
 function builtPage(path: string, facts: PageFacts = {}): BuiltPage {
   const { links = [], ...rest } = facts
@@ -28,7 +31,7 @@ function builtPage(path: string, facts: PageFacts = {}): BuiltPage {
       images: [],
       textLength: 400,
       ...rest,
-      links: links.map((href): RenderedLink => ({ href, selector: 'a' })),
+      links: links.map((link) => (typeof link === 'string' ? { href: link, selector: 'a' } : link)),
     },
   }
 }
@@ -117,6 +120,7 @@ test('an indexable page without a title, description or canonical gets one findi
       severity: 'warning',
       message: 'The page has no canonical URL.',
       hint: 'Add a <link rel="canonical"> with the URL of the page itself.',
+      element: 'link[rel=canonical]',
       origin: { kind: 'page', page: '/' },
     },
     {
@@ -124,6 +128,7 @@ test('an indexable page without a title, description or canonical gets one findi
       severity: 'warning',
       message: 'The page has no meta description.',
       hint: 'Add a <meta name="description"> that sums up the page in a sentence or two.',
+      element: 'meta[name=description]',
       origin: { kind: 'page', page: '/' },
     },
     {
@@ -131,6 +136,7 @@ test('an indexable page without a title, description or canonical gets one findi
       severity: 'error',
       message: 'The page has no title.',
       hint: 'Add a <title> that says what the page is about.',
+      element: 'title',
       origin: { kind: 'page', page: '/' },
     },
   ])
@@ -239,11 +245,12 @@ test('an indexable page needs exactly one h1', () => {
   ])
 })
 
-test('images without an alt attribute give one finding per page, counting each source once', () => {
-  const img = (src?: string, alt?: string) => ({
+test('images without an alt attribute give one finding per page, source and element', () => {
+  const img = (src?: string, alt?: string, landmark?: Landmark) => ({
     ...(src !== undefined && { src }),
     ...(alt !== undefined && { alt }),
     selector: 'img',
+    ...(landmark && { landmark }),
   })
   const site = builtSite([
     builtPage('/a/', {
@@ -251,9 +258,8 @@ test('images without an alt attribute give one finding per page, counting each s
         img('/1.png'),
         img('/2.png'),
         img('/1.png'),
-        img('/3.png'),
+        img('/1.png', undefined, 'footer'),
         img(),
-        img('/4.png'),
         img('/d.png', ''),
       ],
     }),
@@ -262,18 +268,32 @@ test('images without an alt attribute give one finding per page, counting each s
     builtPage('/app/', { headings: [], textLength: 0, images: [img('/1.png')] }),
   ])
 
-  expect(check(site).filter(({ code }) => code === 'CB_PAGE_IMAGE_ALT_MISSING')).toEqual([
+  expect(
+    checkSite(site)
+      .filter(({ code }) => code === 'CB_PAGE_IMAGE_ALT_MISSING')
+      .map(({ origin, message, target, element }) => ({
+        page: origin.kind === 'page' && origin.page,
+        message,
+        target,
+        element,
+      })),
+  ).toEqual([
     {
-      code: 'CB_PAGE_IMAGE_ALT_MISSING',
       page: '/a/',
-      message: '5 images have no alt attribute: /1.png, /2.png, /3.png and 2 more.',
+      message: 'The image /1.png has no alt attribute.',
+      target: '/1.png',
+      element: 'body img',
     },
+    { page: '/a/', message: expect.any(String), target: '/2.png', element: 'body img' },
+    { page: '/a/', message: expect.any(String), target: '/1.png', element: 'footer img' },
     {
-      code: 'CB_PAGE_IMAGE_ALT_MISSING',
-      page: '/b/',
-      message: '1 image has no alt attribute: /1.png.',
+      page: '/a/',
+      message: 'An image without a src has no alt attribute.',
+      target: undefined,
+      element: 'body img',
     },
-    { code: 'CB_PAGE_IMAGE_ALT_MISSING', page: '/hidden/', message: expect.any(String) },
+    { page: '/b/', message: expect.any(String), target: '/1.png', element: 'body img' },
+    { page: '/hidden/', message: expect.any(String), target: '/1.png', element: 'body img' },
   ])
 })
 
@@ -305,7 +325,7 @@ test('each invalid JSON-LD block is an error with its parse error', () => {
   ])
 })
 
-test('broken links give one finding per distinct href on each page', () => {
+test('broken links give one finding per distinct href and element on each page', () => {
   const site = builtSite(
     [
       builtPage('/', {
@@ -322,6 +342,8 @@ test('broken links give one finding per distinct href on each page', () => {
           '/old/#anything',
           '/api/live',
           'https://other.example/nowhere/',
+          { href: '/nowhere/', selector: 'a.link', landmark: 'footer' },
+          { href: '/nowhere/', selector: 'a.link', landmark: 'footer' },
         ],
       }),
       builtPage('/post/', { ids: ['intro'], links: ['/nowhere/'] }),
@@ -358,7 +380,51 @@ test('broken links give one finding per distinct href on each page', () => {
       page: '/',
       message: 'The link /nowhere points to no built page, redirect or host route.',
     },
+    {
+      code: 'CB_LINK_PAGE_MISSING',
+      page: '/',
+      message: 'The link /nowhere/ points to no built page, redirect or host route.',
+    },
     { code: 'CB_LINK_PAGE_MISSING', page: '/post/', message: expect.any(String) },
+  ])
+})
+
+test('a link finding names its href and element; head findings name a fixed subject', () => {
+  const site = builtSite([
+    builtPage('/', {
+      title: undefined,
+      description: undefined,
+      canonical: 'https://staging.example.com/',
+      headings: [],
+      structuredData: [{ valid: false, error: 'Bad JSON' }],
+      links: [
+        { href: '#gone', selector: 'a.toc-link.active', landmark: 'nav' },
+        { href: '#gone', selector: 'a' },
+      ],
+    }),
+    builtPage('/a/', { canonical: undefined }),
+    builtPage('/b/', { canonical: '/', title: 'Same', description: 'Same.' }),
+    builtPage('/c/', { title: 'Same', description: 'Same.' }),
+    builtPage('/d/', { title: 'Same', description: 'Same.' }),
+  ])
+
+  const subjects = checkSite(site, { origin: 'https://example.com' }).map(
+    ({ code, target, element }) => [code, element, target],
+  )
+  expect(subjects).toEqual([
+    ['CB_LINK_ANCHOR_MISSING', 'nav a.toc-link.active', '#gone'],
+    ['CB_LINK_ANCHOR_MISSING', 'body a', '#gone'],
+    ['CB_PAGE_CANONICAL_ORIGIN', 'link[rel=canonical]', 'https://staging.example.com/'],
+    ['CB_PAGE_DESCRIPTION_MISSING', 'meta[name=description]', undefined],
+    ['CB_PAGE_H1_MISSING', 'h1', undefined],
+    ['CB_PAGE_STRUCTURED_DATA_INVALID', 'script[type=application/ld+json]', undefined],
+    ['CB_PAGE_TITLE_MISSING', 'title', undefined],
+    ['CB_PAGE_CANONICAL_MISSING', 'link[rel=canonical]', undefined],
+    ['CB_PAGE_CANONICAL_ELSEWHERE', 'link[rel=canonical]', '/'],
+    ['CB_PAGE_DESCRIPTION_DUPLICATE', 'meta[name=description]', 'Same.'],
+    ['CB_PAGE_TITLE_DUPLICATE', 'title', 'Same'],
+    ['CB_PAGE_DESCRIPTION_DUPLICATE', 'meta[name=description]', 'Same.'],
+    ['CB_PAGE_TITLE_DUPLICATE', 'title', 'Same'],
   ])
 })
 

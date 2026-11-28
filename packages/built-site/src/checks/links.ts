@@ -1,4 +1,4 @@
-import { siteFinding, type SiteFinding, type SiteFindingOrigin } from '../findings.js'
+import { elementKey, siteFinding, type SiteFinding, type SiteFindingOrigin } from '../findings.js'
 import type { BuiltPage } from '../model.js'
 import { isIndexable, type SiteIndex } from './site-index.js'
 
@@ -6,8 +6,14 @@ export function checkLinks(index: SiteIndex): SiteFinding[] {
   const findings: SiteFinding[] = []
   for (const page of index.pages) {
     const origin: SiteFindingOrigin = { kind: 'page', page: page.path }
-    const hrefs = new Set(page.facts.links.map(({ href }) => href))
-    for (const href of hrefs) findings.push(...linkFindings(index, page, href, origin))
+    const links = new Map<string, { href: string; element: string }>()
+    for (const link of page.facts.links) {
+      const element = elementKey(link)
+      links.set(`${element} ${link.href}`, { href: link.href, element })
+    }
+    for (const { href, element } of links.values()) {
+      findings.push(...linkFindings(index, page, href, origin, element))
+    }
   }
   return findings
 }
@@ -17,7 +23,9 @@ function linkFindings(
   page: BuiltPage,
   href: string,
   origin: SiteFindingOrigin,
+  element: string,
 ): SiteFinding[] {
+  const subject = { target: href, element }
   const target = index.resolveLink(href, page)
   switch (target.kind) {
     case 'missing':
@@ -27,6 +35,7 @@ function linkFindings(
           origin,
           `The link ${href} points to no built page, redirect or host route.`,
           'Fix the link or add a redirect. If the host app serves the path, add it to links.hostRoutes.',
+          subject,
         ),
       ]
     case 'file':
@@ -38,6 +47,7 @@ function linkFindings(
               origin,
               `The link ${href} points to a file that is not in the build.`,
               'Add the file to the build or fix the link.',
+              subject,
             ),
           ]
     case 'page': {
@@ -49,6 +59,7 @@ function linkFindings(
             origin,
             `The link ${href} points to an id that ${target.page === page ? 'this page' : target.page.path} does not have.`,
             'Point the link at an id the page has, or give the element it means that id.',
+            subject,
           ),
         )
       }
@@ -59,6 +70,7 @@ function linkFindings(
             origin,
             `The link ${href} points to ${target.page.path}, a page marked noindex.`,
             'Link to an indexable page instead, or remove noindex from the target if search engines should index it.',
+            subject,
           ),
         )
       }

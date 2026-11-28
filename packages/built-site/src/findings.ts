@@ -1,4 +1,4 @@
-import type { PagePath } from './model.js'
+import type { ElementContext, PagePath } from './model.js'
 
 export type SiteFindingSeverity = 'error' | 'warning'
 
@@ -36,7 +36,14 @@ export type SiteFindingOrigin =
   | { kind: 'template'; element: string; pages: PagePath[] }
   | { kind: 'page'; page: PagePath }
 
-export interface SiteFinding {
+export interface SiteFindingSubject {
+  /** The href, image src, URL or value the finding is about. */
+  target?: string
+  /** What on the page has the problem: a link or image as elementKey() names it, or a fixed head subject such as 'title'. */
+  element?: string
+}
+
+export interface SiteFinding extends SiteFindingSubject {
   code: SiteFindingCode
   severity: SiteFindingSeverity
   message: string
@@ -49,12 +56,20 @@ export function siteFinding(
   origin: SiteFindingOrigin,
   message: string,
   hint?: string,
+  { target, element }: SiteFindingSubject = {},
 ): SiteFinding {
   return {
     code,
     severity: SITE_FINDING_CODES[code],
     message,
     ...(hint !== undefined && { hint }),
+    ...(target !== undefined && { target }),
+    ...(element !== undefined && { element }),
     origin,
   }
+}
+
+/** 'nav a.content-toc-link', or 'body img' for an element outside every landmark. */
+export function elementKey({ landmark, selector }: ElementContext): string {
+  return `${landmark ?? 'body'} ${selector}`
 }

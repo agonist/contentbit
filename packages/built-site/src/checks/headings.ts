@@ -14,6 +14,7 @@ export function checkHeadings(index: SiteIndex): SiteFinding[] {
             { kind: 'page', page: page.path },
             'The page has no h1 heading.',
             'Give the page one h1 that says what it is about.',
+            { element: 'h1' },
           )
         : siteFinding(
             'CB_PAGE_H1_MULTIPLE',
@@ -23,6 +24,7 @@ export function checkHeadings(index: SiteIndex): SiteFinding[] {
               3,
             )}.`,
             'Keep one h1 for the page and make the others h2.',
+            { element: 'h1' },
           ),
     )
   }
