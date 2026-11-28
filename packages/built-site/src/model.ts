@@ -106,6 +106,8 @@ export interface BuiltSite {
   root: string
   /** Sorted by path. */
   pages: BuiltPage[]
+  /** Every file in the build outside dot folders and node_modules, pages included: posix paths relative to the root, sorted. */
+  files: string[]
   /** Absent when the build has no sitemap. files: posix paths relative to the root, in the order read. */
   sitemap?: { files: string[]; urls: string[] }
   /** Absent when the build has no robots.txt. */

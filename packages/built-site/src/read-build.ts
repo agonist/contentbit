@@ -12,20 +12,27 @@ import {
 } from './model.js'
 import { readRenderedPageFacts } from './read-page.js'
 
-const SKIPPED_FOLDERS = new Set(['_astro', '_next', 'node_modules', '_not-found'])
+const PAGELESS_FOLDERS = new Set(['_astro', '_next', '_not-found'])
 const ERROR_PAGES = new Set(['404.html', '500.html', '404/index.html', '500/index.html'])
 const READ_CONCURRENCY = 16
 
+interface BuildFile {
+  file: string
+  page: boolean
+}
+
 export async function readBuildFolder(root: string): Promise<BuiltSite> {
   const buildRoot = resolve(root)
-  const [files, robotsText, redirectsText] = await Promise.all([
-    findPageFiles(buildRoot),
+  const [found, robotsText, redirectsText] = await Promise.all([
+    findFiles(buildRoot),
     readOptional(join(buildRoot, 'robots.txt')),
     readOptional(join(buildRoot, '_redirects')),
   ])
+  const files = found.map(({ file }) => file).sort()
+  const pageFiles = found.filter(({ page }) => page).map(({ file }) => file)
   const robots = robotsText === undefined ? undefined : readRobots(robotsText)
   const [pages, sitemap] = await Promise.all([
-    mapConcurrently(files, READ_CONCURRENCY, async (file): Promise<BuiltPage> => {
+    mapConcurrently(pageFiles, READ_CONCURRENCY, async (file): Promise<BuiltPage> => {
       const html = await readFile(join(buildRoot, file), 'utf8')
       return { path: pagePathFromFile(file), file, facts: readRenderedPageFacts(html) }
     }),
@@ -36,23 +43,25 @@ export async function readBuildFolder(root: string): Promise<BuiltSite> {
   return {
     root: buildRoot,
     pages,
+    files,
     ...(sitemap && { sitemap }),
     ...(robots && { robots }),
     redirects: redirectsText === undefined ? [] : readRedirects(redirectsText),
   }
 }
 
-async function findPageFiles(root: string, dir = ''): Promise<string[]> {
+async function findFiles(root: string, dir = '', holdsPages = true): Promise<BuildFile[]> {
   const entries = await readdir(join(root, dir), { withFileTypes: true })
   const found = await Promise.all(
-    entries.map(async (entry) => {
+    entries.map(async (entry): Promise<BuildFile[]> => {
       const file = dir === '' ? entry.name : `${dir}/${entry.name}`
       if (entry.isDirectory()) {
-        const skip = entry.name.startsWith('.') || SKIPPED_FOLDERS.has(entry.name)
-        return skip ? [] : findPageFiles(root, file)
+        if (entry.name.startsWith('.') || entry.name === 'node_modules') return []
+        return findFiles(root, file, holdsPages && !PAGELESS_FOLDERS.has(entry.name))
       }
-      const isPage = entry.isFile() && entry.name.endsWith('.html') && !ERROR_PAGES.has(file)
-      return isPage ? [file] : []
+      if (!entry.isFile()) return []
+      const page = holdsPages && entry.name.endsWith('.html') && !ERROR_PAGES.has(file)
+      return [{ file, page }]
     }),
   )
   return found.flat()

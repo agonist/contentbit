@@ -27,6 +27,7 @@ const site: BuiltSite = {
     { path: pagePath('/'), file: 'index.html', facts: facts('Home') },
     { path: pagePath('/about/'), file: 'about/index.html', facts: facts('About') },
   ],
+  files: ['index.html', 'about/index.html'],
   redirects: [],
 }
 
