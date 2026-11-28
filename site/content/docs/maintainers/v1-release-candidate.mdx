@@ -1,9 +1,9 @@
 ---
 title: v1 release candidate
-description: Install, evaluate, and promote Contentbit 1.0.0-rc.1.
+description: Install, evaluate, and promote Contentbit 1.0.0-rc.2.
 ---
 
-The candidate version is **1.0.0-rc.1** for all six public packages. It is a
+The candidate version is **1.0.0-rc.2** for all six public packages. It is a
 prerelease of the [v1 compatibility contract](/docs/reference/compatibility).
 The candidate is published to npm and can be installed with the commands below.
 The `rc` tag tracks candidates; `latest` stays on the stable release until v1 is
@@ -14,7 +14,7 @@ promoted.
 In a new or disposable project, run:
 
 ```bash
-npx contentbit@1.0.0-rc.1 init --seo
+npx contentbit@1.0.0-rc.2 init --seo
 ```
 
 Init installs the CLI, Studio, and Contentbit runtime packages at the running
@@ -24,8 +24,8 @@ rules. Commit the resulting lockfile to keep the installed dependency set.
 For an existing React project, update the packages you use together:
 
 ```bash
-pnpm add --save-exact @contentbit/core@1.0.0-rc.1 @contentbit/blocks@1.0.0-rc.1 @contentbit/react@1.0.0-rc.1
-pnpm add --save-exact --save-dev contentbit@1.0.0-rc.1 @contentbit/studio@1.0.0-rc.1
+pnpm add --save-exact @contentbit/core@1.0.0-rc.2 @contentbit/blocks@1.0.0-rc.2 @contentbit/react@1.0.0-rc.2
+pnpm add --save-exact --save-dev contentbit@1.0.0-rc.2 @contentbit/studio@1.0.0-rc.2
 ```
 
 For Astro, replace `@contentbit/react` with `@contentbit/astro` at the same
@@ -57,6 +57,22 @@ these behavior corrections when upgrading:
 - Init selects matching Contentbit versions, including prereleases. Studio's
   TanStack dependencies are pinned to the versions used for candidate testing.
 
+## Changes from 1.0.0-rc.1
+
+The third candidate adds route-aware link checks, makes zod a peer dependency
+and speeds up link hints. Review these before you upgrade from rc.1:
+
+- `links.routes` in `contentbit.config.ts` maps each content directory to a URL
+  pattern such as `/blog/{slug}`, and `links.hostRoutes` lists pages the host app
+  serves outside content. With routes set, Doctor, Studio, and snapshots flag an
+  internal URL only when no page or host route serves it, check its `#anchor`,
+  and no longer accept a link because its last segment matches a page's slug.
+- `@contentbit/core` and `@contentbit/blocks` declare zod `^4.0.0` as a peer
+  dependency and use the project's copy. Projects that define blocks outside
+  `contentbit init` must add zod 4 to their own dependencies.
+- Did-you-mean hints for unresolved links are about a hundred times faster on
+  large sites.
+
 ## Changes from 1.0.0-rc.0
 
 The second candidate fixes bugs found in review. The package changelogs list
@@ -86,7 +102,7 @@ every fix. Review these before you upgrade from rc.0 or 0.7.2:
   peer range is not exercised. See the compatibility policy for details.
 - Styled packs copied from the registry are project source files. Updating
   npm packages does not update those copies; check their rendered output.
-- Repository starters pin `1.0.0-rc.1` exactly and install it from npm. Packed
+- Repository starters pin `1.0.0-rc.2` exactly and install it from npm. Packed
   checks override their Contentbit dependencies with candidate tarballs to
   verify unpublished changes.
 
