@@ -2,6 +2,7 @@ import type { SiteFinding } from '../findings.js'
 import type { BuiltSite } from '../model.js'
 import { checkDuplicates } from './duplicates.js'
 import { checkHeadings } from './headings.js'
+import { checkHreflang } from './hreflang.js'
 import { checkImages } from './images.js'
 import { checkLinks } from './links.js'
 import { checkMetadata } from './metadata.js'
@@ -15,6 +16,7 @@ const CHECKS: Array<(index: SiteIndex) => SiteFinding[]> = [
   checkHeadings,
   checkImages,
   checkLinks,
+  checkHreflang,
 ]
 
 export function checkSite(site: BuiltSite, options: SiteIndexOptions = {}): SiteFinding[] {
