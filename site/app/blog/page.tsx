@@ -7,6 +7,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Blog',
+  alternates: { canonical: '/blog' },
   description:
     'Notes on structured content, LLM-generated Markdown, and validation. Every post is a Content Blocks document rendered by the library.',
 }
