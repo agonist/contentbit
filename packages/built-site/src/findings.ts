@@ -33,7 +33,8 @@ export type SiteFindingCode = keyof typeof SITE_FINDING_CODES
 
 export type SiteFindingOrigin =
   | { kind: 'source'; file: string; line: number; column?: number; page: PagePath }
-  | { kind: 'template'; element: string; pages: PagePath[] }
+  /** element is absent when the grouped findings name none, as site checks do. */
+  | { kind: 'template'; element?: string; pages: PagePath[] }
   | { kind: 'page'; page: PagePath }
 
 export interface SiteFindingSubject {
@@ -43,12 +44,19 @@ export interface SiteFindingSubject {
   element?: string
 }
 
+export interface SiteFindingOccurrence {
+  page: PagePath
+  target?: string
+}
+
 export interface SiteFinding extends SiteFindingSubject {
   code: SiteFindingCode
   severity: SiteFindingSeverity
   message: string
   hint?: string
   origin: SiteFindingOrigin
+  /** A template finding's page findings, one for each page and target. */
+  occurrences?: SiteFindingOccurrence[]
 }
 
 export function siteFinding(

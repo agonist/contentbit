@@ -1,6 +1,6 @@
 import { extractFrontmatter, readContentPageFacts } from '@contentbit/core'
 
-import type { SiteFinding, SiteFindingCode } from './findings.js'
+import { siteFinding, type SiteFinding, type SiteFindingCode } from './findings.js'
 import type { PagePath } from './model.js'
 
 /** The Markdown source document of a built page. */
@@ -13,6 +13,12 @@ const FRONTMATTER_FACTS: Partial<Record<SiteFindingCode, 'title' | 'description'
   CB_PAGE_TITLE_MISSING: 'title',
   CB_PAGE_DESCRIPTION_MISSING: 'description',
 }
+
+// Each of these findings is already about several pages.
+const NEVER_GROUPED = new Set<SiteFindingCode>([
+  'CB_PAGE_TITLE_DUPLICATE',
+  'CB_PAGE_DESCRIPTION_DUPLICATE',
+])
 
 // What can stand next to a value written in Markdown or frontmatter, so /fr/ is not found inside /fr/blog/.
 const VALUE_EDGE = /[\s"'`()<>[\]{},]/
@@ -60,4 +66,60 @@ function indexOfValue(text: string, value: string): number {
     if ((!before || VALUE_EDGE.test(before)) && (!after || VALUE_EDGE.test(after))) return index
   }
   return -1
+}
+
+interface PageFinding {
+  finding: SiteFinding
+  page: PagePath
+}
+
+/**
+ * Replaces the page findings that share a code and an element on two or
+ * more pages with one template finding, at the place of the first. A finding
+ * without an element groups by its code alone. Source findings, and the
+ * duplicate title and description findings, are returned as they were.
+ */
+export function groupTemplateFindings(findings: SiteFinding[]): SiteFinding[] {
+  const groups = new Map<string, PageFinding[]>()
+  for (const finding of findings) {
+    if (finding.origin.kind !== 'page' || NEVER_GROUPED.has(finding.code)) continue
+    const key = `${finding.code} ${finding.element ?? ''}`
+    const member = { finding, page: finding.origin.page }
+    const group = groups.get(key)
+    if (group) group.push(member)
+    else groups.set(key, [member])
+  }
+
+  const templates = new Map<SiteFinding, SiteFinding>()
+  const grouped = new Set<SiteFinding>()
+  for (const group of groups.values()) {
+    const pages = [...new Set(group.map(({ page }) => page))]
+    if (pages.length < 2) continue
+    templates.set(group[0].finding, templateFinding(group, pages))
+    for (const { finding } of group) grouped.add(finding)
+  }
+  return findings.flatMap(
+    (finding) => templates.get(finding) ?? (grouped.has(finding) ? [] : finding),
+  )
+}
+
+function templateFinding(group: PageFinding[], pages: PagePath[]): SiteFinding {
+  const [{ finding: first, page }] = group
+  const { code, element, message, hint } = first
+  const reach = element
+    ? `${element} gives this finding on ${pages.length} pages, so the layout or a shared component renders it.`
+    : `This finding comes up on ${pages.length} pages.`
+  return {
+    ...siteFinding(
+      code,
+      { kind: 'template', ...(element !== undefined && { element }), pages },
+      `${reach} On ${page}: ${message}`,
+      hint,
+      { element },
+    ),
+    occurrences: group.map(({ finding: { target }, page }) => ({
+      page,
+      ...(target !== undefined && { target }),
+    })),
+  }
 }

@@ -259,7 +259,7 @@ function formatSiteFindings(findings: SiteFinding[]): string[] {
       lines.push(`     ${color('hint', 'muted')} ${hint}`)
     }
     for (const { origin, message } of group.slice(0, MAX_EXAMPLES)) {
-      const place = origin.kind === 'template' ? origin.element : origin.page
+      const place = origin.kind === 'template' ? (origin.element ?? origin.pages[0]) : origin.page
       lines.push(`     ${color(place, 'muted')}  ${message}`)
     }
     if (group.length > MAX_EXAMPLES) {
